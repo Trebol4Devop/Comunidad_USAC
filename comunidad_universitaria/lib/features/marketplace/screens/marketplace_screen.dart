@@ -135,6 +135,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDesktop = Responsive.isDesktop(context);
+    final isMobile = Responsive.isMobile(context);
 
     return Scaffold(
       body: RefreshIndicator(
@@ -207,94 +208,179 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                   onRequestSponsor: _openSponsorRequestDialog,
                 ),
 
-                // Search & Sede Dropdown
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        decoration: InputDecoration(
-                          hintText: 'Buscar postres, almuerzos, tutorías o libros...',
-                          prefixIcon: const Icon(Icons.search, size: 20),
-                          suffixIcon: _searchQuery.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(Icons.clear, size: 18),
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    setState(() => _searchQuery = '');
-                                    _loadData();
-                                  },
-                                )
-                              : null,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        ),
-                        onSubmitted: (val) {
-                          setState(() => _searchQuery = val);
-                          _loadData();
-                        },
-                      ),
+                // Search & Filter Dropdowns
+                if (isMobile) ...[
+                  TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Buscar postres, almuerzos, tutorías o libros...',
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear, size: 18),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() => _searchQuery = '');
+                                _loadData();
+                              },
+                            )
+                          : null,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     ),
-                    const SizedBox(width: 10),
-
-                    // Sede Selector
-                    ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: isDesktop ? 200 : 130),
-                      child: DropdownButtonFormField<String>(
-                        initialValue: _selectedSede,
-                        isExpanded: true,
-                        decoration: const InputDecoration(
-                          contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                    onSubmitted: (val) {
+                      setState(() => _searchQuery = val);
+                      _loadData();
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      // Sede Selector
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          initialValue: _selectedSede,
+                          isExpanded: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Sede / Campus',
+                            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                          ),
+                          items: USACConstants.sedes
+                              .map((s) => DropdownMenuItem<String>(
+                                    value: s['id']!,
+                                    child: Text(
+                                      s['nombre']!,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 11),
+                                    ),
+                                  ))
+                              .toList(),
+                          onChanged: (val) {
+                            setState(() {
+                              _selectedSede = val ?? 'todas';
+                            });
+                            _loadData();
+                          },
                         ),
-                        items: USACConstants.sedes
-                            .map((s) => DropdownMenuItem<String>(
-                                  value: s['id']!,
-                                  child: Text(
-                                    s['nombre']!,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                                ))
-                            .toList(),
-                        onChanged: (val) {
-                          setState(() {
-                            _selectedSede = val ?? 'todas';
-                          });
-                          _loadData();
-                        },
                       ),
-                    ),
-
-                    const SizedBox(width: 8),
-
-                    // Faculty Selector
-                    ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: isDesktop ? 200 : 130),
-                      child: DropdownButtonFormField<String>(
-                        initialValue: _selectedFacultad,
-                        isExpanded: true,
-                        decoration: const InputDecoration(
-                          contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                      const SizedBox(width: 8),
+                      // Faculty Selector
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          initialValue: _selectedFacultad,
+                          isExpanded: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Facultad / Unidad',
+                            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                          ),
+                          items: USACConstants.facultades
+                              .map((f) => DropdownMenuItem<String>(
+                                    value: f['id'].toString(),
+                                    child: Text(
+                                      f['nombre'].toString(),
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 11),
+                                    ),
+                                  ))
+                              .toList(),
+                          onChanged: (val) {
+                            setState(() {
+                              _selectedFacultad = val ?? 'todas';
+                            });
+                            _loadData();
+                          },
                         ),
-                        items: USACConstants.facultades
-                            .map((f) => DropdownMenuItem<String>(
-                                  value: f['id'].toString(),
-                                  child: Text(
-                                    f['nombre'].toString(),
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                                ))
-                            .toList(),
-                        onChanged: (val) {
-                          setState(() {
-                            _selectedFacultad = val ?? 'todas';
-                          });
-                          _loadData();
-                        },
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ] else ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            hintText: 'Buscar postres, almuerzos, tutorías o libros...',
+                            prefixIcon: const Icon(Icons.search, size: 20),
+                            suffixIcon: _searchQuery.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear, size: 18),
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      setState(() => _searchQuery = '');
+                                      _loadData();
+                                    },
+                                  )
+                                : null,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          ),
+                          onSubmitted: (val) {
+                            setState(() => _searchQuery = val);
+                            _loadData();
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+
+                      // Sede Selector
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 180),
+                        child: DropdownButtonFormField<String>(
+                          initialValue: _selectedSede,
+                          isExpanded: true,
+                          decoration: const InputDecoration(
+                            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                          ),
+                          items: USACConstants.sedes
+                              .map((s) => DropdownMenuItem<String>(
+                                    value: s['id']!,
+                                    child: Text(
+                                      s['nombre']!,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                  ))
+                              .toList(),
+                          onChanged: (val) {
+                            setState(() {
+                              _selectedSede = val ?? 'todas';
+                            });
+                            _loadData();
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(width: 8),
+
+                      // Faculty Selector
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 180),
+                        child: DropdownButtonFormField<String>(
+                          initialValue: _selectedFacultad,
+                          isExpanded: true,
+                          decoration: const InputDecoration(
+                            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                          ),
+                          items: USACConstants.facultades
+                              .map((f) => DropdownMenuItem<String>(
+                                    value: f['id'].toString(),
+                                    child: Text(
+                                      f['nombre'].toString(),
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                  ))
+                              .toList(),
+                          onChanged: (val) {
+                            setState(() {
+                              _selectedFacultad = val ?? 'todas';
+                            });
+                            _loadData();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
 
                 const SizedBox(height: 12),
 

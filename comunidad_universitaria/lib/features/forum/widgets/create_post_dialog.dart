@@ -4,8 +4,10 @@ import '../../../core/constants/categories.dart';
 import '../../../core/models/post.dart';
 import '../../../core/services/forum_service.dart';
 import '../../../core/services/storage_service.dart';
+import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
 import '../../profile/widgets/alias_modal.dart';
+import '../../shared/widgets/auth_modal.dart';
 
 class CreatePostDialog extends StatefulWidget {
   final String activeAlias;
@@ -112,32 +114,47 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
+    if (!SupabaseService.isAuthenticated) {
+      AuthModal.show(
+        context,
+        title: 'Inicia Sesión para Publicar',
+        subtitle: 'Para crear consultas en el foro universitario, debes iniciar sesión.',
+        onAuthenticated: () => _submit(),
+      );
+      return;
+    }
+
     setState(() => _isSubmitting = true);
 
-    final newPost = await ForumService.createPost(
-      title: _titleController.text.trim(),
-      content: _contentController.text.trim(),
-      category: _selectedCategory,
-      carrera: _selectedCarrera,
-      authorAlias: widget.activeAlias,
-      imageUrl: _uploadedImageUrl,
-    );
+    try {
+      final newPost = await ForumService.createPost(
+        title: _titleController.text.trim(),
+        content: _contentController.text.trim(),
+        category: _selectedCategory,
+        carrera: _selectedCarrera,
+        authorAlias: widget.activeAlias,
+        imageUrl: _uploadedImageUrl,
+      );
 
-    if (mounted) {
-      setState(() => _isSubmitting = false);
-      if (newPost != null) {
-        widget.onPostCreated(newPost);
-        Navigator.of(context).pop();
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        if (newPost != null) {
+          widget.onPostCreated(newPost);
+          Navigator.of(context).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Publicación creada exitosamente en el foro.'),
+              backgroundColor: Color(0xFF004B87),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('¡Publicación creada exitosamente en el foro!'),
-            backgroundColor: Color(0xFF004B87),
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error al crear publicación. Inténtalo de nuevo.'),
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '').replaceAll('AuthException: ', '')),
             backgroundColor: Colors.red,
           ),
         );
@@ -213,6 +230,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                     width: isMobile ? double.infinity : 240,
                     child: DropdownButtonFormField<String>(
                       initialValue: _selectedCategory,
+                      isExpanded: true,
                       decoration: const InputDecoration(
                         labelText: 'Categoría del tema',
                         contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -221,7 +239,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                           .where((c) => c.id != 'todos')
                           .map((c) => DropdownMenuItem(
                                 value: c.id,
-                                child: Text(c.label, style: const TextStyle(fontSize: 13)),
+                                child: Text(c.label, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13)),
                               ))
                           .toList(),
                       onChanged: (val) => setState(() => _selectedCategory = val ?? 'general'),
@@ -233,6 +251,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                     width: isMobile ? double.infinity : 240,
                     child: DropdownButtonFormField<String>(
                       initialValue: _selectedFacultad,
+                      isExpanded: true,
                       decoration: const InputDecoration(
                         labelText: 'Facultad / Unidad',
                         contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -264,6 +283,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
               DropdownButtonFormField<String>(
                 key: ValueKey('carrera_$_selectedFacultad'),
                 initialValue: _selectedCarrera,
+                isExpanded: true,
                 decoration: const InputDecoration(
                   labelText: 'Carrera específica (opcional)',
                   contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),

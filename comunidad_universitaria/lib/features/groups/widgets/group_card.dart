@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/models/whatsapp_group.dart';
 import '../../../core/utils/time_utils.dart';
 import '../../../core/utils/url_utils.dart';
+import '../../shared/widgets/image_viewer_dialog.dart';
 import '../../shared/widgets/report_dialog.dart';
 
 class GroupCard extends StatelessWidget {
@@ -189,6 +190,45 @@ class GroupCard extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodySmall?.copyWith(fontSize: 12),
+              ),
+            ],
+
+            // Optional Image / Banner Preview
+            if (group.imageUrl != null && group.imageUrl!.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              InkWell(
+                onTap: () => ImageViewerDialog.show(
+                  context,
+                  imageUrl: group.imageUrl!,
+                  title: group.title,
+                ),
+                borderRadius: BorderRadius.circular(8),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Stack(
+                    children: [
+                      Image.network(
+                        group.imageUrl!,
+                        width: double.infinity,
+                        height: 140,
+                        fit: BoxFit.cover,
+                        errorBuilder: (ctx, err, stack) => const SizedBox.shrink(),
+                      ),
+                      Positioned(
+                        bottom: 6,
+                        right: 6,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Icon(Icons.zoom_in, color: Colors.white, size: 16),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
 

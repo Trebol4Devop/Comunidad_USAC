@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/categories.dart';
 import '../../../core/models/whatsapp_group.dart';
 import '../../../core/services/groups_service.dart';
+import '../../../core/services/storage_service.dart';
+import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
 import '../../profile/widgets/alias_modal.dart';
+import '../../shared/widgets/auth_modal.dart';
 
 class CreateGroupDialog extends StatefulWidget {
   final String activeAlias;
@@ -62,6 +66,9 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
   final _linkController = TextEditingController();
   final _descriptionController = TextEditingController();
 
+  String? _uploadedImageUrl;
+  bool _isUploadingImage = false;
+
   String _groupType = 'curso'; // 'curso', 'objetos_perdidos', 'comunidad', 'deportes', 'avisos', 'otro'
   String _selectedFacultad = '08';
   String _selectedCarrera = 'todas';
@@ -86,8 +93,42 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
     return list.map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
+  Future<void> _pickAndUploadImage() async {
+    setState(() => _isUploadingImage = true);
+
+    try {
+      final XFile? file = await StorageService.pickSingleImage();
+      if (file != null) {
+        final url = await StorageService.uploadImageFile(file, folder: 'groups');
+        if (url != null && mounted) {
+          setState(() {
+            _uploadedImageUrl = url;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al subir imagen: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploadingImage = false);
+    }
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+
+    if (!SupabaseService.isAuthenticated) {
+      AuthModal.show(
+        context,
+        title: 'Inicia Sesión para Compartir',
+        subtitle: 'Para compartir enlaces de grupos estudiantiles, debes iniciar sesión.',
+        onAuthenticated: () => _submit(),
+      );
+      return;
+    }
 
     setState(() => _isSubmitting = true);
 
@@ -120,31 +161,37 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
       sectionName = 'Comunidad Abierta';
     }
 
-    final created = await GroupsService.createGroup(
-      title: title,
-      carrera: _selectedCarrera,
-      curso: cursoName,
-      section: sectionName,
-      link: _linkController.text.trim(),
-      description: _descriptionController.text.trim(),
-      authorAlias: widget.activeAlias,
-    );
+    try {
+      final created = await GroupsService.createGroup(
+        title: title,
+        carrera: _selectedCarrera,
+        curso: cursoName,
+        section: sectionName,
+        link: _linkController.text.trim(),
+        description: _descriptionController.text.trim(),
+        authorAlias: widget.activeAlias,
+        imageUrl: _uploadedImageUrl,
+      );
 
-    if (mounted) {
-      setState(() => _isSubmitting = false);
-      if (created != null) {
-        widget.onGroupCreated(created);
-        Navigator.of(context).pop();
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        if (created != null) {
+          widget.onGroupCreated(created);
+          Navigator.of(context).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Grupo estudiantil compartido con éxito.'),
+              backgroundColor: Color(0xFF004B87),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('¡Grupo estudiantil compartido con éxito!'),
-            backgroundColor: Color(0xFF004B87),
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error al compartir el enlace. Revisa los datos.'),
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '').replaceAll('AuthException: ', '')),
             backgroundColor: Colors.red,
           ),
         );
@@ -213,17 +260,18 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
               // Group Type Selector
               DropdownButtonFormField<String>(
                 initialValue: _groupType,
+                isExpanded: true,
                 decoration: const InputDecoration(
                   labelText: 'Tipo de Grupo / Propósito',
                   contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
                 items: const [
-                  DropdownMenuItem(value: 'curso', child: Text('Curso Académico (Tareas, dudas y exámenes)')),
-                  DropdownMenuItem(value: 'objetos_perdidos', child: Text('Objetos Perdidos & Hallazgos')),
-                  DropdownMenuItem(value: 'comunidad', child: Text('Comunidad de Facultad / Sede')),
-                  DropdownMenuItem(value: 'deportes', child: Text('Deportes & Actividades Extracurriculares')),
-                  DropdownMenuItem(value: 'avisos', child: Text('Avisos & Organización Estudiantil')),
-                  DropdownMenuItem(value: 'otro', child: Text('Interés General / Otro')),
+                  DropdownMenuItem(value: 'curso', child: Text('Curso Académico (Tareas, dudas y exámenes)', overflow: TextOverflow.ellipsis)),
+                  DropdownMenuItem(value: 'objetos_perdidos', child: Text('Objetos Perdidos & Hallazgos', overflow: TextOverflow.ellipsis)),
+                  DropdownMenuItem(value: 'comunidad', child: Text('Comunidad de Facultad / Sede', overflow: TextOverflow.ellipsis)),
+                  DropdownMenuItem(value: 'deportes', child: Text('Deportes & Actividades Extracurriculares', overflow: TextOverflow.ellipsis)),
+                  DropdownMenuItem(value: 'avisos', child: Text('Avisos & Organización Estudiantil', overflow: TextOverflow.ellipsis)),
+                  DropdownMenuItem(value: 'otro', child: Text('Interés General / Otro', overflow: TextOverflow.ellipsis)),
                 ],
                 onChanged: (val) => setState(() => _groupType = val ?? 'curso'),
               ),
@@ -239,6 +287,7 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
                     width: isMobile ? double.infinity : 240,
                     child: DropdownButtonFormField<String>(
                       initialValue: _selectedFacultad,
+                      isExpanded: true,
                       decoration: const InputDecoration(
                         labelText: 'Facultad / Unidad',
                         contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -266,6 +315,7 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
                     child: DropdownButtonFormField<String>(
                       key: ValueKey('carrera_$_selectedFacultad'),
                       initialValue: _selectedCarrera,
+                      isExpanded: true,
                       decoration: const InputDecoration(
                         labelText: 'Carrera (opcional)',
                         contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -368,6 +418,66 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
                   contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 ),
               ),
+
+              const SizedBox(height: 14),
+
+              // Image Upload to Supabase Storage
+              Text(
+                'Imagen o Logotipo del Grupo (Opcional)',
+                style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              const SizedBox(height: 6),
+
+              if (_uploadedImageUrl != null) ...[
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        _uploadedImageUrl!,
+                        width: double.infinity,
+                        height: 130,
+                        fit: BoxFit.cover,
+                        errorBuilder: (ctx, err, stack) => Container(
+                          height: 130,
+                          color: Colors.grey.shade300,
+                          child: const Center(child: Icon(Icons.broken_image)),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: InkWell(
+                        onTap: () => setState(() => _uploadedImageUrl = null),
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.black54,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.close, size: 16, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ] else ...[
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  ),
+                  onPressed: _isUploadingImage ? null : _pickAndUploadImage,
+                  icon: _isUploadingImage
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.add_photo_alternate_outlined, size: 18),
+                  label: Text(_isUploadingImage ? 'Subiendo imagen...' : 'Subir Imagen / Logotipo'),
+                ),
+              ],
 
               const SizedBox(height: 18),
 

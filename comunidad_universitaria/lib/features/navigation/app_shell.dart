@@ -3,6 +3,7 @@ import '../../core/utils/responsive.dart';
 import '../forum/screens/forum_screen.dart';
 import '../groups/screens/groups_screen.dart';
 import '../marketplace/screens/marketplace_screen.dart';
+import '../profile/screens/profile_screen.dart';
 import '../rules/screens/rules_screen.dart';
 import '../shared/widgets/alias_badge_button.dart';
 
@@ -26,6 +27,10 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
+
+  void _navigateToProfile() {
+    setState(() => _currentIndex = 3);
+  }
 
   void _showDisclaimerModal() {
     showDialog(
@@ -116,10 +121,11 @@ class _AppShellState extends State<AppShell> {
           ],
         ),
         actions: [
-          // User Alias Pill
+          // User Alias Pill that links directly to Profile
           AliasBadgeButton(
             alias: widget.activeAlias,
             onAliasChanged: widget.onAliasChanged,
+            onTap: _navigateToProfile,
           ),
           const SizedBox(width: 8),
 
@@ -150,7 +156,8 @@ class _AppShellState extends State<AppShell> {
                         _buildNavTab(index: 0, label: 'Foro Estudiantil', icon: Icons.forum_outlined),
                         _buildNavTab(index: 1, label: 'Grupos de Estudio', icon: Icons.groups_outlined),
                         _buildNavTab(index: 2, label: 'Marketplace & Tutorías', icon: Icons.storefront_outlined),
-                        _buildNavTab(index: 3, label: 'Normas & Descargo', icon: Icons.shield_outlined),
+                        _buildNavTab(index: 3, label: 'Mi Perfil', icon: Icons.person_outline),
+                        _buildNavTab(index: 4, label: 'Normas & Descargo', icon: Icons.shield_outlined),
                       ],
                     ),
                   ),
@@ -173,6 +180,12 @@ class _AppShellState extends State<AppShell> {
           MarketplaceScreen(
             activeAlias: widget.activeAlias,
             onAliasChanged: widget.onAliasChanged,
+          ),
+          ProfileScreen(
+            activeAlias: widget.activeAlias,
+            onAliasChanged: widget.onAliasChanged,
+            onToggleTheme: widget.onToggleTheme,
+            isDarkMode: widget.isDarkMode,
           ),
           const RulesScreen(),
         ],
@@ -199,6 +212,11 @@ class _AppShellState extends State<AppShell> {
                   icon: Icon(Icons.storefront_outlined),
                   selectedIcon: Icon(Icons.storefront),
                   label: 'Marketplace',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.person_outline),
+                  selectedIcon: Icon(Icons.person),
+                  label: 'Perfil',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.shield_outlined),

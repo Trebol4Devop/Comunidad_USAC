@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/categories.dart';
 import '../../../core/models/post.dart';
 import '../../../core/services/forum_service.dart';
+import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
 import '../widgets/create_post_dialog.dart';
 import '../widgets/post_card.dart';
 import 'post_detail_screen.dart';
+import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/empty_state_widget.dart';
 
 class ForumScreen extends StatefulWidget {
@@ -47,6 +49,7 @@ class _ForumScreenState extends State<ForumScreen> {
     setState(() => _isLoading = true);
     final posts = await ForumService.fetchPosts(
       category: _selectedCategory,
+      facultad: _selectedFacultad,
       carrera: _selectedCarrera,
       searchQuery: _searchQuery,
     );
@@ -59,6 +62,16 @@ class _ForumScreenState extends State<ForumScreen> {
   }
 
   Future<void> _handleToggleLike(Post post) async {
+    if (!SupabaseService.isAuthenticated) {
+      AuthModal.show(
+        context,
+        title: 'Inicia Sesión para Votar',
+        subtitle: 'Para valorar publicaciones útiles en el foro, debes iniciar sesión.',
+        onAuthenticated: () => _handleToggleLike(post),
+      );
+      return;
+    }
+
     final prevLiked = post.isLikedByMe;
     final prevLikes = post.likes;
 
@@ -85,6 +98,21 @@ class _ForumScreenState extends State<ForumScreen> {
   }
 
   void _openCreateDialog() {
+    if (!SupabaseService.isAuthenticated) {
+      AuthModal.show(
+        context,
+        title: 'Inicia Sesión para Publicar',
+        subtitle: 'Para participar y crear consultas en el foro estudiantil, debes iniciar sesión.',
+        onAuthenticated: () {
+          _showCreateDialog();
+        },
+      );
+      return;
+    }
+    _showCreateDialog();
+  }
+
+  void _showCreateDialog() {
     CreatePostDialog.show(
       context,
       activeAlias: widget.activeAlias,
@@ -110,6 +138,7 @@ class _ForumScreenState extends State<ForumScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDesktop = Responsive.isDesktop(context);
+    final isMobile = Responsive.isMobile(context);
 
     return Scaffold(
       body: RefreshIndicator(
@@ -177,63 +206,113 @@ class _ForumScreenState extends State<ForumScreen> {
                 const SizedBox(height: 16),
 
                 // Search & Filter controls
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        decoration: InputDecoration(
-                          hintText: 'Buscar dudas, apuntes, cursos o catedráticos...',
-                          prefixIcon: const Icon(Icons.search, size: 20),
-                          suffixIcon: _searchQuery.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(Icons.clear, size: 18),
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    setState(() => _searchQuery = '');
-                                    _loadPosts();
-                                  },
-                                )
-                              : null,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        ),
-                        onSubmitted: (val) {
-                          setState(() => _searchQuery = val);
-                          _loadPosts();
-                        },
-                      ),
+                if (isMobile) ...[
+                  TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Buscar dudas, apuntes, cursos o catedráticos...',
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear, size: 18),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() => _searchQuery = '');
+                                _loadPosts();
+                              },
+                            )
+                          : null,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     ),
-                    const SizedBox(width: 10),
-                    // Faculty Selector Dropdown
-                    ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: isDesktop ? 260 : 160),
-                      child: DropdownButtonFormField<String>(
-                        initialValue: _selectedFacultad,
-                        isExpanded: true,
-                        decoration: const InputDecoration(
-                          contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                        ),
-                        items: USACConstants.facultades
-                            .map((f) => DropdownMenuItem<String>(
-                                  value: f['id'].toString(),
-                                  child: Text(
-                                    f['nombre'].toString(),
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                                ))
-                            .toList(),
-                        onChanged: (val) {
-                          setState(() {
-                            _selectedFacultad = val ?? 'todas';
-                            _selectedCarrera = 'todas';
-                          });
-                          _loadPosts();
-                        },
-                      ),
+                    onSubmitted: (val) {
+                      setState(() => _searchQuery = val);
+                      _loadPosts();
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    initialValue: _selectedFacultad,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Facultad / Unidad',
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     ),
-                  ],
-                ),
+                    items: USACConstants.facultades
+                        .map((f) => DropdownMenuItem<String>(
+                              value: f['id'].toString(),
+                              child: Text(
+                                f['nombre'].toString(),
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ))
+                        .toList(),
+                    onChanged: (val) {
+                      setState(() {
+                        _selectedFacultad = val ?? 'todas';
+                        _selectedCarrera = 'todas';
+                      });
+                      _loadPosts();
+                    },
+                  ),
+                ] else ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            hintText: 'Buscar dudas, apuntes, cursos o catedráticos...',
+                            prefixIcon: const Icon(Icons.search, size: 20),
+                            suffixIcon: _searchQuery.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear, size: 18),
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      setState(() => _searchQuery = '');
+                                      _loadPosts();
+                                    },
+                                  )
+                                : null,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          ),
+                          onSubmitted: (val) {
+                            setState(() => _searchQuery = val);
+                            _loadPosts();
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 260),
+                        child: DropdownButtonFormField<String>(
+                          initialValue: _selectedFacultad,
+                          isExpanded: true,
+                          decoration: const InputDecoration(
+                            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                          ),
+                          items: USACConstants.facultades
+                              .map((f) => DropdownMenuItem<String>(
+                                    value: f['id'].toString(),
+                                    child: Text(
+                                      f['nombre'].toString(),
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                  ))
+                              .toList(),
+                          onChanged: (val) {
+                            setState(() {
+                              _selectedFacultad = val ?? 'todas';
+                              _selectedCarrera = 'todas';
+                            });
+                            _loadPosts();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
 
                 const SizedBox(height: 12),
 

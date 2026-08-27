@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/categories.dart';
 import '../../../core/models/post.dart';
 import '../../../core/services/forum_service.dart';
+import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/utils/time_utils.dart';
 import '../widgets/comment_item.dart';
+import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/image_viewer_dialog.dart';
 import '../../shared/widgets/report_dialog.dart';
 
@@ -58,6 +60,16 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   }
 
   Future<void> _handleLike() async {
+    if (!SupabaseService.isAuthenticated) {
+      AuthModal.show(
+        context,
+        title: 'Inicia Sesión para Votar',
+        subtitle: 'Para valorar publicaciones útiles en el foro, debes iniciar sesión.',
+        onAuthenticated: () => _handleLike(),
+      );
+      return;
+    }
+
     final prevLiked = _post.isLikedByMe;
     final prevLikes = _post.likes;
 
@@ -94,26 +106,48 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     final text = _commentController.text.trim();
     if (text.isEmpty) return;
 
+    if (!SupabaseService.isAuthenticated) {
+      AuthModal.show(
+        context,
+        title: 'Inicia Sesión para Responder',
+        subtitle: 'Para participar y responder en este tema, debes iniciar sesión.',
+        onAuthenticated: () => _sendComment(),
+      );
+      return;
+    }
+
     setState(() => _isSendingComment = true);
 
-    final newComment = await ForumService.addComment(
-      postId: _post.id,
-      content: text,
-      authorAlias: widget.activeAlias,
-      parentId: _replyTarget?.id,
-    );
+    try {
+      final newComment = await ForumService.addComment(
+        postId: _post.id,
+        content: text,
+        authorAlias: widget.activeAlias,
+        parentId: _replyTarget?.id,
+      );
 
-    if (mounted) {
-      setState(() {
-        _isSendingComment = false;
-        if (newComment != null) {
-          _commentController.clear();
-          _replyTarget = null;
-          _post = _post.copyWith(commentCount: _post.commentCount + 1);
-        }
-      });
-      // Reload comments tree to include new response
-      _loadComments();
+      if (mounted) {
+        setState(() {
+          _isSendingComment = false;
+          if (newComment != null) {
+            _commentController.clear();
+            _replyTarget = null;
+            _post = _post.copyWith(commentCount: _post.commentCount + 1);
+          }
+        });
+        // Reload comments tree to include new response
+        _loadComments();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSendingComment = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

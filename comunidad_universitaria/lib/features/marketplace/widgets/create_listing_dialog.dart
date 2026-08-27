@@ -306,6 +306,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                     width: isMobile ? double.infinity : 260,
                     child: DropdownButtonFormField<String>(
                       initialValue: _selectedCategory,
+                      isExpanded: true,
                       decoration: const InputDecoration(
                         labelText: 'Categoría',
                         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -314,7 +315,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                           .where((c) => c.id != 'todos')
                           .map((c) => DropdownMenuItem(
                                 value: c.id,
-                                child: Text(c.label, style: const TextStyle(fontSize: 13)),
+                                child: Text(c.label, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13)),
                               ))
                           .toList(),
                       onChanged: (val) => setState(() => _selectedCategory = val ?? 'comida_postres'),
@@ -454,6 +455,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                     width: isMobile ? double.infinity : 240,
                     child: DropdownButtonFormField<String>(
                       initialValue: _selectedSede,
+                      isExpanded: true,
                       decoration: const InputDecoration(
                         labelText: 'Sede / Campus',
                         contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -471,6 +473,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                     width: isMobile ? double.infinity : 240,
                     child: DropdownButtonFormField<String>(
                       initialValue: _selectedFacultad,
+                      isExpanded: true,
                       decoration: const InputDecoration(
                         labelText: 'Facultad / Unidad',
                         contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -488,6 +491,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                     width: isMobile ? double.infinity : 240,
                     child: DropdownButtonFormField<String>(
                       initialValue: _selectedBuilding,
+                      isExpanded: true,
                       decoration: const InputDecoration(
                         labelText: 'Edificio o Punto',
                         contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
