@@ -76,7 +76,7 @@ void main() {
       expect(paidItem.formattedPrice, 'Q15.50');
     });
 
-    test('Generación de enlace directo de WhatsApp con mensaje personalizado', () {
+    test('Generación de enlaces directos flexibles (WhatsApp, Instagram, Messenger, Telegram)', () {
       final item = MarketplaceItem(
         id: '3',
         title: 'Calculadora TI-84',
@@ -84,16 +84,23 @@ void main() {
         price: 300.0,
         category: 'libros_materiales',
         contactWhatsapp: '50255554433',
+        contactInstagram: 'calc_usac',
+        contactMessenger: 'tienda_usac',
+        contactTelegram: 'tutor_mate',
+        socialLinks: ['https://instagram.com/p/12345', 'https://facebook.com/post/999'],
         authorAlias: 'Vendedor #3',
         createdAt: DateTime.now(),
       );
 
-      final waUrl = item.whatsappUrl;
-      expect(waUrl, startsWith('https://wa.me/50255554433?text='));
-      expect(waUrl, contains('Calculadora%20TI-84'));
+      expect(item.hasAnyContact, isTrue);
+      expect(item.whatsappUrl, startsWith('https://wa.me/50255554433?text='));
+      expect(item.instagramUrl, 'https://instagram.com/calc_usac');
+      expect(item.messengerUrl, 'https://m.me/tienda_usac');
+      expect(item.telegramUrl, 'https://t.me/tutor_mate');
+      expect(item.socialLinks.length, 2);
     });
 
-    test('Serialización y Deserialización de MarketplaceItem', () {
+    test('Serialización y Deserialización de MarketplaceItem con enlaces sociales y multimedia', () {
       final original = MarketplaceItem(
         id: 'test-100',
         title: 'Libro de Física 1',
@@ -106,7 +113,9 @@ void main() {
         buildingCode: 'T-3',
         locationDetail: '2do nivel',
         contactWhatsapp: '50212345678',
-        imageUrls: ['https://ejemplo.com/foto.jpg'],
+        contactInstagram: 'fisica_libros',
+        socialLinks: ['https://instagram.com/p/libro_post'],
+        imageUrls: ['https://ejemplo.com/foto1.jpg', 'https://ejemplo.com/foto2.jpg'],
         videoUrl: 'https://youtube.com/video',
         isSponsored: true,
         sponsorBadgeText: 'Patrocinador VIP',
@@ -121,12 +130,15 @@ void main() {
       expect(insertMap['price'], 75.0);
       expect(insertMap['is_sponsored'], isTrue);
       expect(insertMap['building_code'], 'T-3');
+      expect(insertMap['contact_instagram'], 'fisica_libros');
+      expect((insertMap['image_urls'] as List).length, 2);
 
       final fromMap = MarketplaceItem.fromMap(insertMap, isUpvotedByMe: true);
       expect(fromMap.title, original.title);
       expect(fromMap.price, original.price);
       expect(fromMap.isSponsored, isTrue);
       expect(fromMap.isUpvotedByMe, isTrue);
+      expect(fromMap.imageUrls.length, 2);
     });
 
     test('Filtrado en MarketplaceService (Mock Fallback)', () async {

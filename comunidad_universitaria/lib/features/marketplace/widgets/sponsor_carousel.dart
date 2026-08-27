@@ -226,7 +226,10 @@ class SponsorCarousel extends StatelessWidget {
                             ),
                             icon: const Icon(Icons.chat, size: 13),
                             label: const Text('Contactar por WhatsApp', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                            onPressed: () => UrlUtils.openUrl(context, item.whatsappUrl),
+                            onPressed: () {
+                              final contact = item.whatsappUrl ?? item.instagramUrl ?? item.messengerUrl ?? item.telegramUrl ?? item.videoUrl ?? '';
+                              UrlUtils.openUrl(context, contact);
+                            },
                           ),
                         ],
                       ),

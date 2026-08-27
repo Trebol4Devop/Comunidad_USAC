@@ -81,7 +81,7 @@ class MarketplaceService {
         );
       }).toList();
     } catch (e) {
-      debugPrint('Error al obtener publicaciones del marketplace: ');
+      debugPrint('Error al obtener publicaciones del marketplace: $e');
       return _filterSampleListings(
         category: category,
         facultad: facultad,
@@ -109,7 +109,7 @@ class MarketplaceService {
       final List<dynamic> data = response as List<dynamic>;
       return data.map((item) => MarketplaceItem.fromMap(Map<String, dynamic>.from(item))).toList();
     } catch (e) {
-      debugPrint('Error obteniendo patrocinadores: ');
+      debugPrint('Error obteniendo patrocinadores: $e');
       return _getSampleListings().where((item) => item.isSponsored).toList();
     }
   }
@@ -124,9 +124,15 @@ class MarketplaceService {
     required String sede,
     required String buildingCode,
     required String locationDetail,
-    required String contactWhatsapp,
+    String? contactWhatsapp,
+    String? contactInstagram,
+    String? contactMessenger,
     String? contactTelegram,
+    List<String> socialLinks = const [],
     List<String> imageUrls = const [],
+    String? videoUrl,
+    bool isSponsored = false,
+    String? sponsorBadgeText,
     required String authorAlias,
   }) async {
     if (!SupabaseConfig.isConfigured) return null;
@@ -142,10 +148,15 @@ class MarketplaceService {
         'sede': sede,
         'building_code': buildingCode.trim(),
         'location_detail': locationDetail.trim(),
-        'contact_whatsapp': contactWhatsapp.trim(),
+        'contact_whatsapp': contactWhatsapp?.trim().isEmpty == true ? null : contactWhatsapp?.trim(),
+        'contact_instagram': contactInstagram?.trim().isEmpty == true ? null : contactInstagram?.trim(),
+        'contact_messenger': contactMessenger?.trim().isEmpty == true ? null : contactMessenger?.trim(),
         'contact_telegram': contactTelegram?.trim().isEmpty == true ? null : contactTelegram?.trim(),
+        'social_links': socialLinks,
         'image_urls': imageUrls,
-        'is_sponsored': false,
+        'video_url': videoUrl?.trim().isEmpty == true ? null : videoUrl?.trim(),
+        'is_sponsored': isSponsored,
+        'sponsor_badge_text': sponsorBadgeText,
         'author_alias': authorAlias.trim(),
         'user_id': SupabaseService.currentUserId,
         'moderation_status': 0,
@@ -160,7 +171,7 @@ class MarketplaceService {
 
       return MarketplaceItem.fromMap(Map<String, dynamic>.from(res), isUpvotedByMe: true);
     } catch (e) {
-      debugPrint('Error al crear publicación de marketplace: ');
+      debugPrint('Error al crear publicación de marketplace: $e');
       return null;
     }
   }
@@ -188,8 +199,8 @@ class MarketplaceService {
       });
       return true;
     } catch (e) {
-      debugPrint('Error al enviar solicitud de patrocinio: ');
-      return true; // Return true as graceful fallback for user flow
+      debugPrint('Error al enviar solicitud de patrocinio: $e');
+      return true;
     }
   }
 
@@ -227,7 +238,7 @@ class MarketplaceService {
         return true;
       }
     } catch (e) {
-      debugPrint('Error procesando upvote en marketplace: ');
+      debugPrint('Error procesando upvote en marketplace: $e');
       return item.isUpvotedByMe;
     }
   }
@@ -246,7 +257,7 @@ class MarketplaceService {
       });
       return true;
     } catch (e) {
-      debugPrint('Error al reportar publicación de marketplace: ');
+      debugPrint('Error al reportar publicación de marketplace: $e');
       return true;
     }
   }
@@ -302,6 +313,8 @@ class MarketplaceService {
         buildingCode: 'T-3',
         locationDetail: 'Frente al Edificio T-3, Campus Central',
         contactWhatsapp: '50255550199',
+        contactInstagram: 'libreria_central_usac',
+        socialLinks: ['https://facebook.com/libreriacentralusac'],
         imageUrls: [
           'https://images.unsplash.com/photo-1568667256549-094345857637?w=800&q=80',
           'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800&q=80',
@@ -325,6 +338,8 @@ class MarketplaceService {
         buildingCode: 'T-3',
         locationDetail: 'Bancas del Edificio T-3 y Plaza de los Mártires',
         contactWhatsapp: '50244441122',
+        contactInstagram: 'postres_sancarlistas',
+        socialLinks: ['https://instagram.com/p/sample_post'],
         imageUrls: [
           'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&q=80'
         ],
@@ -343,48 +358,10 @@ class MarketplaceService {
         sede: 'central',
         buildingCode: 'BIBLIO',
         locationDetail: 'Cubículos de estudio, Biblioteca Central',
-        contactWhatsapp: '50233332211',
+        contactTelegram: 'tutor_mate_usac',
         authorAlias: 'Tutor Académico #402',
         createdAt: DateTime.now().subtract(const Duration(hours: 8)),
         upvotes: 35,
-      ),
-      MarketplaceItem(
-        id: 'm-3',
-        title: 'Calculadora Texas Instruments TI-84 Plus (Excelente estado)',
-        description: 'Incluye cable de datos, tapa protectora y baterías nuevas. Ideal para cursos de Matemática Intermedia y Física.',
-        price: 350.0,
-        isFree: false,
-        category: 'libros_materiales',
-        facultad: '08',
-        sede: 'central',
-        buildingCode: 'T-1',
-        locationDetail: 'Edificio T-1 o Cafetería Central',
-        contactWhatsapp: '50255554433',
-        imageUrls: [
-          'https://images.unsplash.com/photo-1594980596870-8aa52a78d8cd?w=800&q=80'
-        ],
-        authorAlias: 'Estudiante Ing. #109',
-        createdAt: DateTime.now().subtract(const Duration(days: 1)),
-        upvotes: 11,
-      ),
-      MarketplaceItem(
-        id: 'm-4',
-        title: 'Estuche de Disección & Bata Blanca Médica',
-        description: 'Kit completo para laboratorios de Anatomía en CUM. En perfecto estado higiénico.',
-        price: 180.0,
-        isFree: false,
-        category: 'libros_materiales',
-        facultad: '05',
-        sede: 'cum',
-        buildingCode: 'CUM-A',
-        locationDetail: 'Entrada principal del CUM, Zona 11',
-        contactWhatsapp: '50244449988',
-        imageUrls: [
-          'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=800&q=80'
-        ],
-        authorAlias: 'Estudiante CUM #501',
-        createdAt: DateTime.now().subtract(const Duration(days: 2)),
-        upvotes: 14,
       ),
     ];
   }

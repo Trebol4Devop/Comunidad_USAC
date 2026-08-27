@@ -3,9 +3,10 @@ import '../../../core/constants/categories.dart';
 import '../../../core/models/marketplace_item.dart';
 import '../../../core/utils/time_utils.dart';
 import '../../../core/utils/url_utils.dart';
+import '../../shared/widgets/image_viewer_dialog.dart';
 import '../../shared/widgets/report_dialog.dart';
 
-class MarketplaceCard extends StatelessWidget {
+class MarketplaceCard extends StatefulWidget {
   final MarketplaceItem item;
   final VoidCallback onUpvote;
   final Function(String reason)? onReport;
@@ -16,6 +17,13 @@ class MarketplaceCard extends StatelessWidget {
     required this.onUpvote,
     this.onReport,
   });
+
+  @override
+  State<MarketplaceCard> createState() => _MarketplaceCardState();
+}
+
+class _MarketplaceCardState extends State<MarketplaceCard> {
+  int _currentImageIndex = 0;
 
   String _getCategoryLabel(String catId) {
     final match = USACConstants.marketplaceCategories.where((c) => c.id == catId);
@@ -42,10 +50,28 @@ class MarketplaceCard extends StatelessWidget {
     }
   }
 
+  String _getDomainLabel(String url) {
+    final lower = url.toLowerCase();
+    if (lower.contains('instagram.com')) return 'Instagram';
+    if (lower.contains('facebook.com') || lower.contains('fb.com')) return 'Facebook';
+    if (lower.contains('tiktok.com')) return 'TikTok';
+    if (lower.contains('drive.google.com')) return 'Drive / Menú';
+    return 'Enlace';
+  }
+
+  IconData _getDomainIcon(String url) {
+    final lower = url.toLowerCase();
+    if (lower.contains('instagram.com')) return Icons.camera_alt_outlined;
+    if (lower.contains('facebook.com') || lower.contains('fb.com')) return Icons.facebook;
+    if (lower.contains('tiktok.com')) return Icons.music_note_outlined;
+    return Icons.link;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final item = widget.item;
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -61,7 +87,7 @@ class MarketplaceCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top Image or Category placeholder
+          // Top Image Section
           Stack(
             children: [
               Container(
@@ -69,17 +95,49 @@ class MarketplaceCard extends StatelessWidget {
                 width: double.infinity,
                 color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
                 child: item.imageUrls.isNotEmpty
-                    ? Image.network(
-                        item.imageUrls.first,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Center(
-                          child: Icon(_getCategoryIcon(item.category), size: 48, color: Colors.grey.shade400),
-                        ),
+                    ? PageView.builder(
+                        itemCount: item.imageUrls.length,
+                        onPageChanged: (idx) => setState(() => _currentImageIndex = idx),
+                        itemBuilder: (ctx, i) {
+                          final imgUrl = item.imageUrls[i];
+                          return InkWell(
+                            onTap: () => ImageViewerDialog.show(
+                              context,
+                              imageUrl: imgUrl,
+                              title: '${item.title} (${i + 1}/${item.imageUrls.length})',
+                            ),
+                            child: Image.network(
+                              imgUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Center(
+                                child: Icon(_getCategoryIcon(item.category), size: 48, color: Colors.grey.shade400),
+                              ),
+                            ),
+                          );
+                        },
                       )
                     : Center(
                         child: Icon(_getCategoryIcon(item.category), size: 48, color: theme.colorScheme.primary.withValues(alpha: 0.4)),
                       ),
               ),
+
+              // Multi-image indicators
+              if (item.imageUrls.length > 1)
+                Positioned(
+                  bottom: 6,
+                  right: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.65),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '${_currentImageIndex + 1}/${item.imageUrls.length}',
+                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
 
               // Price badge (Top Right)
               Positioned(
@@ -115,27 +173,23 @@ class MarketplaceCard extends StatelessWidget {
               Positioned(
                 top: 8,
                 left: 8,
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.65),
-                        borderRadius: BorderRadius.circular(6),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.65),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(_getCategoryIcon(item.category), size: 12, color: Colors.white),
+                      const SizedBox(width: 4),
+                      Text(
+                        _getCategoryLabel(item.category),
+                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(_getCategoryIcon(item.category), size: 12, color: Colors.white),
-                          const SizedBox(width: 4),
-                          Text(
-                            _getCategoryLabel(item.category),
-                            style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
 
@@ -203,7 +257,7 @@ class MarketplaceCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
 
-                // Delivery location / Building tag
+                // Delivery location
                 Row(
                   children: [
                     Icon(Icons.place_outlined, size: 14, color: theme.colorScheme.primary),
@@ -223,7 +277,74 @@ class MarketplaceCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+
+                // Reference Social Links
+                if (item.socialLinks.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: item.socialLinks.map((link) {
+                      return InkWell(
+                        onTap: () => UrlUtils.openUrl(context, link),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(_getDomainIcon(link), size: 12, color: theme.colorScheme.primary),
+                              const SizedBox(width: 4),
+                              Text(
+                                _getDomainLabel(link),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+
+                // Video button if available
+                if (item.videoUrl != null && item.videoUrl!.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  InkWell(
+                    onTap: () => UrlUtils.openUrl(context, item.videoUrl!),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEF4444).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.play_circle_fill, size: 13, color: Color(0xFFEF4444)),
+                          SizedBox(width: 4),
+                          Text(
+                            'Ver Video Promocional',
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFFEF4444)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+
+                const SizedBox(height: 10),
 
                 // Author & Time
                 Row(
@@ -248,14 +369,14 @@ class MarketplaceCard extends StatelessWidget {
                   ],
                 ),
 
-                const Divider(height: 18),
+                const Divider(height: 16),
 
-                // Footer: Upvote + WhatsApp Contact Button + Report
+                // Contact channels & Upvote Row
                 Row(
                   children: [
                     // Upvote button
                     InkWell(
-                      onTap: onUpvote,
+                      onTap: widget.onUpvote,
                       borderRadius: BorderRadius.circular(16),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -289,42 +410,130 @@ class MarketplaceCard extends StatelessWidget {
 
                     const SizedBox(width: 8),
 
-                    // WhatsApp Direct Contact Button
+                    // Contact icons / buttons
                     Expanded(
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF25D366),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                          minimumSize: const Size(0, 32),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          elevation: 0,
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            // WhatsApp
+                            if (item.whatsappUrl != null)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 6),
+                                child: InkWell(
+                                  onTap: () => UrlUtils.openUrl(context, item.whatsappUrl!),
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF25D366),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: const [
+                                        Icon(Icons.chat, size: 13, color: Colors.white),
+                                        SizedBox(width: 4),
+                                        Text('WhatsApp', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                            // Instagram
+                            if (item.instagramUrl != null)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 6),
+                                child: InkWell(
+                                  onTap: () => UrlUtils.openUrl(context, item.instagramUrl!),
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFE1306C),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: const [
+                                        Icon(Icons.camera_alt_outlined, size: 13, color: Colors.white),
+                                        SizedBox(width: 4),
+                                        Text('Instagram', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                            // Messenger
+                            if (item.messengerUrl != null)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 6),
+                                child: InkWell(
+                                  onTap: () => UrlUtils.openUrl(context, item.messengerUrl!),
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF0084FF),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: const [
+                                        Icon(Icons.message_outlined, size: 13, color: Colors.white),
+                                        SizedBox(width: 4),
+                                        Text('Messenger', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                            // Telegram
+                            if (item.telegramUrl != null)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 6),
+                                child: InkWell(
+                                  onTap: () => UrlUtils.openUrl(context, item.telegramUrl!),
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF229ED9),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: const [
+                                        Icon(Icons.send_outlined, size: 13, color: Colors.white),
+                                        SizedBox(width: 4),
+                                        Text('Telegram', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
-                        icon: const Icon(Icons.chat, size: 14),
-                        label: const Text(
-                          'Contactar',
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                        ),
-                        onPressed: () {
-                          UrlUtils.openUrl(context, item.whatsappUrl);
-                        },
                       ),
                     ),
 
                     const SizedBox(width: 4),
 
-                    // More / Report menu
+                    // Report menu
                     PopupMenuButton<String>(
                       icon: Icon(Icons.more_vert, size: 16, color: Colors.grey.shade600),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                       onSelected: (val) {
-                        if (val == 'report' && onReport != null) {
+                        if (val == 'report' && widget.onReport != null) {
                           ReportDialog.show(
                             context,
                             title: 'Reportar Publicación',
                             subtitle: 'Anuncio: ${item.title}',
-                            onSubmitted: onReport!,
+                            onSubmitted: widget.onReport!,
                           );
                         }
                       },

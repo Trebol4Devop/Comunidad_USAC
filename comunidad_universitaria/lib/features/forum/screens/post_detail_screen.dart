@@ -5,6 +5,7 @@ import '../../../core/services/forum_service.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/utils/time_utils.dart';
 import '../widgets/comment_item.dart';
+import '../../shared/widgets/image_viewer_dialog.dart';
 import '../../shared/widgets/report_dialog.dart';
 
 class PostDetailScreen extends StatefulWidget {
@@ -247,13 +248,47 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           // Image if present
                           if (_post.imageUrl != null && _post.imageUrl!.isNotEmpty) ...[
                             const SizedBox(height: 14),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: Image.network(
-                                _post.imageUrl!,
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                                errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                            InkWell(
+                              onTap: () => ImageViewerDialog.show(
+                                context,
+                                imageUrl: _post.imageUrl!,
+                                title: _post.title,
+                              ),
+                              child: Stack(
+                                alignment: Alignment.bottomRight,
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Image.network(
+                                      _post.imageUrl!,
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                      errorBuilder: (context, error, stackTrace) => Container(
+                                        height: 140,
+                                        color: Colors.grey.shade300,
+                                        child: const Center(
+                                          child: Icon(Icons.broken_image, color: Colors.grey),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Container(
+                                    margin: const EdgeInsets.all(8),
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(alpha: 0.65),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: const [
+                                        Icon(Icons.zoom_in, color: Colors.white, size: 14),
+                                        SizedBox(width: 4),
+                                        Text('Ampliar', style: TextStyle(color: Colors.white, fontSize: 11)),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],

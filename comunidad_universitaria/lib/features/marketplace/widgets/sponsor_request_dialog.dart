@@ -81,15 +81,18 @@ class _SponsorRequestDialogState extends State<SponsorRequestDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isMobile = Responsive.isMobile(context);
+    final maxHeight = MediaQuery.of(context).size.height * (isMobile ? 0.90 : 0.85);
 
     Widget content = Form(
       key: _formKey,
-      child: SingleChildScrollView(
-        padding: EdgeInsets.all(isMobile ? 16 : 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(isMobile ? 16 : 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             // Header
             Row(
               children: [
@@ -236,7 +239,8 @@ class _SponsorRequestDialogState extends State<SponsorRequestDialog> {
           ],
         ),
       ),
-    );
+    ),
+  );
 
     if (isMobile) {
       return Padding(

@@ -64,8 +64,11 @@ class MarketplaceItem {
   final String sede;
   final String buildingCode; // ej. T-3, S-12, CUM, etc.
   final String locationDetail; // ej. 2do nivel frente a cafetería
-  final String contactWhatsapp;
+  final String? contactWhatsapp;
+  final String? contactInstagram;
+  final String? contactMessenger;
   final String? contactTelegram;
+  final List<String> socialLinks; // Links a publicaciones de FB, IG, etc.
   final List<String> imageUrls;
   final String? videoUrl; // Exclusivo para patrocinadores / showcase
   final bool isSponsored; // Primera plana
@@ -88,8 +91,11 @@ class MarketplaceItem {
     this.sede = 'central',
     this.buildingCode = '',
     this.locationDetail = '',
-    required this.contactWhatsapp,
+    this.contactWhatsapp,
+    this.contactInstagram,
+    this.contactMessenger,
     this.contactTelegram,
+    this.socialLinks = const [],
     this.imageUrls = const [],
     this.videoUrl,
     this.isSponsored = false,
@@ -109,15 +115,44 @@ class MarketplaceItem {
     return 'Q${price.toStringAsFixed(2)}';
   }
 
-  String get cleanWhatsappNumber {
-    return contactWhatsapp.replaceAll(RegExp(r'[^0-9+]'), '');
-  }
+  bool get hasAnyContact =>
+      (contactWhatsapp != null && contactWhatsapp!.trim().isNotEmpty) ||
+      (contactInstagram != null && contactInstagram!.trim().isNotEmpty) ||
+      (contactMessenger != null && contactMessenger!.trim().isNotEmpty) ||
+      (contactTelegram != null && contactTelegram!.trim().isNotEmpty);
 
-  String get whatsappUrl {
-    final cleanPhone = cleanWhatsappNumber;
-    final phone = cleanPhone.startsWith('+') ? cleanPhone.substring(1) : (cleanPhone.length == 8 ? '502$cleanPhone' : cleanPhone);
+  String? get whatsappUrl {
+    if (contactWhatsapp == null || contactWhatsapp!.trim().isEmpty) return null;
+    final cleanPhone = contactWhatsapp!.replaceAll(RegExp(r'[^0-9+]'), '');
+    final phone = cleanPhone.startsWith('+')
+        ? cleanPhone.substring(1)
+        : (cleanPhone.length == 8 ? '502$cleanPhone' : cleanPhone);
     final msg = Uri.encodeComponent('¡Hola! Vi tu publicación en Comunidad USAC sobre "$title". ¿Sigue disponible?');
     return 'https://wa.me/$phone?text=$msg';
+  }
+
+  String? get instagramUrl {
+    if (contactInstagram == null || contactInstagram!.trim().isEmpty) return null;
+    var user = contactInstagram!.trim();
+    if (user.startsWith('http://') || user.startsWith('https://')) return user;
+    if (user.startsWith('@')) user = user.substring(1);
+    return 'https://instagram.com/$user';
+  }
+
+  String? get messengerUrl {
+    if (contactMessenger == null || contactMessenger!.trim().isEmpty) return null;
+    var user = contactMessenger!.trim();
+    if (user.startsWith('http://') || user.startsWith('https://')) return user;
+    if (user.startsWith('@')) user = user.substring(1);
+    return 'https://m.me/$user';
+  }
+
+  String? get telegramUrl {
+    if (contactTelegram == null || contactTelegram!.trim().isEmpty) return null;
+    var user = contactTelegram!.trim();
+    if (user.startsWith('http://') || user.startsWith('https://')) return user;
+    if (user.startsWith('@')) user = user.substring(1);
+    return 'https://t.me/$user';
   }
 
   MarketplaceItem copyWith({
@@ -132,7 +167,10 @@ class MarketplaceItem {
     String? buildingCode,
     String? locationDetail,
     String? contactWhatsapp,
+    String? contactInstagram,
+    String? contactMessenger,
     String? contactTelegram,
+    List<String>? socialLinks,
     List<String>? imageUrls,
     String? videoUrl,
     bool? isSponsored,
@@ -156,7 +194,10 @@ class MarketplaceItem {
       buildingCode: buildingCode ?? this.buildingCode,
       locationDetail: locationDetail ?? this.locationDetail,
       contactWhatsapp: contactWhatsapp ?? this.contactWhatsapp,
+      contactInstagram: contactInstagram ?? this.contactInstagram,
+      contactMessenger: contactMessenger ?? this.contactMessenger,
       contactTelegram: contactTelegram ?? this.contactTelegram,
+      socialLinks: socialLinks ?? this.socialLinks,
       imageUrls: imageUrls ?? this.imageUrls,
       videoUrl: videoUrl ?? this.videoUrl,
       isSponsored: isSponsored ?? this.isSponsored,
@@ -178,6 +219,11 @@ class MarketplaceItem {
       imgs = [map['image_url'] as String];
     }
 
+    List<String> links = [];
+    if (map['social_links'] is List) {
+      links = (map['social_links'] as List).map((e) => e.toString()).toList();
+    }
+
     final rawPrice = map['price'];
     final priceVal = (rawPrice is num) ? rawPrice.toDouble() : double.tryParse(rawPrice?.toString() ?? '0') ?? 0.0;
     final isFreeVal = map['is_free'] == true || priceVal <= 0.0;
@@ -193,8 +239,11 @@ class MarketplaceItem {
       sede: map['sede'] ?? 'central',
       buildingCode: map['building_code'] ?? '',
       locationDetail: map['location_detail'] ?? '',
-      contactWhatsapp: map['contact_whatsapp'] ?? '',
+      contactWhatsapp: map['contact_whatsapp'],
+      contactInstagram: map['contact_instagram'],
+      contactMessenger: map['contact_messenger'],
       contactTelegram: map['contact_telegram'],
+      socialLinks: links,
       imageUrls: imgs,
       videoUrl: map['video_url'],
       isSponsored: map['is_sponsored'] == true,
@@ -220,7 +269,10 @@ class MarketplaceItem {
       'building_code': buildingCode,
       'location_detail': locationDetail,
       'contact_whatsapp': contactWhatsapp,
+      'contact_instagram': contactInstagram,
+      'contact_messenger': contactMessenger,
       'contact_telegram': contactTelegram,
+      'social_links': socialLinks,
       'image_urls': imageUrls,
       'video_url': videoUrl,
       'is_sponsored': isSponsored,
