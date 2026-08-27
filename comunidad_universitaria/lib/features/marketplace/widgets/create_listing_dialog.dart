@@ -11,12 +11,14 @@ class CreateListingDialog extends StatefulWidget {
   final String activeAlias;
   final Function(String newAlias) onAliasChanged;
   final Function(MarketplaceItem newItem) onListingCreated;
+  final bool isSponsored;
 
   const CreateListingDialog({
     super.key,
     required this.activeAlias,
     required this.onAliasChanged,
     required this.onListingCreated,
+    this.isSponsored = false,
   });
 
   static Future<void> show(
@@ -24,6 +26,7 @@ class CreateListingDialog extends StatefulWidget {
     required String activeAlias,
     required Function(String) onAliasChanged,
     required Function(MarketplaceItem) onListingCreated,
+    bool isSponsored = false,
   }) {
     if (Responsive.isMobile(context)) {
       return showModalBottomSheet(
@@ -38,6 +41,7 @@ class CreateListingDialog extends StatefulWidget {
           activeAlias: activeAlias,
           onAliasChanged: onAliasChanged,
           onListingCreated: onListingCreated,
+          isSponsored: isSponsored,
         ),
       );
     } else {
@@ -47,6 +51,7 @@ class CreateListingDialog extends StatefulWidget {
           activeAlias: activeAlias,
           onAliasChanged: onAliasChanged,
           onListingCreated: onListingCreated,
+          isSponsored: isSponsored,
         ),
       );
     }
@@ -101,10 +106,16 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
     super.dispose();
   }
 
+  int get _maxImages => widget.isSponsored ? 3 : 1;
+
   Future<void> _pickAndUploadImage() async {
-    if (_imageUrls.length >= 3) {
+    if (_imageUrls.length >= _maxImages) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Límite de 3 imágenes alcanzado.')),
+        SnackBar(
+          content: Text(widget.isSponsored
+              ? 'Límite de 3 imágenes alcanzado para patrocinadores.'
+              : 'Límite de 1 imagen alcanzado para publicaciones regulares.'),
+        ),
       );
       return;
     }
@@ -515,9 +526,11 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
 
               const SizedBox(height: 14),
 
-              // Image Upload to Bucket (Up to 3 images)
+              // Image Upload to Bucket
               Text(
-                'Fotos del Producto / Servicio (Hasta 3 imágenes)',
+                widget.isSponsored
+                    ? 'Fotos de Patrocinador (Hasta 3 imágenes)'
+                    : 'Foto del Producto / Servicio (1 imagen)',
                 style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: 13),
               ),
               const SizedBox(height: 6),
@@ -561,7 +574,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                           ),
                         ],
                       )),
-                  if (_imageUrls.length < 3)
+                  if (_imageUrls.length < _maxImages)
                     OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -629,18 +642,19 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                 ),
               ],
 
-              const SizedBox(height: 14),
-
-              // Video URL (Optional for sponsors/demos)
-              TextFormField(
-                controller: _videoUrlController,
-                decoration: const InputDecoration(
-                  labelText: 'Enlace de Video Promocional (YouTube, Vimeo, etc. - opcional)',
-                  hintText: 'https://youtube.com/watch?v=...',
-                  prefixIcon: Icon(Icons.play_circle_outline, size: 18),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              // Video URL (Exclusive for sponsors)
+              if (widget.isSponsored) ...[
+                const SizedBox(height: 14),
+                TextFormField(
+                  controller: _videoUrlController,
+                  decoration: const InputDecoration(
+                    labelText: 'Enlace de Video Promocional (YouTube, Vimeo, etc.)',
+                    hintText: 'https://youtube.com/watch?v=...',
+                    prefixIcon: Icon(Icons.play_circle_outline, size: 18),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  ),
                 ),
-              ),
+              ],
 
               const SizedBox(height: 16),
 
