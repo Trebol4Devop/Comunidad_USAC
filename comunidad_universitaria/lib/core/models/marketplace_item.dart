@@ -76,7 +76,8 @@ class MarketplaceItem {
   final String authorAlias;
   final String? userId;
   final DateTime createdAt;
-  final int moderationStatus;
+  final int moderationStatus; // 0: Activo, 1: En revisión, 2: Oculto/Bloqueado
+  final int reportedCount;
   final int upvotes;
   final bool isUpvotedByMe;
 
@@ -104,6 +105,7 @@ class MarketplaceItem {
     this.userId,
     required this.createdAt,
     this.moderationStatus = 0,
+    this.reportedCount = 0,
     this.upvotes = 0,
     this.isUpvotedByMe = false,
   });
@@ -114,6 +116,9 @@ class MarketplaceItem {
     }
     return 'Q${price.toStringAsFixed(2)}';
   }
+
+  bool get isHidden => moderationStatus >= 2;
+  bool get isUnderReview => moderationStatus == 1;
 
   bool get hasAnyContact =>
       (contactWhatsapp != null && contactWhatsapp!.trim().isNotEmpty) ||
@@ -179,6 +184,7 @@ class MarketplaceItem {
     String? userId,
     DateTime? createdAt,
     int? moderationStatus,
+    int? reportedCount,
     int? upvotes,
     bool? isUpvotedByMe,
   }) {
@@ -206,6 +212,7 @@ class MarketplaceItem {
       userId: userId ?? this.userId,
       createdAt: createdAt ?? this.createdAt,
       moderationStatus: moderationStatus ?? this.moderationStatus,
+      reportedCount: reportedCount ?? this.reportedCount,
       upvotes: upvotes ?? this.upvotes,
       isUpvotedByMe: isUpvotedByMe ?? this.isUpvotedByMe,
     );
@@ -252,6 +259,7 @@ class MarketplaceItem {
       userId: map['user_id']?.toString(),
       createdAt: map['created_at'] != null ? DateTime.tryParse(map['created_at'].toString()) ?? DateTime.now() : DateTime.now(),
       moderationStatus: (map['moderation_status'] is int) ? map['moderation_status'] : int.tryParse(map['moderation_status']?.toString() ?? '0') ?? 0,
+      reportedCount: (map['reported_count'] is int) ? map['reported_count'] : int.tryParse(map['reported_count']?.toString() ?? '0') ?? 0,
       upvotes: (map['upvotes'] is int) ? map['upvotes'] : int.tryParse(map['upvotes']?.toString() ?? '0') ?? 0,
       isUpvotedByMe: isUpvotedByMe,
     );
@@ -280,6 +288,7 @@ class MarketplaceItem {
       'author_alias': authorAlias,
       'user_id': userId,
       'moderation_status': moderationStatus,
+      'reported_count': reportedCount,
       'upvotes': upvotes,
     };
   }

@@ -384,9 +384,17 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                             item: item,
                             onUpvote: () => _handleToggleUpvote(item),
                             onReport: (reason) {
-                              MarketplaceService.reportListing(itemId: item.id, reason: reason);
+                              MarketplaceService.reportListing(
+                                itemId: item.id,
+                                reason: reason,
+                                sellerUserId: item.userId,
+                                sellerAlias: item.authorAlias,
+                              );
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Reporte recibido con éxito.')),
+                                const SnackBar(
+                                  content: Text('Reporte recibido. El contenido será revisado por moderación.'),
+                                  backgroundColor: Color(0xFF004B87),
+                                ),
                               );
                             },
                           ),
@@ -409,9 +417,17 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                           item: item,
                           onUpvote: () => _handleToggleUpvote(item),
                           onReport: (reason) {
-                            MarketplaceService.reportListing(itemId: item.id, reason: reason);
+                            MarketplaceService.reportListing(
+                              itemId: item.id,
+                              reason: reason,
+                              sellerUserId: item.userId,
+                              sellerAlias: item.authorAlias,
+                            );
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Reporte recibido con éxito.')),
+                              const SnackBar(
+                                content: Text('Reporte recibido. El contenido será revisado por moderación.'),
+                                backgroundColor: Color(0xFF004B87),
+                              ),
                             );
                           },
                         );

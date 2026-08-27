@@ -181,42 +181,56 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
 
     final priceVal = _isFree ? 0.0 : (double.tryParse(_priceController.text.trim()) ?? 0.0);
 
-    final created = await MarketplaceService.createListing(
-      title: _titleController.text.trim(),
-      description: _descriptionController.text.trim(),
-      price: priceVal,
-      isFree: _isFree || priceVal <= 0.0,
-      category: _selectedCategory,
-      facultad: _selectedFacultad,
-      sede: _selectedSede,
-      buildingCode: _selectedBuilding,
-      locationDetail: _locationDetailController.text.trim(),
-      contactWhatsapp: hasWhatsapp ? _whatsappController.text.trim() : null,
-      contactInstagram: hasInstagram ? _instagramController.text.trim() : null,
-      contactMessenger: hasMessenger ? _messengerController.text.trim() : null,
-      contactTelegram: hasTelegram ? _telegramController.text.trim() : null,
-      socialLinks: _socialLinks,
-      imageUrls: _imageUrls,
-      videoUrl: _videoUrlController.text.trim().isNotEmpty ? _videoUrlController.text.trim() : null,
-      authorAlias: widget.activeAlias,
-    );
+    try {
+      final created = await MarketplaceService.createListing(
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim(),
+        price: priceVal,
+        isFree: _isFree || priceVal <= 0.0,
+        category: _selectedCategory,
+        facultad: _selectedFacultad,
+        sede: _selectedSede,
+        buildingCode: _selectedBuilding,
+        locationDetail: _locationDetailController.text.trim(),
+        contactWhatsapp: hasWhatsapp ? _whatsappController.text.trim() : null,
+        contactInstagram: hasInstagram ? _instagramController.text.trim() : null,
+        contactMessenger: hasMessenger ? _messengerController.text.trim() : null,
+        contactTelegram: hasTelegram ? _telegramController.text.trim() : null,
+        socialLinks: _socialLinks,
+        imageUrls: _imageUrls,
+        videoUrl: _videoUrlController.text.trim().isNotEmpty ? _videoUrlController.text.trim() : null,
+        authorAlias: widget.activeAlias,
+      );
 
-    if (mounted) {
-      setState(() => _isSubmitting = false);
-      if (created != null) {
-        widget.onListingCreated(created);
-        Navigator.of(context).pop();
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        if (created != null) {
+          widget.onListingCreated(created);
+          Navigator.of(context).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('¡Publicación creada exitosamente en el Marketplace!'),
+              backgroundColor: Color(0xFF004B87),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Error al crear la publicación. Revisa los datos.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        final msg = e.toString().replaceAll('Exception: ', '');
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('¡Publicación creada exitosamente en el Marketplace!'),
-            backgroundColor: Color(0xFF004B87),
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error al crear la publicación. Revisa los datos.'),
-            backgroundColor: Colors.red,
+          SnackBar(
+            content: Text(msg),
+            backgroundColor: Colors.red.shade700,
+            duration: const Duration(seconds: 4),
           ),
         );
       }

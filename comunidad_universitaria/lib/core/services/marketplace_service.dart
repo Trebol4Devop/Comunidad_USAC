@@ -4,6 +4,39 @@ import '../models/marketplace_item.dart';
 import 'supabase_service.dart';
 
 class MarketplaceService {
+  // Prohibited words and phrases filter according to community rules
+  static final List<String> _prohibitedKeywords = [
+    'hacer examenes',
+    'hago examenes',
+    'vender parcial',
+    'vendo parcial',
+    'suplantacion',
+    'resolucion de examen',
+    'resuelvo examen',
+    'hago tareas completas por parcial',
+    'arma',
+    'armas',
+    'droga',
+    'drogas',
+    'marihuana',
+    'cocaina',
+    'estafa',
+    'piramidal',
+    'alcohol',
+    'cerveza',
+    'licor',
+  ];
+
+  static String? validateContent({required String title, required String description}) {
+    final combined = '$title $description'.toLowerCase();
+    for (var keyword in _prohibitedKeywords) {
+      if (combined.contains(keyword)) {
+        return 'Tu publicación contiene términos restringidos ("$keyword"). No se permiten productos o servicios contrarios a las normas comunitarias (Regla 5 y 6).';
+      }
+    }
+    return null;
+  }
+
   static Future<List<MarketplaceItem>> fetchListings({
     String category = 'todos',
     String facultad = 'todas',
@@ -135,6 +168,12 @@ class MarketplaceService {
     String? sponsorBadgeText,
     required String authorAlias,
   }) async {
+    // 1. Validate content with moderation blacklist
+    final violationError = validateContent(title: title, description: description);
+    if (violationError != null) {
+      throw Exception(violationError);
+    }
+
     if (!SupabaseConfig.isConfigured) return null;
 
     try {
@@ -160,6 +199,7 @@ class MarketplaceService {
         'author_alias': authorAlias.trim(),
         'user_id': SupabaseService.currentUserId,
         'moderation_status': 0,
+        'reported_count': 0,
         'upvotes': 1,
       };
 
@@ -172,7 +212,75 @@ class MarketplaceService {
       return MarketplaceItem.fromMap(Map<String, dynamic>.from(res), isUpvotedByMe: true);
     } catch (e) {
       debugPrint('Error al crear publicación de marketplace: $e');
-      return null;
+      rethrow;
+    }
+  }
+
+  static Future<bool> reportListing({
+    required String itemId,
+    required String reason,
+    String? sellerUserId,
+    String? sellerAlias,
+  }) async {
+    if (!SupabaseConfig.isConfigured) return true;
+
+    try {
+      // 1. Call RPC in Supabase with auto-moderation threshold
+      await SupabaseService.client.rpc('report_marketplace_item', params: {
+        'target_item_id': itemId,
+        'report_reason': reason.trim(),
+        'target_seller_id': sellerUserId,
+        'target_seller_alias': sellerAlias,
+      }).catchError((_) async {
+        // Fallback standard insert
+        await SupabaseService.client.from('marketplace_reports').insert({
+          'item_id': itemId,
+          'user_id': SupabaseService.currentUserId,
+          'reason': reason.trim(),
+          'seller_user_id': sellerUserId,
+          'seller_alias': sellerAlias,
+        });
+      });
+
+      // 2. Also register in general user_reports if seller is registered
+      if (sellerUserId != null) {
+        await SupabaseService.client.from('user_reports').insert({
+          'reporter_id': SupabaseService.currentUserId,
+          'reported_user_id': sellerUserId,
+          'reported_user_alias': sellerAlias ?? 'Vendedor',
+          'reason': 'Marketplace: $reason',
+        }).catchError((_) {});
+      }
+
+      return true;
+    } catch (e) {
+      debugPrint('Error al reportar publicación de marketplace: $e');
+      return true;
+    }
+  }
+
+  static Future<bool> moderateListing({
+    required String itemId,
+    required int newStatus, // 0: Activo, 1: En revisión, 2: Oculto
+  }) async {
+    if (!SupabaseConfig.isConfigured) return false;
+
+    try {
+      final res = await SupabaseService.client.rpc('moderate_marketplace_item', params: {
+        'target_item_id': itemId,
+        'new_status': newStatus,
+      }).catchError((_) async {
+        await SupabaseService.client
+            .from('marketplace_items')
+            .update({'moderation_status': newStatus})
+            .eq('id', itemId);
+        return true;
+      });
+
+      return res == true;
+    } catch (e) {
+      debugPrint('Error al moderar publicación: $e');
+      return false;
     }
   }
 
@@ -243,25 +351,6 @@ class MarketplaceService {
     }
   }
 
-  static Future<bool> reportListing({
-    required String itemId,
-    required String reason,
-  }) async {
-    if (!SupabaseConfig.isConfigured) return true;
-
-    try {
-      await SupabaseService.client.from('marketplace_reports').insert({
-        'item_id': itemId,
-        'user_id': SupabaseService.currentUserId,
-        'reason': reason.trim(),
-      });
-      return true;
-    } catch (e) {
-      debugPrint('Error al reportar publicación de marketplace: $e');
-      return true;
-    }
-  }
-
   static List<MarketplaceItem> _filterSampleListings({
     String category = 'todos',
     String facultad = 'todas',
@@ -321,7 +410,7 @@ class MarketplaceService {
         ],
         videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
         isSponsored: true,
-        sponsorBadgeText: 'Patrocinador Destacado ★',
+        sponsorBadgeText: 'Patrocinador Destacado',
         authorAlias: 'Librería Central',
         createdAt: DateTime.now().subtract(const Duration(hours: 1)),
         upvotes: 42,

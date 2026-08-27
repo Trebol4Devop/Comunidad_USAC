@@ -141,6 +141,27 @@ void main() {
       expect(fromMap.imageUrls.length, 2);
     });
 
+    test('Filtro de moderación detecta y bloquea términos prohibidos', () {
+      final clean = MarketplaceService.validateContent(
+        title: 'Porciones de Pastel de Chocolate',
+        description: 'Deliciosas porciones entregadas en el T-3',
+      );
+      expect(clean, isNull);
+
+      final examFraud = MarketplaceService.validateContent(
+        title: 'Hago examenes de matematica',
+        description: 'Garantizo 100 puntos en tu parcial',
+      );
+      expect(examFraud, isNotNull);
+      expect(examFraud, contains('términos restringidos'));
+
+      final prohibitedItem = MarketplaceService.validateContent(
+        title: 'Vendo botellas de alcohol',
+        description: 'Entrega en campus',
+      );
+      expect(prohibitedItem, isNotNull);
+    });
+
     test('Filtrado en MarketplaceService (Mock Fallback)', () async {
       final all = await MarketplaceService.fetchListings();
       expect(all.isNotEmpty, isTrue);
