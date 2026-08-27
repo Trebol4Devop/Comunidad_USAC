@@ -181,7 +181,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                 SizedBox(
                   width: isMobile ? double.infinity : 240,
                   child: DropdownButtonFormField<String>(
-                    value: _selectedCategory,
+                    initialValue: _selectedCategory,
                     decoration: const InputDecoration(
                       labelText: 'Categoría del tema',
                       contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -201,9 +201,9 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                 SizedBox(
                   width: isMobile ? double.infinity : 240,
                   child: DropdownButtonFormField<String>(
-                    value: _selectedFacultad,
+                    initialValue: _selectedFacultad,
                     decoration: const InputDecoration(
-                      labelText: 'Facultad USAC',
+                      labelText: 'Facultad / Unidad Académica',
                       contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     ),
                     items: USACConstants.facultades
@@ -231,7 +231,8 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
 
             // Career dropdown
             DropdownButtonFormField<String>(
-              value: _selectedCarrera,
+              key: ValueKey('carrera_$_selectedFacultad'),
+              initialValue: _selectedCarrera,
               decoration: const InputDecoration(
                 labelText: 'Carrera específica (opcional)',
                 contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),

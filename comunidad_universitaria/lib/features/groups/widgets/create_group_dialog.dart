@@ -188,9 +188,9 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
                 SizedBox(
                   width: isMobile ? double.infinity : 240,
                   child: DropdownButtonFormField<String>(
-                    value: _selectedFacultad,
+                    initialValue: _selectedFacultad,
                     decoration: const InputDecoration(
-                      labelText: 'Facultad USAC',
+                      labelText: 'Facultad / Unidad Académica',
                       contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     ),
                     items: USACConstants.facultades
@@ -214,7 +214,8 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
                 SizedBox(
                   width: isMobile ? double.infinity : 240,
                   child: DropdownButtonFormField<String>(
-                    value: _selectedCarrera,
+                    key: ValueKey('carrera_$_selectedFacultad'),
+                    initialValue: _selectedCarrera,
                     decoration: const InputDecoration(
                       labelText: 'Carrera',
                       contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),

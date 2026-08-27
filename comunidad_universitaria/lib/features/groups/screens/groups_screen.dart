@@ -153,7 +153,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Grupos Estudiantiles USAC',
+                              'Directorio de Grupos de Estudio',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 20,
@@ -162,7 +162,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              'Encuentra y comparte enlaces de WhatsApp, Telegram y Discord organizados por curso, sección y facultad.',
+                              'Comunidad libre para encontrar y compartir enlaces de grupos de WhatsApp, Telegram y Discord organizados por curso y facultad.',
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.9),
                                 fontSize: 13,
@@ -252,7 +252,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
                     ConstrainedBox(
                       constraints: BoxConstraints(maxWidth: isDesktop ? 260 : 160),
                       child: DropdownButtonFormField<String>(
-                        value: _selectedFacultad,
+                        initialValue: _selectedFacultad,
                         isExpanded: true,
                         decoration: const InputDecoration(
                           contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),

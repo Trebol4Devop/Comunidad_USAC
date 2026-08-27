@@ -140,7 +140,7 @@ class _ForumScreenState extends State<ForumScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Foro Universitario USAC',
+                              'Foro Estudiantil Universitario',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 20,
@@ -149,7 +149,7 @@ class _ForumScreenState extends State<ForumScreen> {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              'Comparte dudas sobre cátedras, laboratorios, horarios y material de estudio con toda la comunidad sancarlista.',
+                              'Espacio libre e independiente para consultas académicas sobre cátedras, laboratorios, horarios y apuntes.',
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.9),
                                 fontSize: 13,
@@ -208,7 +208,7 @@ class _ForumScreenState extends State<ForumScreen> {
                     ConstrainedBox(
                       constraints: BoxConstraints(maxWidth: isDesktop ? 260 : 160),
                       child: DropdownButtonFormField<String>(
-                        value: _selectedFacultad,
+                        initialValue: _selectedFacultad,
                         isExpanded: true,
                         decoration: const InputDecoration(
                           contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
