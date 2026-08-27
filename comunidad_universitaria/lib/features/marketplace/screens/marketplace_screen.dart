@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import '../../../core/config/supabase_config.dart';
 import '../../../core/constants/categories.dart';
 import '../../../core/models/marketplace_item.dart';
 import '../../../core/services/marketplace_service.dart';
+import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
 import '../widgets/create_listing_dialog.dart';
 import '../widgets/marketplace_card.dart';
 import '../widgets/sponsor_carousel.dart';
 import '../widgets/sponsor_request_dialog.dart';
+import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/empty_state_widget.dart';
 
 class MarketplaceScreen extends StatefulWidget {
@@ -96,6 +99,21 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     }
   }
 
+  void _handleCreateListingClick() {
+    if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
+      AuthModal.show(
+        context,
+        title: 'Inicia Sesión para Publicar',
+        subtitle: 'Para mantener la seguridad del Marketplace y prevenir anuncios fraudulentos, inicia sesión antes de publicar.',
+        onAuthenticated: () {
+          _openCreateDialog();
+        },
+      );
+    } else {
+      _openCreateDialog();
+    }
+  }
+
   void _openCreateDialog() {
     CreateListingDialog.show(
       context,
@@ -172,7 +190,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                             backgroundColor: const Color(0xFFEAB308),
                             foregroundColor: Colors.black87,
                           ),
-                          onPressed: _openCreateDialog,
+                          onPressed: _handleCreateListingClick,
                           icon: const Icon(Icons.add_shopping_cart, size: 18),
                           label: const Text('Publicar Anuncio'),
                         ),
@@ -350,7 +368,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                     title: 'No hay publicaciones en esta categoría',
                     description: '¿Ofreces tutorías, almuerzos, postres o libros universitarios? ¡Publica tu anuncio libremente!',
                     buttonText: 'Crear Primera Publicación',
-                    onButtonPressed: _openCreateDialog,
+                    onButtonPressed: _handleCreateListingClick,
                   )
                 else
                   Responsive(
@@ -406,7 +424,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openCreateDialog,
+        onPressed: _handleCreateListingClick,
         backgroundColor: const Color(0xFF004B87),
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add_business),

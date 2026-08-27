@@ -7,7 +7,7 @@ class SupabaseService {
 
   static User? get currentUser => SupabaseConfig.isConfigured ? client.auth.currentUser : null;
   static String? get currentUserId => currentUser?.id;
-  static bool get isAuthenticated => currentUser != null;
+  static bool get isAuthenticated => currentUser != null && !(currentUser!.isAnonymous);
 
   static Future<void> ensureSession() async {
     if (!SupabaseConfig.isConfigured) return;
@@ -35,6 +35,47 @@ class SupabaseService {
     } catch (e) {
       debugPrint('Error en Google Sign-In: $e');
       return false;
+    }
+  }
+
+  static Future<String?> signInWithPassword({required String email, required String password}) async {
+    if (!SupabaseConfig.isConfigured) return null;
+    try {
+      final res = await client.auth.signInWithPassword(
+        email: email.trim(),
+        password: password,
+      );
+      return res.user?.id;
+    } catch (e) {
+      debugPrint('Error en inicio de sesión: $e');
+      rethrow;
+    }
+  }
+
+  static Future<String?> signUp({required String email, required String password}) async {
+    if (!SupabaseConfig.isConfigured) return null;
+    try {
+      final res = await client.auth.signUp(
+        email: email.trim(),
+        password: password,
+      );
+      return res.user?.id;
+    } catch (e) {
+      debugPrint('Error en registro: $e');
+      rethrow;
+    }
+  }
+
+  static Future<void> sendMagicLink(String email) async {
+    if (!SupabaseConfig.isConfigured) return;
+    try {
+      await client.auth.signInWithOtp(
+        email: email.trim(),
+        emailRedirectTo: kIsWeb ? null : 'comunidadusac://login-callback/',
+      );
+    } catch (e) {
+      debugPrint('Error enviando enlace mágico: $e');
+      rethrow;
     }
   }
 
