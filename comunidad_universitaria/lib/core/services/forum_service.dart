@@ -1,11 +1,13 @@
 import 'package:flutter/foundation.dart';
 import '../config/supabase_config.dart';
+import '../constants/categories.dart';
 import '../models/post.dart';
 import 'supabase_service.dart';
 
 class ForumService {
   static Future<List<Post>> fetchPosts({
     String category = 'todos',
+    String facultad = 'todas',
     String carrera = 'todas',
     String searchQuery = '',
   }) async {
@@ -23,10 +25,19 @@ class ForumService {
 
       if (carrera != 'todas') {
         query = query.eq('carrera', carrera);
+      } else if (facultad != 'todas') {
+        final fac = USACConstants.facultades.firstWhere(
+          (f) => f['id'] == facultad,
+          orElse: () => USACConstants.facultades.first,
+        );
+        final rawCarreras = fac['carreras'] as List<dynamic>? ?? [];
+        final careerIds = rawCarreras.map((c) => c['id'].toString()).toSet()..add('todas');
+        query = query.inFilter('carrera', careerIds.toList());
       }
 
       if (searchQuery.trim().isNotEmpty) {
-        query = query.or('title.ilike.%${searchQuery.trim()}%,content.ilike.%${searchQuery.trim()}%');
+        final q = searchQuery.trim();
+        query = query.or('title.ilike.%$q%,content.ilike.%$q%');
       }
 
       final response = await query.order('created_at', ascending: false).limit(50);
@@ -121,6 +132,11 @@ class ForumService {
   }) async {
     if (!SupabaseConfig.isConfigured) return null;
 
+    final userId = SupabaseService.currentUserId;
+    if (userId == null) {
+      throw Exception('Debes iniciar sesión para publicar en el foro estudiantil.');
+    }
+
     try {
       final postMap = {
         'title': title.trim(),
@@ -128,7 +144,7 @@ class ForumService {
         'category': category,
         'carrera': carrera,
         'author_alias': authorAlias.trim(),
-        'user_id': SupabaseService.currentUserId,
+        'user_id': userId,
         'image_url': imageUrl?.trim().isEmpty == true ? null : imageUrl?.trim(),
         'likes': 0,
         'moderation_status': 0,
@@ -143,7 +159,7 @@ class ForumService {
       return Post.fromMap(Map<String, dynamic>.from(res));
     } catch (e) {
       debugPrint('Error al crear post: $e');
-      return null;
+      rethrow;
     }
   }
 
@@ -208,12 +224,17 @@ class ForumService {
   }) async {
     if (!SupabaseConfig.isConfigured) return null;
 
+    final userId = SupabaseService.currentUserId;
+    if (userId == null) {
+      throw Exception('Debes iniciar sesión para responder en el foro.');
+    }
+
     try {
       final commentMap = {
         'post_id': postId,
         'content': content.trim(),
         'author_alias': authorAlias.trim(),
-        'user_id': SupabaseService.currentUserId,
+        'user_id': userId,
         'parent_id': parentId,
         'moderation_status': 0,
       };
@@ -227,7 +248,7 @@ class ForumService {
       return PostComment.fromMap(Map<String, dynamic>.from(res));
     } catch (e) {
       debugPrint('Error al agregar comentario: $e');
-      return null;
+      rethrow;
     }
   }
 

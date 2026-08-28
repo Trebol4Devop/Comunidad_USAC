@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/categories.dart';
 import '../../../core/models/post.dart';
 import '../../../core/utils/time_utils.dart';
+import '../../shared/widgets/image_viewer_dialog.dart';
 import '../../shared/widgets/report_dialog.dart';
 
 class PostCard extends StatelessWidget {
@@ -149,11 +150,18 @@ class PostCard extends StatelessWidget {
                     height: 160,
                     width: double.infinity,
                     color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-                    child: Image.network(
-                      post.imageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => const Center(
-                        child: Icon(Icons.broken_image, color: Colors.grey),
+                    child: InkWell(
+                      onTap: () => ImageViewerDialog.show(
+                        context,
+                        imageUrl: post.imageUrl!,
+                        title: post.title,
+                      ),
+                      child: Image.network(
+                        post.imageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => const Center(
+                          child: Icon(Icons.broken_image, color: Colors.grey),
+                        ),
                       ),
                     ),
                   ),

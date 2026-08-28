@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../core/utils/responsive.dart';
 import '../forum/screens/forum_screen.dart';
 import '../groups/screens/groups_screen.dart';
+import '../marketplace/screens/marketplace_screen.dart';
+import '../profile/screens/profile_screen.dart';
 import '../rules/screens/rules_screen.dart';
 import '../shared/widgets/alias_badge_button.dart';
 
@@ -26,6 +28,36 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
 
+  void _navigateToProfile() {
+    setState(() => _currentIndex = 3);
+  }
+
+  void _showDisclaimerModal() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: const [
+            Icon(Icons.info_outline, color: Color(0xFF004B87)),
+            SizedBox(width: 8),
+            Text('Aviso Comunitario', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: const Text(
+          'Comunidad Universitaria es una plataforma estudiantil colaborativa, autónoma y sin fines de lucro. No representa formalmente a la administración ni a las autoridades de la Universidad de San Carlos de Guatemala (USAC). Los datos académicos, pensums y directorios son informativos y compartidos entre compañeros.',
+          style: TextStyle(fontSize: 13, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -45,30 +77,55 @@ class _AppShellState extends State<AppShell> {
               child: const Icon(Icons.school, color: Colors.white, size: 20),
             ),
             const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Comunidad USAC',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                Text(
-                  'Id y Enseñad a Todos',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
-                    color: theme.colorScheme.primary,
+            InkWell(
+              onTap: _showDisclaimerModal,
+              borderRadius: BorderRadius.circular(4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Text(
+                        'Comunidad Universitaria',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          'No Oficial',
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                  Text(
+                    'Red Estudiantil Autónoma e Independiente',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      color: isDesktop ? Colors.grey.shade600 : theme.colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
         actions: [
-          // User Alias Pill
+          // User Alias Pill that links directly to Profile
           AliasBadgeButton(
             alias: widget.activeAlias,
             onAliasChanged: widget.onAliasChanged,
+            onTap: _navigateToProfile,
           ),
           const SizedBox(width: 8),
 
@@ -96,9 +153,11 @@ class _AppShellState extends State<AppShell> {
                     padding: EdgeInsets.zero,
                     child: Row(
                       children: [
-                        _buildNavTab(index: 0, label: 'Foro Universitario', icon: Icons.forum_outlined),
-                        _buildNavTab(index: 1, label: 'Grupos Estudiantiles', icon: Icons.groups_outlined),
-                        _buildNavTab(index: 2, label: 'Normas & Descargo', icon: Icons.shield_outlined),
+                        _buildNavTab(index: 0, label: 'Foro Estudiantil', icon: Icons.forum_outlined),
+                        _buildNavTab(index: 1, label: 'Grupos de Estudio', icon: Icons.groups_outlined),
+                        _buildNavTab(index: 2, label: 'Marketplace & Tutorías', icon: Icons.storefront_outlined),
+                        _buildNavTab(index: 3, label: 'Mi Perfil', icon: Icons.person_outline),
+                        _buildNavTab(index: 4, label: 'Normas & Descargo', icon: Icons.shield_outlined),
                       ],
                     ),
                   ),
@@ -106,7 +165,7 @@ class _AppShellState extends State<AppShell> {
               )
             : null,
       ),
-      // IndexedStack avoids destroying and re-fetching screens when switching tabs, preventing memory leaks & network thrashing
+      // IndexedStack avoids destroying and re-fetching screens when switching tabs
       body: IndexedStack(
         index: _currentIndex,
         children: [
@@ -117,6 +176,16 @@ class _AppShellState extends State<AppShell> {
           GroupsScreen(
             activeAlias: widget.activeAlias,
             onAliasChanged: widget.onAliasChanged,
+          ),
+          MarketplaceScreen(
+            activeAlias: widget.activeAlias,
+            onAliasChanged: widget.onAliasChanged,
+          ),
+          ProfileScreen(
+            activeAlias: widget.activeAlias,
+            onAliasChanged: widget.onAliasChanged,
+            onToggleTheme: widget.onToggleTheme,
+            isDarkMode: widget.isDarkMode,
           ),
           const RulesScreen(),
         ],
@@ -138,6 +207,16 @@ class _AppShellState extends State<AppShell> {
                   icon: Icon(Icons.groups_outlined),
                   selectedIcon: Icon(Icons.groups),
                   label: 'Grupos',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.storefront_outlined),
+                  selectedIcon: Icon(Icons.storefront),
+                  label: 'Marketplace',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.person_outline),
+                  selectedIcon: Icon(Icons.person),
+                  label: 'Perfil',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.shield_outlined),

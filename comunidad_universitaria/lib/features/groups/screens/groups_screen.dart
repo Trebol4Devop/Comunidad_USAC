@@ -3,9 +3,11 @@ import '../../../core/constants/categories.dart';
 import '../../../core/models/whatsapp_group.dart';
 import '../../../core/services/groups_service.dart';
 import '../../../core/services/local_storage_service.dart';
+import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
 import '../widgets/create_group_dialog.dart';
 import '../widgets/group_card.dart';
+import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/empty_state_widget.dart';
 
 class GroupsScreen extends StatefulWidget {
@@ -35,6 +37,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
   void initState() {
     super.initState();
     _checkCleanupBanner();
+    _loadUserAcademicContext();
     _loadGroups();
   }
 
@@ -58,6 +61,17 @@ class _GroupsScreenState extends State<GroupsScreen> {
     }
   }
 
+  Future<void> _loadUserAcademicContext() async {
+    final profile = await LocalStorageService.getUserProfile();
+    if (mounted && profile.facultadId.isNotEmpty) {
+      setState(() {
+        _selectedFacultad = profile.facultadId;
+        _selectedCarrera = profile.carreraId.isNotEmpty ? profile.carreraId : 'todas';
+      });
+      _loadGroups();
+    }
+  }
+
   Future<void> _loadGroups() async {
     setState(() => _isLoading = true);
     final list = await GroupsService.fetchGroups(
@@ -73,6 +87,16 @@ class _GroupsScreenState extends State<GroupsScreen> {
   }
 
   Future<void> _handleToggleUpvote(WhatsAppGroup group) async {
+    if (!SupabaseService.isAuthenticated) {
+      AuthModal.show(
+        context,
+        title: 'Inicia Sesión para Votar',
+        subtitle: 'Para apoyar y verificar enlaces de grupos, debes iniciar sesión.',
+        onAuthenticated: () => _handleToggleUpvote(group),
+      );
+      return;
+    }
+
     final prevUpvoted = group.isUpvotedByMe;
     final prevUpvotes = group.upvotes;
 
@@ -99,6 +123,21 @@ class _GroupsScreenState extends State<GroupsScreen> {
   }
 
   void _openCreateGroupDialog() {
+    if (!SupabaseService.isAuthenticated) {
+      AuthModal.show(
+        context,
+        title: 'Inicia Sesión para Compartir',
+        subtitle: 'Para compartir enlaces de grupos estudiantiles, debes iniciar sesión.',
+        onAuthenticated: () {
+          _showCreateGroupDialog();
+        },
+      );
+      return;
+    }
+    _showCreateGroupDialog();
+  }
+
+  void _showCreateGroupDialog() {
     CreateGroupDialog.show(
       context,
       activeAlias: widget.activeAlias,
@@ -123,6 +162,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
   @override
   Widget build(BuildContext context) {
     final isDesktop = Responsive.isDesktop(context);
+    final isMobile = Responsive.isMobile(context);
 
     return Scaffold(
       body: RefreshIndicator(
@@ -153,7 +193,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Grupos Estudiantiles USAC',
+                              'Directorio de Grupos de Estudio',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 20,
@@ -162,7 +202,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              'Encuentra y comparte enlaces de WhatsApp, Telegram y Discord organizados por curso, sección y facultad.',
+                              'Comunidad libre para encontrar y compartir enlaces de grupos de WhatsApp, Telegram y Discord organizados por curso y facultad.',
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.9),
                                 fontSize: 13,
@@ -220,64 +260,114 @@ class _GroupsScreenState extends State<GroupsScreen> {
 
                 const SizedBox(height: 16),
 
-                // Filters Row
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        decoration: InputDecoration(
-                          hintText: 'Buscar por curso, catedrático o sección...',
-                          prefixIcon: const Icon(Icons.search, size: 20),
-                          suffixIcon: _searchQuery.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(Icons.clear, size: 18),
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    setState(() => _searchQuery = '');
-                                    _loadGroups();
-                                  },
-                                )
-                              : null,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        ),
-                        onSubmitted: (val) {
-                          setState(() => _searchQuery = val);
-                          _loadGroups();
-                        },
-                      ),
+                // Filters
+                if (isMobile) ...[
+                  TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Buscar por curso, catedrático o sección...',
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear, size: 18),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() => _searchQuery = '');
+                                _loadGroups();
+                              },
+                            )
+                          : null,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     ),
-                    const SizedBox(width: 10),
-                    // Faculty Selector
-                    ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: isDesktop ? 260 : 160),
-                      child: DropdownButtonFormField<String>(
-                        value: _selectedFacultad,
-                        isExpanded: true,
-                        decoration: const InputDecoration(
-                          contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                        ),
-                        items: USACConstants.facultades
-                            .map((f) => DropdownMenuItem<String>(
-                                  value: f['id'].toString(),
-                                  child: Text(
-                                    f['nombre'].toString(),
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                                ))
-                            .toList(),
-                        onChanged: (val) {
-                          setState(() {
-                            _selectedFacultad = val ?? 'todas';
-                            _selectedCarrera = 'todas';
-                          });
-                          _loadGroups();
-                        },
-                      ),
+                    onSubmitted: (val) {
+                      setState(() => _searchQuery = val);
+                      _loadGroups();
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    initialValue: _selectedFacultad,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Facultad / Unidad',
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     ),
-                  ],
-                ),
+                    items: USACConstants.facultades
+                        .map((f) => DropdownMenuItem<String>(
+                              value: f['id'].toString(),
+                              child: Text(
+                                f['nombre'].toString(),
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ))
+                        .toList(),
+                    onChanged: (val) {
+                      setState(() {
+                        _selectedFacultad = val ?? 'todas';
+                        _selectedCarrera = 'todas';
+                      });
+                      _loadGroups();
+                    },
+                  ),
+                ] else ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            hintText: 'Buscar por curso, catedrático o sección...',
+                            prefixIcon: const Icon(Icons.search, size: 20),
+                            suffixIcon: _searchQuery.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear, size: 18),
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      setState(() => _searchQuery = '');
+                                      _loadGroups();
+                                    },
+                                  )
+                                : null,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          ),
+                          onSubmitted: (val) {
+                            setState(() => _searchQuery = val);
+                            _loadGroups();
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 260),
+                        child: DropdownButtonFormField<String>(
+                          initialValue: _selectedFacultad,
+                          isExpanded: true,
+                          decoration: const InputDecoration(
+                            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                          ),
+                          items: USACConstants.facultades
+                              .map((f) => DropdownMenuItem<String>(
+                                    value: f['id'].toString(),
+                                    child: Text(
+                                      f['nombre'].toString(),
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                  ))
+                              .toList(),
+                          onChanged: (val) {
+                            setState(() {
+                              _selectedFacultad = val ?? 'todas';
+                              _selectedCarrera = 'todas';
+                            });
+                            _loadGroups();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
 
                 // Career Filter chips if a specific faculty is chosen
                 if (_selectedFacultad != 'todas' && _availableCarreras.length > 1) ...[

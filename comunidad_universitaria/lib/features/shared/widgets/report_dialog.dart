@@ -131,13 +131,25 @@ class _ReportDialogState extends State<ReportDialog> {
                   itemCount: widget.reasonOptions.length,
                   itemBuilder: (ctx, i) {
                     final opt = widget.reasonOptions[i];
-                    return RadioListTile<String>(
-                      dense: true,
-                      contentPadding: EdgeInsets.zero,
-                      value: opt,
-                      groupValue: _selectedReason,
-                      title: Text(opt, style: theme.textTheme.bodyMedium?.copyWith(fontSize: 13)),
-                      onChanged: (val) => setState(() => _selectedReason = val),
+                    final isSelected = _selectedReason == opt;
+                    return InkWell(
+                      onTap: () => setState(() => _selectedReason = opt),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          children: [
+                            Icon(
+                              isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                              size: 18,
+                              color: isSelected ? theme.colorScheme.primary : Colors.grey.shade500,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(opt, style: theme.textTheme.bodyMedium?.copyWith(fontSize: 13)),
+                            ),
+                          ],
+                        ),
+                      ),
                     );
                   },
                 ),

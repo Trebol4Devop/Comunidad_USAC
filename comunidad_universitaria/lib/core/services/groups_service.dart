@@ -108,8 +108,14 @@ class GroupsService {
     required String link,
     required String description,
     required String authorAlias,
+    String? imageUrl,
   }) async {
     if (!SupabaseConfig.isConfigured) return null;
+
+    final userId = SupabaseService.currentUserId;
+    if (userId == null) {
+      throw Exception('Debes iniciar sesión para compartir un grupo estudiantil.');
+    }
 
     try {
       final groupMap = {
@@ -120,7 +126,8 @@ class GroupsService {
         'link': link.trim(),
         'description': description.trim(),
         'author_alias': authorAlias.trim(),
-        'user_id': SupabaseService.currentUserId,
+        'user_id': userId,
+        'image_url': imageUrl?.trim().isEmpty == true ? null : imageUrl?.trim(),
         'upvotes': 1, // Start with 1 upvote from creator
         'reported_count': 0,
         'moderation_status': 0,
@@ -135,17 +142,15 @@ class GroupsService {
       final created = WhatsAppGroup.fromMap(Map<String, dynamic>.from(res), isUpvotedByMe: true);
 
       // Auto-upvote for creator
-      if (SupabaseService.currentUserId != null) {
-        await SupabaseService.client.from('whatsapp_group_upvotes').insert({
-          'group_id': created.id,
-          'user_id': SupabaseService.currentUserId,
-        });
-      }
+      await SupabaseService.client.from('whatsapp_group_upvotes').insert({
+        'group_id': created.id,
+        'user_id': userId,
+      });
 
       return created;
     } catch (e) {
       debugPrint('Error al crear grupo: $e');
-      return null;
+      rethrow;
     }
   }
 

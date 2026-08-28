@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import '../../profile/widgets/alias_modal.dart';
 
 class AliasBadgeButton extends StatelessWidget {
   final String alias;
   final Function(String newAlias) onAliasChanged;
+  final VoidCallback? onTap;
 
   const AliasBadgeButton({
     super.key,
     required this.alias,
     required this.onAliasChanged,
+    this.onTap,
   });
 
   @override
@@ -19,11 +20,7 @@ class AliasBadgeButton extends StatelessWidget {
     final maxTextWidth = width < 450 ? 80.0 : 140.0;
 
     return InkWell(
-      onTap: () => AliasModal.show(
-        context,
-        currentAlias: alias,
-        onSaved: onAliasChanged,
-      ),
+      onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
@@ -56,8 +53,8 @@ class AliasBadgeButton extends StatelessWidget {
             ),
             const SizedBox(width: 3),
             Icon(
-              Icons.edit_outlined,
-              size: 12,
+              Icons.manage_accounts_outlined,
+              size: 13,
               color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
             ),
           ],
@@ -66,3 +63,4 @@ class AliasBadgeButton extends StatelessWidget {
     );
   }
 }
+
