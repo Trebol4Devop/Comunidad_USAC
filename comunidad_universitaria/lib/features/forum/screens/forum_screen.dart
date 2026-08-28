@@ -27,6 +27,7 @@ class ForumScreen extends StatefulWidget {
 class _ForumScreenState extends State<ForumScreen> {
   List<Post> _posts = [];
   bool _isLoading = true;
+  bool _showOnlyBookmarks = false;
   String _selectedCategory = 'todos';
   String _selectedFacultad = 'todas';
   String _selectedCarrera = 'todas';
@@ -52,6 +53,7 @@ class _ForumScreenState extends State<ForumScreen> {
       facultad: _selectedFacultad,
       carrera: _selectedCarrera,
       searchQuery: _searchQuery,
+      showOnlyBookmarks: _showOnlyBookmarks,
     );
     if (mounted) {
       setState(() {
@@ -95,6 +97,120 @@ class _ForumScreenState extends State<ForumScreen> {
         }
       });
     }
+  }
+
+  Future<void> _handleToggleBookmark(Post post) async {
+    if (!SupabaseService.isAuthenticated) {
+      AuthModal.show(
+        context,
+        title: 'Inicia Sesión para Guardar',
+        subtitle: 'Para guardar publicaciones importantes en tus marcadores, debes iniciar sesión.',
+        onAuthenticated: () => _handleToggleBookmark(post),
+      );
+      return;
+    }
+
+    final prevBookmarked = post.isBookmarkedByMe;
+    setState(() {
+      final idx = _posts.indexWhere((p) => p.id == post.id);
+      if (idx != -1) {
+        _posts[idx] = post.copyWith(isBookmarkedByMe: !prevBookmarked);
+      }
+    });
+
+    final success = await ForumService.toggleBookmark(post);
+    if (mounted) {
+      if (success != !prevBookmarked) {
+        setState(() {
+          final idx = _posts.indexWhere((p) => p.id == post.id);
+          if (idx != -1) {
+            _posts[idx] = post.copyWith(isBookmarkedByMe: prevBookmarked);
+          }
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(!prevBookmarked ? 'Publicación guardada en marcadores.' : 'Publicación eliminada de marcadores.'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        if (_showOnlyBookmarks && prevBookmarked) {
+          _loadPosts();
+        }
+      }
+    }
+  }
+
+  Future<void> _handleVotePoll(String pollId, String optionId) async {
+    if (!SupabaseService.isAuthenticated) {
+      AuthModal.show(
+        context,
+        title: 'Inicia Sesión para Votar en la Encuesta',
+        subtitle: 'Para participar en las votaciones estudiantiles, debes iniciar sesión.',
+        onAuthenticated: () => _handleVotePoll(pollId, optionId),
+      );
+      return;
+    }
+
+    final postIdx = _posts.indexWhere((p) => p.poll?.id == pollId);
+    if (postIdx != -1) {
+      final oldPoll = _posts[postIdx].poll!;
+      final oldMyVote = oldPoll.myVotedOptionId;
+
+      // Update options optimistic counts
+      final newOptions = oldPoll.options.map((opt) {
+        int newCount = opt.votesCount;
+        if (opt.id == optionId && oldMyVote != optionId) {
+          newCount += 1;
+        } else if (opt.id == oldMyVote && oldMyVote != optionId) {
+          newCount = (newCount - 1).clamp(0, 999999);
+        }
+        return PollOption(
+          id: opt.id,
+          pollId: opt.pollId,
+          optionText: opt.optionText,
+          votesCount: newCount,
+        );
+      }).toList();
+
+      setState(() {
+        _posts[postIdx] = _posts[postIdx].copyWith(
+          poll: oldPoll.copyWith(
+            options: newOptions,
+            myVotedOptionId: optionId,
+          ),
+        );
+      });
+    }
+
+    final ok = await ForumService.votePoll(pollId: pollId, optionId: optionId);
+    if (mounted && !ok) {
+      _loadPosts();
+    }
+  }
+
+  void _handleQuotePost(Post post) {
+    if (!SupabaseService.isAuthenticated) {
+      AuthModal.show(
+        context,
+        title: 'Inicia Sesión para Citar',
+        subtitle: 'Para republicar o citar esta consulta en el foro, debes iniciar sesión.',
+        onAuthenticated: () => _handleQuotePost(post),
+      );
+      return;
+    }
+
+    CreatePostDialog.show(
+      context,
+      activeAlias: widget.activeAlias,
+      quotedPost: post,
+      onAliasChanged: widget.onAliasChanged,
+      onPostCreated: (newPost) {
+        setState(() {
+          _posts.insert(0, newPost);
+        });
+      },
+    );
   }
 
   void _openCreateDialog() {
@@ -316,32 +432,61 @@ class _ForumScreenState extends State<ForumScreen> {
 
                 const SizedBox(height: 12),
 
-                // Category Filter Chips
+                // Category Filter Chips & Bookmarks toggle
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
-                    children: USACConstants.forumCategories.map((cat) {
-                      final isSelected = _selectedCategory == cat.id;
-                      return Padding(
+                    children: [
+                      // Bookmarks Filter Chip
+                      Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: FilterChip(
-                          label: Text(cat.label),
-                          selected: isSelected,
+                          avatar: Icon(
+                            _showOnlyBookmarks ? Icons.bookmark : Icons.bookmark_border,
+                            size: 14,
+                            color: _showOnlyBookmarks ? Colors.white : const Color(0xFFD97706),
+                          ),
+                          label: const Text('Guardados'),
+                          selected: _showOnlyBookmarks,
+                          selectedColor: const Color(0xFFD97706),
+                          checkmarkColor: Colors.white,
+                          labelStyle: TextStyle(
+                            fontSize: 12,
+                            fontWeight: _showOnlyBookmarks ? FontWeight.bold : FontWeight.normal,
+                            color: _showOnlyBookmarks ? Colors.white : const Color(0xFFD97706),
+                          ),
                           onSelected: (selected) {
                             setState(() {
-                              _selectedCategory = cat.id;
+                              _showOnlyBookmarks = selected;
                             });
                             _loadPosts();
                           },
-                          selectedColor: theme.colorScheme.primary.withValues(alpha: 0.15),
-                          labelStyle: TextStyle(
-                            fontSize: 12,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            color: isSelected ? theme.colorScheme.primary : null,
-                          ),
                         ),
-                      );
-                    }).toList(),
+                      ),
+                      ...USACConstants.forumCategories.map((cat) {
+                        final isSelected = !_showOnlyBookmarks && _selectedCategory == cat.id;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: FilterChip(
+                            label: Text(cat.label),
+                            selected: isSelected,
+                            onSelected: (selected) {
+                              setState(() {
+                                _showOnlyBookmarks = false;
+                                _selectedCategory = cat.id;
+                              });
+                              _loadPosts();
+                            },
+                            selectedColor: theme.colorScheme.primary.withValues(alpha: 0.15),
+                            labelStyle: TextStyle(
+                              fontSize: 12,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              color: isSelected ? theme.colorScheme.primary : null,
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
                   ),
                 ),
 
@@ -385,8 +530,10 @@ class _ForumScreenState extends State<ForumScreen> {
                 else if (_posts.isEmpty)
                   EmptyStateWidget(
                     icon: Icons.forum_outlined,
-                    title: 'No se encontraron publicaciones',
-                    description: 'Sé el primero en iniciar una conversación o formular una duda en esta categoría.',
+                    title: _showOnlyBookmarks ? 'No tienes publicaciones guardadas' : 'No se encontraron publicaciones',
+                    description: _showOnlyBookmarks
+                        ? 'Guarda publicaciones importantes del foro tocando el icono de marcador.'
+                        : 'Sé el primero en iniciar una conversación o formular una duda en esta categoría.',
                     buttonText: 'Crear Primera Publicación',
                     onButtonPressed: _openCreateDialog,
                   )
@@ -411,6 +558,9 @@ class _ForumScreenState extends State<ForumScreen> {
                           _loadPosts();
                         },
                         onLike: () => _handleToggleLike(post),
+                        onBookmark: () => _handleToggleBookmark(post),
+                        onRepost: () => _handleQuotePost(post),
+                        onVotePoll: (pollId, optionId) => _handleVotePoll(pollId, optionId),
                         onReport: (reason) {
                           if (post.userId != null) {
                             ForumService.reportUser(

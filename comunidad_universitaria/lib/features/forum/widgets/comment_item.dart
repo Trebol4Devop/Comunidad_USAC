@@ -143,6 +143,20 @@ class CommentItemWidget extends StatelessWidget {
                     height: 1.35,
                   ),
                 ),
+
+                // GIF in comment if present
+                if (comment.gifUrl != null && comment.gifUrl!.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      comment.gifUrl!,
+                      height: 120,
+                      fit: BoxFit.cover,
+                      errorBuilder: (ctx, err, stack) => const Icon(Icons.broken_image, color: Colors.grey),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
