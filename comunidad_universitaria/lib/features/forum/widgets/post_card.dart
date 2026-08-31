@@ -183,9 +183,12 @@ class PostCard extends StatelessWidget {
                         children: [
                           Icon(Icons.format_quote, size: 14, color: theme.colorScheme.primary),
                           const SizedBox(width: 4),
-                          Text(
-                            post.quotedPost!.authorAlias,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                          Expanded(
+                            child: Text(
+                              post.quotedPost!.authorAlias,
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                           const SizedBox(width: 6),
                           Text(
@@ -239,7 +242,8 @@ class PostCard extends StatelessWidget {
                       const SizedBox(height: 8),
                       ...post.poll!.options.map((opt) {
                         final total = post.poll!.totalVotes;
-                        final percent = total > 0 ? (opt.votesCount / total) : 0.0;
+                        final rawPercent = total > 0 ? (opt.votesCount / total) : 0.0;
+                        final percent = (rawPercent.isNaN || rawPercent.isInfinite) ? 0.0 : rawPercent.clamp(0.0, 1.0);
                         final hasVoted = post.poll!.myVotedOptionId != null;
                         final isMyVote = post.poll!.myVotedOptionId == opt.id;
 
@@ -265,7 +269,7 @@ class PostCard extends StatelessWidget {
                                   children: [
                                     if (hasVoted)
                                       FractionallySizedBox(
-                                        widthFactor: percent.clamp(0.0, 1.0),
+                                        widthFactor: percent,
                                         child: Container(
                                           color: isMyVote
                                               ? const Color(0xFF004B87).withValues(alpha: 0.22)
@@ -417,30 +421,34 @@ class PostCard extends StatelessWidget {
                   const SizedBox(width: 8),
 
                   // Comments
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.chat_bubble_outline,
-                          size: 15,
-                          color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '${post.commentCount}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
+                  InkWell(
+                    onTap: onTap,
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.chat_bubble_outline,
+                            size: 15,
+                            color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 6),
+                          Text(
+                            '${post.commentCount}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),

@@ -55,56 +55,64 @@ class CommentItemWidget extends StatelessWidget {
               children: [
                 // Header: Author alias, author badge, time ago, reply button
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     CircleAvatar(
                       radius: 11,
                       backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.15),
                       child: Icon(Icons.person, size: 12, color: theme.colorScheme.primary),
                     ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        comment.authorAlias,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                    if (isPostAuthor) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          'AUTOR',
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                      ),
-                    ],
                     const SizedBox(width: 6),
-                    Text(
-                      '• ${TimeUtils.timeAgo(comment.createdAt)}',
-                      style: theme.textTheme.bodySmall?.copyWith(fontSize: 10),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              comment.authorAlias,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                          if (isPostAuthor) ...[
+                            const SizedBox(width: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                'AUTOR',
+                                style: TextStyle(
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                          const SizedBox(width: 4),
+                          Text(
+                            '• ${TimeUtils.timeAgo(comment.createdAt)}',
+                            style: theme.textTheme.bodySmall?.copyWith(fontSize: 10),
+                          ),
+                        ],
+                      ),
                     ),
-                    const Spacer(),
+                    const SizedBox(width: 6),
                     InkWell(
                       onTap: () => onReply(comment),
                       borderRadius: BorderRadius.circular(6),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.reply, size: 14, color: theme.colorScheme.primary),
-                            const SizedBox(width: 3),
+                            Icon(Icons.reply, size: 13, color: theme.colorScheme.primary),
+                            const SizedBox(width: 2),
                             Text(
                               'Responder',
                               style: TextStyle(
@@ -121,7 +129,7 @@ class CommentItemWidget extends StatelessWidget {
                       IconButton(
                         icon: Icon(Icons.flag_outlined, size: 14, color: Colors.grey.shade500),
                         padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
+                        constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
                         tooltip: 'Reportar comentario',
                         onPressed: () {
                           ReportDialog.show(

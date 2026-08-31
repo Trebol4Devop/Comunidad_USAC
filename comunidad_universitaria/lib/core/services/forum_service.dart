@@ -23,7 +23,8 @@ class ForumService {
             .from('post_bookmarks')
             .select('post_id')
             .eq('user_id', currentUserId)
-            .order('created_at', ascending: false);
+            .order('created_at', ascending: false)
+            .timeout(const Duration(seconds: 10));
         final bookmarkedIds = (bookmarksRes as List<dynamic>).map((e) => e['post_id'].toString()).toList();
         if (bookmarkedIds.isEmpty) return [];
 
@@ -31,7 +32,8 @@ class ForumService {
             .from('posts')
             .select('*, comments(count)')
             .inFilter('id', bookmarkedIds)
-            .lt('moderation_status', 2);
+            .lt('moderation_status', 2)
+            .timeout(const Duration(seconds: 10));
         final List<dynamic> data = postsRes as List<dynamic>;
         return _hydratePosts(data, currentUserId);
       }
@@ -65,7 +67,8 @@ class ForumService {
       final response = await query
           .order('is_pinned', ascending: false)
           .order('created_at', ascending: false)
-          .limit(50);
+          .limit(50)
+          .timeout(const Duration(seconds: 10));
       final List<dynamic> data = response as List<dynamic>;
 
       return _hydratePosts(data, currentUserId);
@@ -358,12 +361,18 @@ class ForumService {
           .select('*')
           .eq('post_id', postId)
           .lt('moderation_status', 2)
-          .order('created_at', ascending: true);
+          .order('created_at', ascending: true)
+          .timeout(const Duration(seconds: 10));
 
       final List<dynamic> data = response as List<dynamic>;
       final List<PostComment> allComments = data
           .map((item) => PostComment.fromMap(Map<String, dynamic>.from(item)))
           .toList();
+
+      // Clear any pre-existing children references
+      for (var c in allComments) {
+        c.children = [];
+      }
 
       // Build hierarchical tree with cycle and loop prevention
       final Map<String, PostComment> map = {};
@@ -376,8 +385,10 @@ class ForumService {
       bool hasCycle(String currentId, String targetParentId) {
         String? next = targetParentId;
         int hops = 0;
+        final Set<String> visited = {currentId};
         while (next != null && hops < 15) {
-          if (next == currentId) return true;
+          if (visited.contains(next)) return true;
+          visited.add(next);
           next = map[next]?.parentId;
           hops++;
         }
@@ -385,11 +396,13 @@ class ForumService {
       }
 
       for (var c in allComments) {
-        if (c.parentId != null &&
-            map.containsKey(c.parentId) &&
-            c.parentId != c.id &&
-            !hasCycle(c.id, c.parentId!)) {
-          map[c.parentId]!.children.add(c);
+        final pId = c.parentId;
+        if (pId != null &&
+            pId.trim().isNotEmpty &&
+            map.containsKey(pId) &&
+            pId != c.id &&
+            !hasCycle(c.id, pId)) {
+          map[pId]!.children.add(c);
         } else {
           rootComments.add(c);
         }
@@ -398,7 +411,7 @@ class ForumService {
       return rootComments;
     } catch (e) {
       debugPrint('Error al obtener comentarios: $e');
-      return [];
+      return _getSampleComments(postId);
     }
   }
 
@@ -422,7 +435,7 @@ class ForumService {
         'content': content.trim(),
         'author_alias': authorAlias.trim(),
         'user_id': userId,
-        'parent_id': parentId,
+        'parent_id': (parentId != null && parentId.trim().isNotEmpty) ? parentId.trim() : null,
         'gif_url': gifUrl?.trim().isEmpty == true ? null : gifUrl?.trim(),
         'moderation_status': 0,
       };
@@ -431,7 +444,8 @@ class ForumService {
           .from('comments')
           .insert(commentMap)
           .select()
-          .single();
+          .single()
+          .timeout(const Duration(seconds: 12));
 
       return PostComment.fromMap(Map<String, dynamic>.from(res));
     } catch (e) {

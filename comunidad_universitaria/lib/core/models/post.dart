@@ -248,16 +248,26 @@ class PostComment {
   }) : children = children ?? [];
 
   factory PostComment.fromMap(Map<String, dynamic> map) {
+    final rawParentId = map['parent_id']?.toString().trim();
+    final parentId = (rawParentId != null && rawParentId.isNotEmpty && rawParentId != 'null')
+        ? rawParentId
+        : null;
+
+    final rawUserId = map['user_id']?.toString().trim();
+    final userId = (rawUserId != null && rawUserId.isNotEmpty && rawUserId != 'null')
+        ? rawUserId
+        : null;
+
     return PostComment(
       id: map['id']?.toString() ?? '',
       postId: map['post_id']?.toString() ?? '',
       authorAlias: map['author_alias'] ?? 'Estudiante',
       content: map['content'] ?? '',
-      userId: map['user_id']?.toString(),
+      userId: userId,
       createdAt: map['created_at'] != null
           ? DateTime.tryParse(map['created_at'].toString()) ?? DateTime.now()
           : DateTime.now(),
-      parentId: map['parent_id']?.toString(),
+      parentId: parentId,
       gifUrl: map['gif_url'],
       moderationStatus: (map['moderation_status'] is int)
           ? map['moderation_status']

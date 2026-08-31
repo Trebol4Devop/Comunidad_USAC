@@ -538,13 +538,10 @@ class _ForumScreenState extends State<ForumScreen> {
                     onButtonPressed: _openCreateDialog,
                   )
                 else
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _posts.length,
-                    itemBuilder: (ctx, i) {
-                      final post = _posts[i];
+                  Column(
+                    children: _posts.map((post) {
                       return PostCard(
+                        key: ValueKey(post.id),
                         post: post,
                         onTap: () async {
                           await Navigator.of(context).push(
@@ -574,7 +571,7 @@ class _ForumScreenState extends State<ForumScreen> {
                           }
                         },
                       );
-                    },
+                    }).toList(),
                   ),
               ],
             ),
