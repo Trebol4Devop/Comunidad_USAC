@@ -824,14 +824,15 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   Widget _buildActivitySection(ThemeData theme) {
     final isDark = theme.brightness == Brightness.dark;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+    return Material(
+      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
+        side: BorderSide(
           color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
         ),
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -1205,18 +1206,20 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     final isDark = theme.brightness == Brightness.dark;
     final isAuthenticated = SupabaseService.isAuthenticated;
 
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+    return Material(
+      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
+        side: BorderSide(
           color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           Row(
             children: [
               Container(
@@ -1329,8 +1332,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           ],
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _showAvatarPickerModal() {
     showModalBottomSheet(

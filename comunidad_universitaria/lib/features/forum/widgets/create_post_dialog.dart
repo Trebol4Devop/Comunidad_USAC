@@ -8,15 +8,18 @@ import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
 import '../../profile/widgets/alias_modal.dart';
 import '../../shared/widgets/auth_modal.dart';
+import '../../shared/widgets/gif_picker_modal.dart';
 
 class CreatePostDialog extends StatefulWidget {
   final String activeAlias;
+  final Post? quotedPost;
   final Function(String newAlias) onAliasChanged;
   final Function(Post newPost) onPostCreated;
 
   const CreatePostDialog({
     super.key,
     required this.activeAlias,
+    this.quotedPost,
     required this.onAliasChanged,
     required this.onPostCreated,
   });
@@ -24,6 +27,7 @@ class CreatePostDialog extends StatefulWidget {
   static Future<void> show(
     BuildContext context, {
     required String activeAlias,
+    Post? quotedPost,
     required Function(String) onAliasChanged,
     required Function(Post) onPostCreated,
   }) {
@@ -38,6 +42,7 @@ class CreatePostDialog extends StatefulWidget {
         ),
         builder: (ctx) => CreatePostDialog(
           activeAlias: activeAlias,
+          quotedPost: quotedPost,
           onAliasChanged: onAliasChanged,
           onPostCreated: onPostCreated,
         ),
@@ -47,6 +52,7 @@ class CreatePostDialog extends StatefulWidget {
         context: context,
         builder: (ctx) => CreatePostDialog(
           activeAlias: activeAlias,
+          quotedPost: quotedPost,
           onAliasChanged: onAliasChanged,
           onPostCreated: onPostCreated,
         ),
@@ -64,7 +70,15 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
   final _contentController = TextEditingController();
 
   String? _uploadedImageUrl;
+  String? _selectedGifUrl;
   bool _isUploadingImage = false;
+
+  bool _showPollForm = false;
+  final _pollQuestionController = TextEditingController();
+  final List<TextEditingController> _pollOptionControllers = [
+    TextEditingController(text: 'Opción 1'),
+    TextEditingController(text: 'Opción 2'),
+  ];
 
   String _selectedCategory = 'general';
   String _selectedFacultad = '08';
@@ -72,9 +86,21 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
   bool _isSubmitting = false;
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.quotedPost != null) {
+      _titleController.text = 'Re: ${widget.quotedPost!.title}';
+    }
+  }
+
+  @override
   void dispose() {
     _titleController.dispose();
     _contentController.dispose();
+    _pollQuestionController.dispose();
+    for (var c in _pollOptionControllers) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -97,6 +123,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
         if (url != null && mounted) {
           setState(() {
             _uploadedImageUrl = url;
+            _selectedGifUrl = null;
           });
         }
       }
@@ -111,6 +138,22 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
     }
   }
 
+  void _addPollOption() {
+    if (_pollOptionControllers.length < 5) {
+      setState(() {
+        _pollOptionControllers.add(TextEditingController());
+      });
+    }
+  }
+
+  void _removePollOption(int index) {
+    if (_pollOptionControllers.length > 2) {
+      setState(() {
+        _pollOptionControllers.removeAt(index).dispose();
+      });
+    }
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -118,7 +161,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
       AuthModal.show(
         context,
         title: 'Inicia Sesión para Publicar',
-        subtitle: 'Para crear consultas en el foro universitario, debes iniciar sesión.',
+        subtitle: 'Para crear consultas o citar posts en el foro universitario, debes iniciar sesión.',
         onAuthenticated: () => _submit(),
       );
       return;
@@ -127,6 +170,19 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
     setState(() => _isSubmitting = true);
 
     try {
+      String? pollQuestion;
+      List<String>? pollOptions;
+
+      if (_showPollForm) {
+        pollQuestion = _pollQuestionController.text.trim().isNotEmpty
+            ? _pollQuestionController.text.trim()
+            : _titleController.text.trim();
+        pollOptions = _pollOptionControllers
+            .map((c) => c.text.trim())
+            .where((text) => text.isNotEmpty)
+            .toList();
+      }
+
       final newPost = await ForumService.createPost(
         title: _titleController.text.trim(),
         content: _contentController.text.trim(),
@@ -134,6 +190,10 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
         carrera: _selectedCarrera,
         authorAlias: widget.activeAlias,
         imageUrl: _uploadedImageUrl,
+        gifUrl: _selectedGifUrl,
+        quotedPostId: widget.quotedPost?.id,
+        pollQuestion: _showPollForm ? pollQuestion : null,
+        pollOptions: _showPollForm ? pollOptions : null,
       );
 
       if (mounted) {
@@ -187,7 +247,11 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                       color: theme.colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(Icons.add_comment_outlined, color: theme.colorScheme.primary, size: 22),
+                    child: Icon(
+                      widget.quotedPost != null ? Icons.format_quote : Icons.add_comment_outlined,
+                      color: theme.colorScheme.primary,
+                      size: 22,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -195,7 +259,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Nueva Consulta en el Foro',
+                          widget.quotedPost != null ? 'Citar Publicación (Quote Post)' : 'Nueva Consulta en el Foro',
                           style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         Text(
@@ -219,6 +283,42 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                 ],
               ),
               const Divider(height: 20),
+
+              // Quote preview banner if quoting a post
+              if (widget.quotedPost != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.format_quote, size: 18, color: Color(0xFF004B87)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Citando a ${widget.quotedPost!.authorAlias}',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                            ),
+                            Text(
+                              widget.quotedPost!.title,
+                              style: const TextStyle(fontSize: 12),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
 
               // Category & Faculty Row
               Wrap(
@@ -335,14 +435,162 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
 
               const SizedBox(height: 14),
 
-              // Image Upload to Supabase Storage
-              Text(
-                'Imagen Adjunta (Captura, horario, material de estudio - opcional)',
-                style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: 13),
+              // Media & Poll toolbar
+              Row(
+                children: [
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    ),
+                    onPressed: _isUploadingImage ? null : _pickAndUploadImage,
+                    icon: const Icon(Icons.image_outlined, size: 16),
+                    label: const Text('Foto', style: TextStyle(fontSize: 12)),
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    ),
+                    onPressed: () {
+                      GifPickerModal.show(
+                        context,
+                        onGifSelected: (url) {
+                          setState(() {
+                            _selectedGifUrl = url;
+                            _uploadedImageUrl = null;
+                          });
+                        },
+                      );
+                    },
+                    icon: const Icon(Icons.gif_box_outlined, size: 16),
+                    label: const Text('GIF', style: TextStyle(fontSize: 12)),
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: _showPollForm ? const Color(0xFF004B87).withValues(alpha: 0.12) : null,
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    ),
+                    onPressed: () => setState(() => _showPollForm = !_showPollForm),
+                    icon: Icon(Icons.poll_outlined, size: 16, color: _showPollForm ? const Color(0xFF004B87) : null),
+                    label: Text(
+                      'Encuesta',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: _showPollForm ? const Color(0xFF004B87) : null,
+                        fontWeight: _showPollForm ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 6),
 
+              // Interactive Poll Creator Section
+              if (_showPollForm) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF004B87).withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFF004B87).withValues(alpha: 0.2)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Crear Encuesta Estudiantil',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF004B87)),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close, size: 16),
+                            onPressed: () => setState(() => _showPollForm = false),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: _pollQuestionController,
+                        decoration: const InputDecoration(
+                          labelText: 'Pregunta de la encuesta (opcional, usa el título por defecto)',
+                          isDense: true,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ..._pollOptionControllers.asMap().entries.map((entry) {
+                        final idx = entry.key;
+                        final ctrl = entry.value;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  controller: ctrl,
+                                  decoration: InputDecoration(
+                                    labelText: 'Opción ${idx + 1}',
+                                    isDense: true,
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                  ),
+                                ),
+                              ),
+                              if (_pollOptionControllers.length > 2)
+                                IconButton(
+                                  icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                                  onPressed: () => _removePollOption(idx),
+                                ),
+                            ],
+                          ),
+                        );
+                      }),
+                      if (_pollOptionControllers.length < 5)
+                        TextButton.icon(
+                          onPressed: _addPollOption,
+                          icon: const Icon(Icons.add, size: 16),
+                          label: const Text('Añadir opción', style: TextStyle(fontSize: 12)),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+
+              // Attached GIF Preview
+              if (_selectedGifUrl != null) ...[
+                const SizedBox(height: 12),
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        _selectedGifUrl!,
+                        width: double.infinity,
+                        height: 150,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: InkWell(
+                        onTap: () => setState(() => _selectedGifUrl = null),
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                          child: const Icon(Icons.close, size: 16, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+
+              // Attached Image Preview
               if (_uploadedImageUrl != null) ...[
+                const SizedBox(height: 12),
                 Stack(
                   children: [
                     ClipRRect(
@@ -375,21 +623,6 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                       ),
                     ),
                   ],
-                ),
-              ] else ...[
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  ),
-                  onPressed: _isUploadingImage ? null : _pickAndUploadImage,
-                  icon: _isUploadingImage
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.add_photo_alternate_outlined, size: 18),
-                  label: Text(_isUploadingImage ? 'Subiendo imagen...' : 'Subir Imagen desde Galería'),
                 ),
               ],
 
@@ -444,3 +677,4 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
     }
   }
 }
+

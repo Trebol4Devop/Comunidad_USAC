@@ -28,9 +28,10 @@ class SupabaseService {
   static Future<bool> signInWithGoogle() async {
     if (!SupabaseConfig.isConfigured) return false;
     try {
+      final redirectUrl = kIsWeb ? '${Uri.base.origin}/' : 'comunidadusac://login-callback/';
       return await client.auth.signInWithOAuth(
         OAuthProvider.google,
-        redirectTo: kIsWeb ? null : 'comunidadusac://login-callback/',
+        redirectTo: redirectUrl,
       );
     } catch (e) {
       debugPrint('Error en Google Sign-In: $e');
@@ -69,9 +70,10 @@ class SupabaseService {
   static Future<void> sendMagicLink(String email) async {
     if (!SupabaseConfig.isConfigured) return;
     try {
+      final redirectUrl = kIsWeb ? '${Uri.base.origin}/' : 'comunidadusac://login-callback/';
       await client.auth.signInWithOtp(
         email: email.trim(),
-        emailRedirectTo: kIsWeb ? null : 'comunidadusac://login-callback/',
+        emailRedirectTo: redirectUrl,
       );
     } catch (e) {
       debugPrint('Error enviando enlace mágico: $e');

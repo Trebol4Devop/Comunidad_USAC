@@ -41,7 +41,36 @@ class WhatsAppGroup {
     this.isUpvotedByMe = false,
   });
 
-  GroupPlatform get platform {
+  static String platformToString(GroupPlatform p) {
+    switch (p) {
+      case GroupPlatform.whatsApp:
+        return 'whatsapp';
+      case GroupPlatform.telegram:
+        return 'telegram';
+      case GroupPlatform.discord:
+        return 'discord';
+      case GroupPlatform.drive:
+        return 'drive';
+      case GroupPlatform.other:
+        return 'otro';
+    }
+  }
+
+  static GroupPlatform stringToPlatform(String? p, String link) {
+    if (p != null && p.isNotEmpty) {
+      switch (p.toLowerCase()) {
+        case 'whatsapp':
+          return GroupPlatform.whatsApp;
+        case 'telegram':
+          return GroupPlatform.telegram;
+        case 'discord':
+          return GroupPlatform.discord;
+        case 'drive':
+          return GroupPlatform.drive;
+        case 'otro':
+          return GroupPlatform.other;
+      }
+    }
     final lower = link.toLowerCase();
     if (lower.contains('chat.whatsapp.com') || lower.contains('wa.me')) {
       return GroupPlatform.whatsApp;
@@ -57,6 +86,8 @@ class WhatsAppGroup {
     }
     return GroupPlatform.other;
   }
+
+  GroupPlatform get platform => stringToPlatform(null, link);
 
   WhatsAppGroup copyWith({
     String? id,
@@ -129,6 +160,7 @@ class WhatsAppGroup {
       'curso': curso,
       'section': section,
       'link': link,
+      'platform': platformToString(platform),
       'description': description,
       'user_id': userId,
       'author_alias': authorAlias,

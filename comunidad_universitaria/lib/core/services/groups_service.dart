@@ -12,7 +12,7 @@ class GroupsService {
 
     try {
       var query = SupabaseService.client
-          .from('whatsapp_groups')
+          .from('student_groups')
           .select('*')
           .lt('moderation_status', 2);
 
@@ -35,7 +35,7 @@ class GroupsService {
       if (currentUserId != null && data.isNotEmpty) {
         final groupIds = data.map((item) => item['id'].toString()).toList();
         final upvotesRes = await SupabaseService.client
-            .from('whatsapp_group_upvotes')
+            .from('student_group_upvotes')
             .select('group_id')
             .eq('user_id', currentUserId)
             .inFilter('group_id', groupIds);
@@ -65,32 +65,20 @@ class GroupsService {
 
     try {
       if (group.isUpvotedByMe) {
-        // Remove upvote
+        // Remove upvote (PostgreSQL trigger automatically syncs counter)
         await SupabaseService.client
-            .from('whatsapp_group_upvotes')
+            .from('student_group_upvotes')
             .delete()
             .eq('group_id', group.id)
             .eq('user_id', currentUserId);
 
-        final newUpvotes = (group.upvotes - 1).clamp(0, 999999);
-        await SupabaseService.client
-            .from('whatsapp_groups')
-            .update({'upvotes': newUpvotes})
-            .eq('id', group.id);
-
         return false;
       } else {
-        // Add upvote
-        await SupabaseService.client.from('whatsapp_group_upvotes').insert({
+        // Add upvote (PostgreSQL trigger automatically syncs counter)
+        await SupabaseService.client.from('student_group_upvotes').insert({
           'group_id': group.id,
           'user_id': currentUserId,
         });
-
-        final newUpvotes = group.upvotes + 1;
-        await SupabaseService.client
-            .from('whatsapp_groups')
-            .update({'upvotes': newUpvotes})
-            .eq('id', group.id);
 
         return true;
       }
@@ -118,12 +106,14 @@ class GroupsService {
     }
 
     try {
+      final platform = WhatsAppGroup.stringToPlatform(null, link);
       final groupMap = {
         'title': title.trim(),
         'carrera': carrera,
         'curso': curso.trim(),
         'section': section.trim().isEmpty ? 'Sección Única' : section.trim(),
         'link': link.trim(),
+        'platform': WhatsAppGroup.platformToString(platform),
         'description': description.trim(),
         'author_alias': authorAlias.trim(),
         'user_id': userId,
@@ -134,7 +124,7 @@ class GroupsService {
       };
 
       final res = await SupabaseService.client
-          .from('whatsapp_groups')
+          .from('student_groups')
           .insert(groupMap)
           .select()
           .single();
@@ -142,7 +132,7 @@ class GroupsService {
       final created = WhatsAppGroup.fromMap(Map<String, dynamic>.from(res), isUpvotedByMe: true);
 
       // Auto-upvote for creator
-      await SupabaseService.client.from('whatsapp_group_upvotes').insert({
+      await SupabaseService.client.from('student_group_upvotes').insert({
         'group_id': created.id,
         'user_id': userId,
       });
@@ -161,18 +151,10 @@ class GroupsService {
     if (!SupabaseConfig.isConfigured) return true;
 
     try {
-      await SupabaseService.client.from('whatsapp_group_reports').insert({
+      await SupabaseService.client.from('student_group_reports').insert({
         'group_id': groupId,
         'user_id': SupabaseService.currentUserId,
         'reason': reason.trim(),
-      });
-
-      // Increment reported count
-      await SupabaseService.client.rpc('increment_group_report', params: {'target_group_id': groupId}).catchError((_) async {
-        // Fallback if rpc is not present: simple fetch + update
-        final current = await SupabaseService.client.from('whatsapp_groups').select('reported_count').eq('id', groupId).single();
-        final count = (current['reported_count'] ?? 0) + 1;
-        await SupabaseService.client.from('whatsapp_groups').update({'reported_count': count}).eq('id', groupId);
       });
 
       return true;

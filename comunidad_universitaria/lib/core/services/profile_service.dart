@@ -65,7 +65,7 @@ class ProfileService {
     }
 
     try {
-      var query = SupabaseService.client.from('whatsapp_groups').select('*');
+      var query = SupabaseService.client.from('student_groups').select('*');
 
       if (userId != null && userId.isNotEmpty && userId != 'local_user') {
         query = query.eq('user_id', userId);
@@ -130,7 +130,7 @@ class ProfileService {
   static Future<bool> deleteGroup(String groupId) async {
     if (!SupabaseConfig.isConfigured) return true;
     try {
-      await SupabaseService.client.from('whatsapp_groups').delete().eq('id', groupId);
+      await SupabaseService.client.from('student_groups').delete().eq('id', groupId);
       return true;
     } catch (e) {
       debugPrint('Error al eliminar grupo: $e');
