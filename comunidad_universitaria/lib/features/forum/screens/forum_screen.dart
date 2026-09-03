@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/categories.dart';
+import '../../../core/config/supabase_config.dart';
 import '../../../core/models/post.dart';
 import '../../../core/services/forum_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
+import '../models/discord_forum_models.dart';
 import '../widgets/create_post_dialog.dart';
+import '../widgets/discord/forum_channel_sidebar.dart';
+import '../widgets/discord/forum_server_rail.dart';
 import '../widgets/post_card.dart';
 import 'post_detail_screen.dart';
 import '../../shared/widgets/auth_modal.dart';
@@ -25,18 +28,24 @@ class ForumScreen extends StatefulWidget {
 }
 
 class _ForumScreenState extends State<ForumScreen> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  late List<ForumServer> _servers;
+  late ForumServer _activeServer;
+  late ForumChannel _activeChannel;
+
   List<Post> _posts = [];
   bool _isLoading = true;
-  bool _showOnlyBookmarks = false;
-  String _selectedCategory = 'todos';
-  String _selectedFacultad = 'todas';
-  String _selectedCarrera = 'todas';
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
+  bool _showMobileSearch = false;
 
   @override
   void initState() {
     super.initState();
+    _servers = List.from(ForumServer.defaultServers);
+    _activeServer = _servers.length > 2 ? _servers[2] : _servers.first;
+    _activeChannel = ForumChannel.defaultChannels.first;
     _loadPosts();
   }
 
@@ -48,13 +57,18 @@ class _ForumScreenState extends State<ForumScreen> {
 
   Future<void> _loadPosts() async {
     setState(() => _isLoading = true);
+
+    final isBookmarks = _activeChannel.isSpecial;
+    final category = isBookmarks ? 'todos' : _activeChannel.categoryId;
+
     final posts = await ForumService.fetchPosts(
-      category: _selectedCategory,
-      facultad: _selectedFacultad,
-      carrera: _selectedCarrera,
+      category: category,
+      facultad: _activeServer.facultadId,
+      carrera: _activeServer.carreraId,
       searchQuery: _searchQuery,
-      showOnlyBookmarks: _showOnlyBookmarks,
+      showOnlyBookmarks: isBookmarks,
     );
+
     if (mounted) {
       setState(() {
         _posts = posts;
@@ -63,8 +77,43 @@ class _ForumScreenState extends State<ForumScreen> {
     }
   }
 
+  void _onSelectServer(ForumServer server) {
+    if (_activeServer.id == server.id) return;
+    setState(() {
+      _activeServer = server;
+      _searchQuery = '';
+      _searchController.clear();
+      _showMobileSearch = false;
+    });
+    _loadPosts();
+  }
+
+  void _onAddServer(ForumServer newServer) {
+    final exists = _servers.any((s) => s.id == newServer.id);
+    if (!exists) {
+      setState(() {
+        _servers.add(newServer);
+      });
+    }
+  }
+
+  void _onSelectChannel(ForumChannel channel) {
+    if (_activeChannel.id == channel.id) return;
+    setState(() {
+      _activeChannel = channel;
+      _searchQuery = '';
+      _searchController.clear();
+      _showMobileSearch = false;
+    });
+    _loadPosts();
+
+    if (_scaffoldKey.currentState?.isDrawerOpen == true) {
+      Navigator.of(context).pop();
+    }
+  }
+
   Future<void> _handleToggleLike(Post post) async {
-    if (!SupabaseService.isAuthenticated) {
+    if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
       AuthModal.show(
         context,
         title: 'Inicia Sesión para Votar',
@@ -77,7 +126,6 @@ class _ForumScreenState extends State<ForumScreen> {
     final prevLiked = post.isLikedByMe;
     final prevLikes = post.likes;
 
-    // Optimistic UI update
     setState(() {
       final idx = _posts.indexWhere((p) => p.id == post.id);
       if (idx != -1) {
@@ -100,7 +148,7 @@ class _ForumScreenState extends State<ForumScreen> {
   }
 
   Future<void> _handleToggleBookmark(Post post) async {
-    if (!SupabaseService.isAuthenticated) {
+    if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
       AuthModal.show(
         context,
         title: 'Inicia Sesión para Guardar',
@@ -134,7 +182,7 @@ class _ForumScreenState extends State<ForumScreen> {
             duration: const Duration(seconds: 2),
           ),
         );
-        if (_showOnlyBookmarks && prevBookmarked) {
+        if (_activeChannel.isSpecial && prevBookmarked) {
           _loadPosts();
         }
       }
@@ -142,7 +190,7 @@ class _ForumScreenState extends State<ForumScreen> {
   }
 
   Future<void> _handleVotePoll(String pollId, String optionId) async {
-    if (!SupabaseService.isAuthenticated) {
+    if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
       AuthModal.show(
         context,
         title: 'Inicia Sesión para Votar en la Encuesta',
@@ -157,7 +205,6 @@ class _ForumScreenState extends State<ForumScreen> {
       final oldPoll = _posts[postIdx].poll!;
       final oldMyVote = oldPoll.myVotedOptionId;
 
-      // Update options optimistic counts
       final newOptions = oldPoll.options.map((opt) {
         int newCount = opt.votesCount;
         if (opt.id == optionId && oldMyVote != optionId) {
@@ -190,7 +237,7 @@ class _ForumScreenState extends State<ForumScreen> {
   }
 
   void _handleQuotePost(Post post) {
-    if (!SupabaseService.isAuthenticated) {
+    if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
       AuthModal.show(
         context,
         title: 'Inicia Sesión para Citar',
@@ -204,6 +251,11 @@ class _ForumScreenState extends State<ForumScreen> {
       context,
       activeAlias: widget.activeAlias,
       quotedPost: post,
+      serverName: _activeServer.name,
+      channelName: _activeChannel.name,
+      initialCategory: _activeChannel.isSpecial ? 'general' : _activeChannel.categoryId,
+      initialCarrera: _activeServer.carreraId,
+      initialFacultad: _activeServer.facultadId,
       onAliasChanged: widget.onAliasChanged,
       onPostCreated: (newPost) {
         setState(() {
@@ -214,7 +266,7 @@ class _ForumScreenState extends State<ForumScreen> {
   }
 
   void _openCreateDialog() {
-    if (!SupabaseService.isAuthenticated) {
+    if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
       AuthModal.show(
         context,
         title: 'Inicia Sesión para Publicar',
@@ -232,6 +284,11 @@ class _ForumScreenState extends State<ForumScreen> {
     CreatePostDialog.show(
       context,
       activeAlias: widget.activeAlias,
+      serverName: _activeServer.name,
+      channelName: _activeChannel.name,
+      initialCategory: _activeChannel.isSpecial ? 'general' : _activeChannel.categoryId,
+      initialCarrera: _activeServer.carreraId,
+      initialFacultad: _activeServer.facultadId,
       onAliasChanged: widget.onAliasChanged,
       onPostCreated: (newPost) {
         setState(() {
@@ -241,349 +298,407 @@ class _ForumScreenState extends State<ForumScreen> {
     );
   }
 
-  List<Map<String, dynamic>> get _availableCarreras {
-    final fac = USACConstants.facultades.firstWhere(
-      (f) => f['id'] == _selectedFacultad,
-      orElse: () => USACConstants.facultades.first,
-    );
-    final list = fac['carreras'] as List<dynamic>? ?? [];
-    return list.map((e) => Map<String, dynamic>.from(e)).toList();
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDesktop = Responsive.isDesktop(context);
-    final isMobile = Responsive.isMobile(context);
+    final isDesktop = Responsive.isDesktop(context) || MediaQuery.of(context).size.width >= 800;
+    final isDark = theme.brightness == Brightness.dark;
+
+    final feedBg = isDark ? const Color(0xFF313338) : Colors.white;
+
+    if (!isDesktop) {
+      return _buildMobileScaffold(theme, isDark, feedBg);
+    }
 
     return Scaffold(
-      body: RefreshIndicator(
-        onRefresh: _loadPosts,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: MaxWidthContainer(
-            maxWidth: 1100,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Top Welcome / Action Banner
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF004B87), Color(0xFF0066CC)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Foro Estudiantil Universitario',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Espacio libre e independiente para consultas académicas sobre cátedras, laboratorios, horarios y apuntes.',
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.9),
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (isDesktop) ...[
-                        const SizedBox(width: 16),
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFEAB308),
-                            foregroundColor: Colors.black87,
-                          ),
-                          onPressed: _openCreateDialog,
-                          icon: const Icon(Icons.add, size: 18),
-                          label: const Text('Crear Consulta'),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
+      key: _scaffoldKey,
+      backgroundColor: feedBg,
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // 1. Left Discord Server Rail (Carreras)
+          ForumServerRail(
+            servers: _servers,
+            activeServer: _activeServer,
+            onSelectServer: _onSelectServer,
+            onAddServer: _onAddServer,
+          ),
 
-                const SizedBox(height: 16),
+          // 2. Channels Sidebar (Categorías)
+          ForumChannelSidebar(
+            activeServer: _activeServer,
+            activeChannel: _activeChannel,
+            onSelectChannel: _onSelectChannel,
+            onServerChanged: _onSelectServer,
+            activeAlias: widget.activeAlias,
+            onAliasChanged: widget.onAliasChanged,
+          ),
 
-                // Search & Filter controls
-                if (isMobile) ...[
-                  TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Buscar dudas, apuntes, cursos o catedráticos...',
-                      prefixIcon: const Icon(Icons.search, size: 20),
-                      suffixIcon: _searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear, size: 18),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() => _searchQuery = '');
-                                _loadPosts();
-                              },
-                            )
-                          : null,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    ),
-                    onSubmitted: (val) {
-                      setState(() => _searchQuery = val);
-                      _loadPosts();
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    initialValue: _selectedFacultad,
-                    isExpanded: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Facultad / Unidad',
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    ),
-                    items: USACConstants.facultades
-                        .map((f) => DropdownMenuItem<String>(
-                              value: f['id'].toString(),
-                              child: Text(
-                                f['nombre'].toString(),
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                            ))
-                        .toList(),
-                    onChanged: (val) {
-                      setState(() {
-                        _selectedFacultad = val ?? 'todas';
-                        _selectedCarrera = 'todas';
-                      });
-                      _loadPosts();
-                    },
-                  ),
-                ] else ...[
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _searchController,
-                          decoration: InputDecoration(
-                            hintText: 'Buscar dudas, apuntes, cursos o catedráticos...',
-                            prefixIcon: const Icon(Icons.search, size: 20),
-                            suffixIcon: _searchQuery.isNotEmpty
-                                ? IconButton(
-                                    icon: const Icon(Icons.clear, size: 18),
-                                    onPressed: () {
-                                      _searchController.clear();
-                                      setState(() => _searchQuery = '');
-                                      _loadPosts();
-                                    },
-                                  )
-                                : null,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                          ),
-                          onSubmitted: (val) {
-                            setState(() => _searchQuery = val);
-                            _loadPosts();
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 260),
-                        child: DropdownButtonFormField<String>(
-                          initialValue: _selectedFacultad,
-                          isExpanded: true,
-                          decoration: const InputDecoration(
-                            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                          ),
-                          items: USACConstants.facultades
-                              .map((f) => DropdownMenuItem<String>(
-                                    value: f['id'].toString(),
-                                    child: Text(
-                                      f['nombre'].toString(),
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontSize: 12),
-                                    ),
-                                  ))
-                              .toList(),
-                          onChanged: (val) {
-                            setState(() {
-                              _selectedFacultad = val ?? 'todas';
-                              _selectedCarrera = 'todas';
-                            });
-                            _loadPosts();
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-
-                const SizedBox(height: 12),
-
-                // Category Filter Chips & Bookmarks toggle
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      // Bookmarks Filter Chip
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: FilterChip(
-                          avatar: Icon(
-                            _showOnlyBookmarks ? Icons.bookmark : Icons.bookmark_border,
-                            size: 14,
-                            color: _showOnlyBookmarks ? Colors.white : const Color(0xFFD97706),
-                          ),
-                          label: const Text('Guardados'),
-                          selected: _showOnlyBookmarks,
-                          selectedColor: const Color(0xFFD97706),
-                          checkmarkColor: Colors.white,
-                          labelStyle: TextStyle(
-                            fontSize: 12,
-                            fontWeight: _showOnlyBookmarks ? FontWeight.bold : FontWeight.normal,
-                            color: _showOnlyBookmarks ? Colors.white : const Color(0xFFD97706),
-                          ),
-                          onSelected: (selected) {
-                            setState(() {
-                              _showOnlyBookmarks = selected;
-                            });
-                            _loadPosts();
-                          },
-                        ),
-                      ),
-                      ...USACConstants.forumCategories.map((cat) {
-                        final isSelected = !_showOnlyBookmarks && _selectedCategory == cat.id;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: FilterChip(
-                            label: Text(cat.label),
-                            selected: isSelected,
-                            onSelected: (selected) {
-                              setState(() {
-                                _showOnlyBookmarks = false;
-                                _selectedCategory = cat.id;
-                              });
-                              _loadPosts();
-                            },
-                            selectedColor: theme.colorScheme.primary.withValues(alpha: 0.15),
-                            labelStyle: TextStyle(
-                              fontSize: 12,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                              color: isSelected ? theme.colorScheme.primary : null,
-                            ),
-                          ),
-                        );
-                      }),
-                    ],
-                  ),
-                ),
-
-                // Career Filter chips if a specific faculty is chosen
-                if (_selectedFacultad != 'todas' && _availableCarreras.length > 1) ...[
-                  const SizedBox(height: 10),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: _availableCarreras.map((car) {
-                        final id = car['id'].toString();
-                        final isSelected = _selectedCarrera == id;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: FilterChip(
-                            label: Text(car['nombre'].toString()),
-                            selected: isSelected,
-                            onSelected: (selected) {
-                              setState(() {
-                                _selectedCarrera = selected ? id : 'todas';
-                              });
-                              _loadPosts();
-                            },
-                          ),
-                        );
-                      }).toList(),
+          // 3. Main Channel Feed
+          Expanded(
+            child: Container(
+              color: feedBg,
+              child: Column(
+                children: [
+                  _buildDesktopChannelHeader(theme, isDark),
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: _loadPosts,
+                      child: _buildFeedContent(theme, isDark),
                     ),
                   ),
                 ],
-
-                const SizedBox(height: 16),
-
-                // Posts Feed
-                if (_isLoading)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(40),
-                      child: CircularProgressIndicator(),
-                    ),
-                  )
-                else if (_posts.isEmpty)
-                  EmptyStateWidget(
-                    icon: Icons.forum_outlined,
-                    title: _showOnlyBookmarks ? 'No tienes publicaciones guardadas' : 'No se encontraron publicaciones',
-                    description: _showOnlyBookmarks
-                        ? 'Guarda publicaciones importantes del foro tocando el icono de marcador.'
-                        : 'Sé el primero en iniciar una conversación o formular una duda en esta categoría.',
-                    buttonText: 'Crear Primera Publicación',
-                    onButtonPressed: _openCreateDialog,
-                  )
-                else
-                  Column(
-                    children: _posts.map((post) {
-                      return PostCard(
-                        key: ValueKey(post.id),
-                        post: post,
-                        onTap: () async {
-                          await Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => PostDetailScreen(
-                                initialPost: post,
-                                activeAlias: widget.activeAlias,
-                              ),
-                            ),
-                          );
-                          _loadPosts();
-                        },
-                        onLike: () => _handleToggleLike(post),
-                        onBookmark: () => _handleToggleBookmark(post),
-                        onRepost: () => _handleQuotePost(post),
-                        onVotePoll: (pollId, optionId) => _handleVotePoll(pollId, optionId),
-                        onReport: (reason) {
-                          if (post.userId != null) {
-                            ForumService.reportUser(
-                              reportedUserId: post.userId!,
-                              reportedAlias: post.authorAlias,
-                              reason: reason,
-                            );
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Reporte enviado con éxito.')),
-                            );
-                          }
-                        },
-                      );
-                    }).toList(),
-                  ),
-              ],
+              ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileScaffold(ThemeData theme, bool isDark, Color feedBg) {
+    return Scaffold(
+      key: _scaffoldKey,
+      backgroundColor: feedBg,
+      drawer: Drawer(
+        width: 312,
+        child: Row(
+          children: [
+            ForumServerRail(
+              servers: _servers,
+              activeServer: _activeServer,
+              onSelectServer: (s) {
+                _onSelectServer(s);
+              },
+              onAddServer: _onAddServer,
+            ),
+            Expanded(
+              child: ForumChannelSidebar(
+                activeServer: _activeServer,
+                activeChannel: _activeChannel,
+                onSelectChannel: _onSelectChannel,
+                onServerChanged: (s) {
+                  _onSelectServer(s);
+                },
+                activeAlias: widget.activeAlias,
+                onAliasChanged: widget.onAliasChanged,
+              ),
+            ),
+          ],
         ),
+      ),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          tooltip: 'Ver Carreras y Canales',
+          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+        ),
+        titleSpacing: 0,
+        title: _showMobileSearch
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: 'Buscar en #${_activeChannel.name}...',
+                  border: InputBorder.none,
+                  hintStyle: TextStyle(fontSize: 14, color: Colors.grey.shade400),
+                ),
+                onSubmitted: (val) {
+                  setState(() => _searchQuery = val);
+                  _loadPosts();
+                },
+              )
+            : Row(
+                children: [
+                  Icon(_activeChannel.icon, size: 18, color: theme.colorScheme.primary),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      '#${_activeChannel.name}',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                    decoration: BoxDecoration(
+                      color: _activeServer.color.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      _activeServer.shortCode,
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        color: _activeServer.color,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+        actions: [
+          IconButton(
+            icon: Icon(_showMobileSearch ? Icons.close : Icons.search, size: 20),
+            onPressed: () {
+              setState(() {
+                if (_showMobileSearch && _searchQuery.isNotEmpty) {
+                  _searchController.clear();
+                  _searchQuery = '';
+                  _loadPosts();
+                }
+                _showMobileSearch = !_showMobileSearch;
+              });
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.add_circle, color: Color(0xFF004B87), size: 24),
+            tooltip: 'Crear publicación',
+            onPressed: _openCreateDialog,
+          ),
+        ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: _loadPosts,
+        child: _buildFeedContent(theme, isDark),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openCreateDialog,
         backgroundColor: const Color(0xFF004B87),
         foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_comment),
-        label: const Text('Nueva Consulta'),
+        icon: const Icon(Icons.add_comment, size: 20),
+        label: Text('Publicar en #${_activeChannel.name}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+      ),
+    );
+  }
+
+  Widget _buildDesktopChannelHeader(ThemeData theme, bool isDark) {
+    return Container(
+      height: 56,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF313338) : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? const Color(0xFF202225) : const Color(0xFFE2E8F0),
+            width: 1.5,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(_activeChannel.icon, size: 20, color: Colors.grey.shade400),
+          const SizedBox(width: 8),
+          Text(
+            _activeChannel.name,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            height: 20,
+            width: 1,
+            color: isDark ? const Color(0xFF3F4147) : Colors.grey.shade300,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Row(
+              children: [
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: _activeServer.color.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(_activeServer.icon, size: 13, color: _activeServer.color),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            _activeServer.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: _activeServer.color,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _activeChannel.description,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDark ? const Color(0xFF949BA4) : const Color(0xFF64748B),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 160,
+            height: 32,
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Buscar...',
+                hintStyle: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500),
+                prefixIcon: const Icon(Icons.search, size: 15),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 13),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() => _searchQuery = '');
+                          _loadPosts();
+                        },
+                      )
+                    : null,
+                contentPadding: const EdgeInsets.symmetric(vertical: 6),
+                filled: true,
+                fillColor: isDark ? const Color(0xFF1E1F22) : const Color(0xFFF1F5F9),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              onSubmitted: (val) {
+                setState(() => _searchQuery = val);
+                _loadPosts();
+              },
+            ),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF004B87),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            icon: const Icon(Icons.add, size: 15),
+            label: const Text('Publicar', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+            onPressed: _openCreateDialog,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeedContent(ThemeData theme, bool isDark) {
+    if (_isLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(40),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      children: [
+        _buildDiscordWelcomeHero(theme, isDark),
+        const SizedBox(height: 16),
+        if (_posts.isEmpty)
+          EmptyStateWidget(
+            icon: _activeChannel.icon,
+            title: _activeChannel.isSpecial
+                ? 'No tienes publicaciones guardadas'
+                : 'No hay mensajes en #${_activeChannel.name}',
+            description: _activeChannel.isSpecial
+                ? 'Guarda consultas importantes del foro tocando el icono de marcador.'
+                : 'Sé el primero en iniciar una conversación o formular una duda en este canal.',
+            buttonText: 'Crear Primera Publicación',
+            onButtonPressed: _openCreateDialog,
+          )
+        else
+          ..._posts.map((post) {
+            return PostCard(
+              key: ValueKey(post.id),
+              post: post,
+              onTap: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => PostDetailScreen(
+                      initialPost: post,
+                      activeAlias: widget.activeAlias,
+                    ),
+                  ),
+                );
+                _loadPosts();
+              },
+              onLike: () => _handleToggleLike(post),
+              onBookmark: () => _handleToggleBookmark(post),
+              onRepost: () => _handleQuotePost(post),
+              onVotePoll: (pollId, optionId) => _handleVotePoll(pollId, optionId),
+              onReport: (reason) {
+                if (post.userId != null) {
+                  ForumService.reportUser(
+                    reportedUserId: post.userId!,
+                    reportedAlias: post.authorAlias,
+                    reason: reason,
+                  );
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Reporte enviado con éxito.')),
+                  );
+                }
+              },
+            );
+          }),
+      ],
+    );
+  }
+
+  Widget _buildDiscordWelcomeHero(ThemeData theme, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF2B2D31) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark ? const Color(0xFF383A40) : const Color(0xFFE2E8F0),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF3F4147) : Colors.grey.shade200,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(_activeChannel.icon, size: 24, color: isDark ? Colors.white : const Color(0xFF004B87)),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '¡Te damos la bienvenida a #${_activeChannel.name}!',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Este es el inicio del canal #${_activeChannel.name} en el servidor de ${_activeServer.name}. ${_activeChannel.description}',
+            style: TextStyle(
+              fontSize: 12,
+              height: 1.4,
+              color: isDark ? const Color(0xFF949BA4) : const Color(0xFF64748B),
+            ),
+          ),
+        ],
       ),
     );
   }

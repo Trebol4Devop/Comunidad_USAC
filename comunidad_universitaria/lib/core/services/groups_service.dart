@@ -98,7 +98,23 @@ class GroupsService {
     required String authorAlias,
     String? imageUrl,
   }) async {
-    if (!SupabaseConfig.isConfigured) return null;
+    if (!SupabaseConfig.isConfigured) {
+      return WhatsAppGroup(
+        id: 'local-${DateTime.now().millisecondsSinceEpoch}',
+        title: title.trim(),
+        carrera: carrera,
+        curso: curso.trim(),
+        section: section.trim().isEmpty ? 'Sección Única' : section.trim(),
+        link: link.trim(),
+        description: description.trim(),
+        authorAlias: authorAlias.trim(),
+        imageUrl: imageUrl?.trim().isEmpty == true ? null : imageUrl?.trim(),
+        upvotes: 1,
+        reportedCount: 0,
+        createdAt: DateTime.now(),
+        isUpvotedByMe: true,
+      );
+    }
 
     final userId = SupabaseService.currentUserId;
     if (userId == null) {

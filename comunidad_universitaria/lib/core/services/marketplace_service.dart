@@ -174,7 +174,33 @@ class MarketplaceService {
       throw Exception(violationError);
     }
 
-    if (!SupabaseConfig.isConfigured) return null;
+    if (!SupabaseConfig.isConfigured) {
+      return MarketplaceItem(
+        id: 'local-${DateTime.now().millisecondsSinceEpoch}',
+        title: title.trim(),
+        description: description.trim(),
+        price: isFree ? 0.0 : price,
+        isFree: isFree || price <= 0.0,
+        category: category,
+        facultad: facultad,
+        sede: sede,
+        buildingCode: buildingCode.trim(),
+        locationDetail: locationDetail.trim(),
+        contactWhatsapp: contactWhatsapp?.trim().isEmpty == true ? null : contactWhatsapp?.trim(),
+        contactInstagram: contactInstagram?.trim().isEmpty == true ? null : contactInstagram?.trim(),
+        contactMessenger: contactMessenger?.trim().isEmpty == true ? null : contactMessenger?.trim(),
+        contactTelegram: contactTelegram?.trim().isEmpty == true ? null : contactTelegram?.trim(),
+        socialLinks: socialLinks,
+        imageUrls: imageUrls,
+        videoUrl: videoUrl?.trim().isEmpty == true ? null : videoUrl?.trim(),
+        isSponsored: isSponsored,
+        sponsorBadgeText: sponsorBadgeText,
+        authorAlias: authorAlias.trim(),
+        createdAt: DateTime.now(),
+        upvotes: 1,
+        isUpvotedByMe: true,
+      );
+    }
 
     try {
       final itemMap = {

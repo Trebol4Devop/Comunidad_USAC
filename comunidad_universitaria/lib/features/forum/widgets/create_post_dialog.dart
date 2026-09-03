@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../core/config/supabase_config.dart';
 import '../../../core/constants/categories.dart';
 import '../../../core/models/post.dart';
 import '../../../core/services/forum_service.dart';
@@ -15,6 +16,11 @@ class CreatePostDialog extends StatefulWidget {
   final Post? quotedPost;
   final Function(String newAlias) onAliasChanged;
   final Function(Post newPost) onPostCreated;
+  final String? initialCategory;
+  final String? initialCarrera;
+  final String? initialFacultad;
+  final String? serverName;
+  final String? channelName;
 
   const CreatePostDialog({
     super.key,
@@ -22,6 +28,11 @@ class CreatePostDialog extends StatefulWidget {
     this.quotedPost,
     required this.onAliasChanged,
     required this.onPostCreated,
+    this.initialCategory,
+    this.initialCarrera,
+    this.initialFacultad,
+    this.serverName,
+    this.channelName,
   });
 
   static Future<void> show(
@@ -30,6 +41,11 @@ class CreatePostDialog extends StatefulWidget {
     Post? quotedPost,
     required Function(String) onAliasChanged,
     required Function(Post) onPostCreated,
+    String? initialCategory,
+    String? initialCarrera,
+    String? initialFacultad,
+    String? serverName,
+    String? channelName,
   }) {
     if (Responsive.isMobile(context)) {
       return showModalBottomSheet(
@@ -45,6 +61,11 @@ class CreatePostDialog extends StatefulWidget {
           quotedPost: quotedPost,
           onAliasChanged: onAliasChanged,
           onPostCreated: onPostCreated,
+          initialCategory: initialCategory,
+          initialCarrera: initialCarrera,
+          initialFacultad: initialFacultad,
+          serverName: serverName,
+          channelName: channelName,
         ),
       );
     } else {
@@ -55,6 +76,11 @@ class CreatePostDialog extends StatefulWidget {
           quotedPost: quotedPost,
           onAliasChanged: onAliasChanged,
           onPostCreated: onPostCreated,
+          initialCategory: initialCategory,
+          initialCarrera: initialCarrera,
+          initialFacultad: initialFacultad,
+          serverName: serverName,
+          channelName: channelName,
         ),
       );
     }
@@ -80,14 +106,20 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
     TextEditingController(text: 'Opción 2'),
   ];
 
-  String _selectedCategory = 'general';
-  String _selectedFacultad = '08';
-  String _selectedCarrera = 'todas';
+  late String _selectedCategory;
+  late String _selectedFacultad;
+  late String _selectedCarrera;
   bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
+    _selectedCategory = (widget.initialCategory != null && widget.initialCategory != 'todos')
+        ? widget.initialCategory!
+        : 'general';
+    _selectedFacultad = widget.initialFacultad ?? '08';
+    _selectedCarrera = widget.initialCarrera ?? 'todas';
+
     if (widget.quotedPost != null) {
       _titleController.text = 'Re: ${widget.quotedPost!.title}';
     }
@@ -104,13 +136,30 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
     super.dispose();
   }
 
-  List<Map<String, dynamic>> get _availableCarreras {
-    final fac = USACConstants.facultades.firstWhere(
-      (f) => f['id'] == _selectedFacultad,
-      orElse: () => USACConstants.facultades.first,
+  String get _channelLabel {
+    if (widget.channelName != null && widget.channelName!.isNotEmpty) {
+      return widget.channelName!;
+    }
+    final cat = USACConstants.forumCategories.firstWhere(
+      (c) => c.id == _selectedCategory,
+      orElse: () => USACConstants.forumCategories.last,
     );
-    final list = fac['carreras'] as List<dynamic>? ?? [];
-    return list.map((e) => Map<String, dynamic>.from(e)).toList();
+    return cat.label;
+  }
+
+  String get _serverLabel {
+    if (widget.serverName != null && widget.serverName!.isNotEmpty) {
+      return widget.serverName!;
+    }
+    if (_selectedCarrera != 'todas') {
+      for (var fac in USACConstants.facultades) {
+        final carreras = fac['carreras'] as List<dynamic>? ?? [];
+        for (var c in carreras) {
+          if (c['id'] == _selectedCarrera) return c['nombre'] as String;
+        }
+      }
+    }
+    return 'Campus Central (General)';
   }
 
   Future<void> _pickAndUploadImage() async {
@@ -157,7 +206,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (!SupabaseService.isAuthenticated) {
+    if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
       AuthModal.show(
         context,
         title: 'Inicia Sesión para Publicar',
@@ -225,6 +274,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final isMobile = Responsive.isMobile(context);
     final maxHeight = MediaQuery.of(context).size.height * (isMobile ? 0.90 : 0.85);
 
@@ -320,82 +370,62 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                 ),
               ],
 
-              // Category & Faculty Row
-              Wrap(
-                spacing: 12,
-                runSpacing: 8,
-                children: [
-                  // Category dropdown
-                  SizedBox(
-                    width: isMobile ? double.infinity : 240,
-                    child: DropdownButtonFormField<String>(
-                      initialValue: _selectedCategory,
-                      isExpanded: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Categoría del tema',
-                        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                      ),
-                      items: USACConstants.forumCategories
-                          .where((c) => c.id != 'todos')
-                          .map((c) => DropdownMenuItem(
-                                value: c.id,
-                                child: Text(c.label, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13)),
-                              ))
-                          .toList(),
-                      onChanged: (val) => setState(() => _selectedCategory = val ?? 'general'),
-                    ),
-                  ),
-
-                  // Faculty dropdown
-                  SizedBox(
-                    width: isMobile ? double.infinity : 240,
-                    child: DropdownButtonFormField<String>(
-                      initialValue: _selectedFacultad,
-                      isExpanded: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Facultad / Unidad',
-                        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                      ),
-                      items: USACConstants.facultades
-                          .map((f) => DropdownMenuItem<String>(
-                                value: f['id'].toString(),
-                                child: Text(
-                                  f['nombre'].toString(),
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                              ))
-                          .toList(),
-                      onChanged: (val) {
-                        setState(() {
-                          _selectedFacultad = val ?? '08';
-                          _selectedCarrera = 'todas';
-                        });
-                      },
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 10),
-
-              // Career dropdown
-              DropdownButtonFormField<String>(
-                key: ValueKey('carrera_$_selectedFacultad'),
-                initialValue: _selectedCarrera,
-                isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: 'Carrera específica (opcional)',
-                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              // Canal y Servidor bloqueados automáticamente según el contexto de navegación
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
                 ),
-                items: _availableCarreras
-                    .map((c) => DropdownMenuItem<String>(
-                          value: c['id'].toString(),
-                          child: Text(c['nombre'].toString(), overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12)),
-                        ))
-                    .toList(),
-                onChanged: (val) => setState(() => _selectedCarrera = val ?? 'todas'),
+                child: Row(
+                  children: [
+                    Icon(Icons.tag, size: 22, color: theme.colorScheme.primary),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  '#$_channelLabel',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Text(
+                                  'Canal asignado',
+                                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Servidor: $_serverLabel',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.lock_outline, size: 16, color: Colors.grey.shade400),
+                  ],
+                ),
               ),
+
+              const SizedBox(height: 14),
 
               const SizedBox(height: 12),
 

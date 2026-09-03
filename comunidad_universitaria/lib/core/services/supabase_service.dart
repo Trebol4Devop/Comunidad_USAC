@@ -25,10 +25,10 @@ class SupabaseService {
     }
   }
 
-  static Future<bool> signInWithGoogle() async {
+  static Future<bool> signInWithGoogle({String? redirectTo}) async {
     if (!SupabaseConfig.isConfigured) return false;
     try {
-      final redirectUrl = kIsWeb ? '${Uri.base.origin}/' : 'comunidadusac://login-callback/';
+      final redirectUrl = redirectTo ?? (kIsWeb ? '${Uri.base.origin}/' : 'comunidadusac://login-callback/');
       return await client.auth.signInWithOAuth(
         OAuthProvider.google,
         redirectTo: redirectUrl,

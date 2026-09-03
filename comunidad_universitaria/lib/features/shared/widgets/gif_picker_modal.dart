@@ -45,12 +45,12 @@ class _GifPickerModalState extends State<GifPickerModal> {
   String _selectedCategory = 'todas';
 
   static const List<Map<String, String>> categories = [
-    {'id': 'todas', 'name': '🔥 Populares'},
-    {'id': 'estudiando', 'name': '📚 Estudiando'},
-    {'id': 'examenes', 'name': '📝 Parciales'},
-    {'id': 'celebracion', 'name': '🎉 Aprobé'},
-    {'id': 'f', 'name': '💀 F en el Chat'},
-    {'id': 'memes', 'name': '🤣 Memes USAC'},
+    {'id': 'todas', 'name': 'Populares'},
+    {'id': 'estudiando', 'name': 'Estudiando'},
+    {'id': 'examenes', 'name': 'Parciales'},
+    {'id': 'celebracion', 'name': 'Aprobado'},
+    {'id': 'f', 'name': 'Reacciones'},
+    {'id': 'memes', 'name': 'Comunidad'},
   ];
 
   static const List<GifItem> _curatedGifs = [

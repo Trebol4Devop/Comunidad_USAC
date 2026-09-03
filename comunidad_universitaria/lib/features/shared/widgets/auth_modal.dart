@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
@@ -73,7 +74,8 @@ class _AuthModalState extends State<AuthModal> {
     });
 
     try {
-      final success = await SupabaseService.signInWithGoogle();
+      final currentUrl = kIsWeb ? Uri.base.toString() : null;
+      final success = await SupabaseService.signInWithGoogle(redirectTo: currentUrl);
       if (mounted) {
         setState(() => _isLoading = false);
         if (success) {

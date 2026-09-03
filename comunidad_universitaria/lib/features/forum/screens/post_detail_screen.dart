@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/config/supabase_config.dart';
 import '../../../core/constants/categories.dart';
 import '../../../core/models/post.dart';
 import '../../../core/services/forum_service.dart';
@@ -63,7 +64,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   }
 
   Future<void> _handleLike() async {
-    if (!SupabaseService.isAuthenticated) {
+    if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
       AuthModal.show(
         context,
         title: 'Inicia Sesión para Votar',
@@ -92,7 +93,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   }
 
   Future<void> _handleBookmark() async {
-    if (!SupabaseService.isAuthenticated) {
+    if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
       AuthModal.show(
         context,
         title: 'Inicia Sesión para Guardar',
@@ -125,7 +126,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   }
 
   Future<void> _handleVotePoll(String pollId, String optionId) async {
-    if (!SupabaseService.isAuthenticated) {
+    if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
       AuthModal.show(
         context,
         title: 'Inicia Sesión para Votar en la Encuesta',
@@ -170,7 +171,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   }
 
   void _handleQuotePost() {
-    if (!SupabaseService.isAuthenticated) {
+    if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
       AuthModal.show(
         context,
         title: 'Inicia Sesión para Citar',
@@ -210,7 +211,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     final text = _commentController.text.trim();
     if (text.isEmpty && _commentGifUrl == null) return;
 
-    if (!SupabaseService.isAuthenticated) {
+    if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
       AuthModal.show(
         context,
         title: 'Inicia Sesión para Responder',

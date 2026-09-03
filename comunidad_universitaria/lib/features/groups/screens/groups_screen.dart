@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/config/supabase_config.dart';
 import '../../../core/constants/categories.dart';
 import '../../../core/models/whatsapp_group.dart';
 import '../../../core/services/groups_service.dart';
@@ -87,7 +88,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
   }
 
   Future<void> _handleToggleUpvote(WhatsAppGroup group) async {
-    if (!SupabaseService.isAuthenticated) {
+    if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
       AuthModal.show(
         context,
         title: 'Inicia Sesión para Votar',
@@ -123,7 +124,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
   }
 
   void _openCreateGroupDialog() {
-    if (!SupabaseService.isAuthenticated) {
+    if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
       AuthModal.show(
         context,
         title: 'Inicia Sesión para Compartir',

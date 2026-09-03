@@ -5,26 +5,27 @@ import 'package:url_launcher/url_launcher.dart';
 class UrlUtils {
   static Future<bool> openUrl(BuildContext context, String urlString) async {
     try {
-      final uri = Uri.parse(urlString.trim());
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-        return true;
-      } else {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('No se pudo abrir el enlace: $urlString'),
-              backgroundColor: Colors.red.shade700,
-            ),
-          );
-        }
-        return false;
+      String formattedUrl = urlString.trim();
+      if (formattedUrl.isEmpty) return false;
+
+      if (!formattedUrl.startsWith('http://') &&
+          !formattedUrl.startsWith('https://') &&
+          !formattedUrl.startsWith('mailto:') &&
+          !formattedUrl.startsWith('tel:')) {
+        formattedUrl = 'https://$formattedUrl';
       }
+
+      final uri = Uri.parse(formattedUrl);
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched) {
+        await launchUrl(uri, mode: LaunchMode.platformDefault);
+      }
+      return true;
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('URL no válida: $e'),
+            content: Text('No se pudo abrir el enlace: $urlString'),
             backgroundColor: Colors.red.shade700,
           ),
         );

@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'core/config/app_theme.dart';
 import 'core/config/supabase_config.dart';
 import 'core/services/local_storage_service.dart';
 import 'core/services/supabase_service.dart';
 import 'features/navigation/app_shell.dart';
+import 'features/sso/screens/sso_authorize_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,6 +53,62 @@ class _ComunidadUSACAppState extends State<ComunidadUSACApp> {
     });
   }
 
+  Route<dynamic> _onGenerateRoute(RouteSettings settings) {
+    final rawName = settings.name ?? '';
+    Uri? uri = Uri.tryParse(rawName);
+
+    // In Flutter web, check Uri.base if settings.name is empty or '/'
+    if ((uri == null || (uri.path != '/auth/authorize' && uri.path != 'auth/authorize')) && kIsWeb) {
+      final base = Uri.base;
+      if (base.path == '/auth/authorize' || base.path == 'auth/authorize' || base.fragment.contains('auth/authorize')) {
+        if (base.fragment.contains('auth/authorize')) {
+          final cleanFragment = base.fragment.startsWith('/') ? base.fragment : '/${base.fragment}';
+          uri = Uri.tryParse(cleanFragment);
+        } else {
+          uri = base;
+        }
+      }
+    }
+
+    if (uri != null && (uri.path == '/auth/authorize' || uri.path == 'auth/authorize' || uri.path.endsWith('/auth/authorize'))) {
+      final params = Map<String, String>.from(uri.queryParameters);
+      if (kIsWeb) {
+        Uri.base.queryParameters.forEach((k, v) {
+          params.putIfAbsent(k, () => v);
+        });
+        if (Uri.base.fragment.isNotEmpty) {
+          final frag = Uri.tryParse(Uri.base.fragment);
+          if (frag != null) {
+            frag.queryParameters.forEach((k, v) {
+              params.putIfAbsent(k, () => v);
+            });
+          }
+        }
+      }
+
+      return MaterialPageRoute(
+        builder: (_) => SsoAuthorizeScreen(
+          clientId: params['client_id'],
+          redirectUri: params['redirect_uri'],
+          state: params['state'],
+          activeAlias: _activeAlias,
+          onAliasChanged: _updateAlias,
+        ),
+        settings: settings,
+      );
+    }
+
+    return MaterialPageRoute(
+      builder: (_) => AppShell(
+        activeAlias: _activeAlias,
+        onAliasChanged: _updateAlias,
+        onToggleTheme: _toggleTheme,
+        isDarkMode: _themeMode == ThemeMode.dark,
+      ),
+      settings: settings,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -59,12 +117,8 @@ class _ComunidadUSACAppState extends State<ComunidadUSACApp> {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: _themeMode,
-      home: AppShell(
-        activeAlias: _activeAlias,
-        onAliasChanged: _updateAlias,
-        onToggleTheme: _toggleTheme,
-        isDarkMode: _themeMode == ThemeMode.dark,
-      ),
+      onGenerateRoute: _onGenerateRoute,
     );
   }
 }
+

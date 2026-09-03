@@ -12,7 +12,15 @@ class ForumService {
     String searchQuery = '',
     bool showOnlyBookmarks = false,
   }) async {
-    if (!SupabaseConfig.isConfigured) return _getSamplePosts();
+    if (!SupabaseConfig.isConfigured) {
+      return _filterSamplePosts(
+        category: category,
+        facultad: facultad,
+        carrera: carrera,
+        searchQuery: searchQuery,
+        showOnlyBookmarks: showOnlyBookmarks,
+      );
+    }
 
     try {
       final currentUserId = SupabaseService.currentUserId;
@@ -289,7 +297,41 @@ class ForumService {
     String? pollQuestion,
     List<String>? pollOptions,
   }) async {
-    if (!SupabaseConfig.isConfigured) return null;
+    if (!SupabaseConfig.isConfigured) {
+      final localId = 'local-${DateTime.now().millisecondsSinceEpoch}';
+      return Post(
+        id: localId,
+        title: title.trim(),
+        content: content.trim(),
+        category: category,
+        carrera: carrera,
+        authorAlias: authorAlias.trim(),
+        likes: 0,
+        createdAt: DateTime.now(),
+        imageUrl: imageUrl?.trim().isEmpty == true ? null : imageUrl?.trim(),
+        gifUrl: gifUrl?.trim().isEmpty == true ? null : gifUrl?.trim(),
+        quotedPostId: quotedPostId,
+        poll: (pollQuestion != null &&
+                pollQuestion.trim().isNotEmpty &&
+                pollOptions != null &&
+                pollOptions.length >= 2)
+            ? PostPoll(
+                id: 'poll-$localId',
+                postId: localId,
+                question: pollQuestion.trim(),
+                options: pollOptions
+                    .where((opt) => opt.trim().isNotEmpty)
+                    .map((opt) => PollOption(
+                          id: 'opt-$localId-${opt.hashCode}',
+                          pollId: 'poll-$localId',
+                          optionText: opt.trim(),
+                          votesCount: 0,
+                        ))
+                    .toList(),
+              )
+            : null,
+      );
+    }
 
     final userId = SupabaseService.currentUserId;
     if (userId == null) {
@@ -422,7 +464,17 @@ class ForumService {
     String? parentId,
     String? gifUrl,
   }) async {
-    if (!SupabaseConfig.isConfigured) return null;
+    if (!SupabaseConfig.isConfigured) {
+      return PostComment(
+        id: 'comment-${DateTime.now().millisecondsSinceEpoch}',
+        postId: postId,
+        content: content.trim(),
+        authorAlias: authorAlias.trim(),
+        parentId: (parentId != null && parentId.trim().isNotEmpty) ? parentId.trim() : null,
+        gifUrl: gifUrl?.trim().isEmpty == true ? null : gifUrl?.trim(),
+        createdAt: DateTime.now(),
+      );
+    }
 
     final userId = SupabaseService.currentUserId;
     if (userId == null) {
@@ -474,6 +526,48 @@ class ForumService {
     }
   }
 
+  static List<Post> _filterSamplePosts({
+    required String category,
+    required String facultad,
+    required String carrera,
+    required String searchQuery,
+    required bool showOnlyBookmarks,
+  }) {
+    var list = _getSamplePosts();
+
+    if (showOnlyBookmarks) {
+      list = list.where((p) => p.isBookmarkedByMe).toList();
+    }
+
+    if (carrera != 'todas') {
+      list = list.where((p) => p.carrera == carrera || p.carrera == 'todas' || p.carrera == 'area_comun').toList();
+    } else if (facultad != 'todas') {
+      final fac = USACConstants.facultades.firstWhere(
+        (f) => f['id'] == facultad,
+        orElse: () => USACConstants.facultades.first,
+      );
+      final rawCarreras = fac['carreras'] as List<dynamic>? ?? [];
+      final careerIds = rawCarreras.map((c) => c['id'].toString()).toSet()
+        ..add('todas')
+        ..add('area_comun');
+      list = list.where((p) => careerIds.contains(p.carrera)).toList();
+    }
+
+    if (category != 'todos') {
+      list = list.where((p) => p.category == category).toList();
+    }
+
+    if (searchQuery.trim().isNotEmpty) {
+      final q = searchQuery.toLowerCase().trim();
+      list = list.where((p) =>
+          p.title.toLowerCase().contains(q) ||
+          p.content.toLowerCase().contains(q) ||
+          p.authorAlias.toLowerCase().contains(q)).toList();
+    }
+
+    return list;
+  }
+
   static List<Post> _getSamplePosts() {
     return [
       Post(
@@ -497,6 +591,72 @@ class ForumService {
         likes: 25,
         createdAt: DateTime.now().subtract(const Duration(days: 1)),
         commentCount: 7,
+      ),
+      Post(
+        id: 'mock-3',
+        title: 'Duda con asignación de IPC1 y Organización de Lenguajes y Compiladores',
+        category: 'prerrequisitos',
+        carrera: 'sistemas',
+        content: 'Compañeros de Sistemas, ¿cuántos créditos piden para la asignación de OLYC 1 en vacaciones? ¿Hay prerrequisito de Mate Computacional?',
+        authorAlias: 'SysDev USAC #110',
+        likes: 8,
+        createdAt: DateTime.now().subtract(const Duration(hours: 5)),
+        commentCount: 3,
+      ),
+      Post(
+        id: 'mock-4',
+        title: 'Atlas de Anatomía y resúmenes para Histología 1er Año',
+        category: 'apuntes',
+        carrera: 'medicina',
+        content: 'Comparto carpeta en Drive con esquemas del Netter y Moore comentados para los parciales de bloque de Anatomía Humana en CUM.',
+        authorAlias: 'MedEstudiante #402',
+        likes: 38,
+        createdAt: DateTime.now().subtract(const Duration(hours: 6)),
+        commentCount: 11,
+      ),
+      Post(
+        id: 'mock-5',
+        title: 'Opiniones sobre Derecho Penal 1 en S-7 y S-2',
+        category: 'catedraticos',
+        carrera: 'derecho',
+        content: '¿Alguien ha llevado con el Lic. De León o la Licda. Álvarez en el edificio S-7? ¿Qué libros de doctrina penal recomiendan conseguir?',
+        authorAlias: 'FuturoAbogado #99',
+        likes: 14,
+        createdAt: DateTime.now().subtract(const Duration(hours: 8)),
+        commentCount: 5,
+      ),
+      Post(
+        id: 'mock-6',
+        title: 'Plantillas y bloques para AutoCAD / Revit en T-1',
+        category: 'apuntes',
+        carrera: 'arquitectura',
+        content: 'Dejo enlaces para descargar bloques de escalas humanas, mobiliario y vegetación para las entregas de Diseño 3.',
+        authorAlias: 'ArquiUSAC #208',
+        likes: 19,
+        createdAt: DateTime.now().subtract(const Duration(hours: 12)),
+        commentCount: 2,
+      ),
+      Post(
+        id: 'mock-7',
+        title: 'Calculadoras permitidas para Topografía 1 y Mecánica Analítica',
+        category: 'horarios',
+        carrera: 'civil',
+        content: '¿Saben si en los exámenes de Civil permiten programables o solo científicas no graficadoras?',
+        authorAlias: 'CivilFIUSAC #501',
+        likes: 6,
+        createdAt: DateTime.now().subtract(const Duration(hours: 16)),
+        commentCount: 4,
+      ),
+      Post(
+        id: 'mock-8',
+        title: 'Comunidad general: ¿Hasta qué hora está abierta la Biblioteca Central?',
+        category: 'general',
+        carrera: 'todas',
+        content: 'Hola a todos, ¿saben los horarios actuales de la Biblioteca Central en el campus para ir a estudiar en grupos?',
+        authorAlias: 'Sancarlita #77',
+        likes: 31,
+        createdAt: DateTime.now().subtract(const Duration(days: 2)),
+        commentCount: 9,
       ),
     ];
   }
