@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
-import '../../core/utils/responsive.dart';
+import '../forum/models/discord_forum_models.dart';
 import '../forum/screens/forum_screen.dart';
+import '../forum/widgets/create_post_dialog.dart';
+import '../forum/widgets/digg/digg_header.dart';
+import '../forum/widgets/digg/digg_sidebar_left.dart';
+import '../forum/widgets/discord/forum_carrera_picker_dialog.dart';
 import '../groups/screens/groups_screen.dart';
 import '../marketplace/screens/marketplace_screen.dart';
 import '../profile/screens/profile_screen.dart';
 import '../rules/screens/rules_screen.dart';
-import '../shared/widgets/alias_badge_button.dart';
 
 class AppShell extends StatefulWidget {
   final String activeAlias;
@@ -28,158 +31,201 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
 
-  void _navigateToProfile() {
-    setState(() => _currentIndex = 3);
+  // Discord Forum Models State
+  late List<ForumServer> _servers;
+  late ForumServer _activeServer;
+  late List<ForumChannel> _channels;
+  late ForumChannel _activeChannel;
+
+  // Search & Filters State
+  DiggFeedFilter _activeFeedFilter = DiggFeedFilter.myFeed;
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _servers = List.from(ForumServer.defaultServers);
+    _activeServer = _servers.length > 2 ? _servers[2] : _servers.first; // Default to Sistemas or first
+    _channels = [
+      ...ForumChannel.defaultChannels,
+      ForumChannel.bookmarksChannel,
+    ];
+    _activeChannel = _channels.first;
   }
 
-  void _showDisclaimerModal() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: const [
-            Icon(Icons.info_outline, color: Color(0xFF004B87)),
-            SizedBox(width: 8),
-            Text('Aviso Comunitario', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          ],
-        ),
-        content: const Text(
-          'Comunidad Universitaria es una plataforma estudiantil colaborativa, autónoma y sin fines de lucro. No representa formalmente a la administración ni a las autoridades de la Universidad de San Carlos de Guatemala (USAC). Los datos académicos, pensums y directorios son informativos y compartidos entre compañeros.',
-          style: TextStyle(fontSize: 13, height: 1.4),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Entendido'),
-          ),
-        ],
-      ),
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSelectChannel(ForumChannel channel) {
+    setState(() {
+      _currentIndex = 0; // Switch to Forum
+      _activeChannel = channel;
+      _searchQuery = '';
+      _searchController.clear();
+    });
+  }
+
+  void _onSelectServer(ForumServer server) {
+    setState(() {
+      _currentIndex = 0; // Switch to Forum
+      _activeServer = server;
+      _searchQuery = '';
+      _searchController.clear();
+    });
+  }
+
+  void _onTapAvatar() {
+    setState(() => _currentIndex = 3); // Switch to Mi Perfil
+  }
+
+  void _onOpenSettings() {
+    setState(() => _currentIndex = 3); // Switch to Mi Perfil / Ajustes
+  }
+
+  void _openCreatePost() {
+    CreatePostDialog.show(
+      context,
+      activeAlias: widget.activeAlias,
+      serverName: _activeServer.name,
+      channelName: _activeChannel.name,
+      initialCategory: _activeChannel.categoryId,
+      initialFacultad: _activeServer.facultadId,
+      initialCarrera: _activeServer.carreraId,
+      onAliasChanged: widget.onAliasChanged,
+      onPostCreated: (newPost) {
+        setState(() {});
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDesktop = Responsive.isDesktop(context);
+    final width = MediaQuery.of(context).size.width;
+    final isDesktopOrTablet = width >= 768;
+    final isDark = widget.isDarkMode;
+    final feedBg = isDark ? const Color(0xFF18181B) : const Color(0xFFF4F4F5);
 
-    return Scaffold(
-      appBar: AppBar(
-        titleSpacing: 16,
-        title: Row(
+    if (isDesktopOrTablet) {
+      return Scaffold(
+        backgroundColor: feedBg,
+        body: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: const Color(0xFF004B87),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.school, color: Colors.white, size: 20),
+            // 1. Left Rail (Channels using ForumChannel models, user avatar, settings)
+            DiggSidebarLeft(
+              activeChannel: _activeChannel,
+              onSelectChannel: _onSelectChannel,
+              channels: _channels,
+              activeAlias: widget.activeAlias,
+              onTapAvatar: _onTapAvatar,
+              onOpenSettings: _onOpenSettings,
+              onOpenMoreCommunities: () {
+                ForumCarreraPickerDialog.show(
+                  context,
+                  onServerSelected: _onSelectServer,
+                );
+              },
             ),
-            const SizedBox(width: 10),
-            Flexible(
-              child: InkWell(
-                onTap: _showDisclaimerModal,
-                borderRadius: BorderRadius.circular(4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
+
+            // 2. Central Area (Header with Screen Navigation, Search Bar & Active Screen)
+            Expanded(
+              child: Column(
+                children: [
+                  // Integrated Top Header with Screen Navigation, Channel Selector & Search Bar
+                  DiggHeader(
+                    currentIndex: _currentIndex,
+                    onSelectTab: (index) {
+                      setState(() => _currentIndex = index);
+                    },
+                    activeChannel: _activeChannel,
+                    onChannelChanged: _onSelectChannel,
+                    channels: _channels,
+                    activeServer: _activeServer,
+                    onServerChanged: _onSelectServer,
+                    servers: _servers,
+                    activeFilter: _activeFeedFilter,
+                    onFilterChanged: (filter) {
+                      setState(() => _activeFeedFilter = filter);
+                    },
+                    searchController: _searchController,
+                    onSearchSubmitted: (val) {
+                      setState(() => _searchQuery = val);
+                    },
+                    onClearSearch: () {
+                      _searchController.clear();
+                      setState(() => _searchQuery = '');
+                    },
+                    activeAlias: widget.activeAlias,
+                    onAliasChanged: widget.onAliasChanged,
+                    onOpenCreatePost: _currentIndex == 0 ? _openCreatePost : null,
+                    onToggleTheme: widget.onToggleTheme,
+                    isDarkMode: widget.isDarkMode,
+                  ),
+
+                  // Active Screen Content
+                  Expanded(
+                    child: IndexedStack(
+                      index: _currentIndex,
                       children: [
-                        Flexible(
-                          child: Text(
-                            isDesktop ? 'Comunidad Universitaria' : 'Comunidad USAC',
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                          ),
+                        ForumScreen(
+                          activeAlias: widget.activeAlias,
+                          onAliasChanged: widget.onAliasChanged,
+                          onToggleTheme: widget.onToggleTheme,
+                          isDarkMode: widget.isDarkMode,
+                          activeChannel: _activeChannel,
+                          activeServer: _activeServer,
+                          onChannelChanged: _onSelectChannel,
+                          activeFeedFilter: _activeFeedFilter,
+                          searchQuery: _searchQuery,
+                          isEmbeddedInShell: true,
                         ),
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            'No Oficial',
-                            style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.primary,
-                            ),
-                          ),
+                        GroupsScreen(
+                          activeAlias: widget.activeAlias,
+                          onAliasChanged: widget.onAliasChanged,
                         ),
+                        MarketplaceScreen(
+                          activeAlias: widget.activeAlias,
+                          onAliasChanged: widget.onAliasChanged,
+                        ),
+                        ProfileScreen(
+                          activeAlias: widget.activeAlias,
+                          onAliasChanged: widget.onAliasChanged,
+                          onToggleTheme: widget.onToggleTheme,
+                          isDarkMode: widget.isDarkMode,
+                        ),
+                        const RulesScreen(),
                       ],
                     ),
-                    Text(
-                      'Red Estudiantil Autónoma',
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
-                        color: isDesktop ? Colors.grey.shade600 : theme.colorScheme.primary,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
-        actions: [
-          // User Alias Pill that links directly to Profile
-          AliasBadgeButton(
-            alias: widget.activeAlias,
-            onAliasChanged: widget.onAliasChanged,
-            onTap: _navigateToProfile,
-          ),
-          const SizedBox(width: 8),
+      );
+    }
 
-          // Theme toggle
-          IconButton(
-            icon: Icon(widget.isDarkMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined, size: 20),
-            tooltip: 'Cambiar tema',
-            onPressed: widget.onToggleTheme,
-          ),
-          const SizedBox(width: 8),
-        ],
-        bottom: isDesktop
-            ? PreferredSize(
-                preferredSize: const Size.fromHeight(48),
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(
-                        color: widget.isDarkMode ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                      ),
-                    ),
-                  ),
-                  child: MaxWidthContainer(
-                    maxWidth: 1100,
-                    padding: EdgeInsets.zero,
-                    child: Row(
-                      children: [
-                        _buildNavTab(index: 0, label: 'Foro Estudiantil', icon: Icons.forum_outlined),
-                        _buildNavTab(index: 1, label: 'Grupos de Estudio', icon: Icons.groups_outlined),
-                        _buildNavTab(index: 2, label: 'Marketplace & Tutorías', icon: Icons.storefront_outlined),
-                        _buildNavTab(index: 3, label: 'Mi Perfil', icon: Icons.person_outline),
-                        _buildNavTab(index: 4, label: 'Normas & Descargo', icon: Icons.shield_outlined),
-                      ],
-                    ),
-                  ),
-                ),
-              )
-            : null,
-      ),
-      // IndexedStack avoids destroying and re-fetching screens when switching tabs
+    // Mobile layout (screens < 768px): clean body with bottom NavigationBar
+    return Scaffold(
+      backgroundColor: feedBg,
       body: IndexedStack(
         index: _currentIndex,
         children: [
           ForumScreen(
             activeAlias: widget.activeAlias,
             onAliasChanged: widget.onAliasChanged,
+            onToggleTheme: widget.onToggleTheme,
+            isDarkMode: widget.isDarkMode,
+            activeChannel: _activeChannel,
+            activeServer: _activeServer,
+            onChannelChanged: _onSelectChannel,
+            activeFeedFilter: _activeFeedFilter,
+            searchQuery: _searchQuery,
+            isEmbeddedInShell: false,
           ),
           GroupsScreen(
             activeAlias: widget.activeAlias,
@@ -198,83 +244,38 @@ class _AppShellState extends State<AppShell> {
           const RulesScreen(),
         ],
       ),
-      bottomNavigationBar: isDesktop
-          ? null
-          : NavigationBar(
-              selectedIndex: _currentIndex,
-              onDestinationSelected: (index) {
-                setState(() => _currentIndex = index);
-              },
-              destinations: const [
-                NavigationDestination(
-                  icon: Icon(Icons.forum_outlined),
-                  selectedIcon: Icon(Icons.forum),
-                  label: 'Foro',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.groups_outlined),
-                  selectedIcon: Icon(Icons.groups),
-                  label: 'Grupos',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.storefront_outlined),
-                  selectedIcon: Icon(Icons.storefront),
-                  label: 'Marketplace',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.person_outline),
-                  selectedIcon: Icon(Icons.person),
-                  label: 'Perfil',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.shield_outlined),
-                  selectedIcon: Icon(Icons.shield),
-                  label: 'Normas',
-                ),
-              ],
-            ),
-    );
-  }
-
-  Widget _buildNavTab({
-    required int index,
-    required String label,
-    required IconData icon,
-  }) {
-    final isSelected = _currentIndex == index;
-    final theme = Theme.of(context);
-
-    return InkWell(
-      onTap: () => setState(() => _currentIndex = index),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: isSelected ? theme.colorScheme.primary : Colors.transparent,
-              width: 2.5,
-            ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _currentIndex,
+        onDestinationSelected: (index) {
+          setState(() => _currentIndex = index);
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.forum_outlined),
+            selectedIcon: Icon(Icons.forum),
+            label: 'Foro',
           ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 18,
-              color: isSelected ? theme.colorScheme.primary : Colors.grey.shade600,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: isSelected ? theme.colorScheme.primary : Colors.grey.shade700,
-              ),
-            ),
-          ],
-        ),
+          NavigationDestination(
+            icon: Icon(Icons.groups_outlined),
+            selectedIcon: Icon(Icons.groups),
+            label: 'Grupos',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.storefront_outlined),
+            selectedIcon: Icon(Icons.storefront),
+            label: 'Marketplace',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: 'Perfil',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.shield_outlined),
+            selectedIcon: Icon(Icons.shield),
+            label: 'Normas',
+          ),
+        ],
       ),
     );
   }

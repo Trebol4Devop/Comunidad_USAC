@@ -472,6 +472,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'groups_fab',
         onPressed: _openCreateGroupDialog,
         backgroundColor: const Color(0xFF198754),
         foregroundColor: Colors.white,

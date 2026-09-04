@@ -526,6 +526,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'marketplace_fab',
         onPressed: _handleCreateListingClick,
         backgroundColor: const Color(0xFF004B87),
         foregroundColor: Colors.white,
