@@ -115,11 +115,13 @@ class _AppShellState extends State<AppShell> {
         body: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 1. Left Rail (Channels using ForumChannel models, user avatar, settings)
+            // 1. Left Rail (USAC Faculty Servers, user avatar, settings, normas)
             DiggSidebarLeft(
+              activeServer: _activeServer,
+              onSelectServer: _onSelectServer,
+              servers: _servers,
               activeChannel: _activeChannel,
               onSelectChannel: _onSelectChannel,
-              channels: _channels,
               activeAlias: widget.activeAlias,
               onTapAvatar: _onTapAvatar,
               onOpenSettings: _onOpenSettings,
@@ -128,6 +130,9 @@ class _AppShellState extends State<AppShell> {
                   context,
                   onServerSelected: _onSelectServer,
                 );
+              },
+              onOpenRules: () {
+                setState(() => _currentIndex = 4); // Switch to Normas Screen
               },
             ),
 

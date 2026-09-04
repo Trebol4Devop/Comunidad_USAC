@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/services/supabase_service.dart';
-import '../../../shared/widgets/alias_badge_button.dart';
-import '../../../shared/widgets/auth_modal.dart';
 import '../../models/discord_forum_models.dart';
-import '../discord/forum_carrera_picker_dialog.dart';
 
 enum DiggFeedFilter { myFeed, allDigg }
 
@@ -59,26 +55,6 @@ class DiggHeader extends StatefulWidget {
 class _DiggHeaderState extends State<DiggHeader> {
   bool _isSearchExpanded = false;
 
-  void _handleAuthAction() {
-    if (SupabaseService.isAuthenticated) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Sesión activa como: ${SupabaseService.currentUser?.email ?? widget.activeAlias}'),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    } else {
-      AuthModal.show(
-        context,
-        title: 'Iniciar Sesión / Registro',
-        subtitle: 'Accede con tu cuenta institucional o correo para personalizar tu feed.',
-        onAuthenticated: () {
-          setState(() {});
-        },
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -97,69 +73,17 @@ class _DiggHeaderState extends State<DiggHeader> {
       ),
       child: Row(
         children: [
-          // 1. Screen Navigation Tabs (Foro, Grupos, Marketplace, Perfil, Normas)
+          // 1. Screen Navigation Tabs (Foro, Grupos, Marketplace)
           _buildScreenNavigationTabs(theme, isDark),
-
-          const SizedBox(width: 10),
-
-          // 2. Channel & Server Selectors when inside Forum
-          if (widget.currentIndex == 0) ...[
-            _buildChannelSelector(theme, isDark),
-            const SizedBox(width: 8),
-            _buildServerBadge(theme, isDark),
-          ],
 
           const Spacer(),
 
-          // 3. Search Bar Section
+          // 2. Search Bar Section
           _buildSearchBar(theme, isDark),
 
           const SizedBox(width: 10),
 
-          // 4. Create Button
-          if (widget.onOpenCreatePost != null) ...[
-            _ScalePressButton(
-              onTap: widget.onOpenCreatePost!,
-              child: Container(
-                height: 36,
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF004B87),
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x20004B87),
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.add_rounded, size: 18, color: Colors.white),
-                    SizedBox(width: 6),
-                    Text(
-                      'Publicar',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-          ],
-
-          // 5. Auth Button
-          _buildAuthButton(theme, isDark),
-
-          const SizedBox(width: 6),
-
-          // 6. Theme toggle
+          // 3. Theme toggle
           if (widget.onToggleTheme != null)
             IconButton(
               icon: Icon(
@@ -206,20 +130,6 @@ class _DiggHeaderState extends State<DiggHeader> {
             label: 'Marketplace',
             icon: Icons.storefront_outlined,
             activeIcon: Icons.storefront,
-            isDark: isDark,
-          ),
-          _buildScreenTab(
-            index: 3,
-            label: 'Perfil',
-            icon: Icons.person_outline,
-            activeIcon: Icons.person,
-            isDark: isDark,
-          ),
-          _buildScreenTab(
-            index: 4,
-            label: 'Normas',
-            icon: Icons.shield_outlined,
-            activeIcon: Icons.shield,
             isDark: isDark,
           ),
         ],
@@ -288,140 +198,13 @@ class _DiggHeaderState extends State<DiggHeader> {
     );
   }
 
-  Widget _buildChannelSelector(ThemeData theme, bool isDark) {
-    final currentCh = widget.activeChannel ??
-        (widget.channels.isNotEmpty ? widget.channels.first : ForumChannel.defaultChannels.first);
-
-    return PopupMenuButton<ForumChannel>(
-      tooltip: 'Seleccionar Canal',
-      offset: const Offset(0, 42),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      onSelected: (ch) {
-        if (widget.onChannelChanged != null) {
-          widget.onChannelChanged!(ch);
-        }
-      },
-      itemBuilder: (ctx) => widget.channels.map((ch) {
-        final isSelected = ch.id == currentCh.id;
-        return PopupMenuItem<ForumChannel>(
-          value: ch,
-          child: Row(
-            children: [
-              Icon(
-                ch.icon,
-                size: 18,
-                color: isSelected ? const Color(0xFF004B87) : Colors.grey,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '#${ch.name}',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  color: isSelected ? const Color(0xFF004B87) : null,
-                ),
-              ),
-            ],
-          ),
-        );
-      }).toList(),
-      child: Container(
-        height: 36,
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF27272A) : const Color(0xFFF1F5F9),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              currentCh.icon,
-              size: 16,
-              color: const Color(0xFF004B87),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              '#${currentCh.name}',
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-                color: isDark ? const Color(0xFFE4E4E7) : const Color(0xFF334155),
-              ),
-            ),
-            const SizedBox(width: 4),
-            Icon(
-              Icons.keyboard_arrow_down_rounded,
-              size: 16,
-              color: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildServerBadge(ThemeData theme, bool isDark) {
-    final srv = widget.activeServer ?? ForumServer.defaultServers.first;
-
-    return Tooltip(
-      message: 'Carrera: ${srv.name}',
-      child: InkWell(
-        onTap: () {
-          ForumCarreraPickerDialog.show(
-            context,
-            onServerSelected: (newServer) {
-              if (widget.onServerChanged != null) {
-                widget.onServerChanged!(newServer);
-              }
-            },
-          );
-        },
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          height: 36,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          decoration: BoxDecoration(
-            color: srv.color.withValues(alpha: isDark ? 0.25 : 0.12),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: srv.color.withValues(alpha: 0.35),
-              width: 1,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(srv.icon, size: 15, color: srv.color),
-              const SizedBox(width: 6),
-              Text(
-                srv.shortCode,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: srv.color,
-                ),
-              ),
-              const SizedBox(width: 2),
-              Icon(
-                Icons.unfold_more_rounded,
-                size: 14,
-                color: srv.color.withValues(alpha: 0.8),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildSearchBar(ThemeData theme, bool isDark) {
     final searchBg = isDark ? const Color(0xFF27272A) : const Color(0xFFF4F4F5);
 
     String hintText = 'Buscar en la comunidad...';
     if (widget.currentIndex == 0) {
-      final chName = widget.activeChannel?.name ?? 'foro';
-      hintText = 'Buscar en #$chName...';
+      final srv = widget.activeServer ?? ForumServer.defaultServers.first;
+      hintText = 'Buscar en ${srv.shortCode}...';
     } else if (widget.currentIndex == 1) {
       hintText = 'Buscar grupos...';
     } else if (widget.currentIndex == 2) {
@@ -464,51 +247,6 @@ class _DiggHeaderState extends State<DiggHeader> {
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: BorderSide.none,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAuthButton(ThemeData theme, bool isDark) {
-    final isAuthenticated = SupabaseService.isAuthenticated;
-
-    if (isAuthenticated) {
-      return AliasBadgeButton(
-        alias: widget.activeAlias,
-        onAliasChanged: widget.onAliasChanged,
-        onTap: () {
-          if (widget.onSelectTab != null) {
-            widget.onSelectTab!(3); // Navigate to Profile
-          }
-        },
-      );
-    }
-
-    return _ScalePressButton(
-      onTap: _handleAuthAction,
-      child: Container(
-        height: 36,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        decoration: BoxDecoration(
-          color: isDark ? Colors.white : const Color(0xFF18181B),
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          'Signup / Login',
-          style: TextStyle(
-            color: isDark ? const Color(0xFF18181B) : Colors.white,
-            fontSize: 12.5,
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.2,
           ),
         ),
       ),

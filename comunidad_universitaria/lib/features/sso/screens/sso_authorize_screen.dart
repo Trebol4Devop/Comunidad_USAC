@@ -4,7 +4,6 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../core/services/local_storage_service.dart';
 import '../../../core/services/supabase_service.dart';
-import '../../../core/utils/responsive.dart';
 import '../sso_security_validator.dart';
 
 class SsoAuthorizeScreen extends StatefulWidget {

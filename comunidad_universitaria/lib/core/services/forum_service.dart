@@ -43,7 +43,7 @@ class ForumService {
             .lt('moderation_status', 2)
             .timeout(const Duration(seconds: 10));
         final List<dynamic> data = postsRes as List<dynamic>;
-        return _hydratePosts(data, currentUserId);
+        return await _hydratePosts(data, currentUserId);
       }
 
       var query = SupabaseService.client
@@ -79,7 +79,7 @@ class ForumService {
           .timeout(const Duration(seconds: 10));
       final List<dynamic> data = response as List<dynamic>;
 
-      return _hydratePosts(data, currentUserId);
+      return await _hydratePosts(data, currentUserId);
     } catch (e) {
       debugPrint('Error al obtener posts del foro: $e');
       return _getSamplePosts();

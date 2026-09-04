@@ -2,15 +2,18 @@ import 'package:flutter/material.dart';
 import '../../models/discord_forum_models.dart';
 
 class DiggSidebarLeft extends StatelessWidget {
-  final ForumChannel? activeChannel;
-  final Function(ForumChannel channel)? onSelectChannel;
-  final List<ForumChannel> channels;
+  final ForumServer? activeServer;
+  final Function(ForumServer server)? onSelectServer;
+  final List<ForumServer> servers;
   final String activeAlias;
   final VoidCallback? onTapAvatar;
   final VoidCallback onOpenSettings;
   final VoidCallback? onOpenMoreCommunities;
+  final VoidCallback? onOpenRules;
 
-  // Optional legacy fallbacks
+  // Optional legacy / fallback properties for backward compatibility
+  final ForumChannel? activeChannel;
+  final Function(ForumChannel channel)? onSelectChannel;
   final String? activeSection;
   final String? activeCommunityId;
   final Function(String section)? onSelectSection;
@@ -18,16 +21,16 @@ class DiggSidebarLeft extends StatelessWidget {
 
   const DiggSidebarLeft({
     super.key,
-    this.activeChannel,
-    this.onSelectChannel,
-    this.channels = const [
-      ...ForumChannel.defaultChannels,
-      ForumChannel.bookmarksChannel,
-    ],
+    this.activeServer,
+    this.onSelectServer,
+    this.servers = ForumServer.defaultServers,
     this.activeAlias = 'Estudiante',
     this.onTapAvatar,
     required this.onOpenSettings,
     this.onOpenMoreCommunities,
+    this.onOpenRules,
+    this.activeChannel,
+    this.onSelectChannel,
     this.activeSection,
     this.activeCommunityId,
     this.onSelectSection,
@@ -41,13 +44,7 @@ class DiggSidebarLeft extends StatelessWidget {
     final borderColor = isDark ? const Color(0xFF27272A) : const Color(0xFFE4E4E7);
     final bgSurface = isDark ? const Color(0xFF18181B) : const Color(0xFFFAFAFA);
 
-    final currentChannelId = activeChannel?.id ??
-        (activeCommunityId ??
-            (activeSection == 'questions'
-                ? 'prerrequisitos'
-                : activeSection == 'top'
-                    ? 'catedraticos'
-                    : 'todos'));
+    final currentServerId = activeServer?.id ?? (servers.isNotEmpty ? servers.first.id : 'todas');
 
     return Container(
       width: 70,
@@ -60,7 +57,7 @@ class DiggSidebarLeft extends StatelessWidget {
       child: Column(
         children: [
           const SizedBox(height: 12),
-          // 1. Top Logo (Brand identity)
+          // 1. Top Logo (Brand identity - returns to general USAC server)
           _buildLogo(theme, isDark),
 
           const SizedBox(height: 14),
@@ -70,18 +67,18 @@ class DiggSidebarLeft extends StatelessWidget {
           ),
           const SizedBox(height: 10),
 
-          // 2. Discord Channels Vertical Rail (ForumChannel models)
+          // 2. Discord Faculty Servers Vertical Rail (ForumServer models)
           Expanded(
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(vertical: 4),
-              itemCount: channels.length,
+              itemCount: servers.length,
               separatorBuilder: (context, index) => const SizedBox(height: 10),
               itemBuilder: (context, index) {
-                final ch = channels[index];
-                final isSelected = ch.id == currentChannelId;
-                return _buildChannelItem(
+                final srv = servers[index];
+                final isSelected = srv.id == currentServerId;
+                return _buildServerItem(
                   context: context,
-                  channel: ch,
+                  server: srv,
                   isSelected: isSelected,
                   theme: theme,
                   isDark: isDark,
@@ -90,12 +87,22 @@ class DiggSidebarLeft extends StatelessWidget {
             ),
           ),
 
-          // 3. Bottom Controls (User Avatar & Settings)
+          // 3. Bottom Controls: Explorar, Normas, Avatar, Ajustes
           if (onOpenMoreCommunities != null) ...[
             _buildBottomAction(
               icon: Icons.explore_outlined,
-              tooltip: 'Explorar Carreras y Canales',
+              tooltip: 'Explorar Facultades y Carreras',
               onTap: onOpenMoreCommunities!,
+              isDark: isDark,
+            ),
+            const SizedBox(height: 8),
+          ],
+
+          if (onOpenRules != null) ...[
+            _buildBottomAction(
+              icon: Icons.shield_outlined,
+              tooltip: 'Normas de la Comunidad',
+              onTap: onOpenRules!,
               isDark: isDark,
             ),
             const SizedBox(height: 8),
@@ -119,13 +126,13 @@ class DiggSidebarLeft extends StatelessWidget {
 
   Widget _buildLogo(ThemeData theme, bool isDark) {
     return Tooltip(
-      message: 'Comunidad USAC - Canales Estudiantiles',
+      message: 'Comunidad USAC - Campus Central',
       child: _ScalePressButton(
         onTap: () {
-          if (onSelectChannel != null && channels.isNotEmpty) {
-            onSelectChannel!(channels.first);
-          } else if (onSelectSection != null) {
-            onSelectSection!('featured');
+          if (onSelectServer != null && servers.isNotEmpty) {
+            onSelectServer!(servers.first);
+          } else if (onSelectChannel != null && activeChannel != null) {
+            onSelectChannel!(activeChannel!);
           }
         },
         child: Container(
@@ -153,23 +160,23 @@ class DiggSidebarLeft extends StatelessWidget {
     );
   }
 
-  Widget _buildChannelItem({
+  Widget _buildServerItem({
     required BuildContext context,
-    required ForumChannel channel,
+    required ForumServer server,
     required bool isSelected,
     required ThemeData theme,
     required bool isDark,
   }) {
     return Tooltip(
-      message: '#${channel.name}\n${channel.description}',
+      message: '${server.name}\n${server.description}',
       preferBelow: false,
       child: _ScalePressButton(
         onTap: () {
-          if (onSelectChannel != null) {
-            onSelectChannel!(channel);
+          if (onSelectServer != null) {
+            onSelectServer!(server);
           }
           if (onSelectCommunity != null) {
-            onSelectCommunity!(channel.categoryId);
+            onSelectCommunity!(server.id);
           }
         },
         child: Center(
@@ -177,35 +184,41 @@ class DiggSidebarLeft extends StatelessWidget {
             clipBehavior: Clip.none,
             alignment: Alignment.center,
             children: [
-              // Discord-style Active Indicator Pill on the left
-              if (isSelected)
-                Positioned(
-                  left: -14,
-                  child: Container(
-                    width: 4,
-                    height: 24,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF004B87),
-                      borderRadius: BorderRadius.horizontal(right: Radius.circular(4)),
-                    ),
+              // Discord-style Active Indicator Pill on the left rail edge
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOut,
+                left: -14,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOut,
+                  width: isSelected ? 4 : 0,
+                  height: isSelected ? 28 : 0,
+                  decoration: BoxDecoration(
+                    color: server.color,
+                    borderRadius: const BorderRadius.horizontal(right: Radius.circular(4)),
                   ),
                 ),
-              // Squircle / Circle Channel Icon
+              ),
+              // Squircle / Circle Server Icon (Discord Morphing Shape)
               AnimatedContainer(
                 duration: const Duration(milliseconds: 160),
                 curve: Curves.easeOut,
-                width: 42,
-                height: 42,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? const Color(0xFF004B87)
+                      ? server.color
                       : (isDark ? const Color(0xFF27272A) : const Color(0xFFF1F5F9)),
-                  borderRadius: BorderRadius.circular(isSelected ? 13 : 21), // Discord squircle morph
+                  borderRadius: BorderRadius.circular(isSelected ? 14 : 22), // Discord squircle morph
+                  border: isSelected
+                      ? Border.all(color: Colors.white.withValues(alpha: 0.25), width: 1.5)
+                      : null,
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: const Color(0x35004B87),
-                            blurRadius: 6,
+                            color: server.color.withValues(alpha: 0.35),
+                            blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
                         ]
@@ -213,8 +226,8 @@ class DiggSidebarLeft extends StatelessWidget {
                 ),
                 alignment: Alignment.center,
                 child: Icon(
-                  channel.icon,
-                  size: 20,
+                  server.icon,
+                  size: 21,
                   color: isSelected
                       ? Colors.white
                       : (isDark ? const Color(0xFFA1A1AA) : const Color(0xFF64748B)),

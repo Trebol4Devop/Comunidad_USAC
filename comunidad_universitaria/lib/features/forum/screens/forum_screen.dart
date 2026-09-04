@@ -56,8 +56,7 @@ class _ForumScreenState extends State<ForumScreen> {
 
   // Filter & Navigation States
   DiggFeedFilter _activeFeedFilter = DiggFeedFilter.myFeed;
-  String _activeSection = 'featured'; // 'questions', 'featured', 'top'
-  String? _activeCommunityId; // e.g. 'gaming', 'tech', 'ingenieria'
+  final String _activeSection = 'featured'; // 'questions', 'featured', 'top'
 
   // Data & Search States
   List<Post> _posts = [];
@@ -351,26 +350,16 @@ class _ForumScreenState extends State<ForumScreen> {
       return Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Central Column (Filter Pills + Feed List)
+          // Central Column (Feed List with Facebook-style Create Post composer)
           Expanded(
-            child: Column(
-              children: [
-                // Scrollable Horizontal Channel Chips (Default Carrera Channels)
-                _buildChannelPills(theme, isDark),
-
-                // Feed List
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: _loadPosts,
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 720),
-                        child: _buildFeedList(theme, isDark),
-                      ),
-                    ),
-                  ),
+            child: RefreshIndicator(
+              onRefresh: _loadPosts,
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 720),
+                  child: _buildFeedList(theme, isDark),
                 ),
-              ],
+              ),
             ),
           ),
 
@@ -395,8 +384,15 @@ class _ForumScreenState extends State<ForumScreen> {
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 1. Left Navigation & Communities Rail (68px)
+          // 1. Left Navigation & USAC Faculty Rail (68px)
           DiggSidebarLeft(
+            activeServer: _activeServer,
+            onSelectServer: (srv) {
+              setState(() {
+                _activeServer = srv;
+              });
+              _loadPosts();
+            },
             activeChannel: _activeChannel,
             onSelectChannel: (ch) {
               setState(() {
@@ -412,7 +408,7 @@ class _ForumScreenState extends State<ForumScreen> {
             },
           ),
 
-          // 2. Central Column (Header + Filter Pills + Feed)
+          // 2. Central Column (Header + Feed)
           Expanded(
             child: Container(
               color: feedBg,
@@ -452,9 +448,6 @@ class _ForumScreenState extends State<ForumScreen> {
                     onToggleTheme: widget.onToggleTheme,
                     isDarkMode: widget.isDarkMode,
                   ),
-
-                  // Horizontal Scrollable Channel Chips
-                  _buildChannelPills(theme, isDark),
 
                   // Feed List
                   Expanded(
@@ -498,6 +491,16 @@ class _ForumScreenState extends State<ForumScreen> {
         child: Row(
           children: [
             DiggSidebarLeft(
+              activeServer: _activeServer,
+              onSelectServer: (srv) {
+                setState(() {
+                  _activeServer = srv;
+                });
+                _loadPosts();
+                if (_scaffoldKey.currentState?.isDrawerOpen == true) {
+                  Navigator.of(context).pop();
+                }
+              },
               activeChannel: _activeChannel,
               onSelectChannel: (ch) {
                 setState(() {
@@ -520,12 +523,12 @@ class _ForumScreenState extends State<ForumScreen> {
                   children: [
                     const SizedBox(height: 32),
                     const Text(
-                      'Comunidades Digg',
+                      'Comunidades USAC',
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     const SizedBox(height: 12),
                     const Text(
-                      'Selecciona un canal para filtrar noticias académicas y debates.',
+                      'Selecciona una facultad en la barra izquierda para filtrar debates y aportes.',
                       style: TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                   ],
@@ -550,7 +553,7 @@ class _ForumScreenState extends State<ForumScreen> {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Text(
-                'digg',
+                'USAC',
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w900,
@@ -561,7 +564,7 @@ class _ForumScreenState extends State<ForumScreen> {
             ),
             const SizedBox(width: 8),
             Text(
-              _activeCommunityId != null ? '/$_activeCommunityId' : 'My Feed',
+              _activeServer.shortCode,
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
             ),
           ],
@@ -576,131 +579,156 @@ class _ForumScreenState extends State<ForumScreen> {
               );
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.add_circle, color: Color(0xFF004B87)),
-            onPressed: _openCreateDialog,
-          ),
         ],
       ),
-      body: Column(
-        children: [
-          _buildChannelPills(theme, isDark),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: _loadPosts,
-              child: _buildFeedList(theme, isDark),
-            ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openCreateDialog,
-        backgroundColor: const Color(0xFF004B87),
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Publicar', style: TextStyle(fontWeight: FontWeight.bold)),
+      body: RefreshIndicator(
+        onRefresh: _loadPosts,
+        child: _buildFeedList(theme, isDark),
       ),
     );
   }
 
-  Widget _buildChannelPills(ThemeData theme, bool isDark) {
-    final activeCh = widget.activeChannel ?? _activeChannel;
-    final channels = [
-      ...ForumChannel.defaultChannels,
-      ForumChannel.bookmarksChannel,
-    ];
+  Widget _buildFacebookCreatePostBox(ThemeData theme, bool isDark) {
+    final cardBg = isDark ? const Color(0xFF27272A) : Colors.white;
+    final inputBg = isDark ? const Color(0xFF18181B) : const Color(0xFFF4F4F5);
+    final borderColor = isDark ? const Color(0xFF3F3F46) : const Color(0xFFE4E4E7);
+    final hintColor = isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A);
+    final aliasLetter = widget.activeAlias.trim().isNotEmpty
+        ? widget.activeAlias.trim()[0].toUpperCase()
+        : 'U';
+
+    final srv = widget.activeServer ?? _activeServer;
 
     return Container(
-      height: 44,
-      width: double.infinity,
-      color: Colors.transparent,
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 860),
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            scrollDirection: Axis.horizontal,
-            itemCount: channels.length,
-            separatorBuilder: (_, index) => const SizedBox(width: 8),
-            itemBuilder: (context, index) {
-              final ch = channels[index];
-              final isSelected = activeCh.id == ch.id;
-
-              return _buildChannelPillChip(
-                channel: ch,
-                isSelected: isSelected,
-                onTap: () {
-                  setState(() {
-                    _activeChannel = ch;
-                  });
-                  widget.onChannelChanged?.call(ch);
-                  _loadPosts();
-                },
-                theme: theme,
-                isDark: isDark,
-              );
-            },
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-        ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Row: User Avatar + Clickable Input Box
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isDark ? const Color(0xFF1E3A5F) : const Color(0xFFE0EDF8),
+                  border: Border.all(
+                    color: const Color(0xFF004B87),
+                    width: 2,
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  aliasLetter,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF004B87),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: InkWell(
+                  onTap: _openCreateDialog,
+                  borderRadius: BorderRadius.circular(24),
+                  child: Container(
+                    height: 42,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: inputBg,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: borderColor.withValues(alpha: 0.6)),
+                    ),
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      '¿Qué estás pensando, ${widget.activeAlias}? Publica en ${srv.shortCode}...',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        color: hintColor,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Divider(color: borderColor.withValues(alpha: 0.6), height: 1),
+          const SizedBox(height: 8),
+
+          // Bottom Quick Actions: Foto / Imagen, Encuesta, Duda Académica
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildFacebookActionItem(
+                icon: Icons.photo_library_outlined,
+                iconColor: const Color(0xFF16A34A),
+                label: 'Foto / Archivo',
+                onTap: _openCreateDialog,
+                isDark: isDark,
+              ),
+              _buildFacebookActionItem(
+                icon: Icons.poll_outlined,
+                iconColor: const Color(0xFF2563EB),
+                label: 'Encuesta',
+                onTap: _openCreateDialog,
+                isDark: isDark,
+              ),
+              _buildFacebookActionItem(
+                icon: Icons.help_outline_rounded,
+                iconColor: const Color(0xFFD97706),
+                label: 'Consulta',
+                onTap: _openCreateDialog,
+                isDark: isDark,
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildChannelPillChip({
-    required ForumChannel channel,
-    required bool isSelected,
+  Widget _buildFacebookActionItem({
+    required IconData icon,
+    required Color iconColor,
+    required String label,
     required VoidCallback onTap,
-    required ThemeData theme,
     required bool isDark,
   }) {
-    final activeBg = const Color(0xFF004B87);
-    final inactiveBg = isDark
-        ? const Color(0xFF27272A).withValues(alpha: 0.7)
-        : const Color(0xFFE4E4E7).withValues(alpha: 0.6);
-    final activeTextColor = Colors.white;
-    final inactiveTextColor = isDark ? const Color(0xFFA1A1AA) : const Color(0xFF52525B);
-
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(9999),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 140),
-        curve: Curves.easeOut,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-        decoration: BoxDecoration(
-          color: isSelected ? activeBg : inactiveBg,
-          borderRadius: BorderRadius.circular(9999), // Capsule Pill
-          border: Border.all(
-            color: isSelected
-                ? const Color(0xFF004B87)
-                : (isDark ? const Color(0x2AFFFFFF) : const Color(0x18000000)),
-            width: isSelected ? 1.5 : 1.0,
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: const Color(0x35004B87),
-                    blurRadius: 5,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              channel.icon,
-              size: 14,
-              color: isSelected ? activeTextColor : inactiveTextColor,
-            ),
-            const SizedBox(width: 6),
+            Icon(icon, size: 20, color: iconColor),
+            const SizedBox(width: 8),
             Text(
-              '# ${channel.name}',
+              label,
               style: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: isSelected ? activeTextColor : inactiveTextColor,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B),
               ),
             ),
           ],
@@ -722,26 +750,36 @@ class _ForumScreenState extends State<ForumScreen> {
     final displayPosts = _posts;
 
     if (displayPosts.isEmpty) {
-      final activeCh = widget.activeChannel ?? _activeChannel;
-      return Padding(
-        padding: const EdgeInsets.all(24),
-        child: EmptyStateWidget(
-          icon: Icons.newspaper_rounded,
-          title: 'No hay publicaciones en #${activeCh.name}',
-          description: _searchQuery.isNotEmpty
-              ? 'No se encontraron resultados para "$_searchQuery".'
-              : 'Sé el primero en compartir un aporte o consulta en este canal.',
-          buttonText: 'Crear Primera Publicación',
-          onButtonPressed: _openCreateDialog,
-        ),
+      final srv = widget.activeServer ?? _activeServer;
+      return ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        children: [
+          _buildFacebookCreatePostBox(theme, isDark),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            child: EmptyStateWidget(
+              icon: Icons.newspaper_rounded,
+              title: 'No hay publicaciones en ${srv.name}',
+              description: _searchQuery.isNotEmpty
+                  ? 'No se encontraron resultados para "$_searchQuery".'
+                  : 'Sé el primero en compartir un aporte o consulta en esta facultad.',
+              buttonText: 'Crear Primera Publicación',
+              onButtonPressed: _openCreateDialog,
+            ),
+          ),
+        ],
       );
     }
 
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      itemCount: displayPosts.length,
+      itemCount: displayPosts.length + 1, // First item is the Facebook create post box
       itemBuilder: (context, index) {
-        final post = displayPosts[index];
+        if (index == 0) {
+          return _buildFacebookCreatePostBox(theme, isDark);
+        }
+
+        final post = displayPosts[index - 1];
         return DiggPostCard(
           key: ValueKey(post.id),
           post: post,

@@ -159,6 +159,13 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
         }
       }
     }
+    if (_selectedFacultad != 'todas') {
+      final fac = USACConstants.facultades.firstWhere(
+        (f) => f['id'] == _selectedFacultad,
+        orElse: () => USACConstants.facultades.first,
+      );
+      return fac['nombre'] as String? ?? 'Campus Central (General)';
+    }
     return 'Campus Central (General)';
   }
 
