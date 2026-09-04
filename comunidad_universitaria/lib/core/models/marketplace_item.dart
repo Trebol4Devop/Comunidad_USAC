@@ -80,6 +80,7 @@ class MarketplaceItem {
   final int reportedCount;
   final int upvotes;
   final bool isUpvotedByMe;
+  final String status; // available, reserved, sold, archived
 
   MarketplaceItem({
     required this.id,
@@ -108,6 +109,7 @@ class MarketplaceItem {
     this.reportedCount = 0,
     this.upvotes = 0,
     this.isUpvotedByMe = false,
+    this.status = 'available',
   });
 
   String get formattedPrice {
@@ -187,6 +189,7 @@ class MarketplaceItem {
     int? reportedCount,
     int? upvotes,
     bool? isUpvotedByMe,
+    String? status,
   }) {
     return MarketplaceItem(
       id: id ?? this.id,
@@ -215,6 +218,7 @@ class MarketplaceItem {
       reportedCount: reportedCount ?? this.reportedCount,
       upvotes: upvotes ?? this.upvotes,
       isUpvotedByMe: isUpvotedByMe ?? this.isUpvotedByMe,
+      status: status ?? this.status,
     );
   }
 
@@ -262,6 +266,7 @@ class MarketplaceItem {
       reportedCount: (map['reported_count'] is int) ? map['reported_count'] : int.tryParse(map['reported_count']?.toString() ?? '0') ?? 0,
       upvotes: (map['upvotes'] is int) ? map['upvotes'] : int.tryParse(map['upvotes']?.toString() ?? '0') ?? 0,
       isUpvotedByMe: isUpvotedByMe,
+      status: map['status']?.toString() ?? 'available',
     );
   }
 
@@ -290,6 +295,7 @@ class MarketplaceItem {
       'moderation_status': moderationStatus,
       'reported_count': reportedCount,
       'upvotes': upvotes,
+      'status': status,
     };
   }
 }

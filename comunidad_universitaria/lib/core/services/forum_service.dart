@@ -37,19 +37,17 @@ class ForumService {
         if (bookmarkedIds.isEmpty) return [];
 
         final postsRes = await SupabaseService.client
-            .from('posts')
-            .select('*, comments(count)')
+            .from('v_public_posts')
+            .select('*')
             .inFilter('id', bookmarkedIds)
-            .lt('moderation_status', 2)
             .timeout(const Duration(seconds: 10));
         final List<dynamic> data = postsRes as List<dynamic>;
         return await _hydratePosts(data, currentUserId);
       }
 
       var query = SupabaseService.client
-          .from('posts')
-          .select('*, comments(count)')
-          .lt('moderation_status', 2);
+          .from('v_public_posts')
+          .select('*');
 
       if (category != 'todos') {
         query = query.eq('category', category);
@@ -171,7 +169,7 @@ class ForumService {
     if (quotedIds.isNotEmpty) {
       try {
         final quotedRes = await SupabaseService.client
-            .from('posts')
+            .from('v_public_posts')
             .select('*')
             .inFilter('id', quotedIds);
 
@@ -399,10 +397,9 @@ class ForumService {
 
     try {
       final response = await SupabaseService.client
-          .from('comments')
+          .from('v_public_comments')
           .select('*')
           .eq('post_id', postId)
-          .lt('moderation_status', 2)
           .order('created_at', ascending: true)
           .timeout(const Duration(seconds: 10));
 
@@ -503,6 +500,44 @@ class ForumService {
     } catch (e) {
       debugPrint('Error al agregar comentario: $e');
       rethrow;
+    }
+  }
+
+  static Future<bool> reportPost({
+    required String postId,
+    required String reason,
+    String? details,
+  }) async {
+    if (!SupabaseConfig.isConfigured) return true;
+    try {
+      final res = await SupabaseService.client.rpc('report_forum_post', params: {
+        'p_post_id': postId,
+        'p_reason': reason.trim(),
+        'p_details': details?.trim(),
+      });
+      return res == true;
+    } catch (e) {
+      debugPrint('Error reportando post: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> reportComment({
+    required String commentId,
+    required String reason,
+    String? details,
+  }) async {
+    if (!SupabaseConfig.isConfigured) return true;
+    try {
+      final res = await SupabaseService.client.rpc('report_forum_comment', params: {
+        'p_comment_id': commentId,
+        'p_reason': reason.trim(),
+        'p_details': details?.trim(),
+      });
+      return res == true;
+    } catch (e) {
+      debugPrint('Error reportando comentario: $e');
+      return false;
     }
   }
 

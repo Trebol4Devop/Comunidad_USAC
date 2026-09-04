@@ -350,24 +350,12 @@ class MarketplaceService {
             .eq('item_id', item.id)
             .eq('user_id', currentUserId);
 
-        final newUpvotes = (item.upvotes - 1).clamp(0, 999999);
-        await SupabaseService.client
-            .from('marketplace_items')
-            .update({'upvotes': newUpvotes})
-            .eq('id', item.id);
-
         return false;
       } else {
         await SupabaseService.client.from('marketplace_upvotes').insert({
           'item_id': item.id,
           'user_id': currentUserId,
         });
-
-        final newUpvotes = item.upvotes + 1;
-        await SupabaseService.client
-            .from('marketplace_items')
-            .update({'upvotes': newUpvotes})
-            .eq('id', item.id);
 
         return true;
       }

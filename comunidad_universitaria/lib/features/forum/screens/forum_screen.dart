@@ -789,16 +789,13 @@ class _ForumScreenState extends State<ForumScreen> {
           onRepost: () => _handleQuotePost(post),
           onVotePoll: (pollId, optionId) => _handleVotePoll(pollId, optionId),
           onReport: (reason) {
-            if (post.userId != null) {
-              ForumService.reportUser(
-                reportedUserId: post.userId!,
-                reportedAlias: post.authorAlias,
-                reason: reason,
-              );
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Reporte enviado con éxito.')),
-              );
-            }
+            ForumService.reportPost(
+              postId: post.id,
+              reason: reason,
+            );
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Reporte enviado con éxito.')),
+            );
           },
         );
       },

@@ -291,16 +291,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 title: 'Reportar Publicación',
                 subtitle: 'Publicación de ${_post.authorAlias}',
                 onSubmitted: (reason) {
-                  if (_post.userId != null) {
-                    ForumService.reportUser(
-                      reportedUserId: _post.userId!,
-                      reportedAlias: _post.authorAlias,
-                      reason: reason,
-                    );
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Gracias por tu reporte. Se ha enviado al equipo de moderación.')),
-                    );
-                  }
+                  ForumService.reportPost(
+                    postId: _post.id,
+                    reason: reason,
+                  );
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Gracias por tu reporte. Se ha enviado al equipo de moderación.')),
+                  );
                 },
               );
             },
@@ -770,16 +767,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             postAuthorUserId: _post.userId ?? '',
                             onReply: _startReplyTo,
                             onReport: (comment, reason) {
-                              if (comment.userId != null) {
-                                ForumService.reportUser(
-                                  reportedUserId: comment.userId!,
-                                  reportedAlias: comment.authorAlias,
-                                  reason: reason,
-                                );
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Reporte enviado a moderación.')),
-                                );
-                              }
+                              ForumService.reportComment(
+                                commentId: comment.id,
+                                reason: reason,
+                              );
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Reporte enviado a moderación.')),
+                              );
                             },
                           );
                         }).toList(),

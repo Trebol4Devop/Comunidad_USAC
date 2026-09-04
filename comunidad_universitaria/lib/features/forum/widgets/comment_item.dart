@@ -23,7 +23,8 @@ class CommentItemWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final isPostAuthor = comment.userId != null && comment.userId == postAuthorUserId;
+    final isPostAuthor = comment.isPostAuthor ||
+        (comment.userId != null && postAuthorUserId.isNotEmpty && comment.userId == postAuthorUserId);
 
     // Cap visual indentation depth to 4 levels so it looks clean on mobile
     final visualDepth = depth.clamp(0, 4);

@@ -85,6 +85,7 @@ class Post {
   final String authorAlias;
   final int likes;
   final String? userId;
+  final String? authorHash;
   final DateTime createdAt;
   final String carrera;
   final String? imageUrl;
@@ -97,6 +98,7 @@ class Post {
   final int moderationStatus;
   final bool isLikedByMe;
   final bool isBookmarkedByMe;
+  final bool isMyPost;
   final int commentCount;
 
   Post({
@@ -107,6 +109,7 @@ class Post {
     required this.authorAlias,
     required this.likes,
     this.userId,
+    this.authorHash,
     required this.createdAt,
     this.carrera = 'todas',
     this.imageUrl,
@@ -119,6 +122,7 @@ class Post {
     this.moderationStatus = 0,
     this.isLikedByMe = false,
     this.isBookmarkedByMe = false,
+    this.isMyPost = false,
     this.commentCount = 0,
   });
 
@@ -130,6 +134,7 @@ class Post {
     String? authorAlias,
     int? likes,
     String? userId,
+    String? authorHash,
     DateTime? createdAt,
     String? carrera,
     String? imageUrl,
@@ -142,6 +147,7 @@ class Post {
     int? moderationStatus,
     bool? isLikedByMe,
     bool? isBookmarkedByMe,
+    bool? isMyPost,
     int? commentCount,
   }) {
     return Post(
@@ -152,6 +158,7 @@ class Post {
       authorAlias: authorAlias ?? this.authorAlias,
       likes: likes ?? this.likes,
       userId: userId ?? this.userId,
+      authorHash: authorHash ?? this.authorHash,
       createdAt: createdAt ?? this.createdAt,
       carrera: carrera ?? this.carrera,
       imageUrl: imageUrl ?? this.imageUrl,
@@ -164,6 +171,7 @@ class Post {
       moderationStatus: moderationStatus ?? this.moderationStatus,
       isLikedByMe: isLikedByMe ?? this.isLikedByMe,
       isBookmarkedByMe: isBookmarkedByMe ?? this.isBookmarkedByMe,
+      isMyPost: isMyPost ?? this.isMyPost,
       commentCount: commentCount ?? this.commentCount,
     );
   }
@@ -176,6 +184,13 @@ class Post {
     Post? quotedPost,
     PostPoll? poll,
   }) {
+    int parsedCommentCount = commentCount;
+    if (map['comment_count'] != null) {
+      parsedCommentCount = (map['comment_count'] is int)
+          ? map['comment_count']
+          : int.tryParse(map['comment_count'].toString()) ?? commentCount;
+    }
+
     return Post(
       id: map['id']?.toString() ?? '',
       title: map['title'] ?? '',
@@ -184,6 +199,7 @@ class Post {
       authorAlias: map['author_alias'] ?? 'Estudiante USAC',
       likes: (map['likes'] is int) ? map['likes'] : int.tryParse(map['likes']?.toString() ?? '0') ?? 0,
       userId: map['user_id']?.toString(),
+      authorHash: map['author_hash']?.toString(),
       createdAt: map['created_at'] != null ? DateTime.tryParse(map['created_at'].toString()) ?? DateTime.now() : DateTime.now(),
       carrera: map['carrera'] ?? 'todas',
       imageUrl: map['image_url'],
@@ -200,7 +216,8 @@ class Post {
           : int.tryParse(map['moderation_status']?.toString() ?? '0') ?? 0,
       isLikedByMe: isLikedByMe,
       isBookmarkedByMe: isBookmarkedByMe,
-      commentCount: commentCount,
+      isMyPost: map['is_my_post'] == true,
+      commentCount: parsedCommentCount,
     );
   }
 
@@ -228,10 +245,13 @@ class PostComment {
   final String authorAlias;
   final String content;
   final String? userId;
+  final String? authorHash;
   final DateTime createdAt;
   final String? parentId;
   final String? gifUrl;
   final int moderationStatus;
+  final bool isPostAuthor;
+  final bool isMyComment;
   List<PostComment> children;
 
   PostComment({
@@ -240,10 +260,13 @@ class PostComment {
     required this.authorAlias,
     required this.content,
     this.userId,
+    this.authorHash,
     required this.createdAt,
     this.parentId,
     this.gifUrl,
     this.moderationStatus = 0,
+    this.isPostAuthor = false,
+    this.isMyComment = false,
     List<PostComment>? children,
   }) : children = children ?? [];
 
@@ -264,6 +287,7 @@ class PostComment {
       authorAlias: map['author_alias'] ?? 'Estudiante',
       content: map['content'] ?? '',
       userId: userId,
+      authorHash: map['author_hash']?.toString(),
       createdAt: map['created_at'] != null
           ? DateTime.tryParse(map['created_at'].toString()) ?? DateTime.now()
           : DateTime.now(),
@@ -272,6 +296,8 @@ class PostComment {
       moderationStatus: (map['moderation_status'] is int)
           ? map['moderation_status']
           : int.tryParse(map['moderation_status']?.toString() ?? '0') ?? 0,
+      isPostAuthor: map['is_post_author'] == true,
+      isMyComment: map['is_my_comment'] == true,
     );
   }
 
