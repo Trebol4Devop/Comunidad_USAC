@@ -3,6 +3,8 @@ import '../../../core/config/supabase_config.dart';
 import '../../../core/models/post.dart';
 import '../../../core/services/forum_service.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/models/user_profile.dart';
+import '../../../core/services/local_storage_service.dart';
 import '../models/discord_forum_models.dart';
 import '../widgets/create_post_dialog.dart';
 import '../widgets/digg/digg_header.dart';
@@ -12,6 +14,7 @@ import '../widgets/digg/digg_sidebar_right.dart';
 import 'post_detail_screen.dart';
 import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/empty_state_widget.dart';
+import '../../shared/widgets/network_state_widgets.dart';
 
 class ForumScreen extends StatefulWidget {
   final String activeAlias;
@@ -61,16 +64,27 @@ class _ForumScreenState extends State<ForumScreen> {
   // Data & Search States
   List<Post> _posts = [];
   bool _isLoading = true;
+  bool _isOffline = false;
+  UserProfile? _currentUserProfile;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
-
 
   @override
   void initState() {
     super.initState();
     _activeChannel = widget.activeChannel ?? ForumChannel.defaultChannels.first;
     _activeServer = widget.activeServer ?? ForumServer.defaultServers.first;
+    _loadUserProfile();
     _loadPosts();
+  }
+
+  Future<void> _loadUserProfile() async {
+    final prof = await LocalStorageService.getUserProfile();
+    if (mounted) {
+      setState(() {
+        _currentUserProfile = prof;
+      });
+    }
   }
 
   @override
@@ -101,31 +115,41 @@ class _ForumScreenState extends State<ForumScreen> {
   Future<void> _loadPosts() async {
     setState(() => _isLoading = true);
 
-    final ch = widget.activeChannel ?? _activeChannel;
-    final srv = widget.activeServer ?? _activeServer;
-    final query = widget.isEmbeddedInShell ? widget.searchQuery : _searchQuery;
+    try {
+      final ch = widget.activeChannel ?? _activeChannel;
+      final srv = widget.activeServer ?? _activeServer;
+      final query = widget.isEmbeddedInShell ? widget.searchQuery : _searchQuery;
 
-    final isBookmarks = ch.isSpecial;
-    final category = isBookmarks ? 'todos' : ch.categoryId;
+      final isBookmarks = ch.isSpecial;
+      final category = isBookmarks ? 'todos' : ch.categoryId;
 
-    final posts = await ForumService.fetchPosts(
-      category: category,
-      facultad: srv.facultadId,
-      carrera: srv.carreraId,
-      searchQuery: query,
-      showOnlyBookmarks: isBookmarks,
-    );
+      final posts = await ForumService.fetchPosts(
+        category: category,
+        facultad: srv.facultadId,
+        carrera: srv.carreraId,
+        searchQuery: query,
+        showOnlyBookmarks: isBookmarks,
+      );
 
-    // If section is 'top', sort posts by likes descending
-    if (widget.activeSection == 'top' || _activeSection == 'top') {
-      posts.sort((a, b) => b.likes.compareTo(a.likes));
-    }
+      // If section is 'top', sort posts by likes descending
+      if (widget.activeSection == 'top' || _activeSection == 'top') {
+        posts.sort((a, b) => b.likes.compareTo(a.likes));
+      }
 
-    if (mounted) {
-      setState(() {
-        _posts = posts;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _posts = posts;
+          _isLoading = false;
+          _isOffline = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _isOffline = true;
+        });
+      }
     }
   }
 
@@ -350,16 +374,26 @@ class _ForumScreenState extends State<ForumScreen> {
       return Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Central Column (Feed List with Facebook-style Create Post composer)
+          // Central Column (Chips + Feed List with Facebook-style Create Post composer)
           Expanded(
-            child: RefreshIndicator(
-              onRefresh: _loadPosts,
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 720),
-                  child: _buildFeedList(theme, isDark),
+            child: Column(
+              children: [
+                // Scrollable Horizontal Category Chips (sin '#')
+                _buildChannelPills(theme, isDark),
+
+                // Feed List
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: _loadPosts,
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 720),
+                        child: _buildFeedList(theme, isDark),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
 
@@ -448,6 +482,9 @@ class _ForumScreenState extends State<ForumScreen> {
                     onToggleTheme: widget.onToggleTheme,
                     isDarkMode: widget.isDarkMode,
                   ),
+
+                  // Horizontal Category Chips (sin '#')
+                  _buildChannelPills(theme, isDark),
 
                   // Feed List
                   Expanded(
@@ -581,9 +618,16 @@ class _ForumScreenState extends State<ForumScreen> {
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _loadPosts,
-        child: _buildFeedList(theme, isDark),
+      body: Column(
+        children: [
+          _buildChannelPills(theme, isDark),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _loadPosts,
+              child: _buildFeedList(theme, isDark),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -737,29 +781,142 @@ class _ForumScreenState extends State<ForumScreen> {
     );
   }
 
+  Widget _buildChannelPills(ThemeData theme, bool isDark) {
+    final activeCh = widget.activeChannel ?? _activeChannel;
+    final channels = [
+      ...ForumChannel.defaultChannels,
+      ForumChannel.bookmarksChannel,
+    ];
+
+    return Container(
+      height: 44,
+      width: double.infinity,
+      color: Colors.transparent,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 860),
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            scrollDirection: Axis.horizontal,
+            itemCount: channels.length,
+            separatorBuilder: (_, index) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final ch = channels[index];
+              final isSelected = activeCh.id == ch.id;
+
+              return _buildChannelPillChip(
+                channel: ch,
+                isSelected: isSelected,
+                onTap: () {
+                  setState(() {
+                    _activeChannel = ch;
+                  });
+                  widget.onChannelChanged?.call(ch);
+                  _loadPosts();
+                },
+                theme: theme,
+                isDark: isDark,
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChannelPillChip({
+    required ForumChannel channel,
+    required bool isSelected,
+    required VoidCallback onTap,
+    required ThemeData theme,
+    required bool isDark,
+  }) {
+    final activeBg = const Color(0xFF004B87);
+    final inactiveBg = isDark
+        ? const Color(0xFF27272A).withValues(alpha: 0.7)
+        : const Color(0xFFE4E4E7).withValues(alpha: 0.6);
+    final activeTextColor = Colors.white;
+    final inactiveTextColor = isDark ? const Color(0xFFA1A1AA) : const Color(0xFF52525B);
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(9999),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? activeBg : inactiveBg,
+          borderRadius: BorderRadius.circular(9999), // Capsule Pill
+          border: Border.all(
+            color: isSelected
+                ? const Color(0xFF004B87)
+                : (isDark ? const Color(0x2AFFFFFF) : const Color(0x18000000)),
+            width: isSelected ? 1.5 : 1.0,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: const Color(0x35004B87),
+                    blurRadius: 5,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              channel.icon,
+              size: 15,
+              color: isSelected ? activeTextColor : inactiveTextColor,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              channel.name,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                color: isSelected ? activeTextColor : inactiveTextColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildFeedList(ThemeData theme, bool isDark) {
     if (_isLoading) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(40),
-          child: CircularProgressIndicator(),
+      return ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        itemCount: 4,
+        itemBuilder: (context, index) => const Padding(
+          padding: EdgeInsets.only(bottom: 12),
+          child: SkeletonCard(height: 140),
         ),
       );
     }
 
     final displayPosts = _posts;
+    final isMod = _currentUserProfile?.isModerator ?? false;
 
     if (displayPosts.isEmpty) {
       final srv = widget.activeServer ?? _activeServer;
       return ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         children: [
+          if (_isOffline) ...[
+            OfflineBanner(onRetry: _loadPosts),
+            const SizedBox(height: 12),
+          ],
           _buildFacebookCreatePostBox(theme, isDark),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 24),
             child: EmptyStateWidget(
               icon: Icons.newspaper_rounded,
-              title: 'No hay publicaciones en ${srv.name}',
+              title: 'No hay publicaciones en ${srv.name} aún',
               description: _searchQuery.isNotEmpty
                   ? 'No se encontraron resultados para "$_searchQuery".'
                   : 'Sé el primero en compartir un aporte o consulta en esta facultad.',
@@ -771,18 +928,30 @@ class _ForumScreenState extends State<ForumScreen> {
       );
     }
 
+    final totalItems = displayPosts.length + 1 + (_isOffline ? 1 : 0);
+
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      itemCount: displayPosts.length + 1, // First item is the Facebook create post box
+      itemCount: totalItems,
       itemBuilder: (context, index) {
-        if (index == 0) {
+        if (_isOffline && index == 0) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: OfflineBanner(onRetry: _loadPosts),
+          );
+        }
+
+        final postIndex = _isOffline ? index - 1 : index;
+
+        if (postIndex == 0) {
           return _buildFacebookCreatePostBox(theme, isDark);
         }
 
-        final post = displayPosts[index - 1];
+        final post = displayPosts[postIndex - 1];
         return DiggPostCard(
           key: ValueKey(post.id),
           post: post,
+          isModerator: isMod,
           onTap: () => _openPostDetail(post),
           onLike: () => _handleToggleLike(post),
           onBookmark: () => _handleToggleBookmark(post),
@@ -793,8 +962,15 @@ class _ForumScreenState extends State<ForumScreen> {
               postId: post.id,
               reason: reason,
             );
+            // Feedback inmediato al denunciante: colapsar/ocultar localmente
+            setState(() {
+              _posts.removeWhere((p) => p.id == post.id);
+            });
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Reporte enviado con éxito.')),
+              const SnackBar(
+                content: Text('Publicación ocultada para ti. Gracias por cuidar la comunidad.'),
+                backgroundColor: Color(0xFF004B87),
+              ),
             );
           },
         );

@@ -14,6 +14,7 @@ import '../../forum/screens/post_detail_screen.dart';
 import '../../rules/screens/rules_screen.dart';
 import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/empty_state_widget.dart';
+import '../widgets/carne_validation_modal.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String activeAlias;
@@ -560,6 +561,89 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               prefixIcon: Icon(Icons.edit_note_outlined, size: 18),
               isDense: true,
               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // Tarjeta de Validación de Carné y Consentimiento Informado
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: (_profile?.isCarneVerified ?? false)
+                  ? const Color(0xFF059669).withValues(alpha: 0.08)
+                  : const Color(0xFF0284C7).withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: (_profile?.isCarneVerified ?? false)
+                    ? const Color(0xFF059669).withValues(alpha: 0.3)
+                    : const Color(0xFF0284C7).withValues(alpha: 0.3),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  (_profile?.isCarneVerified ?? false) ? Icons.verified : Icons.verified_user_outlined,
+                  color: (_profile?.isCarneVerified ?? false) ? const Color(0xFF059669) : const Color(0xFF0284C7),
+                  size: 24,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        (_profile?.isCarneVerified ?? false)
+                            ? 'Estudiante Validado: ${_profile?.studentName} (${_profile?.carne})'
+                            : 'Validación con Carné Universitario',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: (_profile?.isCarneVerified ?? false) ? const Color(0xFF059669) : const Color(0xFF0284C7),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        (_profile?.isCarneVerified ?? false)
+                            ? 'Tu nombre y badge de verificado se muestran en Marketplace. En el Foro sigues 100% anónimo.'
+                            : 'Solo consultaremos tu nombre y estado activo en Registro y Estadística. Tus notas y datos personales privados nunca son leídos ni almacenados.',
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          height: 1.3,
+                          color: isDark ? Colors.grey.shade300 : const Color(0xFF334155),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: () {
+                    if (_profile != null) {
+                      CarneValidationModal.show(
+                        context,
+                        currentProfile: _profile!,
+                        onProfileUpdated: (updated) {
+                          setState(() {
+                            _profile = updated;
+                          });
+                        },
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: (_profile?.isCarneVerified ?? false) ? const Color(0xFF059669) : const Color(0xFF0284C7),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    minimumSize: const Size(60, 34),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: Text(
+                    (_profile?.isCarneVerified ?? false) ? 'Verificar' : 'Validar',
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

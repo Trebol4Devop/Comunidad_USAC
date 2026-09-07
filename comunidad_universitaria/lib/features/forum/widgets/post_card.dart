@@ -13,6 +13,7 @@ class PostCard extends StatelessWidget {
   final VoidCallback? onRepost;
   final Function(String pollId, String optionId)? onVotePoll;
   final Function(String reason)? onReport;
+  final bool isModerator;
 
   const PostCard({
     super.key,
@@ -23,6 +24,7 @@ class PostCard extends StatelessWidget {
     this.onRepost,
     this.onVotePoll,
     this.onReport,
+    this.isModerator = false,
   });
 
   String _getCategoryLabel(String catId) {
@@ -34,9 +36,18 @@ class PostCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final modStatus = post.moderationStatus;
+    final showModBanner = isModerator && modStatus > 0;
+    final modColor = modStatus == 1 ? const Color(0xFFEAB308) : const Color(0xFFEF4444);
 
     return Card(
       clipBehavior: Clip.antiAlias,
+      shape: showModBanner
+          ? RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+              side: BorderSide(color: modColor, width: 2.5),
+            )
+          : null,
       child: InkWell(
         onTap: onTap,
         child: Padding(
@@ -44,6 +55,36 @@ class PostCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (showModBanner) ...[
+                Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: modColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: modColor.withValues(alpha: 0.4)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        modStatus == 1 ? Icons.hourglass_top : Icons.visibility_off,
+                        size: 13,
+                        color: modColor,
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        modStatus == 1 ? 'MODERACIÓN: Pendiente de revisión' : 'MODERACIÓN: Ocultado por reportes',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: modColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               // Pinned badge if applicable
               if (post.isPinned) ...[
                 Row(

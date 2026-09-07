@@ -232,6 +232,33 @@ class USACConstants {
   // Catálogo de Edificios y Puntos de Encuentro (Preparado para Mapa Interactivo)
   static const List<Map<String, dynamic>> campusBuildings = [
     {
+      'id': 'cafeteria_t3',
+      'building_code': 'Cafetería T-3',
+      'nombre': 'Frente a Cafetería del T-3 (Punto Seguro)',
+      'sede_id': 'central',
+      'latitude': 14.5886,
+      'longitude': -90.5516,
+      'description': 'Punto de alta concurrencia y visibilidad en Ingeniería.',
+    },
+    {
+      'id': 'plaza_martires',
+      'building_code': 'Plaza Mártires',
+      'nombre': 'Plaza de los Mártires (Punto Seguro)',
+      'sede_id': 'central',
+      'latitude': 14.5875,
+      'longitude': -90.5518,
+      'description': 'Punto de encuentro central y abierto frente a Rectoría.',
+    },
+    {
+      'id': 'entrada_t4',
+      'building_code': 'Entrada T-4',
+      'nombre': 'Entrada del T-4 (Punto Seguro)',
+      'sede_id': 'central',
+      'latitude': 14.5889,
+      'longitude': -90.5520,
+      'description': 'Acceso principal visible y transitado.',
+    },
+    {
       'id': 't3',
       'building_code': 'T-3',
       'nombre': 'Edificio T-3 (Facultad de Ingeniería)',

@@ -6,18 +6,20 @@ class ReportDialog extends StatefulWidget {
   final List<String> reasonOptions;
   final Function(String reason) onReportSubmitted;
 
+  static const List<String> defaultReasonOptions = [
+    'Acoso / Difamación',
+    'Spam / Publicidad engañosa',
+    'Venta ilegal / Servicios prohibidos',
+    'Información personal expuesta (Doxxing)',
+    'Contenido inapropiado / Ofensivo',
+    'Otro motivo',
+  ];
+
   const ReportDialog({
     super.key,
     required this.title,
     required this.subtitle,
-    this.reasonOptions = const [
-      'Enlace roto / expirado / no funciona',
-      'Contenido publicitario / spam / ventas',
-      'Acoso, insultos o lenguaje inapropiado',
-      'Información falsa o desactualizada',
-      'No corresponde a la facultad o carrera',
-      'Otro motivo',
-    ],
+    this.reasonOptions = defaultReasonOptions,
     required this.onReportSubmitted,
   });
 
@@ -33,14 +35,7 @@ class ReportDialog extends StatefulWidget {
       builder: (ctx) => ReportDialog(
         title: title,
         subtitle: subtitle,
-        reasonOptions: reasonOptions ?? const [
-          'Enlace roto / expirado / no funciona',
-          'Contenido publicitario / spam / ventas',
-          'Acoso, insultos o lenguaje inapropiado',
-          'Información falsa o desactualizada',
-          'No corresponde a la facultad o carrera',
-          'Otro motivo',
-        ],
+        reasonOptions: reasonOptions ?? defaultReasonOptions,
         onReportSubmitted: onSubmitted,
       ),
     );

@@ -107,13 +107,15 @@ class CommentItemWidget extends StatelessWidget {
                     InkWell(
                       onTap: () => onReply(comment),
                       borderRadius: BorderRadius.circular(6),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      child: Container(
+                        constraints: const BoxConstraints(minHeight: 48, minWidth: 48),
+                        alignment: Alignment.center,
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.reply, size: 13, color: theme.colorScheme.primary),
-                            const SizedBox(width: 2),
+                            Icon(Icons.reply, size: 14, color: theme.colorScheme.primary),
+                            const SizedBox(width: 4),
                             Text(
                               'Responder',
                               style: TextStyle(
@@ -128,9 +130,8 @@ class CommentItemWidget extends StatelessWidget {
                     ),
                     if (onReport != null)
                       IconButton(
-                        icon: Icon(Icons.flag_outlined, size: 14, color: Colors.grey.shade500),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+                        icon: Icon(Icons.flag_outlined, size: 16, color: Colors.grey.shade500),
+                        constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
                         tooltip: 'Reportar comentario',
                         onPressed: () {
                           ReportDialog.show(

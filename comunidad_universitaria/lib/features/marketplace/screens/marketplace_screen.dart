@@ -11,6 +11,7 @@ import '../widgets/sponsor_carousel.dart';
 import '../widgets/sponsor_request_dialog.dart';
 import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/empty_state_widget.dart';
+import '../../shared/widgets/network_state_widgets.dart';
 
 class MarketplaceScreen extends StatefulWidget {
   final String activeAlias;
@@ -30,6 +31,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   List<MarketplaceItem> _listings = [];
   List<MarketplaceItem> _sponsoredListings = [];
   bool _isLoading = true;
+  bool _isOffline = false;
 
   String _selectedCategory = 'todos';
   String _selectedSede = 'todas';
@@ -53,23 +55,53 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    final results = await Future.wait([
-      MarketplaceService.fetchListings(
-        category: _selectedCategory,
-        facultad: _selectedFacultad,
-        sede: _selectedSede,
-        onlyFree: _onlyFree,
-        searchQuery: _searchQuery,
-      ),
-      MarketplaceService.fetchSponsoredListings(),
-    ]);
+    try {
+      final results = await Future.wait([
+        MarketplaceService.fetchListings(
+          category: _selectedCategory,
+          facultad: _selectedFacultad,
+          sede: _selectedSede,
+          onlyFree: _onlyFree,
+          searchQuery: _searchQuery,
+        ),
+        MarketplaceService.fetchSponsoredListings(),
+      ]);
 
-    if (mounted) {
-      setState(() {
-        _listings = results[0];
-        _sponsoredListings = results[1];
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _listings = results[0];
+          _sponsoredListings = results[1];
+          _isLoading = false;
+          _isOffline = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _isOffline = true;
+        });
+      }
+    }
+  }
+
+  Future<void> _handleUpdateItemStatus(MarketplaceItem item, String newStatus) async {
+    setState(() {
+      final idx = _listings.indexWhere((l) => l.id == item.id);
+      if (idx != -1) {
+        _listings[idx] = item.copyWith(status: newStatus);
+      }
+    });
+
+    final ok = await MarketplaceService.updateItemStatus(itemId: item.id, newStatus: newStatus);
+    if (mounted && ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Estado actualizado a: ${newStatus.toUpperCase()}'),
+          backgroundColor: const Color(0xFF059669),
+          duration: const Duration(seconds: 2),
+        ),
+      );
     }
   }
 
@@ -440,19 +472,28 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
 
                 const SizedBox(height: 16),
 
+                // Offline Banner if degraded network
+                if (_isOffline) ...[
+                  OfflineBanner(onRetry: _loadData),
+                  const SizedBox(height: 12),
+                ],
+
                 // Feed of listings
                 if (_isLoading)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(40),
-                      child: CircularProgressIndicator(),
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: 4,
+                    itemBuilder: (ctx, i) => const Padding(
+                      padding: EdgeInsets.only(bottom: 12),
+                      child: SkeletonCard(height: 220),
                     ),
                   )
                 else if (_listings.isEmpty)
                   EmptyStateWidget(
                     icon: Icons.storefront_outlined,
-                    title: 'No hay publicaciones en esta categoría',
-                    description: '¿Ofreces tutorías, almuerzos, postres o libros universitarios? ¡Publica tu anuncio libremente!',
+                    title: 'No hay publicaciones en esta categoría aún',
+                    description: '¿Ofreces tutorías, almuerzos, postres o libros universitarios? ¡Sé el primero en publicar!',
                     buttonText: 'Crear Primera Publicación',
                     onButtonPressed: _handleCreateListingClick,
                   )
@@ -468,7 +509,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                           padding: const EdgeInsets.only(bottom: 12),
                           child: MarketplaceCard(
                             item: item,
+                            isOwner: true,
                             onUpvote: () => _handleToggleUpvote(item),
+                            onStatusChanged: (newStatus) => _handleUpdateItemStatus(item, newStatus),
                             onReport: (reason) {
                               MarketplaceService.reportListing(
                                 itemId: item.id,
@@ -476,9 +519,13 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                                 sellerUserId: item.userId,
                                 sellerAlias: item.authorAlias,
                               );
+                              // Feedback inmediato al denunciante: colapsar/ocultar localmente
+                              setState(() {
+                                _listings.removeWhere((l) => l.id == item.id);
+                              });
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Reporte recibido. El contenido será revisado por moderación.'),
+                                  content: Text('Publicación ocultada para ti. Gracias por cuidar la comunidad.'),
                                   backgroundColor: Color(0xFF004B87),
                                 ),
                               );
@@ -501,7 +548,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                         final item = _listings[i];
                         return MarketplaceCard(
                           item: item,
+                          isOwner: true,
                           onUpvote: () => _handleToggleUpvote(item),
+                          onStatusChanged: (newStatus) => _handleUpdateItemStatus(item, newStatus),
                           onReport: (reason) {
                             MarketplaceService.reportListing(
                               itemId: item.id,
@@ -509,9 +558,13 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                               sellerUserId: item.userId,
                               sellerAlias: item.authorAlias,
                             );
+                            // Feedback inmediato al denunciante: colapsar/ocultar localmente
+                            setState(() {
+                              _listings.removeWhere((l) => l.id == item.id);
+                            });
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Reporte recibido. El contenido será revisado por moderación.'),
+                                content: Text('Publicación ocultada para ti. Gracias por cuidar la comunidad.'),
                                 backgroundColor: Color(0xFF004B87),
                               ),
                             );

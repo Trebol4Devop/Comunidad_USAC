@@ -81,6 +81,7 @@ class MarketplaceItem {
   final int upvotes;
   final bool isUpvotedByMe;
   final String status; // available, reserved, sold, archived
+  final bool isSellerVerified;
 
   MarketplaceItem({
     required this.id,
@@ -110,6 +111,7 @@ class MarketplaceItem {
     this.upvotes = 0,
     this.isUpvotedByMe = false,
     this.status = 'available',
+    this.isSellerVerified = false,
   });
 
   String get formattedPrice {
@@ -118,6 +120,10 @@ class MarketplaceItem {
     }
     return 'Q${price.toStringAsFixed(2)}';
   }
+
+  bool get isSold => status == 'sold';
+  bool get isReserved => status == 'reserved';
+  bool get isAvailable => status == 'available';
 
   bool get isHidden => moderationStatus >= 2;
   bool get isUnderReview => moderationStatus == 1;
@@ -190,6 +196,7 @@ class MarketplaceItem {
     int? upvotes,
     bool? isUpvotedByMe,
     String? status,
+    bool? isSellerVerified,
   }) {
     return MarketplaceItem(
       id: id ?? this.id,
@@ -219,6 +226,7 @@ class MarketplaceItem {
       upvotes: upvotes ?? this.upvotes,
       isUpvotedByMe: isUpvotedByMe ?? this.isUpvotedByMe,
       status: status ?? this.status,
+      isSellerVerified: isSellerVerified ?? this.isSellerVerified,
     );
   }
 
@@ -267,6 +275,7 @@ class MarketplaceItem {
       upvotes: (map['upvotes'] is int) ? map['upvotes'] : int.tryParse(map['upvotes']?.toString() ?? '0') ?? 0,
       isUpvotedByMe: isUpvotedByMe,
       status: map['status']?.toString() ?? 'available',
+      isSellerVerified: map['is_seller_verified'] == true || map['is_verified'] == true,
     );
   }
 
@@ -296,6 +305,7 @@ class MarketplaceItem {
       'reported_count': reportedCount,
       'upvotes': upvotes,
       'status': status,
+      'is_seller_verified': isSellerVerified,
     };
   }
 }

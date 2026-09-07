@@ -15,6 +15,9 @@ class LocalStorageService {
   static const String _keyWhatsapp = 'usac_contact_whatsapp';
   static const String _keyTelegram = 'usac_contact_telegram';
   static const String _keyInstagram = 'usac_contact_instagram';
+  static const String _keyCarne = 'usac_student_carne';
+  static const String _keyStudentName = 'usac_student_name';
+  static const String _keyCarneVerified = 'usac_carne_verified';
   static const String _keyCleanupDismissed = 'usac_cleanup_dismissed';
 
   static Future<String> getOrGenerateAlias() async {
@@ -47,6 +50,9 @@ class LocalStorageService {
     final whatsapp = prefs.getString(_keyWhatsapp);
     final telegram = prefs.getString(_keyTelegram);
     final instagram = prefs.getString(_keyInstagram);
+    final carne = prefs.getString(_keyCarne);
+    final studentName = prefs.getString(_keyStudentName);
+    final isCarneVerified = prefs.getBool(_keyCarneVerified) ?? false;
     final userId = SupabaseService.currentUserId ?? 'local_user';
     final role = await SupabaseService.getUserRole();
     final email = SupabaseService.currentUser?.email;
@@ -65,6 +71,9 @@ class LocalStorageService {
       contactTelegram: telegram,
       contactInstagram: instagram,
       email: email,
+      carne: carne,
+      studentName: studentName,
+      isCarneVerified: isCarneVerified,
     );
   }
 
@@ -77,6 +86,20 @@ class LocalStorageService {
     await prefs.setString(_keyUserBio, profile.bio.trim());
     await prefs.setInt(_keyAvatarColor, profile.avatarColorIndex);
     await prefs.setInt(_keyAvatarIcon, profile.avatarIconIndex);
+
+    if (profile.carne != null && profile.carne!.trim().isNotEmpty) {
+      await prefs.setString(_keyCarne, profile.carne!.trim());
+    } else {
+      await prefs.remove(_keyCarne);
+    }
+
+    if (profile.studentName != null && profile.studentName!.trim().isNotEmpty) {
+      await prefs.setString(_keyStudentName, profile.studentName!.trim());
+    } else {
+      await prefs.remove(_keyStudentName);
+    }
+
+    await prefs.setBool(_keyCarneVerified, profile.isCarneVerified);
 
     if (profile.contactWhatsapp != null) {
       await prefs.setString(_keyWhatsapp, profile.contactWhatsapp!.trim());

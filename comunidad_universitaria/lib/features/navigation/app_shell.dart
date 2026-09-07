@@ -6,7 +6,9 @@ import '../forum/widgets/digg/digg_header.dart';
 import '../forum/widgets/digg/digg_sidebar_left.dart';
 import '../forum/widgets/discord/forum_carrera_picker_dialog.dart';
 import '../groups/screens/groups_screen.dart';
+import '../groups/widgets/create_group_dialog.dart';
 import '../marketplace/screens/marketplace_screen.dart';
+import '../marketplace/widgets/create_listing_dialog.dart';
 import '../profile/screens/profile_screen.dart';
 import '../rules/screens/rules_screen.dart';
 
@@ -249,6 +251,7 @@ class _AppShellState extends State<AppShell> {
           const RulesScreen(),
         ],
       ),
+      floatingActionButton: _buildContextualFloatingActionButton(),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (index) {
@@ -283,5 +286,57 @@ class _AppShellState extends State<AppShell> {
         ],
       ),
     );
+  }
+
+  Widget? _buildContextualFloatingActionButton() {
+    // FAB Contextual según la pestaña activa (Requerimiento 2: Jerarquía de acciones primarias)
+    switch (_currentIndex) {
+      case 0:
+        // Foro: Crea un Post
+        return FloatingActionButton.extended(
+          heroTag: 'shell_forum_fab',
+          onPressed: _openCreatePost,
+          backgroundColor: const Color(0xFF004B87),
+          foregroundColor: Colors.white,
+          icon: const Icon(Icons.edit_note, size: 22),
+          label: const Text('Crear Post', style: TextStyle(fontWeight: FontWeight.bold)),
+        );
+      case 1:
+        // Grupos / Directorio: Sugiere un Enlace o Grupo
+        return FloatingActionButton.extended(
+          heroTag: 'shell_groups_fab',
+          onPressed: () {
+            CreateGroupDialog.show(
+              context,
+              activeAlias: widget.activeAlias,
+              onAliasChanged: widget.onAliasChanged,
+              onGroupCreated: (_) => setState(() {}),
+            );
+          },
+          backgroundColor: const Color(0xFF16A34A),
+          foregroundColor: Colors.white,
+          icon: const Icon(Icons.group_add, size: 22),
+          label: const Text('Sugerir Enlace', style: TextStyle(fontWeight: FontWeight.bold)),
+        );
+      case 2:
+        // Marketplace: Publica un Artículo
+        return FloatingActionButton.extended(
+          heroTag: 'shell_market_fab',
+          onPressed: () {
+            CreateListingDialog.show(
+              context,
+              activeAlias: widget.activeAlias,
+              onAliasChanged: widget.onAliasChanged,
+              onListingCreated: (_) => setState(() {}),
+            );
+          },
+          backgroundColor: const Color(0xFFEAB308),
+          foregroundColor: Colors.black87,
+          icon: const Icon(Icons.add_shopping_cart, size: 22),
+          label: const Text('Publicar Artículo', style: TextStyle(fontWeight: FontWeight.bold)),
+        );
+      default:
+        return null;
+    }
   }
 }

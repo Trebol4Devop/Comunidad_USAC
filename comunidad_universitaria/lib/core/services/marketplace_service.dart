@@ -310,6 +310,24 @@ class MarketplaceService {
     }
   }
 
+  static Future<bool> updateItemStatus({
+    required String itemId,
+    required String newStatus, // available, reserved, sold, paused
+  }) async {
+    if (!SupabaseConfig.isConfigured) return true;
+
+    try {
+      await SupabaseService.client
+          .from('marketplace_items')
+          .update({'status': newStatus})
+          .eq('id', itemId);
+      return true;
+    } catch (e) {
+      debugPrint('Error actualizando estado del artículo: $e');
+      return false;
+    }
+  }
+
   static Future<bool> requestSponsorship({
     required String brandName,
     required String contactName,

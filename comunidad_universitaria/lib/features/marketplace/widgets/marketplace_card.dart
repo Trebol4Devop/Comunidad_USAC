@@ -10,12 +10,16 @@ class MarketplaceCard extends StatefulWidget {
   final MarketplaceItem item;
   final VoidCallback onUpvote;
   final Function(String reason)? onReport;
+  final Function(String newStatus)? onStatusChanged;
+  final bool isOwner;
 
   const MarketplaceCard({
     super.key,
     required this.item,
     required this.onUpvote,
     this.onReport,
+    this.onStatusChanged,
+    this.isOwner = false,
   });
 
   @override
@@ -139,6 +143,54 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                   ),
                 ),
 
+              // Sold Watermark Overlay
+              if (item.isSold)
+                Positioned.fill(
+                  child: Container(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    alignment: Alignment.center,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade700,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                      child: const Text(
+                        'VENDIDO',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+              // Reserved Overlay Banner
+              if (item.isReserved)
+                Positioned(
+                  top: 40,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    color: Colors.amber.shade700.withValues(alpha: 0.9),
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    alignment: Alignment.center,
+                    child: const Text(
+                      'ARTÍCULO RESERVADO',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
+                ),
+
               // Price badge (Top Right)
               Positioned(
                 top: 8,
@@ -146,9 +198,11 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: item.isFree
-                        ? const Color(0xFF16A34A)
-                        : (item.isSponsored ? const Color(0xFFD97706) : const Color(0xFF004B87)),
+                    color: item.isSold
+                        ? Colors.grey.shade700
+                        : (item.isFree
+                            ? const Color(0xFF16A34A)
+                            : (item.isSponsored ? const Color(0xFFD97706) : const Color(0xFF004B87))),
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
@@ -159,7 +213,7 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                     ],
                   ),
                   child: Text(
-                    item.formattedPrice,
+                    item.isSold ? 'VENDIDO' : item.formattedPrice,
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -346,20 +400,56 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
 
                 const SizedBox(height: 10),
 
-                // Author & Time
+                // Author & Verification Badge
                 Row(
                   children: [
                     CircleAvatar(
-                      radius: 10,
-                      backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      child: Icon(Icons.person, size: 12, color: theme.colorScheme.primary),
+                      radius: 11,
+                      backgroundColor: item.isSellerVerified
+                          ? const Color(0xFF10B981).withValues(alpha: 0.15)
+                          : theme.colorScheme.primary.withValues(alpha: 0.1),
+                      child: Icon(
+                        item.isSellerVerified ? Icons.verified_user : Icons.person,
+                        size: 13,
+                        color: item.isSellerVerified ? const Color(0xFF059669) : theme.colorScheme.primary,
+                      ),
                     ),
                     const SizedBox(width: 6),
                     Expanded(
-                      child: Text(
-                        item.authorAlias,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              item.authorAlias,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          if (item.isSellerVerified)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF059669),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: const [
+                                  Icon(Icons.verified, size: 10, color: Colors.white),
+                                  SizedBox(width: 2),
+                                  Text(
+                                    'Vendedor Verificado',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                     Text(
@@ -368,6 +458,90 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                     ),
                   ],
                 ),
+
+                // Preventive Banner if Seller is NOT verified
+                if (!item.isSellerVerified && !item.isSold) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF451A03) : const Color(0xFFFEF3C7),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFFD97706) : const Color(0xFFF59E0B),
+                        width: 0.8,
+                      ),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.warning_amber_rounded,
+                          size: 14,
+                          color: isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Vendedor no validado con carné. Se sugiere realizar la transacción en persona dentro del campus.',
+                            style: TextStyle(
+                              fontSize: 10,
+                              height: 1.25,
+                              fontWeight: FontWeight.w500,
+                              color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                // 1-Touch Product Lifecycle Buttons (For Seller or Owner)
+                if (widget.onStatusChanged != null && (widget.isOwner || item.userId != null)) ...[
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: [
+                      if (!item.isReserved && !item.isSold)
+                        ActionChip(
+                          avatar: const Icon(Icons.bookmark_outline, size: 14, color: Colors.amber),
+                          label: const Text('Marcar Reservado', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                          onPressed: () => widget.onStatusChanged!('reserved'),
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                        ),
+                      if (item.isReserved)
+                        ActionChip(
+                          avatar: const Icon(Icons.check_circle_outline, size: 14, color: Colors.blue),
+                          label: const Text('Disponible', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                          onPressed: () => widget.onStatusChanged!('available'),
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                        ),
+                      if (!item.isSold)
+                        ActionChip(
+                          avatar: const Icon(Icons.done_all, size: 14, color: Colors.green),
+                          label: const Text('Marcar Vendido', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                          onPressed: () => widget.onStatusChanged!('sold'),
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                        ),
+                      if (item.status != 'paused' && !item.isSold)
+                        ActionChip(
+                          avatar: const Icon(Icons.pause_circle_outline, size: 14, color: Colors.grey),
+                          label: const Text('Pausar', style: TextStyle(fontSize: 11)),
+                          onPressed: () => widget.onStatusChanged!('paused'),
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                        ),
+                      if (item.status == 'paused')
+                        ActionChip(
+                          avatar: const Icon(Icons.play_circle_outline, size: 14, color: Colors.green),
+                          label: const Text('Reanudar', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                          onPressed: () => widget.onStatusChanged!('available'),
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                        ),
+                    ],
+                  ),
+                ],
 
                 const Divider(height: 16),
 

@@ -12,6 +12,9 @@ class UserProfile {
   final String? contactTelegram;
   final String? contactInstagram;
   final String? email;
+  final String? carne; // Carné universitario validado (ej. 202012345)
+  final String? studentName; // Nombre real oficial validado (ej. Juan Pérez)
+  final bool isCarneVerified; // Si fue validado con Registro y Estadística
 
   const UserProfile({
     required this.userId,
@@ -27,6 +30,9 @@ class UserProfile {
     this.contactTelegram,
     this.contactInstagram,
     this.email,
+    this.carne,
+    this.studentName,
+    this.isCarneVerified = false,
   });
 
   bool get isAdmin => role == 'admin';
@@ -46,6 +52,9 @@ class UserProfile {
     String? contactTelegram,
     String? contactInstagram,
     String? email,
+    String? carne,
+    String? studentName,
+    bool? isCarneVerified,
   }) {
     return UserProfile(
       userId: userId ?? this.userId,
@@ -61,6 +70,9 @@ class UserProfile {
       contactTelegram: contactTelegram ?? this.contactTelegram,
       contactInstagram: contactInstagram ?? this.contactInstagram,
       email: email ?? this.email,
+      carne: carne ?? this.carne,
+      studentName: studentName ?? this.studentName,
+      isCarneVerified: isCarneVerified ?? this.isCarneVerified,
     );
   }
 
@@ -79,6 +91,9 @@ class UserProfile {
       'contact_telegram': contactTelegram,
       'contact_instagram': contactInstagram,
       'email': email,
+      'carne': carne,
+      'student_name': studentName,
+      'is_carne_verified': isCarneVerified,
     };
   }
 
@@ -97,6 +112,9 @@ class UserProfile {
       contactTelegram: map['contact_telegram']?.toString(),
       contactInstagram: map['contact_instagram']?.toString(),
       email: map['email']?.toString(),
+      carne: map['carne']?.toString(),
+      studentName: map['student_name']?.toString(),
+      isCarneVerified: map['is_carne_verified'] == true || map['is_verified'] == true,
     );
   }
 }

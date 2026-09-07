@@ -10,6 +10,7 @@ import '../../../core/utils/responsive.dart';
 import '../../profile/widgets/alias_modal.dart';
 import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/gif_picker_modal.dart';
+import '../../shared/widgets/identity_badge_chip.dart';
 
 class CreatePostDialog extends StatefulWidget {
   final String activeAlias;
@@ -320,24 +321,27 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                           style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         Text(
-                          'Publicando como: ${widget.activeAlias}',
+                          'Foro Estudiantil USAC · Espacio Libre',
                           style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.primary),
                         ),
                       ],
                     ),
                   ),
-                  TextButton.icon(
-                    icon: const Icon(Icons.edit, size: 14),
-                    label: const Text('Alias', style: TextStyle(fontSize: 12)),
-                    onPressed: () {
-                      AliasModal.show(
-                        context,
-                        currentAlias: widget.activeAlias,
-                        onSaved: widget.onAliasChanged,
-                      );
-                    },
-                  ),
                 ],
+              ),
+              const SizedBox(height: 14),
+
+              // Indicador visual de modo de identidad (Foro Anónimo)
+              IdentityBadgeChip(
+                mode: IdentityMode.forumAnonymous,
+                displayName: widget.activeAlias,
+                onSwitchIdentity: () {
+                  AliasModal.show(
+                    context,
+                    currentAlias: widget.activeAlias,
+                    onSaved: widget.onAliasChanged,
+                  );
+                },
               ),
               const Divider(height: 20),
 

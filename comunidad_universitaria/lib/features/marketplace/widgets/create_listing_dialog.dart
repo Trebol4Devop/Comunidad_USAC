@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/categories.dart';
 import '../../../core/models/marketplace_item.dart';
+import '../../../core/services/local_storage_service.dart';
 import '../../../core/services/marketplace_service.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/utils/responsive.dart';
-import '../../profile/widgets/alias_modal.dart';
+import '../../profile/widgets/carne_validation_modal.dart';
+import '../../shared/widgets/identity_badge_chip.dart';
+import '../../../core/models/user_profile.dart';
 
 class CreateListingDialog extends StatefulWidget {
   final String activeAlias;
@@ -90,6 +93,31 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
   bool _isFree = false;
   bool _isSubmitting = false;
   bool _isUploadingImage = false;
+  UserProfile? _userProfile;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    final prof = await LocalStorageService.getUserProfile();
+    if (mounted) {
+      setState(() {
+        _userProfile = prof;
+        if (prof.contactWhatsapp != null && _whatsappController.text.isEmpty) {
+          _whatsappController.text = prof.contactWhatsapp!;
+        }
+        if (prof.contactInstagram != null && _instagramController.text.isEmpty) {
+          _instagramController.text = prof.contactInstagram!;
+        }
+        if (prof.contactTelegram != null && _telegramController.text.isEmpty) {
+          _telegramController.text = prof.contactTelegram!;
+        }
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -199,7 +227,9 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
         socialLinks: _socialLinks,
         imageUrls: _imageUrls,
         videoUrl: _videoUrlController.text.trim().isNotEmpty ? _videoUrlController.text.trim() : null,
-        authorAlias: widget.activeAlias,
+        authorAlias: (_userProfile?.isCarneVerified == true && _userProfile?.studentName != null && _userProfile!.studentName!.isNotEmpty)
+            ? _userProfile!.studentName!
+            : widget.activeAlias,
       );
 
       if (mounted) {
@@ -259,10 +289,10 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF004B87).withValues(alpha: 0.12),
+                      color: const Color(0xFF059669).withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.storefront_outlined, color: Color(0xFF004B87), size: 22),
+                    child: const Icon(Icons.storefront, color: Color(0xFF059669), size: 22),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -270,28 +300,39 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Publicar Producto o Tutoría',
+                          'Publicar Producto o Servicio',
                           style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         Text(
-                          'Publicando como: ${widget.activeAlias}',
-                          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.primary),
+                          'Marketplace Universitario · Entorno Seguro',
+                          style: theme.textTheme.bodySmall?.copyWith(color: const Color(0xFF059669), fontWeight: FontWeight.w600),
                         ),
                       ],
                     ),
                   ),
-                  TextButton.icon(
-                    icon: const Icon(Icons.edit, size: 14),
-                    label: const Text('Alias', style: TextStyle(fontSize: 12)),
-                    onPressed: () {
-                      AliasModal.show(
-                        context,
-                        currentAlias: widget.activeAlias,
-                        onSaved: widget.onAliasChanged,
-                      );
-                    },
-                  ),
                 ],
+              ),
+              const SizedBox(height: 14),
+
+              // Selector visual drásticamente diferenciado (Identidad en Marketplace)
+              IdentityBadgeChip(
+                mode: IdentityMode.marketplaceVerified,
+                displayName: _userProfile?.studentName ?? widget.activeAlias,
+                carne: _userProfile?.carne,
+                isVerified: _userProfile?.isCarneVerified ?? false,
+                onSwitchIdentity: () {
+                  if (_userProfile != null) {
+                    CarneValidationModal.show(
+                      context,
+                      currentProfile: _userProfile!,
+                      onProfileUpdated: (updated) {
+                        setState(() {
+                          _userProfile = updated;
+                        });
+                      },
+                    );
+                  }
+                },
               ),
 
               const Divider(height: 20),

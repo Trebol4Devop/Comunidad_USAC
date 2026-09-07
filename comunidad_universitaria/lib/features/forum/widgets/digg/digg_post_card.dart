@@ -13,6 +13,7 @@ class DiggPostCard extends StatefulWidget {
   final VoidCallback? onRepost;
   final Function(String pollId, String optionId)? onVotePoll;
   final Function(String reason)? onReport;
+  final bool isModerator;
 
   const DiggPostCard({
     super.key,
@@ -23,6 +24,7 @@ class DiggPostCard extends StatefulWidget {
     this.onRepost,
     this.onVotePoll,
     this.onReport,
+    this.isModerator = false,
   });
 
   @override
@@ -84,13 +86,23 @@ class _DiggPostCardState extends State<DiggPostCard> {
     final hasImage = widget.post.imageUrl != null && widget.post.imageUrl!.isNotEmpty;
 
     final displayLikes = widget.post.likes - (_isDownvoted ? 1 : 0);
+    final modStatus = widget.post.moderationStatus;
+    final showModBanner = widget.isModerator && modStatus > 0;
+    final modColor = modStatus == 1 ? const Color(0xFFEAB308) : const Color(0xFFEF4444);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(16), // Concentric outer radius
-        border: Border.all(color: cardBorder, width: 1),
+        border: Border(
+          top: BorderSide(color: cardBorder, width: 1),
+          right: BorderSide(color: cardBorder, width: 1),
+          bottom: BorderSide(color: cardBorder, width: 1),
+          left: showModBanner
+              ? BorderSide(color: modColor, width: 5)
+              : BorderSide(color: cardBorder, width: 1),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.03),
@@ -109,6 +121,36 @@ class _DiggPostCardState extends State<DiggPostCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (showModBanner) ...[
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: modColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: modColor.withValues(alpha: 0.4)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          modStatus == 1 ? Icons.hourglass_top : Icons.visibility_off,
+                          size: 13,
+                          color: modColor,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          modStatus == 1 ? 'MODERACIÓN: Pendiente de revisión' : 'MODERACIÓN: Ocultado por reportes',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: modColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 // 1. Post Header: Subreddit / Category • Time ago • Domain
                 Row(
                   children: [

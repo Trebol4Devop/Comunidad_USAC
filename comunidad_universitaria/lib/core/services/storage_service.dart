@@ -11,9 +11,9 @@ class StorageService {
     try {
       return await _picker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 1600,
-        maxHeight: 1600,
-        imageQuality: 85,
+        maxWidth: 1000,
+        maxHeight: 1000,
+        imageQuality: 75,
       );
     } catch (e) {
       debugPrint('Error seleccionando imagen: $e');
@@ -24,9 +24,9 @@ class StorageService {
   static Future<List<XFile>> pickMultipleImages({int maxImages = 3}) async {
     try {
       final picked = await _picker.pickMultiImage(
-        maxWidth: 1600,
-        maxHeight: 1600,
-        imageQuality: 85,
+        maxWidth: 1000,
+        maxHeight: 1000,
+        imageQuality: 75,
       );
       if (picked.length > maxImages) {
         return picked.sublist(0, maxImages);
