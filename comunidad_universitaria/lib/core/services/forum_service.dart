@@ -548,11 +548,14 @@ class ForumService {
   }) async {
     if (!SupabaseConfig.isConfigured) return true;
     try {
-      await SupabaseService.client.from('user_reports').insert({
+      await SupabaseService.client.from('entity_reports').insert({
         'reporter_id': SupabaseService.currentUserId,
+        'entity_type': 'user',
+        'entity_id': reportedUserId,
         'reported_user_id': reportedUserId,
-        'reported_user_alias': reportedAlias,
         'reason': reason.trim(),
+        'moderation_status': 0,
+        'metadata': {'reported_user_alias': reportedAlias},
       });
       return true;
     } catch (e) {
