@@ -863,7 +863,7 @@ class USACConstants {
         },
         {
           'id': 'ambiental',
-          'nombre': 'ngeniería Ambiental',
+          'nombre': 'Ingeniería Ambiental',
           'codigo': '08-00-35',
           'sede': 'Campus Central',
           'modalidades': ['Diario', 'Sabatino', 'Dominical'],

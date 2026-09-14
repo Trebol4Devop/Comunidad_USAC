@@ -80,7 +80,7 @@ class MarketplaceItem {
   final int reportedCount;
   final int upvotes;
   final bool isUpvotedByMe;
-  final String status; // available, reserved, sold, archived
+  final String status; // available, reserved, sold, paused, archived
   final bool isSellerVerified;
 
   MarketplaceItem({

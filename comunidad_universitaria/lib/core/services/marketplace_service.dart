@@ -251,32 +251,25 @@ class MarketplaceService {
     if (!SupabaseConfig.isConfigured) return true;
 
     try {
-      // 1. Call RPC in Supabase with auto-moderation threshold
+      // RPC con umbral de auto-moderación; si no existe, inserción directa.
+      // Todo reporte vive en entity_reports (entity_type = marketplace_item).
       await SupabaseService.client.rpc('report_marketplace_item', params: {
         'target_item_id': itemId,
         'report_reason': reason.trim(),
         'target_seller_id': sellerUserId,
         'target_seller_alias': sellerAlias,
       }).catchError((_) async {
-        // Fallback standard insert
-        await SupabaseService.client.from('marketplace_reports').insert({
-          'item_id': itemId,
-          'user_id': SupabaseService.currentUserId,
+        await SupabaseService.client.from('entity_reports').insert({
+          'reporter_id': SupabaseService.currentUserId,
+          'entity_type': 'marketplace_item',
+          'entity_id': itemId,
+          'entity_owner_id':
+              (sellerUserId != null && sellerUserId.isNotEmpty) ? sellerUserId : null,
           'reason': reason.trim(),
-          'seller_user_id': sellerUserId,
-          'seller_alias': sellerAlias,
+          'moderation_status': 0,
+          'metadata': {'seller_alias': sellerAlias},
         });
       });
-
-      // 2. Also register in general user_reports if seller is registered
-      if (sellerUserId != null) {
-        await SupabaseService.client.from('user_reports').insert({
-          'reporter_id': SupabaseService.currentUserId,
-          'reported_user_id': sellerUserId,
-          'reported_user_alias': sellerAlias ?? 'Vendedor',
-          'reason': 'Marketplace: $reason',
-        }).catchError((_) {});
-      }
 
       return true;
     } catch (e) {

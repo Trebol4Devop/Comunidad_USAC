@@ -167,10 +167,12 @@ class GroupsService {
     if (!SupabaseConfig.isConfigured) return true;
 
     try {
-      await SupabaseService.client.from('student_group_reports').insert({
-        'group_id': groupId,
-        'user_id': SupabaseService.currentUserId,
+      await SupabaseService.client.from('entity_reports').insert({
+        'reporter_id': SupabaseService.currentUserId,
+        'entity_type': 'group',
+        'entity_id': groupId,
         'reason': reason.trim(),
+        'moderation_status': 0,
       });
 
       return true;
