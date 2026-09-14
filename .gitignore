@@ -1,0 +1,6 @@
+# Local secrets and migration artifacts
+.env
+.env.*
+!.env.example
+scripts/.venv/
+scripts/*.json
