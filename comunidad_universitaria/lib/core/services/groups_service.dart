@@ -1,14 +1,32 @@
 import 'package:flutter/foundation.dart';
 import '../config/supabase_config.dart';
 import '../models/whatsapp_group.dart';
+import 'cache_service.dart';
 import 'supabase_service.dart';
 
 class GroupsService {
+  static const String _cacheNamespace = 'student_groups';
+
   static Future<List<WhatsAppGroup>> fetchGroups({
     String carrera = 'todas',
     String searchQuery = '',
   }) async {
+    final isDefaultQuery = carrera == 'todas' && searchQuery.trim().isEmpty;
+    final cacheKey = CacheService.buildKey({
+      'user': SupabaseService.currentUserId ?? 'anon',
+      'carrera': carrera,
+      'search': searchQuery.trim().toLowerCase(),
+    });
+
+    final cached = CacheService.get<List<WhatsAppGroup>>(_cacheNamespace, cacheKey);
+    if (cached != null) return List<WhatsAppGroup>.from(cached);
+
     if (!SupabaseConfig.isConfigured) return _getSampleGroups();
+
+    if (isDefaultQuery) {
+      final persisted = await _readPersistedGroups(cacheKey);
+      if (persisted != null) return persisted;
+    }
 
     try {
       var query = SupabaseService.client
@@ -45,7 +63,7 @@ class GroupsService {
         }
       }
 
-      return data.map((item) {
+      final groups = data.map((item) {
         final map = Map<String, dynamic>.from(item);
         final groupId = map['id'].toString();
         return WhatsAppGroup.fromMap(
@@ -53,10 +71,51 @@ class GroupsService {
           isUpvotedByMe: upvotedGroupIds.contains(groupId),
         );
       }).toList();
+
+      CacheService.set(_cacheNamespace, cacheKey, List<WhatsAppGroup>.from(groups));
+      if (isDefaultQuery) {
+        await CacheService.setPersisted(
+          _cacheNamespace,
+          cacheKey,
+          groups.map(_groupToCacheMap).toList(),
+        );
+      }
+      return groups;
     } catch (e) {
       debugPrint('Error al obtener grupos estudiantiles: $e');
+      if (isDefaultQuery) {
+        final persisted = await _readPersistedGroups(cacheKey);
+        if (persisted != null) return persisted;
+      }
       return _getSampleGroups();
     }
+  }
+
+  /// Lee la primera página persistida (solo consultas por defecto).
+  static Future<List<WhatsAppGroup>?> _readPersistedGroups(String cacheKey) {
+    return CacheService.getPersisted<List<WhatsAppGroup>>(
+      _cacheNamespace,
+      cacheKey,
+      (data) {
+        if (data is! List) throw const FormatException('Caché de grupos inválida');
+        return data
+            .whereType<Map>()
+            .map((item) => _groupFromCacheMap(Map<String, dynamic>.from(item)))
+            .toList();
+      },
+    );
+  }
+
+  static Map<String, dynamic> _groupToCacheMap(WhatsAppGroup group) {
+    final map = group.toInsertMap();
+    map['id'] = group.id;
+    map['created_at'] = group.createdAt.toIso8601String();
+    map['cache_upvoted'] = group.isUpvotedByMe;
+    return map;
+  }
+
+  static WhatsAppGroup _groupFromCacheMap(Map<String, dynamic> map) {
+    return WhatsAppGroup.fromMap(map, isUpvotedByMe: map['cache_upvoted'] == true);
   }
 
   static Future<bool> toggleUpvote(WhatsAppGroup group) async {
@@ -72,6 +131,7 @@ class GroupsService {
             .eq('group_id', group.id)
             .eq('user_id', currentUserId);
 
+        await CacheService.invalidateAll(_cacheNamespace);
         return false;
       } else {
         // Add upvote (PostgreSQL trigger automatically syncs counter)
@@ -80,6 +140,7 @@ class GroupsService {
           'user_id': currentUserId,
         });
 
+        await CacheService.invalidateAll(_cacheNamespace);
         return true;
       }
     } catch (e) {
@@ -153,6 +214,7 @@ class GroupsService {
         'user_id': userId,
       });
 
+      await CacheService.invalidateAll(_cacheNamespace);
       return created;
     } catch (e) {
       debugPrint('Error al crear grupo: $e');

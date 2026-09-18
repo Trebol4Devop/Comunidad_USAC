@@ -1,9 +1,12 @@
 import 'package:flutter/foundation.dart';
 import '../config/supabase_config.dart';
 import '../models/marketplace_item.dart';
+import 'cache_service.dart';
 import 'supabase_service.dart';
 
 class MarketplaceService {
+  static const String _cacheNamespace = 'marketplace_items';
+
   // Prohibited words and phrases filter according to community rules
   static final List<String> _prohibitedKeywords = [
     'hacer examenes',
@@ -44,6 +47,23 @@ class MarketplaceService {
     bool onlyFree = false,
     String searchQuery = '',
   }) async {
+    final isDefaultQuery = category == 'todos' &&
+        facultad == 'todas' &&
+        sede == 'todas' &&
+        !onlyFree &&
+        searchQuery.trim().isEmpty;
+    final cacheKey = CacheService.buildKey({
+      'user': SupabaseService.currentUserId ?? 'anon',
+      'category': category,
+      'facultad': facultad,
+      'sede': sede,
+      'onlyFree': onlyFree,
+      'search': searchQuery.trim().toLowerCase(),
+    });
+
+    final cached = CacheService.get<List<MarketplaceItem>>(_cacheNamespace, cacheKey);
+    if (cached != null) return List<MarketplaceItem>.from(cached);
+
     if (!SupabaseConfig.isConfigured) {
       return _filterSampleListings(
         category: category,
@@ -52,6 +72,11 @@ class MarketplaceService {
         onlyFree: onlyFree,
         searchQuery: searchQuery,
       );
+    }
+
+    if (isDefaultQuery) {
+      final persisted = await _readPersistedListings(cacheKey);
+      if (persisted != null) return persisted;
     }
 
     try {
@@ -105,7 +130,7 @@ class MarketplaceService {
         }
       }
 
-      return data.map((item) {
+      final listings = data.map((item) {
         final map = Map<String, dynamic>.from(item);
         final itemId = map['id'].toString();
         return MarketplaceItem.fromMap(
@@ -113,8 +138,22 @@ class MarketplaceService {
           isUpvotedByMe: upvotedItemIds.contains(itemId),
         );
       }).toList();
+
+      CacheService.set(_cacheNamespace, cacheKey, List<MarketplaceItem>.from(listings));
+      if (isDefaultQuery) {
+        await CacheService.setPersisted(
+          _cacheNamespace,
+          cacheKey,
+          listings.map(_listingToCacheMap).toList(),
+        );
+      }
+      return listings;
     } catch (e) {
       debugPrint('Error al obtener publicaciones del marketplace: $e');
+      if (isDefaultQuery) {
+        final persisted = await _readPersistedListings(cacheKey);
+        if (persisted != null) return persisted;
+      }
       return _filterSampleListings(
         category: category,
         facultad: facultad,
@@ -123,6 +162,33 @@ class MarketplaceService {
         searchQuery: searchQuery,
       );
     }
+  }
+
+  /// Lee la primera página persistida (solo consultas por defecto).
+  static Future<List<MarketplaceItem>?> _readPersistedListings(String cacheKey) {
+    return CacheService.getPersisted<List<MarketplaceItem>>(
+      _cacheNamespace,
+      cacheKey,
+      (data) {
+        if (data is! List) throw const FormatException('Caché de marketplace inválida');
+        return data
+            .whereType<Map>()
+            .map((item) => _listingFromCacheMap(Map<String, dynamic>.from(item)))
+            .toList();
+      },
+    );
+  }
+
+  static Map<String, dynamic> _listingToCacheMap(MarketplaceItem item) {
+    final map = item.toInsertMap();
+    map['id'] = item.id;
+    map['created_at'] = item.createdAt.toIso8601String();
+    map['cache_upvoted'] = item.isUpvotedByMe;
+    return map;
+  }
+
+  static MarketplaceItem _listingFromCacheMap(Map<String, dynamic> map) {
+    return MarketplaceItem.fromMap(map, isUpvotedByMe: map['cache_upvoted'] == true);
   }
 
   static Future<List<MarketplaceItem>> fetchSponsoredListings() async {
@@ -235,7 +301,9 @@ class MarketplaceService {
           .select()
           .single();
 
-      return MarketplaceItem.fromMap(Map<String, dynamic>.from(res), isUpvotedByMe: true);
+      final created = MarketplaceItem.fromMap(Map<String, dynamic>.from(res), isUpvotedByMe: true);
+      await CacheService.invalidateAll(_cacheNamespace);
+      return created;
     } catch (e) {
       debugPrint('Error al crear publicación de marketplace: $e');
       rethrow;
@@ -296,6 +364,7 @@ class MarketplaceService {
         return true;
       });
 
+      await CacheService.invalidateAll(_cacheNamespace);
       return res == true;
     } catch (e) {
       debugPrint('Error al moderar publicación: $e');
@@ -314,6 +383,7 @@ class MarketplaceService {
           .from('marketplace_items')
           .update({'status': newStatus})
           .eq('id', itemId);
+      await CacheService.invalidateAll(_cacheNamespace);
       return true;
     } catch (e) {
       debugPrint('Error actualizando estado del artículo: $e');
@@ -361,6 +431,7 @@ class MarketplaceService {
             .eq('item_id', item.id)
             .eq('user_id', currentUserId);
 
+        await CacheService.invalidateAll(_cacheNamespace);
         return false;
       } else {
         await SupabaseService.client.from('marketplace_upvotes').insert({
@@ -368,6 +439,7 @@ class MarketplaceService {
           'user_id': currentUserId,
         });
 
+        await CacheService.invalidateAll(_cacheNamespace);
         return true;
       }
     } catch (e) {
