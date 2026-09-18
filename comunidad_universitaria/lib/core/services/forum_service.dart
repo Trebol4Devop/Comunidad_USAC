@@ -2,9 +2,12 @@ import 'package:flutter/foundation.dart';
 import '../config/supabase_config.dart';
 import '../constants/categories.dart';
 import '../models/post.dart';
+import 'cache_service.dart';
 import 'supabase_service.dart';
 
 class ForumService {
+  static const String _cacheNamespace = 'forum_posts';
+
   static Future<List<Post>> fetchPosts({
     String category = 'todos',
     String facultad = 'todas',
@@ -12,6 +15,23 @@ class ForumService {
     String searchQuery = '',
     bool showOnlyBookmarks = false,
   }) async {
+    final isDefaultQuery = category == 'todos' &&
+        facultad == 'todas' &&
+        carrera == 'todas' &&
+        searchQuery.trim().isEmpty &&
+        !showOnlyBookmarks;
+    final cacheKey = CacheService.buildKey({
+      'user': SupabaseService.currentUserId ?? 'anon',
+      'category': category,
+      'facultad': facultad,
+      'carrera': carrera,
+      'search': searchQuery.trim().toLowerCase(),
+      'bookmarks': showOnlyBookmarks,
+    });
+
+    final cached = CacheService.get<List<Post>>(_cacheNamespace, cacheKey);
+    if (cached != null) return List<Post>.from(cached);
+
     if (!SupabaseConfig.isConfigured) {
       return _filterSamplePosts(
         category: category,
@@ -20,6 +40,11 @@ class ForumService {
         searchQuery: searchQuery,
         showOnlyBookmarks: showOnlyBookmarks,
       );
+    }
+
+    if (isDefaultQuery) {
+      final persisted = await _readPersistedPosts(cacheKey);
+      if (persisted != null) return persisted;
     }
 
     try {
@@ -42,7 +67,9 @@ class ForumService {
             .inFilter('id', bookmarkedIds)
             .timeout(const Duration(seconds: 10));
         final List<dynamic> data = postsRes as List<dynamic>;
-        return await _hydratePosts(data, currentUserId);
+        final posts = await _hydratePosts(data, currentUserId);
+        CacheService.set(_cacheNamespace, cacheKey, List<Post>.from(posts));
+        return posts;
       }
 
       var query = SupabaseService.client
@@ -76,12 +103,97 @@ class ForumService {
           .limit(50)
           .timeout(const Duration(seconds: 10));
       final List<dynamic> data = response as List<dynamic>;
+      final posts = await _hydratePosts(data, currentUserId);
 
-      return await _hydratePosts(data, currentUserId);
+      CacheService.set(_cacheNamespace, cacheKey, List<Post>.from(posts));
+      if (isDefaultQuery) {
+        await CacheService.setPersisted(
+          _cacheNamespace,
+          cacheKey,
+          posts.map(_postToCacheMap).toList(),
+        );
+      }
+      return posts;
     } catch (e) {
       debugPrint('Error al obtener posts del foro: $e');
+      if (isDefaultQuery) {
+        final persisted = await _readPersistedPosts(cacheKey);
+        if (persisted != null) return persisted;
+      }
       return _getSamplePosts();
     }
+  }
+
+  /// Lee la primera página persistida (solo consultas por defecto).
+  static Future<List<Post>?> _readPersistedPosts(String cacheKey) {
+    return CacheService.getPersisted<List<Post>>(
+      _cacheNamespace,
+      cacheKey,
+      (data) {
+        if (data is! List) throw const FormatException('Caché de posts inválida');
+        return data
+            .whereType<Map>()
+            .map((item) => _postFromCacheMap(Map<String, dynamic>.from(item)))
+            .toList();
+      },
+    );
+  }
+
+  static Map<String, dynamic> _postToCacheMap(Post post) {
+    return {
+      'id': post.id,
+      'title': post.title,
+      'category': post.category,
+      'content': post.content,
+      'author_alias': post.authorAlias,
+      'likes': post.likes,
+      'user_id': post.userId,
+      'author_hash': post.authorHash,
+      'created_at': post.createdAt.toIso8601String(),
+      'carrera': post.carrera,
+      'image_url': post.imageUrl,
+      'gif_url': post.gifUrl,
+      'quoted_post_id': post.quotedPostId,
+      'reposts_count': post.repostsCount,
+      'is_pinned': post.isPinned,
+      'moderation_status': post.moderationStatus,
+      'is_my_post': post.isMyPost,
+      'comment_count': post.commentCount,
+      'cache_liked': post.isLikedByMe,
+      'cache_bookmarked': post.isBookmarkedByMe,
+      'cache_poll': post.poll == null ? null : _pollToCacheMap(post.poll!),
+      'cache_quoted_post': post.quotedPost == null ? null : _postToCacheMap(post.quotedPost!),
+    };
+  }
+
+  static Post _postFromCacheMap(Map<String, dynamic> map) {
+    final rawPoll = map['cache_poll'];
+    final rawQuoted = map['cache_quoted_post'];
+    return Post.fromMap(
+      map,
+      isLikedByMe: map['cache_liked'] == true,
+      isBookmarkedByMe: map['cache_bookmarked'] == true,
+      poll: rawPoll is Map ? _pollFromCacheMap(Map<String, dynamic>.from(rawPoll)) : null,
+      quotedPost:
+          rawQuoted is Map ? _postFromCacheMap(Map<String, dynamic>.from(rawQuoted)) : null,
+    );
+  }
+
+  static Map<String, dynamic> _pollToCacheMap(PostPoll poll) {
+    return {
+      'id': poll.id,
+      'post_id': poll.postId,
+      'question': poll.question,
+      'my_voted_option_id': poll.myVotedOptionId,
+      'options': poll.options.map((option) => option.toMap()).toList(),
+    };
+  }
+
+  static PostPoll _pollFromCacheMap(Map<String, dynamic> map) {
+    return PostPoll.fromMap(
+      {...map, 'options': map['options'] ?? const []},
+      myVotedOptionId: map['my_voted_option_id']?.toString(),
+    );
   }
 
   static Future<List<Post>> _hydratePosts(List<dynamic> data, String? currentUserId) async {
@@ -216,12 +328,14 @@ class ForumService {
             .delete()
             .eq('post_id', post.id)
             .eq('user_id', currentUserId);
+        await CacheService.invalidateAll(_cacheNamespace);
         return false;
       } else {
         await SupabaseService.client.from('post_likes').insert({
           'post_id': post.id,
           'user_id': currentUserId,
         });
+        await CacheService.invalidateAll(_cacheNamespace);
         return true;
       }
     } catch (e) {
@@ -241,12 +355,14 @@ class ForumService {
             .delete()
             .eq('post_id', post.id)
             .eq('user_id', currentUserId);
+        await CacheService.invalidateAll(_cacheNamespace);
         return false;
       } else {
         await SupabaseService.client.from('post_bookmarks').insert({
           'post_id': post.id,
           'user_id': currentUserId,
         });
+        await CacheService.invalidateAll(_cacheNamespace);
         return true;
       }
     } catch (e) {
@@ -276,6 +392,7 @@ class ForumService {
         'user_id': currentUserId,
       });
 
+      await CacheService.invalidateAll(_cacheNamespace);
       return true;
     } catch (e) {
       debugPrint('Error al votar en encuesta: $e');
@@ -385,6 +502,7 @@ class ForumService {
         }
       }
 
+      await CacheService.invalidateAll(_cacheNamespace);
       return createdPost;
     } catch (e) {
       debugPrint('Error al crear post: $e');
@@ -496,7 +614,9 @@ class ForumService {
           .single()
           .timeout(const Duration(seconds: 12));
 
-      return PostComment.fromMap(Map<String, dynamic>.from(res));
+      final comment = PostComment.fromMap(Map<String, dynamic>.from(res));
+      await CacheService.invalidateAll(_cacheNamespace);
+      return comment;
     } catch (e) {
       debugPrint('Error al agregar comentario: $e');
       rethrow;
