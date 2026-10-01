@@ -52,7 +52,7 @@ class ProfileService {
         try {
           var fallbackQuery = SupabaseService.client
               .from('posts')
-              .select('*')
+              .select('id, title, category, content, author_alias, author_hash, likes, carrera, image_url, gif_url, is_pinned, quoted_post_id, created_at, moderation_status')
               .neq('moderation_status', 2);
           if (alias.trim().isNotEmpty) {
             fallbackQuery = fallbackQuery.eq('author_alias', alias.trim());

@@ -114,7 +114,7 @@ class ForumService {
         try {
           var fallbackQuery = SupabaseService.client
               .from('posts')
-              .select('*')
+              .select('id, title, category, content, author_alias, author_hash, likes, carrera, image_url, gif_url, is_pinned, quoted_post_id, created_at, moderation_status')
               .neq('moderation_status', 2);
 
           if (category != 'todos') {
@@ -587,7 +587,7 @@ class ForumService {
         try {
           final fallbackRes = await SupabaseService.client
               .from('comments')
-              .select('*')
+              .select('id, post_id, parent_id, content, author_alias, author_hash, gif_url, created_at, moderation_status')
               .eq('post_id', postId)
               .neq('moderation_status', 2)
               .order('created_at', ascending: true)
