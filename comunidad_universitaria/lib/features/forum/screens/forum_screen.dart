@@ -63,7 +63,6 @@ class _ForumScreenState extends State<ForumScreen> {
   UserProfile? _currentUserProfile;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
-  bool _showMobileSearch = false;
 
   @override
   void initState() {
@@ -154,7 +153,6 @@ class _ForumScreenState extends State<ForumScreen> {
       _activeServer = server;
       _searchQuery = '';
       _searchController.clear();
-      _showMobileSearch = false;
     });
     widget.onServerChanged?.call(server);
     _loadPosts();
@@ -175,7 +173,6 @@ class _ForumScreenState extends State<ForumScreen> {
       _activeChannel = channel;
       _searchQuery = '';
       _searchController.clear();
-      _showMobileSearch = false;
     });
     widget.onChannelChanged?.call(channel);
     _loadPosts();
@@ -417,18 +414,11 @@ class _ForumScreenState extends State<ForumScreen> {
               onAliasChanged: widget.onAliasChanged,
             ),
 
-            // 3. Central Channel Feed
+            // 3. Central Channel Feed without redundant pinned header
             Expanded(
-              child: Column(
-                children: [
-                  _buildDesktopChannelHeader(theme, isDark),
-                  Expanded(
-                    child: RefreshIndicator(
-                      onRefresh: _loadPosts,
-                      child: _buildFeedContent(theme, isDark),
-                    ),
-                  ),
-                ],
+              child: RefreshIndicator(
+                onRefresh: _loadPosts,
+                child: _buildFeedContent(theme, isDark),
               ),
             ),
           ],
@@ -436,7 +426,7 @@ class _ForumScreenState extends State<ForumScreen> {
       );
     }
 
-    // Mobile layout (< 768px)
+    // Mobile layout (< 768px): Unified, sleek Discord mobile layout without double AppBars or redundant FAB
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: feedBg,
@@ -474,209 +464,73 @@ class _ForumScreenState extends State<ForumScreen> {
           ],
         ),
       ),
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-        ),
-        titleSpacing: 0,
-        title: _showMobileSearch
-            ? TextField(
-                controller: _searchController,
-                autofocus: true,
-                decoration: InputDecoration(
-                  hintText: 'Buscar en #${_activeChannel.name}...',
-                  border: InputBorder.none,
-                  hintStyle: TextStyle(fontSize: 14, color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade400),
-                ),
-                onSubmitted: (val) {
-                  setState(() => _searchQuery = val);
-                  _loadPosts();
-                },
-              )
-            : Row(
-                children: [
-                  Icon(_activeChannel.icon, size: 18, color: theme.colorScheme.primary),
-                  const SizedBox(width: 6),
-                  Flexible(
-                    child: Text(
-                      '#${_activeChannel.name}',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                    decoration: BoxDecoration(
-                      color: _activeServer.color.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      _activeServer.shortCode,
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
-                        color: _activeServer.color,
-                      ),
-                    ),
-                  ),
-                ],
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            // Pinned Discord Mobile Channel Bar (clean, no second full AppBar)
+            _buildMobileChannelHeader(theme, isDark),
+            // Posts Feed
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _loadPosts,
+                child: _buildFeedContent(theme, isDark),
               ),
-        actions: [
-          IconButton(
-            icon: Icon(_showMobileSearch ? Icons.close : Icons.search, size: 20),
-            onPressed: () {
-              setState(() {
-                if (_showMobileSearch && _searchQuery.isNotEmpty) {
-                  _searchController.clear();
-                  _searchQuery = '';
-                  _loadPosts();
-                }
-                _showMobileSearch = !_showMobileSearch;
-              });
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.add_circle, color: Color(0xFF004B87), size: 24),
-            tooltip: 'Crear publicación',
-            onPressed: _openCreateDialog,
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _loadPosts,
-        child: _buildFeedContent(theme, isDark),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openCreateDialog,
-        backgroundColor: const Color(0xFF004B87),
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_comment, size: 20),
-        label: Text('Publicar en #${_activeChannel.name}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildDesktopChannelHeader(ThemeData theme, bool isDark) {
+  Widget _buildMobileChannelHeader(ThemeData theme, bool isDark) {
     return Container(
-      height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF313338) : Colors.white,
         border: Border(
           bottom: BorderSide(
             color: isDark ? const Color(0xFF202225) : const Color(0xFFE2E8F0),
-            width: 1.5,
+            width: 1,
           ),
         ),
       ),
       child: Row(
         children: [
-          Icon(_activeChannel.icon, size: 20, color: Colors.grey.shade400),
-          const SizedBox(width: 8),
-          Text(
-            _activeChannel.name,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+          IconButton(
+            icon: const Icon(Icons.menu, size: 22),
+            tooltip: 'Canales y Servidores',
+            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
           ),
-          const SizedBox(width: 12),
-          Container(
-            height: 20,
-            width: 1,
-            color: isDark ? const Color(0xFF3F4147) : Colors.grey.shade300,
+          const SizedBox(width: 4),
+          Icon(
+            _activeChannel.icon,
+            size: 18,
+            color: isDark ? const Color(0xFF949BA4) : theme.colorScheme.primary,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 6),
           Expanded(
-            child: Row(
-              children: [
-                Flexible(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: _activeServer.color.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(_activeServer.icon, size: 13, color: _activeServer.color),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            _activeServer.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: _activeServer.color,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    _activeChannel.description,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: isDark ? const Color(0xFF949BA4) : const Color(0xFF64748B),
-                    ),
-                  ),
-                ),
-              ],
+            child: Text(
+              '#${_activeChannel.name}',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 180,
-            height: 34,
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Buscar en #${_activeChannel.name}...',
-                hintStyle: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500),
-                prefixIcon: const Icon(Icons.search, size: 16),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, size: 14),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() => _searchQuery = '');
-                          _loadPosts();
-                        },
-                      )
-                    : null,
-                contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                filled: true,
-                fillColor: isDark ? const Color(0xFF1E1F22) : const Color(0xFFF1F5F9),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide.none,
-                ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: _activeServer.color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              _activeServer.shortCode,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: _activeServer.color,
               ),
-              onSubmitted: (val) {
-                setState(() => _searchQuery = val);
-                _loadPosts();
-              },
             ),
-          ),
-          const SizedBox(width: 10),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF004B87),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            icon: const Icon(Icons.add, size: 16),
-            label: const Text('Publicar', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-            onPressed: _openCreateDialog,
           ),
         ],
       ),
@@ -694,13 +548,11 @@ class _ForumScreenState extends State<ForumScreen> {
     }
 
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       children: [
         _buildDiscordWelcomeHero(theme, isDark),
-        const SizedBox(height: 14),
-
-        // Quick Create Prompt bar (Discord styled)
-        _buildDiscordCreatePrompt(theme, isDark),
+        const SizedBox(height: 12),
 
         if (_isOffline) ...[
           Container(
@@ -717,7 +569,7 @@ class _ForumScreenState extends State<ForumScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Modo sin conexión — Mostrando publicaciones en memoria/caché local.',
+                    'Sin conexión — Mostrando contenido guardado.',
                     style: TextStyle(fontSize: 12, color: Colors.amber.shade700, fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -768,11 +620,14 @@ class _ForumScreenState extends State<ForumScreen> {
   }
 
   Widget _buildDiscordWelcomeHero(ThemeData theme, bool isDark) {
+    final width = MediaQuery.of(context).size.width;
+    final isDesktop = width >= 800;
+
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF2B2D31) : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDark ? const Color(0xFF383A40) : const Color(0xFFE2E8F0),
         ),
@@ -780,141 +635,174 @@ class _ForumScreenState extends State<ForumScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF3F4147) : Colors.grey.shade200,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(_activeChannel.icon, size: 24, color: isDark ? Colors.white : const Color(0xFF004B87)),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            '¡Te damos la bienvenida a #${_activeChannel.name}!',
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Este es el inicio del canal #${_activeChannel.name} en el servidor de ${_activeServer.name}. ${_activeChannel.description}',
-            style: TextStyle(
-              fontSize: 12,
-              height: 1.4,
-              color: isDark ? const Color(0xFF949BA4) : const Color(0xFF64748B),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDiscordCreatePrompt(ThemeData theme, bool isDark) {
-    final boxBg = isDark ? const Color(0xFF2B2D31) : Colors.white;
-    final inputBg = isDark ? const Color(0xFF1E1F22) : const Color(0xFFF1F5F9);
-    final borderColor = isDark ? const Color(0xFF383A40) : const Color(0xFFE2E8F0);
-    final hintColor = isDark ? const Color(0xFF949BA4) : const Color(0xFF64748B);
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: boxBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          InkWell(
-            onTap: _openCreateDialog,
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              height: 40,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: BoxDecoration(
-                color: inputBg,
-                borderRadius: BorderRadius.circular(8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF3F4147) : const Color(0xFFEEF2FF),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(_activeChannel.icon, size: 22, color: isDark ? Colors.white : const Color(0xFF5865F2)),
               ),
-              alignment: Alignment.centerLeft,
-              child: Row(
-                children: [
-                  Icon(Icons.add_circle_outline, size: 18, color: hintColor),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Enviar mensaje o consulta en #${_activeChannel.name}...',
-                      style: TextStyle(fontSize: 13, color: hintColor),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '¡Te damos la bienvenida a #${_activeChannel.name}!',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      '${_activeServer.name} · ${_activeChannel.description}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? const Color(0xFF949BA4) : const Color(0xFF64748B),
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+              if (isDesktop) ...[
+                const SizedBox(width: 14),
+                SizedBox(
+                  width: 180,
+                  height: 36,
+                  child: TextField(
+                    controller: _searchController,
+                    style: const TextStyle(fontSize: 12),
+                    decoration: InputDecoration(
+                      hintText: 'Buscar...',
+                      hintStyle: TextStyle(
+                        fontSize: 11,
+                        color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
+                      ),
+                      prefixIcon: const Icon(Icons.search, size: 16),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear, size: 14),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() => _searchQuery = '');
+                                _loadPosts();
+                              },
+                            )
+                          : null,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                      filled: true,
+                      fillColor: isDark ? const Color(0xFF1E1F22) : Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: isDark ? const Color(0xFF383A40) : const Color(0xFFCBD5E1),
+                          width: 1,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: isDark ? const Color(0xFF383A40) : const Color(0xFFCBD5E1),
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                    onSubmitted: (val) {
+                      setState(() => _searchQuery = val);
+                      _loadPosts();
+                    },
+                  ),
+                ),
+                const SizedBox(width: 10),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF5865F2), // Discord Blurple
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  icon: const Icon(Icons.add, size: 16),
+                  label: const Text('Publicar', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  onPressed: _openCreateDialog,
+                ),
+              ],
+            ],
           ),
-          const SizedBox(height: 8),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
+          if (!isDesktop) ...[
+            const SizedBox(height: 12),
+            Row(
               children: [
-                _buildQuickActionChip(
-                  icon: Icons.photo_library_outlined,
-                  color: const Color(0xFF16A34A),
-                  label: 'Foto / Adjunto',
-                  onTap: _openCreateDialog,
-                  isDark: isDark,
+                Expanded(
+                  child: SizedBox(
+                    height: 38,
+                    child: TextField(
+                      controller: _searchController,
+                      style: const TextStyle(fontSize: 13),
+                      decoration: InputDecoration(
+                        hintText: 'Buscar en #${_activeChannel.name}...',
+                        hintStyle: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
+                        ),
+                        prefixIcon: const Icon(Icons.search, size: 18),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear, size: 16),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() => _searchQuery = '');
+                                  _loadPosts();
+                                },
+                              )
+                            : null,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                        filled: true,
+                        fillColor: isDark ? const Color(0xFF1E1F22) : Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: isDark ? const Color(0xFF383A40) : const Color(0xFFCBD5E1),
+                            width: 1,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: isDark ? const Color(0xFF383A40) : const Color(0xFFCBD5E1),
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      onSubmitted: (val) {
+                        setState(() => _searchQuery = val);
+                        _loadPosts();
+                      },
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 8),
-                _buildQuickActionChip(
-                  icon: Icons.poll_outlined,
-                  color: const Color(0xFF5865F2),
-                  label: 'Encuesta',
-                  onTap: _openCreateDialog,
-                  isDark: isDark,
-                ),
-                const SizedBox(width: 8),
-                _buildQuickActionChip(
-                  icon: Icons.help_outline_rounded,
-                  color: const Color(0xFFD97706),
-                  label: 'Consulta rápida',
-                  onTap: _openCreateDialog,
-                  isDark: isDark,
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF5865F2),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  icon: const Icon(Icons.add, size: 16),
+                  label: const Text('Publicar', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  onPressed: _openCreateDialog,
                 ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickActionChip({
-    required IconData icon,
-    required Color color,
-    required String label,
-    required VoidCallback onTap,
-    required bool isDark,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(6),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: isDark ? const Color(0xFFDBDEE1) : const Color(0xFF475569),
-              ),
-            ),
           ],
-        ),
+        ],
       ),
     );
   }
