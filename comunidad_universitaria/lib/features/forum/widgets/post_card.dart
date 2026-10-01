@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/categories.dart';
 import '../../../core/models/post.dart';
 import '../../../core/utils/time_utils.dart';
-import '../../shared/widgets/image_viewer_dialog.dart';
 import '../../shared/widgets/report_dialog.dart';
+import 'discord/discord_media_attachment.dart';
 
 class PostCard extends StatelessWidget {
   final Post post;
@@ -40,21 +40,38 @@ class PostCard extends StatelessWidget {
     final showModBanner = isModerator && modStatus > 0;
     final modColor = modStatus == 1 ? const Color(0xFFEAB308) : const Color(0xFFEF4444);
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      shape: showModBanner
-          ? RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-              side: BorderSide(color: modColor, width: 2.5),
-            )
-          : null,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+    // Discord styling: Card #2B2D31 (dark) / #FFFFFF (light), border #383A40 / #E2E8F0
+    final cardBg = isDark ? const Color(0xFF2B2D31) : Colors.white;
+    final cardBorder = showModBanner
+        ? modColor
+        : (isDark ? const Color(0xFF383A40) : const Color(0xFFE2E8F0));
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: cardBorder, width: showModBanner ? 2.0 : 1.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+            blurRadius: 4,
+            offset: const Offset(0, 1.5),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          hoverColor: isDark ? const Color(0xFF35373C) : const Color(0xFFF8FAFC),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               if (showModBanner) ...[
                 Container(
                   margin: const EdgeInsets.only(bottom: 8),
@@ -74,7 +91,7 @@ class PostCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 5),
                       Text(
-                        modStatus == 1 ? 'MODERACIÓN: Pendiente de revisión' : 'MODERACIÓN: Ocultado por reportes',
+                        modStatus == 1 ? 'Pendiente de revisión' : 'Ocultado por reportes',
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
@@ -92,7 +109,7 @@ class PostCard extends StatelessWidget {
                     const Icon(Icons.push_pin, size: 14, color: Color(0xFF004B87)),
                     const SizedBox(width: 4),
                     Text(
-                      'Publicación Fijada / Anuncio Oficial',
+                      'Publicación Fijada',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: const Color(0xFF004B87),
                         fontWeight: FontWeight.bold,
@@ -344,7 +361,7 @@ class PostCard extends StatelessWidget {
                                           ),
                                           if (hasVoted)
                                             Text(
-                                              '${(percent * 100).toStringAsFixed(0)}% (${opt.votesCount})',
+                                              '${(percent * 100).toStringAsFixed(0)}% · ${opt.votesCount} votos',
                                               style: TextStyle(
                                                 fontSize: 11,
                                                 fontWeight: FontWeight.w600,
@@ -373,47 +390,24 @@ class PostCard extends StatelessWidget {
               // GIF Preview if available
               if (post.gifUrl != null && post.gifUrl!.isNotEmpty) ...[
                 const SizedBox(height: 10),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    height: 180,
-                    width: double.infinity,
-                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-                    child: Image.network(
-                      post.gifUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => const Center(
-                        child: Icon(Icons.broken_image, color: Colors.grey),
-                      ),
-                    ),
-                  ),
+                DiscordMediaAttachment(
+                  imageUrl: post.gifUrl!,
+                  title: post.title,
+                  isGif: true,
+                  maxHeight: 240,
+                  maxWidth: 460,
                 ),
               ],
 
               // Image Preview if available
               if (post.imageUrl != null && post.imageUrl!.isNotEmpty) ...[
                 const SizedBox(height: 10),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    height: 160,
-                    width: double.infinity,
-                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-                    child: InkWell(
-                      onTap: () => ImageViewerDialog.show(
-                        context,
-                        imageUrl: post.imageUrl!,
-                        title: post.title,
-                      ),
-                      child: Image.network(
-                        post.imageUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => const Center(
-                          child: Icon(Icons.broken_image, color: Colors.grey),
-                        ),
-                      ),
-                    ),
-                  ),
+                DiscordMediaAttachment(
+                  imageUrl: post.imageUrl!,
+                  title: post.title,
+                  isGif: false,
+                  maxHeight: 280,
+                  maxWidth: 480,
                 ),
               ],
 
@@ -430,8 +424,8 @@ class PostCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
                         color: post.isLikedByMe
-                            ? theme.colorScheme.primary.withValues(alpha: 0.12)
-                            : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
+                            ? (isDark ? const Color(0xFF5865F2).withValues(alpha: 0.2) : theme.colorScheme.primary.withValues(alpha: 0.12))
+                            : (isDark ? const Color(0xFF1E1F22) : const Color(0xFFF1F5F9)),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
@@ -441,7 +435,7 @@ class PostCard extends StatelessWidget {
                             post.isLikedByMe ? Icons.thumb_up : Icons.thumb_up_alt_outlined,
                             size: 15,
                             color: post.isLikedByMe
-                                ? theme.colorScheme.primary
+                                ? (isDark ? const Color(0xFF5865F2) : theme.colorScheme.primary)
                                 : (isDark ? Colors.grey.shade400 : Colors.grey.shade600),
                           ),
                           const SizedBox(width: 6),
@@ -451,7 +445,7 @@ class PostCard extends StatelessWidget {
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                               color: post.isLikedByMe
-                                  ? theme.colorScheme.primary
+                                  ? (isDark ? const Color(0xFF5865F2) : theme.colorScheme.primary)
                                   : (isDark ? Colors.grey.shade300 : Colors.grey.shade700),
                             ),
                           ),
@@ -468,7 +462,7 @@ class PostCard extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                        color: isDark ? const Color(0xFF1E1F22) : const Color(0xFFF1F5F9),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
@@ -502,7 +496,7 @@ class PostCard extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                          color: isDark ? const Color(0xFF1E1F22) : const Color(0xFFF1F5F9),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
@@ -532,18 +526,18 @@ class PostCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: post.isBookmarkedByMe
                               ? const Color(0xFFD97706).withValues(alpha: 0.15)
-                              : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Icon(
-                          post.isBookmarkedByMe ? Icons.bookmark : Icons.bookmark_border,
-                          size: 15,
-                          color: post.isBookmarkedByMe
-                              ? const Color(0xFFD97706)
-                              : (isDark ? Colors.grey.shade400 : Colors.grey.shade600),
-                        ),
+                              : (isDark ? const Color(0xFF1E1F22) : const Color(0xFFF1F5F9)),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Icon(
+                        post.isBookmarkedByMe ? Icons.bookmark : Icons.bookmark_border,
+                        size: 15,
+                        color: post.isBookmarkedByMe
+                            ? const Color(0xFFD97706)
+                            : (isDark ? Colors.grey.shade400 : Colors.grey.shade600),
                       ),
                     ),
+                  ),
 
                   const Spacer(),
                   Icon(
@@ -557,6 +551,7 @@ class PostCard extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

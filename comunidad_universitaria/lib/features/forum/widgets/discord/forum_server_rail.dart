@@ -24,62 +24,74 @@ class ForumServerRail extends StatelessWidget {
     // Discord dark server rail: #1E1F22, light rail: #E3E5E8
     final railBg = isDark ? const Color(0xFF1E1F22) : const Color(0xFFE3E5E8);
 
-    return Container(
-      width: 72,
-      color: railBg,
-      child: Column(
-        children: [
-          const SizedBox(height: 12),
-
-          // 1. General USAC Home Server (first item)
-          if (servers.isNotEmpty) ...[
-            _buildServerIcon(
-              server: servers.first,
-              isActive: activeServer.id == servers.first.id,
-              theme: theme,
-              isDark: isDark,
-              isHome: true,
-            ),
-            const SizedBox(height: 8),
-            // Discord Separator Pill
-            Center(
-              child: Container(
-                width: 32,
-                height: 2,
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF35363C) : const Color(0xFFCBD5E1),
-                  borderRadius: BorderRadius.circular(1),
+    return Align(
+      alignment: Alignment.topCenter,
+      child: Container(
+        width: 52,
+        margin: const EdgeInsets.only(left: 6, top: 10, right: 6),
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: railBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDark ? const Color(0xFF2B2D31) : const Color(0xFFCBD5E1),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 1. General USAC Home Server (first item)
+            if (servers.isNotEmpty) ...[
+              _buildServerIcon(
+                server: servers.first,
+                isActive: activeServer.id == servers.first.id,
+                theme: theme,
+                isDark: isDark,
+                isHome: true,
+              ),
+              const SizedBox(height: 6),
+              // Discord Separator Pill
+              Center(
+                child: Container(
+                  width: 22,
+                  height: 2,
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF35363C) : const Color(0xFFCBD5E1),
+                    borderRadius: BorderRadius.circular(1),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 8),
-          ],
+              const SizedBox(height: 6),
+            ],
 
-          // 2. Scrollable list of Carrera Servers
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              itemCount: servers.length > 1 ? servers.length - 1 : 0,
-              itemBuilder: (ctx, i) {
-                final s = servers[i + 1];
-                final isActive = s.id == activeServer.id;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: _buildServerIcon(
-                    server: s,
-                    isActive: isActive,
-                    theme: theme,
-                    isDark: isDark,
-                  ),
-                );
-              },
+            // 2. Scrollable / fitted list of Carrera Servers
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                physics: const ClampingScrollPhysics(),
+                padding: EdgeInsets.zero,
+                itemCount: servers.length > 1 ? servers.length - 1 : 0,
+                itemBuilder: (ctx, i) {
+                  final s = servers[i + 1];
+                  final isActive = s.id == activeServer.id;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: _buildServerIcon(
+                      server: s,
+                      isActive: isActive,
+                      theme: theme,
+                      isDark: isDark,
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
 
-          // 3. Add / Explore More Carreras Button
-          Padding(
-            padding: const EdgeInsets.only(bottom: 14),
-            child: Tooltip(
+            const SizedBox(height: 4),
+
+            // 3. Add / Explore More Carreras Button
+            Tooltip(
               message: 'Explorar todas las Carreras USAC',
               preferBelow: false,
               child: InkWell(
@@ -92,32 +104,32 @@ class ForumServerRail extends StatelessWidget {
                     },
                   );
                 },
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(18),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  width: 48,
-                  height: 48,
+                  width: 36,
+                  height: 36,
                   decoration: BoxDecoration(
                     color: isDark ? const Color(0xFF313338) : Colors.white,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
+                        blurRadius: 3,
+                        offset: const Offset(0, 1),
                       )
                     ],
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.explore_outlined,
-                    size: 22,
-                    color: const Color(0xFF10B981),
+                    size: 18,
+                    color: Color(0xFF10B981),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -134,18 +146,18 @@ class ForumServerRail extends StatelessWidget {
       preferBelow: false,
       waitDuration: const Duration(milliseconds: 300),
       child: SizedBox(
-        height: 50,
+        height: 38,
         child: Stack(
           alignment: Alignment.centerLeft,
           children: [
             // Discord Pill Indicator on the left side
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              width: 4,
-              height: isActive ? 40 : 0,
+              width: 3,
+              height: isActive ? 24 : 0,
               decoration: BoxDecoration(
                 color: isDark ? Colors.white : const Color(0xFF004B87),
-                borderRadius: const BorderRadius.horizontal(right: Radius.circular(4)),
+                borderRadius: const BorderRadius.horizontal(right: Radius.circular(3)),
               ),
             ),
 
@@ -153,22 +165,22 @@ class ForumServerRail extends StatelessWidget {
             Center(
               child: InkWell(
                 onTap: () => onSelectServer(server),
-                borderRadius: BorderRadius.circular(isActive ? 16 : 24),
+                borderRadius: BorderRadius.circular(isActive ? 10 : 18),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  width: 48,
-                  height: 48,
+                  width: 36,
+                  height: 36,
                   decoration: BoxDecoration(
                     color: isActive
                         ? server.color
                         : (isDark ? const Color(0xFF313338) : Colors.white),
-                    borderRadius: BorderRadius.circular(isActive ? 16 : 24),
+                    borderRadius: BorderRadius.circular(isActive ? 10 : 18),
                     boxShadow: isActive
                         ? [
                             BoxShadow(
                               color: server.color.withValues(alpha: 0.4),
-                              blurRadius: 8,
-                              offset: const Offset(0, 3),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
                             ),
                           ]
                         : null,
@@ -178,23 +190,23 @@ class ForumServerRail extends StatelessWidget {
                         ? Icon(
                             server.icon,
                             color: isActive ? Colors.white : theme.colorScheme.primary,
-                            size: 24,
+                            size: 18,
                           )
                         : (isActive
-                            ? Icon(server.icon, color: Colors.white, size: 24)
+                            ? Icon(server.icon, color: Colors.white, size: 18)
                             : Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
                                     server.icon,
-                                    size: 18,
+                                    size: 15,
                                     color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
                                   ),
-                                  const SizedBox(height: 2),
+                                  const SizedBox(height: 1),
                                   Text(
                                     server.shortCode,
                                     style: TextStyle(
-                                      fontSize: 9,
+                                      fontSize: 7.5,
                                       fontWeight: FontWeight.bold,
                                       color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
                                     ),

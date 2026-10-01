@@ -43,8 +43,8 @@ class ForumChannelSidebar extends StatelessWidget {
               );
             },
             child: Container(
-              height: 56,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
+              height: 60,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
@@ -58,6 +58,7 @@ class ForumChannelSidebar extends StatelessWidget {
                   Expanded(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
@@ -186,7 +187,7 @@ class ForumChannelSidebar extends StatelessWidget {
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                       ),
                       Text(
-                        'En línea · Autónomo',
+                        'En línea',
                         style: TextStyle(
                           fontSize: 10,
                           color: isDark ? const Color(0xFF949BA4) : const Color(0xFF64748B),
