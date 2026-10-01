@@ -10,7 +10,7 @@ class ReportDialog extends StatefulWidget {
     'Acoso / Difamación',
     'Spam / Publicidad engañosa',
     'Venta ilegal / Servicios prohibidos',
-    'Información personal expuesta (Doxxing)',
+    'Información personal expuesta',
     'Contenido inapropiado / Ofensivo',
     'Otro motivo',
   ];
