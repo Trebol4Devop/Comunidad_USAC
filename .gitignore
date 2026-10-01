@@ -5,4 +5,4 @@
 scripts/.venv/
 scripts/*.json
 *.log
-comunidad.sql
+definition/
