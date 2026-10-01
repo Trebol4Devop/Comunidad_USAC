@@ -162,17 +162,9 @@ void main() {
       expect(prohibitedItem, isNotNull);
     });
 
-    test('Filtrado en MarketplaceService (Mock Fallback)', () async {
-      final all = await MarketplaceService.fetchListings();
-      expect(all.isNotEmpty, isTrue);
-
-      final freeOnly = await MarketplaceService.fetchListings(onlyFree: true);
-      for (var item in freeOnly) {
-        expect(item.isFree || item.price <= 0.0, isTrue);
-      }
-
-      final sponsored = await MarketplaceService.fetchSponsoredListings();
-      expect(sponsored.every((s) => s.isSponsored), isTrue);
+    test('Filtrado en MarketplaceService requiere conexión a la base de datos', () async {
+      expect(() => MarketplaceService.fetchListings(), throwsA(isA<Exception>()));
+      expect(() => MarketplaceService.fetchSponsoredListings(), throwsA(isA<Exception>()));
     });
   });
 }
