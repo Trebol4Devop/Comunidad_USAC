@@ -25,11 +25,9 @@ class ProfileService {
     }
 
     try {
-      var query = SupabaseService.client.from('posts').select('*, comments(count)');
+      var query = SupabaseService.client.from('v_public_posts').select('*');
 
-      if (userId != null && userId.isNotEmpty && userId != 'local_user') {
-        query = query.eq('user_id', userId);
-      } else {
+      if (alias.trim().isNotEmpty) {
         query = query.eq('author_alias', alias.trim());
       }
 
@@ -38,11 +36,9 @@ class ProfileService {
 
       return data.map((item) {
         final map = Map<String, dynamic>.from(item);
-        int commentCount = 0;
-        if (map['comments'] is List && (map['comments'] as List).isNotEmpty) {
-          final countObj = (map['comments'] as List).first;
-          commentCount = countObj['count'] ?? 0;
-        }
+        final commentCount = (map['comment_count'] is int)
+            ? map['comment_count'] as int
+            : int.tryParse(map['comment_count']?.toString() ?? '0') ?? 0;
 
         return Post.fromMap(
           map,

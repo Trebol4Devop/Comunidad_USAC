@@ -65,13 +65,7 @@ class MarketplaceService {
     if (cached != null) return List<MarketplaceItem>.from(cached);
 
     if (!SupabaseConfig.isConfigured) {
-      return _filterSampleListings(
-        category: category,
-        facultad: facultad,
-        sede: sede,
-        onlyFree: onlyFree,
-        searchQuery: searchQuery,
-      );
+      throw Exception('La aplicación no está conectada a la base de datos.');
     }
 
     if (isDefaultQuery) {
@@ -154,13 +148,7 @@ class MarketplaceService {
         final persisted = await _readPersistedListings(cacheKey);
         if (persisted != null) return persisted;
       }
-      return _filterSampleListings(
-        category: category,
-        facultad: facultad,
-        sede: sede,
-        onlyFree: onlyFree,
-        searchQuery: searchQuery,
-      );
+      rethrow;
     }
   }
 
@@ -193,7 +181,7 @@ class MarketplaceService {
 
   static Future<List<MarketplaceItem>> fetchSponsoredListings() async {
     if (!SupabaseConfig.isConfigured) {
-      return _getSampleListings().where((item) => item.isSponsored).toList();
+      throw Exception('La aplicación no está conectada a la base de datos.');
     }
 
     try {
@@ -209,7 +197,7 @@ class MarketplaceService {
       return data.map((item) => MarketplaceItem.fromMap(Map<String, dynamic>.from(item))).toList();
     } catch (e) {
       debugPrint('Error obteniendo patrocinadores: $e');
-      return _getSampleListings().where((item) => item.isSponsored).toList();
+      return [];
     }
   }
 
@@ -241,31 +229,12 @@ class MarketplaceService {
     }
 
     if (!SupabaseConfig.isConfigured) {
-      return MarketplaceItem(
-        id: 'local-${DateTime.now().millisecondsSinceEpoch}',
-        title: title.trim(),
-        description: description.trim(),
-        price: isFree ? 0.0 : price,
-        isFree: isFree || price <= 0.0,
-        category: category,
-        facultad: facultad,
-        sede: sede,
-        buildingCode: buildingCode.trim(),
-        locationDetail: locationDetail.trim(),
-        contactWhatsapp: contactWhatsapp?.trim().isEmpty == true ? null : contactWhatsapp?.trim(),
-        contactInstagram: contactInstagram?.trim().isEmpty == true ? null : contactInstagram?.trim(),
-        contactMessenger: contactMessenger?.trim().isEmpty == true ? null : contactMessenger?.trim(),
-        contactTelegram: contactTelegram?.trim().isEmpty == true ? null : contactTelegram?.trim(),
-        socialLinks: socialLinks,
-        imageUrls: imageUrls,
-        videoUrl: videoUrl?.trim().isEmpty == true ? null : videoUrl?.trim(),
-        isSponsored: isSponsored,
-        sponsorBadgeText: sponsorBadgeText,
-        authorAlias: authorAlias.trim(),
-        createdAt: DateTime.now(),
-        upvotes: 1,
-        isUpvotedByMe: true,
-      );
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
+
+    final userId = SupabaseService.currentUserId;
+    if (userId == null) {
+      throw Exception('Debes iniciar sesión para publicar en el marketplace.');
     }
 
     try {
@@ -316,7 +285,9 @@ class MarketplaceService {
     String? sellerUserId,
     String? sellerAlias,
   }) async {
-    if (!SupabaseConfig.isConfigured) return true;
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
 
     try {
       // RPC con umbral de auto-moderación; si no existe, inserción directa.
@@ -350,7 +321,9 @@ class MarketplaceService {
     required String itemId,
     required int newStatus, // 0: Activo, 1: En revisión, 2: Oculto
   }) async {
-    if (!SupabaseConfig.isConfigured) return false;
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
 
     try {
       final res = await SupabaseService.client.rpc('moderate_marketplace_item', params: {
@@ -376,7 +349,9 @@ class MarketplaceService {
     required String itemId,
     required String newStatus, // available, reserved, sold, paused
   }) async {
-    if (!SupabaseConfig.isConfigured) return true;
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
 
     try {
       await SupabaseService.client
@@ -399,7 +374,9 @@ class MarketplaceService {
     required String proposalDetails,
     required String expectedPlacement,
   }) async {
-    if (!SupabaseConfig.isConfigured) return true;
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
 
     try {
       await SupabaseService.client.from('sponsor_requests').insert({
@@ -420,8 +397,11 @@ class MarketplaceService {
   }
 
   static Future<bool> toggleUpvote(MarketplaceItem item) async {
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
     final currentUserId = SupabaseService.currentUserId;
-    if (currentUserId == null || !SupabaseConfig.isConfigured) return !item.isUpvotedByMe;
+    if (currentUserId == null) return item.isUpvotedByMe;
 
     try {
       if (item.isUpvotedByMe) {
@@ -447,108 +427,5 @@ class MarketplaceService {
       return item.isUpvotedByMe;
     }
   }
-
-  static List<MarketplaceItem> _filterSampleListings({
-    String category = 'todos',
-    String facultad = 'todas',
-    String sede = 'todas',
-    bool onlyFree = false,
-    String searchQuery = '',
-  }) {
-    var list = _getSampleListings();
-
-    if (category != 'todos') {
-      list = list.where((i) => i.category == category).toList();
-    }
-
-    if (facultad != 'todas') {
-      list = list.where((i) => i.facultad == facultad || i.facultad == 'todas').toList();
-    }
-
-    if (sede != 'todas') {
-      list = list.where((i) => i.sede == sede || i.sede == 'todas').toList();
-    }
-
-    if (onlyFree) {
-      list = list.where((i) => i.isFree || i.price <= 0).toList();
-    }
-
-    if (searchQuery.trim().isNotEmpty) {
-      final q = searchQuery.toLowerCase().trim();
-      list = list.where((i) {
-        return i.title.toLowerCase().contains(q) ||
-            i.description.toLowerCase().contains(q) ||
-            i.buildingCode.toLowerCase().contains(q);
-      }).toList();
-    }
-
-    return list;
-  }
-
-  static List<MarketplaceItem> _getSampleListings() {
-    return [
-      MarketplaceItem(
-        id: 'sponsor-1',
-        title: 'Librería & Copistería Universitaria — Impresiones y Empastados',
-        description: 'Servicio de fotocopias, ploteo de planos para Arquitectura e Ingeniería, empastados de tesis y venta de útiles. Descuento especial para estudiantes mostrando este anuncio.',
-        price: 0.0,
-        isFree: false,
-        category: 'servicios_estudiantiles',
-        facultad: '08',
-        sede: 'central',
-        buildingCode: 'T-3',
-        locationDetail: 'Frente al Edificio T-3, Campus Central',
-        contactWhatsapp: '50255550199',
-        contactInstagram: 'libreria_central_usac',
-        socialLinks: ['https://facebook.com/libreriacentralusac'],
-        imageUrls: [
-          'https://images.unsplash.com/photo-1568667256549-094345857637?w=800&q=80',
-          'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800&q=80',
-        ],
-        videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        isSponsored: true,
-        sponsorBadgeText: 'Patrocinador Destacado',
-        authorAlias: 'Librería Central',
-        createdAt: DateTime.now().subtract(const Duration(hours: 1)),
-        upvotes: 42,
-      ),
-      MarketplaceItem(
-        id: 'm-1',
-        title: 'Pastel de Zanahoria & Brownies Artesanales',
-        description: 'Porciones individuales recién horneadas. Entregas durante el cambio de período entre 10:00 AM y 2:00 PM.',
-        price: 12.0,
-        isFree: false,
-        category: 'comida_postres',
-        facultad: '08',
-        sede: 'central',
-        buildingCode: 'T-3',
-        locationDetail: 'Bancas del Edificio T-3 y Plaza de los Mártires',
-        contactWhatsapp: '50244441122',
-        contactInstagram: 'postres_sancarlistas',
-        socialLinks: ['https://instagram.com/p/sample_post'],
-        imageUrls: [
-          'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&q=80'
-        ],
-        authorAlias: 'Postres Sancarlistas',
-        createdAt: DateTime.now().subtract(const Duration(hours: 4)),
-        upvotes: 19,
-      ),
-      MarketplaceItem(
-        id: 'm-2',
-        title: 'Tutoría Gratuita de Matemática Básica 1 y 2 (Repaso de Parcial)',
-        description: 'Sesión colaborativa en cubículos de Biblioteca Central. Revisaremos temas de límites, derivadas e integrales básicas sin costo.',
-        price: 0.0,
-        isFree: true,
-        category: 'tutorias_academica',
-        facultad: '08',
-        sede: 'central',
-        buildingCode: 'BIBLIO',
-        locationDetail: 'Cubículos de estudio, Biblioteca Central',
-        contactTelegram: 'tutor_mate_usac',
-        authorAlias: 'Tutor Académico #402',
-        createdAt: DateTime.now().subtract(const Duration(hours: 8)),
-        upvotes: 35,
-      ),
-    ];
-  }
 }
+
