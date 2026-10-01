@@ -253,7 +253,7 @@ class _CarneValidationModalState extends State<CarneValidationModal> {
                   controller: _nameController,
                   textCapitalization: TextCapitalization.words,
                   decoration: const InputDecoration(
-                    labelText: 'Nombre Completo (como aparece en Registro)',
+                    labelText: 'Nombre Completo Oficial',
                     hintText: 'Ej. Juan José Pérez Gómez',
                     prefixIcon: Icon(Icons.person_outline, size: 20),
                   ),

@@ -31,7 +31,24 @@ class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
 
   void _navigateToProfile() {
-    setState(() => _currentIndex = 3);
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ProfileScreen(
+          activeAlias: widget.activeAlias,
+          onAliasChanged: widget.onAliasChanged,
+          onToggleTheme: widget.onToggleTheme,
+          isDarkMode: widget.isDarkMode,
+        ),
+      ),
+    );
+  }
+
+  void _navigateToRules() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const RulesScreen(),
+      ),
+    );
   }
 
   void _showDisclaimerModal() {
@@ -47,10 +64,17 @@ class _AppShellState extends State<AppShell> {
           ],
         ),
         content: const Text(
-          'Comunidad Universitaria es una plataforma estudiantil colaborativa, autónoma y sin fines de lucro. No representa formalmente a la administración ni a las autoridades de la Universidad de San Carlos de Guatemala (USAC). Los datos académicos, pensums y directorios son informativos y compartidos entre compañeros.',
+          'Comunidad Universitaria es una plataforma estudiantil colaborativa, autónoma y sin fines de lucro. No representa formalmente a la administración ni a las autoridades de la Universidad de San Carlos de Guatemala. Los datos académicos, pensums y directorios son informativos y compartidos entre compañeros.',
           style: TextStyle(fontSize: 13, height: 1.4),
         ),
         actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _navigateToRules();
+            },
+            child: const Text('Ver Normas Completas'),
+          ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
             child: const Text('Entendido'),
@@ -132,13 +156,20 @@ class _AppShellState extends State<AppShell> {
           ],
         ),
         actions: [
+          // Rules & Norms Button
+          IconButton(
+            icon: const Icon(Icons.shield_outlined, size: 20),
+            tooltip: 'Normas y Descargo',
+            onPressed: _navigateToRules,
+          ),
+
           // User Alias Pill that links directly to Profile
           AliasBadgeButton(
             alias: widget.activeAlias,
             onAliasChanged: widget.onAliasChanged,
             onTap: _navigateToProfile,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
 
           // Theme toggle
           IconButton(
@@ -169,8 +200,6 @@ class _AppShellState extends State<AppShell> {
                         _buildNavTab(index: 0, label: 'Foro Estudiantil', icon: Icons.forum_outlined),
                         _buildNavTab(index: 1, label: 'Grupos de Estudio', icon: Icons.groups_outlined),
                         _buildNavTab(index: 2, label: 'Marketplace & Tutorías', icon: Icons.storefront_outlined),
-                        _buildNavTab(index: 3, label: 'Mi Perfil', icon: Icons.person_outline),
-                        _buildNavTab(index: 4, label: 'Normas & Descargo', icon: Icons.shield_outlined),
                       ],
                     ),
                   ),
@@ -196,13 +225,6 @@ class _AppShellState extends State<AppShell> {
             activeAlias: widget.activeAlias,
             onAliasChanged: widget.onAliasChanged,
           ),
-          ProfileScreen(
-            activeAlias: widget.activeAlias,
-            onAliasChanged: widget.onAliasChanged,
-            onToggleTheme: widget.onToggleTheme,
-            isDarkMode: widget.isDarkMode,
-          ),
-          const RulesScreen(),
         ],
       ),
       floatingActionButton: !isDesktop ? _buildContextualFloatingActionButton() : null,
@@ -228,16 +250,6 @@ class _AppShellState extends State<AppShell> {
                   icon: Icon(Icons.storefront_outlined),
                   selectedIcon: Icon(Icons.storefront),
                   label: 'Marketplace',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.person_outline),
-                  selectedIcon: Icon(Icons.person),
-                  label: 'Perfil',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.shield_outlined),
-                  selectedIcon: Icon(Icons.shield),
-                  label: 'Normas',
                 ),
               ],
             ),
