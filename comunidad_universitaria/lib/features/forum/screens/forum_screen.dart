@@ -25,6 +25,8 @@ class ForumScreen extends StatefulWidget {
   final Function(ForumServer newServer)? onServerChanged;
   final String searchQuery;
   final bool isEmbeddedInShell;
+  final String activeSection;
+  final String? activeCommunityId;
 
   const ForumScreen({
     super.key,
@@ -38,6 +40,8 @@ class ForumScreen extends StatefulWidget {
     this.onServerChanged,
     this.searchQuery = '',
     this.isEmbeddedInShell = false,
+    this.activeSection = 'featured',
+    this.activeCommunityId,
   });
 
   @override

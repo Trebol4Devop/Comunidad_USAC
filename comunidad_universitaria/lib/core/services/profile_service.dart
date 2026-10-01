@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/supabase_config.dart';
 import '../models/marketplace_item.dart';
 import '../models/post.dart';
@@ -47,6 +48,28 @@ class ProfileService {
         );
       }).toList();
     } catch (e) {
+      if (e is PostgrestException && (e.code == '42501' || e.message.contains('generate_author_hash'))) {
+        try {
+          var fallbackQuery = SupabaseService.client
+              .from('posts')
+              .select('*')
+              .neq('moderation_status', 2);
+          if (alias.trim().isNotEmpty) {
+            fallbackQuery = fallbackQuery.eq('author_alias', alias.trim());
+          }
+          final response = await fallbackQuery.order('created_at', ascending: false).limit(50);
+          final List<dynamic> data = response as List<dynamic>;
+          return data.map((item) {
+            return Post.fromMap(
+              Map<String, dynamic>.from(item),
+              isLikedByMe: false,
+              commentCount: 0,
+            );
+          }).toList();
+        } catch (inner) {
+          debugPrint('Error en fallback directo a posts en perfil: $inner');
+        }
+      }
       debugPrint('Error al obtener posts del usuario: $e');
       return [];
     }

@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/supabase_config.dart';
 import '../constants/categories.dart';
 import '../models/post.dart';
@@ -109,6 +110,48 @@ class ForumService {
       }
       return posts;
     } catch (e) {
+      if (e is PostgrestException && (e.code == '42501' || e.message.contains('generate_author_hash'))) {
+        try {
+          var fallbackQuery = SupabaseService.client
+              .from('posts')
+              .select('*')
+              .neq('moderation_status', 2);
+
+          if (category != 'todos') {
+            fallbackQuery = fallbackQuery.eq('category', category);
+          }
+
+          if (carrera != 'todas') {
+            fallbackQuery = fallbackQuery.eq('carrera', carrera);
+          } else if (facultad != 'todas') {
+            final fac = USACConstants.facultades.firstWhere(
+              (f) => f['id'] == facultad,
+              orElse: () => USACConstants.facultades.first,
+            );
+            final rawCarreras = fac['carreras'] as List<dynamic>? ?? [];
+            final careerIds = rawCarreras.map((c) => c['id'].toString()).toSet()..add('todas');
+            fallbackQuery = fallbackQuery.inFilter('carrera', careerIds.toList());
+          }
+
+          if (searchQuery.trim().isNotEmpty) {
+            final q = searchQuery.trim();
+            fallbackQuery = fallbackQuery.or('title.ilike.%$q%,content.ilike.%$q%');
+          }
+
+          final response = await fallbackQuery
+              .order('is_pinned', ascending: false)
+              .order('created_at', ascending: false)
+              .limit(50)
+              .timeout(const Duration(seconds: 10));
+          final List<dynamic> data = response as List<dynamic>;
+          final posts = await _hydratePosts(data, SupabaseService.currentUserId);
+
+          CacheService.set(_cacheNamespace, cacheKey, List<Post>.from(posts));
+          return posts;
+        } catch (innerError) {
+          debugPrint('Error en fallback directo a tabla posts: $innerError');
+        }
+      }
       debugPrint('Error al obtener posts del foro: $e');
       if (isDefaultQuery) {
         final persisted = await _readPersistedPosts(cacheKey);
@@ -540,6 +583,40 @@ class ForumService {
 
       return rootComments;
     } catch (e) {
+      if (e is PostgrestException && (e.code == '42501' || e.message.contains('generate_author_hash'))) {
+        try {
+          final fallbackRes = await SupabaseService.client
+              .from('comments')
+              .select('*')
+              .eq('post_id', postId)
+              .neq('moderation_status', 2)
+              .order('created_at', ascending: true)
+              .timeout(const Duration(seconds: 10));
+          final List<dynamic> data = fallbackRes as List<dynamic>;
+          final List<PostComment> allComments = data
+              .map((item) => PostComment.fromMap(Map<String, dynamic>.from(item)))
+              .toList();
+          for (var c in allComments) {
+            c.children = [];
+          }
+          final Map<String, PostComment> map = {};
+          final List<PostComment> rootComments = [];
+          for (var c in allComments) {
+            map[c.id] = c;
+          }
+          for (var c in allComments) {
+            final pId = c.parentId;
+            if (pId != null && pId.trim().isNotEmpty && map.containsKey(pId) && pId != c.id) {
+              map[pId]!.children.add(c);
+            } else {
+              rootComments.add(c);
+            }
+          }
+          return rootComments;
+        } catch (inner) {
+          debugPrint('Error en fallback directo a tabla comments: $inner');
+        }
+      }
       debugPrint('Error al obtener comentarios: $e');
       rethrow;
     }
