@@ -54,12 +54,21 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
   Future<void> _loadComments() async {
     setState(() => _isLoadingComments = true);
-    final list = await ForumService.fetchCommentsTree(_post.id);
-    if (mounted) {
-      setState(() {
-        _comments = list;
-        _isLoadingComments = false;
-      });
+    try {
+      final list = await ForumService.fetchCommentsTree(_post.id);
+      if (mounted) {
+        setState(() {
+          _comments = list;
+          _isLoadingComments = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _comments = [];
+          _isLoadingComments = false;
+        });
+      }
     }
   }
 
