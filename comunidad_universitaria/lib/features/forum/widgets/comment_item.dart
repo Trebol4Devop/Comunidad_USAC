@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/models/post.dart';
 import '../../../core/utils/time_utils.dart';
 import '../../shared/widgets/report_dialog.dart';
+import 'discord/discord_media_attachment.dart';
 
 class CommentItemWidget extends StatelessWidget {
   final PostComment comment;
@@ -157,14 +158,11 @@ class CommentItemWidget extends StatelessWidget {
                 // GIF in comment if present
                 if (comment.gifUrl != null && comment.gifUrl!.isNotEmpty) ...[
                   const SizedBox(height: 8),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      comment.gifUrl!,
-                      height: 120,
-                      fit: BoxFit.cover,
-                      errorBuilder: (ctx, err, stack) => const Icon(Icons.broken_image, color: Colors.grey),
-                    ),
+                  DiscordMediaAttachment(
+                    imageUrl: comment.gifUrl!,
+                    isGif: true,
+                    maxHeight: 180,
+                    maxWidth: 320,
                   ),
                 ],
               ],
