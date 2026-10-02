@@ -165,9 +165,9 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
         (f) => f['id'] == _selectedFacultad,
         orElse: () => USACConstants.facultades.first,
       );
-      return fac['nombre'] as String? ?? 'Campus Central (General)';
+      return fac['nombre'] as String? ?? 'Campus Central';
     }
-    return 'Campus Central (General)';
+    return 'Campus Central';
   }
 
   Future<void> _pickAndUploadImage() async {
@@ -317,7 +317,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          widget.quotedPost != null ? 'Citar Publicación (Quote Post)' : 'Nueva Consulta en el Foro',
+                          widget.quotedPost != null ? 'Citar Publicación' : 'Nueva Consulta en el Foro',
                           style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         Text(
@@ -556,7 +556,8 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                       TextFormField(
                         controller: _pollQuestionController,
                         decoration: const InputDecoration(
-                          labelText: 'Pregunta de la encuesta (opcional, usa el título por defecto)',
+                          labelText: 'Pregunta de la encuesta',
+                          hintText: 'Opcional, por defecto usará el título',
                           isDense: true,
                           contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                         ),

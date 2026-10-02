@@ -267,7 +267,7 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
                   contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
                 items: const [
-                  DropdownMenuItem(value: 'curso', child: Text('Curso Académico (Tareas, dudas y exámenes)', overflow: TextOverflow.ellipsis)),
+                  DropdownMenuItem(value: 'curso', child: Text('Curso Académico', overflow: TextOverflow.ellipsis)),
                   DropdownMenuItem(value: 'objetos_perdidos', child: Text('Objetos Perdidos & Hallazgos', overflow: TextOverflow.ellipsis)),
                   DropdownMenuItem(value: 'comunidad', child: Text('Comunidad de Facultad / Sede', overflow: TextOverflow.ellipsis)),
                   DropdownMenuItem(value: 'deportes', child: Text('Deportes & Actividades Extracurriculares', overflow: TextOverflow.ellipsis)),
@@ -318,7 +318,7 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
                       initialValue: _selectedCarrera,
                       isExpanded: true,
                       decoration: const InputDecoration(
-                        labelText: 'Carrera (opcional)',
+                        labelText: 'Carrera',
                         contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                       ),
                       items: _availableCarreras
@@ -386,11 +386,11 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
 
               const SizedBox(height: 12),
 
-              // Invitation Link (WhatsApp, Telegram, Discord, Drive)
+              // Invitation Link
               TextFormField(
                 controller: _linkController,
                 decoration: const InputDecoration(
-                  labelText: 'Enlace de Invitación (WhatsApp / Telegram / Discord / Drive)',
+                  labelText: 'Enlace de Invitación',
                   hintText: 'https://chat.whatsapp.com/..., https://t.me/..., https://discord.gg/...',
                   prefixIcon: Icon(Icons.link, size: 20),
                   contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -409,12 +409,12 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
 
               const SizedBox(height: 12),
 
-              // Optional custom description
+              // Description
               TextFormField(
                 controller: _descriptionController,
                 maxLines: 2,
                 decoration: const InputDecoration(
-                  labelText: 'Descripción, reglas o notas (opcional)',
+                  labelText: 'Descripción, reglas o notas',
                   hintText: 'Ej. Grupo para compartir reportes de objetos extraviados / tareas con el Ing. Morales.',
                   contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 ),
@@ -424,7 +424,7 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
 
               // Image Upload to Supabase Storage
               Text(
-                'Imagen o Logotipo del Grupo (Opcional)',
+                'Imagen o Logotipo del Grupo',
                 style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: 13),
               ),
               const SizedBox(height: 6),

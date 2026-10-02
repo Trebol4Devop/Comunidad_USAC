@@ -93,7 +93,7 @@ class _GifPickerModalState extends State<GifPickerModal> {
       category: 'examenes',
     ),
     GifItem(
-      title: 'Todo bajo control (fuego)',
+      title: 'Todo bajo control',
       url: 'https://media.giphy.com/media/9M5jK4GXmD5o1irGrF/giphy.gif',
       category: 'examenes',
     ),
@@ -226,7 +226,7 @@ class _GifPickerModalState extends State<GifPickerModal> {
                   controller: _searchController,
                   onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
-                    hintText: 'Buscar GIFs (ej. café, examen, llorar)...',
+                    hintText: 'Buscar GIFs...',
                     prefixIcon: const Icon(Icons.search, size: 20),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
