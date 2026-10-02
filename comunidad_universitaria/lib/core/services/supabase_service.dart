@@ -67,14 +67,14 @@ class SupabaseService {
     }
   }
 
-  static Future<String?> signUp({required String email, required String password}) async {
+  static Future<AuthResponse?> signUp({required String email, required String password}) async {
     if (!SupabaseConfig.isConfigured) return null;
     try {
       final res = await client.auth.signUp(
         email: email.trim(),
         password: password,
       );
-      return res.user?.id;
+      return res;
     } catch (e) {
       debugPrint('Error en registro: $e');
       rethrow;
