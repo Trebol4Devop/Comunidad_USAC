@@ -106,17 +106,51 @@ class _AuthModalState extends State<AuthModal> {
       final password = _passwordController.text.trim();
 
       if (_isSignUp) {
-        await SupabaseService.signUp(email: email, password: password);
+        final res = await SupabaseService.signUp(email: email, password: password);
         if (mounted) {
           setState(() => _isLoading = false);
-          Navigator.of(context).pop();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Cuenta creada con éxito. Ya puedes publicar tu anuncio.'),
-              backgroundColor: Color(0xFF004B87),
-            ),
-          );
-          widget.onAuthenticated();
+          if (res?.session != null || SupabaseService.isAuthenticated) {
+            Navigator.of(context).pop();
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Cuenta creada con éxito.'),
+                backgroundColor: Color(0xFF004B87),
+              ),
+            );
+            widget.onAuthenticated();
+          } else {
+            setState(() {
+              _isSignUp = false;
+              _errorMessage = null;
+            });
+            showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                title: const Row(
+                  children: [
+                    Icon(Icons.mark_email_read_outlined, color: Color(0xFF004B87)),
+                    SizedBox(width: 8),
+                    Text('Confirma tu Correo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                content: Text(
+                  'Hemos enviado un enlace de confirmación a $email.\n\nPor favor revisa tu bandeja de entrada o spam para activar tu cuenta antes de iniciar sesión.',
+                  style: const TextStyle(fontSize: 13),
+                ),
+                actions: [
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF004B87),
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    child: const Text('Entendido'),
+                  ),
+                ],
+              ),
+            );
+          }
         }
       } else {
         await SupabaseService.signInWithPassword(email: email, password: password);
@@ -128,9 +162,16 @@ class _AuthModalState extends State<AuthModal> {
       }
     } catch (e) {
       if (mounted) {
+        final rawMsg = e.toString().replaceAll('Exception: ', '').replaceAll('AuthException: ', '');
+        String friendlyMsg = rawMsg;
+        if (rawMsg.toLowerCase().contains('email not confirmed')) {
+          friendlyMsg = 'Tu correo aún no ha sido confirmado. Por favor revisa tu bandeja de entrada o carpeta de spam para activar tu cuenta.';
+        } else if (rawMsg.toLowerCase().contains('invalid login credentials')) {
+          friendlyMsg = 'Credenciales inválidas. Verifica tu correo y contraseña.';
+        }
         setState(() {
           _isLoading = false;
-          _errorMessage = e.toString().replaceAll('Exception: ', '').replaceAll('AuthException: ', '');
+          _errorMessage = friendlyMsg;
         });
       }
     }
