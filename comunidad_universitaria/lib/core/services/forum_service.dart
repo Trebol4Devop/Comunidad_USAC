@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/supabase_config.dart';
 import '../constants/categories.dart';
 import '../models/post.dart';
@@ -33,13 +34,7 @@ class ForumService {
     if (cached != null) return List<Post>.from(cached);
 
     if (!SupabaseConfig.isConfigured) {
-      return _filterSamplePosts(
-        category: category,
-        facultad: facultad,
-        carrera: carrera,
-        searchQuery: searchQuery,
-        showOnlyBookmarks: showOnlyBookmarks,
-      );
+      throw Exception('La aplicación no está conectada a la base de datos.');
     }
 
     if (isDefaultQuery) {
@@ -115,12 +110,54 @@ class ForumService {
       }
       return posts;
     } catch (e) {
+      if (e is PostgrestException && (e.code == '42501' || e.message.contains('generate_author_hash'))) {
+        try {
+          var fallbackQuery = SupabaseService.client
+              .from('posts')
+              .select('id, title, category, content, author_alias, author_hash, likes, carrera, image_url, gif_url, is_pinned, quoted_post_id, created_at, moderation_status')
+              .neq('moderation_status', 2);
+
+          if (category != 'todos') {
+            fallbackQuery = fallbackQuery.eq('category', category);
+          }
+
+          if (carrera != 'todas') {
+            fallbackQuery = fallbackQuery.eq('carrera', carrera);
+          } else if (facultad != 'todas') {
+            final fac = USACConstants.facultades.firstWhere(
+              (f) => f['id'] == facultad,
+              orElse: () => USACConstants.facultades.first,
+            );
+            final rawCarreras = fac['carreras'] as List<dynamic>? ?? [];
+            final careerIds = rawCarreras.map((c) => c['id'].toString()).toSet()..add('todas');
+            fallbackQuery = fallbackQuery.inFilter('carrera', careerIds.toList());
+          }
+
+          if (searchQuery.trim().isNotEmpty) {
+            final q = searchQuery.trim();
+            fallbackQuery = fallbackQuery.or('title.ilike.%$q%,content.ilike.%$q%');
+          }
+
+          final response = await fallbackQuery
+              .order('is_pinned', ascending: false)
+              .order('created_at', ascending: false)
+              .limit(50)
+              .timeout(const Duration(seconds: 10));
+          final List<dynamic> data = response as List<dynamic>;
+          final posts = await _hydratePosts(data, SupabaseService.currentUserId);
+
+          CacheService.set(_cacheNamespace, cacheKey, List<Post>.from(posts));
+          return posts;
+        } catch (innerError) {
+          debugPrint('Error en fallback directo a tabla posts: $innerError');
+        }
+      }
       debugPrint('Error al obtener posts del foro: $e');
       if (isDefaultQuery) {
         final persisted = await _readPersistedPosts(cacheKey);
         if (persisted != null) return persisted;
       }
-      return _getSamplePosts();
+      rethrow;
     }
   }
 
@@ -318,8 +355,11 @@ class ForumService {
   }
 
   static Future<bool> toggleLike(Post post) async {
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
     final currentUserId = SupabaseService.currentUserId;
-    if (currentUserId == null || !SupabaseConfig.isConfigured) return !post.isLikedByMe;
+    if (currentUserId == null) return post.isLikedByMe;
 
     try {
       if (post.isLikedByMe) {
@@ -345,8 +385,11 @@ class ForumService {
   }
 
   static Future<bool> toggleBookmark(Post post) async {
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
     final currentUserId = SupabaseService.currentUserId;
-    if (currentUserId == null || !SupabaseConfig.isConfigured) return !post.isBookmarkedByMe;
+    if (currentUserId == null) return post.isBookmarkedByMe;
 
     try {
       if (post.isBookmarkedByMe) {
@@ -375,8 +418,11 @@ class ForumService {
     required String pollId,
     required String optionId,
   }) async {
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
     final currentUserId = SupabaseService.currentUserId;
-    if (currentUserId == null || !SupabaseConfig.isConfigured) return false;
+    if (currentUserId == null) return false;
 
     try {
       // Delete previous vote on this poll if any, then insert new vote
@@ -413,39 +459,7 @@ class ForumService {
     List<String>? pollOptions,
   }) async {
     if (!SupabaseConfig.isConfigured) {
-      final localId = 'local-${DateTime.now().millisecondsSinceEpoch}';
-      return Post(
-        id: localId,
-        title: title.trim(),
-        content: content.trim(),
-        category: category,
-        carrera: carrera,
-        authorAlias: authorAlias.trim(),
-        likes: 0,
-        createdAt: DateTime.now(),
-        imageUrl: imageUrl?.trim().isEmpty == true ? null : imageUrl?.trim(),
-        gifUrl: gifUrl?.trim().isEmpty == true ? null : gifUrl?.trim(),
-        quotedPostId: quotedPostId,
-        poll: (pollQuestion != null &&
-                pollQuestion.trim().isNotEmpty &&
-                pollOptions != null &&
-                pollOptions.length >= 2)
-            ? PostPoll(
-                id: 'poll-$localId',
-                postId: localId,
-                question: pollQuestion.trim(),
-                options: pollOptions
-                    .where((opt) => opt.trim().isNotEmpty)
-                    .map((opt) => PollOption(
-                          id: 'opt-$localId-${opt.hashCode}',
-                          pollId: 'poll-$localId',
-                          optionText: opt.trim(),
-                          votesCount: 0,
-                        ))
-                    .toList(),
-              )
-            : null,
-      );
+      throw Exception('La aplicación no está conectada a la base de datos.');
     }
 
     final userId = SupabaseService.currentUserId;
@@ -511,7 +525,9 @@ class ForumService {
   }
 
   static Future<List<PostComment>> fetchCommentsTree(String postId) async {
-    if (!SupabaseConfig.isConfigured) return _getSampleComments(postId);
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
 
     try {
       final response = await SupabaseService.client
@@ -567,8 +583,42 @@ class ForumService {
 
       return rootComments;
     } catch (e) {
+      if (e is PostgrestException && (e.code == '42501' || e.message.contains('generate_author_hash'))) {
+        try {
+          final fallbackRes = await SupabaseService.client
+              .from('comments')
+              .select('id, post_id, parent_id, content, author_alias, author_hash, gif_url, created_at, moderation_status')
+              .eq('post_id', postId)
+              .neq('moderation_status', 2)
+              .order('created_at', ascending: true)
+              .timeout(const Duration(seconds: 10));
+          final List<dynamic> data = fallbackRes as List<dynamic>;
+          final List<PostComment> allComments = data
+              .map((item) => PostComment.fromMap(Map<String, dynamic>.from(item)))
+              .toList();
+          for (var c in allComments) {
+            c.children = [];
+          }
+          final Map<String, PostComment> map = {};
+          final List<PostComment> rootComments = [];
+          for (var c in allComments) {
+            map[c.id] = c;
+          }
+          for (var c in allComments) {
+            final pId = c.parentId;
+            if (pId != null && pId.trim().isNotEmpty && map.containsKey(pId) && pId != c.id) {
+              map[pId]!.children.add(c);
+            } else {
+              rootComments.add(c);
+            }
+          }
+          return rootComments;
+        } catch (inner) {
+          debugPrint('Error en fallback directo a tabla comments: $inner');
+        }
+      }
       debugPrint('Error al obtener comentarios: $e');
-      return _getSampleComments(postId);
+      rethrow;
     }
   }
 
@@ -580,15 +630,7 @@ class ForumService {
     String? gifUrl,
   }) async {
     if (!SupabaseConfig.isConfigured) {
-      return PostComment(
-        id: 'comment-${DateTime.now().millisecondsSinceEpoch}',
-        postId: postId,
-        content: content.trim(),
-        authorAlias: authorAlias.trim(),
-        parentId: (parentId != null && parentId.trim().isNotEmpty) ? parentId.trim() : null,
-        gifUrl: gifUrl?.trim().isEmpty == true ? null : gifUrl?.trim(),
-        createdAt: DateTime.now(),
-      );
+      throw Exception('La aplicación no está conectada a la base de datos.');
     }
 
     final userId = SupabaseService.currentUserId;
@@ -628,7 +670,9 @@ class ForumService {
     required String reason,
     String? details,
   }) async {
-    if (!SupabaseConfig.isConfigured) return true;
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
     try {
       final res = await SupabaseService.client.rpc('report_forum_post', params: {
         'p_post_id': postId,
@@ -647,7 +691,9 @@ class ForumService {
     required String reason,
     String? details,
   }) async {
-    if (!SupabaseConfig.isConfigured) return true;
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
     try {
       final res = await SupabaseService.client.rpc('report_forum_comment', params: {
         'p_comment_id': commentId,
@@ -666,7 +712,9 @@ class ForumService {
     required String reportedAlias,
     required String reason,
   }) async {
-    if (!SupabaseConfig.isConfigured) return true;
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
     try {
       await SupabaseService.client.from('entity_reports').insert({
         'reporter_id': SupabaseService.currentUserId,
@@ -682,161 +730,5 @@ class ForumService {
       debugPrint('Error reportando usuario: $e');
       return false;
     }
-  }
-
-  static List<Post> _filterSamplePosts({
-    required String category,
-    required String facultad,
-    required String carrera,
-    required String searchQuery,
-    required bool showOnlyBookmarks,
-  }) {
-    var list = _getSamplePosts();
-
-    if (showOnlyBookmarks) {
-      list = list.where((p) => p.isBookmarkedByMe).toList();
-    }
-
-    if (carrera != 'todas') {
-      list = list.where((p) => p.carrera == carrera || p.carrera == 'todas' || p.carrera == 'area_comun').toList();
-    } else if (facultad != 'todas') {
-      final fac = USACConstants.facultades.firstWhere(
-        (f) => f['id'] == facultad,
-        orElse: () => USACConstants.facultades.first,
-      );
-      final rawCarreras = fac['carreras'] as List<dynamic>? ?? [];
-      final careerIds = rawCarreras.map((c) => c['id'].toString()).toSet()
-        ..add('todas')
-        ..add('area_comun');
-      list = list.where((p) => careerIds.contains(p.carrera)).toList();
-    }
-
-    if (category != 'todos') {
-      list = list.where((p) => p.category == category).toList();
-    }
-
-    if (searchQuery.trim().isNotEmpty) {
-      final q = searchQuery.toLowerCase().trim();
-      list = list.where((p) =>
-          p.title.toLowerCase().contains(q) ||
-          p.content.toLowerCase().contains(q) ||
-          p.authorAlias.toLowerCase().contains(q)).toList();
-    }
-
-    return list;
-  }
-
-  static List<Post> _getSamplePosts() {
-    return [
-      Post(
-        id: 'mock-1',
-        title: '¿Recomendaciones para Catedrático de Matemática Básica 1 y 2?',
-        category: 'catedraticos',
-        carrera: 'area_comun',
-        content: 'Hola compañeros, el próximo semestre llevo MB2. ¿Qué catedrático recomiendan que explique claro y dé buenas tareas preparatorias para los parciales?',
-        authorAlias: 'Estudiante USAC #312',
-        likes: 12,
-        createdAt: DateTime.now().subtract(const Duration(hours: 3)),
-        commentCount: 4,
-      ),
-      Post(
-        id: 'mock-2',
-        title: 'Guías de laboratorio y resúmenes de Estructuras de Datos',
-        category: 'apuntes',
-        carrera: 'sistemas',
-        content: 'Dejo este hilo para compartir apuntes sobre apuntadores, árboles AVL, grafos y memoria dinámica en C++.',
-        authorAlias: 'Estudiante Sistemas #804',
-        likes: 25,
-        createdAt: DateTime.now().subtract(const Duration(days: 1)),
-        commentCount: 7,
-      ),
-      Post(
-        id: 'mock-3',
-        title: 'Duda con asignación de IPC1 y Organización de Lenguajes y Compiladores',
-        category: 'prerrequisitos',
-        carrera: 'sistemas',
-        content: 'Compañeros de Sistemas, ¿cuántos créditos piden para la asignación de OLYC 1 en vacaciones? ¿Hay prerrequisito de Mate Computacional?',
-        authorAlias: 'SysDev USAC #110',
-        likes: 8,
-        createdAt: DateTime.now().subtract(const Duration(hours: 5)),
-        commentCount: 3,
-      ),
-      Post(
-        id: 'mock-4',
-        title: 'Atlas de Anatomía y resúmenes para Histología 1er Año',
-        category: 'apuntes',
-        carrera: 'medicina',
-        content: 'Comparto carpeta en Drive con esquemas del Netter y Moore comentados para los parciales de bloque de Anatomía Humana en CUM.',
-        authorAlias: 'MedEstudiante #402',
-        likes: 38,
-        createdAt: DateTime.now().subtract(const Duration(hours: 6)),
-        commentCount: 11,
-      ),
-      Post(
-        id: 'mock-5',
-        title: 'Opiniones sobre Derecho Penal 1 en S-7 y S-2',
-        category: 'catedraticos',
-        carrera: 'derecho',
-        content: '¿Alguien ha llevado con el Lic. De León o la Licda. Álvarez en el edificio S-7? ¿Qué libros de doctrina penal recomiendan conseguir?',
-        authorAlias: 'FuturoAbogado #99',
-        likes: 14,
-        createdAt: DateTime.now().subtract(const Duration(hours: 8)),
-        commentCount: 5,
-      ),
-      Post(
-        id: 'mock-6',
-        title: 'Plantillas y bloques para AutoCAD / Revit en T-1',
-        category: 'apuntes',
-        carrera: 'arquitectura',
-        content: 'Dejo enlaces para descargar bloques de escalas humanas, mobiliario y vegetación para las entregas de Diseño 3.',
-        authorAlias: 'ArquiUSAC #208',
-        likes: 19,
-        createdAt: DateTime.now().subtract(const Duration(hours: 12)),
-        commentCount: 2,
-      ),
-      Post(
-        id: 'mock-7',
-        title: 'Calculadoras permitidas para Topografía 1 y Mecánica Analítica',
-        category: 'horarios',
-        carrera: 'civil',
-        content: '¿Saben si en los exámenes de Civil permiten programables o solo científicas no graficadoras?',
-        authorAlias: 'CivilFIUSAC #501',
-        likes: 6,
-        createdAt: DateTime.now().subtract(const Duration(hours: 16)),
-        commentCount: 4,
-      ),
-      Post(
-        id: 'mock-8',
-        title: 'Comunidad general: ¿Hasta qué hora está abierta la Biblioteca Central?',
-        category: 'general',
-        carrera: 'todas',
-        content: 'Hola a todos, ¿saben los horarios actuales de la Biblioteca Central en el campus para ir a estudiar en grupos?',
-        authorAlias: 'Sancarlita #77',
-        likes: 31,
-        createdAt: DateTime.now().subtract(const Duration(days: 2)),
-        commentCount: 9,
-      ),
-    ];
-  }
-
-  static List<PostComment> _getSampleComments(String postId) {
-    final parent = PostComment(
-      id: 'c-1',
-      postId: postId,
-      authorAlias: 'Estudiante FIUSAC #901',
-      content: 'El Ing. Morales explica muy bien la teoría y sus exámenes son justos si haces las tareas.',
-      createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-    );
-    parent.children.add(
-      PostComment(
-        id: 'c-2',
-        postId: postId,
-        parentId: 'c-1',
-        authorAlias: 'Estudiante #312',
-        content: '¡Muchas gracias por el dato! ¿Da puntos por asistencia?',
-        createdAt: DateTime.now().subtract(const Duration(hours: 1)),
-      ),
-    );
-    return [parent];
   }
 }

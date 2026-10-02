@@ -29,7 +29,7 @@ class USACConstants {
   static const String appName = 'Comunidad Universitaria';
   static const String appSubtitle = 'Plataforma Estudiantil Independiente';
   static const String appDisclaimer =
-      'Comunidad Universitaria es una iniciativa estudiantil 100% independiente, autónoma y sin fines de lucro. No representa, no pertenece ni cuenta con afiliación oficial con las autoridades de la Universidad de San Carlos de Guatemala (USAC). Los datos académicos se recopilan con fines exclusivamente orientativos y de libre acceso.';
+      'Comunidad Universitaria es una iniciativa estudiantil 100% independiente, autónoma y sin fines de lucro. No representa, no pertenece ni cuenta con afiliación oficial con las autoridades de la Universidad de San Carlos de Guatemala. Los datos académicos se recopilan con fines exclusivamente orientativos y de libre acceso.';
   static const String marketplaceDisclaimer =
       'Esta plataforma no interviene en las transacciones comerciales ni custodia fondos. Toda compra, venta o coordinación de tutoría se realiza de forma directa y bajo la responsabilidad mutua de los estudiantes participantes.';
 
@@ -92,7 +92,7 @@ class USACConstants {
       label: 'Tutorías & Asesorías',
       iconName: 'school',
       description:
-          'Clases particulares, resolución de dudas y asesorías de cursos (gratuitas o con costo).',
+          'Clases particulares, resolución de dudas y asesorías para cursos.',
     ),
     MarketplaceCategoryOption(
       id: 'libros_materiales',
@@ -126,12 +126,12 @@ class USACConstants {
     },
     {
       'id': 'central',
-      'nombre': 'Campus Central (Zona 12)',
+      'nombre': 'Campus Central · Zona 12',
       'departamento': 'Guatemala',
     },
     {
       'id': 'cum',
-      'nombre': 'CUM - Centro Univ. Metropolitano (Zona 11)',
+      'nombre': 'CUM · Centro Universitario Metropolitano',
       'departamento': 'Guatemala',
     },
     {
@@ -181,19 +181,19 @@ class USACConstants {
     },
     {
       'id': 'cusantarosa',
-      'nombre': 'Sede Santa Rosa (Barberena/Casillas)',
+      'nombre': 'Sede Santa Rosa',
       'departamento': 'Santa Rosa',
     },
     {'id': 'cuzac', 'nombre': 'Sede Zacapa', 'departamento': 'Zacapa'},
     {
       'id': 'cubajaverapaz',
-      'nombre': 'Sede Baja Verapaz (Salamá/Rabinal)',
+      'nombre': 'Sede Baja Verapaz',
       'departamento': 'Baja Verapaz',
     },
     {'id': 'cudep', 'nombre': 'CUDEP - Petén', 'departamento': 'Petén'},
     {
       'id': 'cusac',
-      'nombre': 'Sede Sacatepéquez (Antigua/San Lucas)',
+      'nombre': 'Sede Sacatepéquez',
       'departamento': 'Sacatepéquez',
     },
     {'id': 'cusol', 'nombre': 'Sede Sololá', 'departamento': 'Sololá'},
@@ -204,7 +204,7 @@ class USACConstants {
     },
     {
       'id': 'cuprog',
-      'nombre': 'Sede El Progreso (Sanarate)',
+      'nombre': 'Sede El Progreso',
       'departamento': 'El Progreso',
     },
     {
@@ -234,7 +234,7 @@ class USACConstants {
     {
       'id': 'cafeteria_t3',
       'building_code': 'Cafetería T-3',
-      'nombre': 'Frente a Cafetería del T-3 (Punto Seguro)',
+      'nombre': 'Frente a Cafetería del T-3 · Punto Seguro',
       'sede_id': 'central',
       'latitude': 14.5886,
       'longitude': -90.5516,
@@ -243,7 +243,7 @@ class USACConstants {
     {
       'id': 'plaza_martires',
       'building_code': 'Plaza Mártires',
-      'nombre': 'Plaza de los Mártires (Punto Seguro)',
+      'nombre': 'Plaza de los Mártires · Punto Seguro',
       'sede_id': 'central',
       'latitude': 14.5875,
       'longitude': -90.5518,
@@ -252,7 +252,7 @@ class USACConstants {
     {
       'id': 'entrada_t4',
       'building_code': 'Entrada T-4',
-      'nombre': 'Entrada del T-4 (Punto Seguro)',
+      'nombre': 'Entrada del T-4 · Punto Seguro',
       'sede_id': 'central',
       'latitude': 14.5889,
       'longitude': -90.5520,
@@ -261,7 +261,7 @@ class USACConstants {
     {
       'id': 't3',
       'building_code': 'T-3',
-      'nombre': 'Edificio T-3 (Facultad de Ingeniería)',
+      'nombre': 'Edificio T-3 · Facultad de Ingeniería',
       'sede_id': 'central',
       'latitude': 14.5886,
       'longitude': -90.5516,
@@ -270,7 +270,7 @@ class USACConstants {
     {
       'id': 't1',
       'building_code': 'T-1',
-      'nombre': 'Edificio T-1 (Ingeniería Mecánica / Eléctrica)',
+      'nombre': 'Edificio T-1 · Ingeniería Mecánica y Eléctrica',
       'sede_id': 'central',
       'latitude': 14.5892,
       'longitude': -90.5512,
@@ -279,7 +279,7 @@ class USACConstants {
     {
       'id': 's12',
       'building_code': 'S-12',
-      'nombre': 'Edificio S-12 (Facultad de Ciencias Económicas)',
+      'nombre': 'Edificio S-12 · Facultad de Ciencias Económicas',
       'sede_id': 'central',
       'latitude': 14.5878,
       'longitude': -90.5524,
@@ -288,7 +288,7 @@ class USACConstants {
     {
       'id': 's3',
       'building_code': 'S-3',
-      'nombre': 'Edificio S-3 (Agronomía / Farmacia)',
+      'nombre': 'Edificio S-3 · Agronomía y Farmacia',
       'sede_id': 'central',
       'latitude': 14.5865,
       'longitude': -90.5530,
@@ -297,7 +297,7 @@ class USACConstants {
     {
       'id': 'm3',
       'building_code': 'M-3',
-      'nombre': 'Edificio M-3 (Facultad de Odontología)',
+      'nombre': 'Edificio M-3 · Facultad de Odontología',
       'sede_id': 'central',
       'latitude': 14.5872,
       'longitude': -90.5505,
@@ -306,7 +306,7 @@ class USACConstants {
     {
       'id': 's2',
       'building_code': 'S-2',
-      'nombre': 'Edificio S-2 (Ciencias Jurídicas y Sociales)',
+      'nombre': 'Edificio S-2 · Ciencias Jurídicas y Sociales',
       'sede_id': 'central',
       'latitude': 14.5861,
       'longitude': -90.5521,
@@ -315,7 +315,7 @@ class USACConstants {
     {
       'id': 's4',
       'building_code': 'S-4',
-      'nombre': 'Edificio S-4 (Facultad de Humanidades)',
+      'nombre': 'Edificio S-4 · Facultad de Humanidades',
       'sede_id': 'central',
       'latitude': 14.5855,
       'longitude': -90.5535,
@@ -324,7 +324,7 @@ class USACConstants {
     {
       'id': 't2',
       'building_code': 'T-2',
-      'nombre': 'Edificio T-2 (Facultad de Arquitectura)',
+      'nombre': 'Edificio T-2 · Facultad de Arquitectura',
       'sede_id': 'central',
       'latitude': 14.5880,
       'longitude': -90.5508,
@@ -342,7 +342,7 @@ class USACConstants {
     {
       'id': 'plaza_martires',
       'building_code': 'PLAZA',
-      'nombre': 'Plaza de los Mártires (Frente a Rectoría)',
+      'nombre': 'Plaza de los Mártires',
       'sede_id': 'central',
       'latitude': 14.5875,
       'longitude': -90.5518,
@@ -360,7 +360,7 @@ class USACConstants {
     {
       'id': 'cum_a',
       'building_code': 'CUM-A',
-      'nombre': 'CUM Edificio A (Medicina y Cirugía)',
+      'nombre': 'CUM Edificio A',
       'sede_id': 'cum',
       'latitude': 14.6152,
       'longitude': -90.5489,
@@ -369,7 +369,7 @@ class USACConstants {
     {
       'id': 'cum_b',
       'building_code': 'CUM-B',
-      'nombre': 'CUM Edificio B (Enfermería y Fisioterapia)',
+      'nombre': 'CUM Edificio B',
       'sede_id': 'cum',
       'latitude': 14.6155,
       'longitude': -90.5492,
@@ -498,42 +498,42 @@ class USACConstants {
         },
         {
           'id': '03-00-01',
-          'nombre': 'Contaduría Pública y Auditoría (Campus Central)',
+          'nombre': 'Contaduría Pública y Auditoría',
           'codigo': '03-00-01',
           'sede': 'Campus Central',
           'modalidades': ['Diario', 'Sabatino', 'Dominical'],
         },
         {
           'id': '03-00-02',
-          'nombre': 'Economía (Campus Central)',
+          'nombre': 'Economía',
           'codigo': '03-00-02',
           'sede': 'Campus Central',
           'modalidades': ['Diario', 'Sabatino', 'Dominical'],
         },
         {
           'id': '03-00-03',
-          'nombre': 'Administración de Empresas (Campus Central)',
+          'nombre': 'Administración de Empresas',
           'codigo': '03-00-03',
           'sede': 'Campus Central',
           'modalidades': ['Diario', 'Sabatino', 'Dominical'],
         },
         {
           'id': '03-02-01',
-          'nombre': 'Contaduría Pública y Auditoría (Extensión)',
+          'nombre': 'Contaduría Pública y Auditoría - Extensión',
           'codigo': '03-02-01',
           'sede': 'Extensión',
           'modalidades': ['Diario', 'Sabatino', 'Dominical'],
         },
         {
           'id': '03-02-02',
-          'nombre': 'Economía - Área común (Extensión)',
+          'nombre': 'Economía - Área Común Extensión',
           'codigo': '03-02-02',
           'sede': 'Extensión',
           'modalidades': ['Diario', 'Sabatino', 'Dominical'],
         },
         {
           'id': '03-02-03',
-          'nombre': 'Administración de Empresas (Extensión)',
+          'nombre': 'Administración de Empresas - Extensión',
           'codigo': '03-02-03',
           'sede': 'Extensión',
           'modalidades': ['Diario', 'Sabatino', 'Dominical'],
@@ -555,8 +555,7 @@ class USACConstants {
         },
         {
           'id': '04-00-01',
-          'nombre':
-              'Licenciatura en Ciencias Jurídicas y Sociales (Abogado y Notario)',
+          'nombre': 'Licenciatura en Ciencias Jurídicas y Sociales',
           'codigo': '04-00-01',
           'sede': 'Campus Central / Extensiones',
           'modalidades': ['Diario', 'Sabatino', 'Dominical'],
@@ -566,7 +565,7 @@ class USACConstants {
     {
       'id': '05',
       'codigo': '05',
-      'nombre': 'Facultad de Ciencias Médicas (CUM)',
+      'nombre': 'Facultad de Ciencias Médicas',
       'sitio': 'http://medicina.usac.edu.gt/',
       'carreras': [
         {
@@ -585,35 +584,35 @@ class USACConstants {
         },
         {
           'id': '05-01-03',
-          'nombre': 'Técnico de Enfermería (ENF-Guatemala)',
+          'nombre': 'Técnico de Enfermería',
           'codigo': '05-01-03',
           'sede': 'Zona 11, Ciudad de Guatemala',
           'modalidades': ['Diario', 'Sabatino'],
         },
         {
           'id': '05-04-04',
-          'nombre': 'Técnico de Fisioterapia (ETFOE)',
+          'nombre': 'Técnico de Fisioterapia',
           'codigo': '05-04-04',
           'sede': 'Escuela de Fisioterapia',
           'modalidades': ['Diario', 'Sabatino'],
         },
         {
           'id': '05-05-05',
-          'nombre': 'Técnico de Terapia Respiratoria (ETR)',
+          'nombre': 'Técnico de Terapia Respiratoria',
           'codigo': '05-05-05',
           'sede': 'Hospital Roosevelt',
           'modalidades': ['Diario'],
         },
         {
           'id': '05-02-03',
-          'nombre': 'Técnico en Enfermería (Quetzaltenango - ENEO)',
+          'nombre': 'Técnico en Enfermería - Quetzaltenango',
           'codigo': '05-02-03',
           'sede': 'Quetzaltenango',
           'modalidades': ['Diario'],
         },
         {
           'id': '05-03-03',
-          'nombre': 'Licenciatura en Enfermería nivel técnico (Cobán)',
+          'nombre': 'Licenciatura en Enfermería nivel técnico - Cobán',
           'codigo': '05-03-03',
           'sede': 'Cobán, Alta Verapaz',
           'modalidades': ['Diario', 'Sabatino'],
@@ -673,7 +672,7 @@ class USACConstants {
     {
       'id': '07',
       'codigo': '77',
-      'nombre': 'Facultad de Humanidades (Central & Extensiones)',
+      'nombre': 'Facultad de Humanidades',
       'sitio': 'https://humanidades.usac.edu.gt/',
       'carreras': [
         {
@@ -764,7 +763,7 @@ class USACConstants {
         {
           'id': '77-00-53',
           'nombre':
-              'Profesorado en Ciencias de la Información Documental (b-learning)',
+              'Profesorado en Ciencias de la Información Documental',
           'codigo': '77-00-53',
           'sede': 'Central & Chimaltenango',
           'modalidades': ['Diario', 'Sabatino'],
@@ -793,7 +792,7 @@ class USACConstants {
         },
         {
           'id': 'area_comun',
-          'nombre': 'Área Común de Ingeniería (1er - 3er Semestre)',
+          'nombre': 'Área Común de Ingeniería',
           'codigo': '08-00-00-AC',
           'sede': 'Campus Central',
           'modalidades': ['Diario', 'Sabatino', 'Dominical'],

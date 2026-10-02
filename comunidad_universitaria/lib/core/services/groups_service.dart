@@ -21,7 +21,9 @@ class GroupsService {
     final cached = CacheService.get<List<WhatsAppGroup>>(_cacheNamespace, cacheKey);
     if (cached != null) return List<WhatsAppGroup>.from(cached);
 
-    if (!SupabaseConfig.isConfigured) return _getSampleGroups();
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
 
     if (isDefaultQuery) {
       final persisted = await _readPersistedGroups(cacheKey);
@@ -87,7 +89,7 @@ class GroupsService {
         final persisted = await _readPersistedGroups(cacheKey);
         if (persisted != null) return persisted;
       }
-      return _getSampleGroups();
+      rethrow;
     }
   }
 
@@ -119,8 +121,11 @@ class GroupsService {
   }
 
   static Future<bool> toggleUpvote(WhatsAppGroup group) async {
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
     final currentUserId = SupabaseService.currentUserId;
-    if (currentUserId == null || !SupabaseConfig.isConfigured) return !group.isUpvotedByMe;
+    if (currentUserId == null) return group.isUpvotedByMe;
 
     try {
       if (group.isUpvotedByMe) {
@@ -160,21 +165,7 @@ class GroupsService {
     String? imageUrl,
   }) async {
     if (!SupabaseConfig.isConfigured) {
-      return WhatsAppGroup(
-        id: 'local-${DateTime.now().millisecondsSinceEpoch}',
-        title: title.trim(),
-        carrera: carrera,
-        curso: curso.trim(),
-        section: section.trim().isEmpty ? 'Sección Única' : section.trim(),
-        link: link.trim(),
-        description: description.trim(),
-        authorAlias: authorAlias.trim(),
-        imageUrl: imageUrl?.trim().isEmpty == true ? null : imageUrl?.trim(),
-        upvotes: 1,
-        reportedCount: 0,
-        createdAt: DateTime.now(),
-        isUpvotedByMe: true,
-      );
+      throw Exception('La aplicación no está conectada a la base de datos.');
     }
 
     final userId = SupabaseService.currentUserId;
@@ -226,7 +217,9 @@ class GroupsService {
     required String groupId,
     required String reason,
   }) async {
-    if (!SupabaseConfig.isConfigured) return true;
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
 
     try {
       await SupabaseService.client.from('entity_reports').insert({
@@ -242,38 +235,5 @@ class GroupsService {
       debugPrint('Error al reportar grupo: $e');
       return false;
     }
-  }
-
-  static List<WhatsAppGroup> _getSampleGroups() {
-    return [
-      WhatsAppGroup(
-        id: 'sample-1',
-        title: 'Matemática Básica 1 - Sección A (Ing. Pérez)',
-        carrera: 'area_comun',
-        curso: 'Matemática Básica 1',
-        section: 'Sección A',
-        link: 'https://chat.whatsapp.com/sample_link_mate1',
-        description: 'Grupo estudiantil para resolución de dudas, tareas y parciales.',
-        authorAlias: 'Estudiante MB #204',
-        upvotes: 18,
-        reportedCount: 0,
-        createdAt: DateTime.now().subtract(const Duration(days: 2)),
-        isUpvotedByMe: false,
-      ),
-      WhatsAppGroup(
-        id: 'sample-2',
-        title: 'Estructuras de Datos - Proyectos y Debates C++',
-        carrera: 'sistemas',
-        curso: 'Estructuras de Datos',
-        section: 'Sección Única',
-        link: 'https://discord.gg/sample_link_edd',
-        description: 'Servidor de Discord para debatir proyectos, punteros y árboles binarios.',
-        authorAlias: 'Estudiante Sistemas #811',
-        upvotes: 34,
-        reportedCount: 0,
-        createdAt: DateTime.now().subtract(const Duration(days: 5)),
-        isUpvotedByMe: true,
-      ),
-    ];
   }
 }

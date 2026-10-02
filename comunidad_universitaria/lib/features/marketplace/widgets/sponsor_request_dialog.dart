@@ -184,9 +184,9 @@ class _SponsorRequestDialogState extends State<SponsorRequestDialog> {
                 contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               ),
               items: const [
-                DropdownMenuItem(value: 'Primera Plana - Marketplace', child: Text('Primera Plana — Marketplace (Video + Fotos)', overflow: TextOverflow.ellipsis)),
+                DropdownMenuItem(value: 'Primera Plana - Marketplace', child: Text('Primera Plana — Marketplace con Video y Fotos', overflow: TextOverflow.ellipsis)),
                 DropdownMenuItem(value: 'Banner en Foro Universitario', child: Text('Banner Destacado en Foro Universitario', overflow: TextOverflow.ellipsis)),
-                DropdownMenuItem(value: 'Todos los Espacios', child: Text('Patrocinio Integral (Marketplace + Foro + Grupos)', overflow: TextOverflow.ellipsis)),
+                DropdownMenuItem(value: 'Todos los Espacios', child: Text('Patrocinio Integral Multisección', overflow: TextOverflow.ellipsis)),
               ],
               onChanged: (val) => setState(() => _placement = val ?? _placement),
             ),

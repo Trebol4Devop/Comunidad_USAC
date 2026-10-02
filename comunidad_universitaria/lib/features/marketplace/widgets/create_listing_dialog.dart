@@ -198,7 +198,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
     if (!hasWhatsapp && !hasInstagram && !hasMessenger && !hasTelegram) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Debes proporcionar al menos un medio de contacto (WhatsApp, Instagram, Messenger o Telegram).'),
+          content: Text('Debes proporcionar al menos un canal de contacto.'),
           backgroundColor: Colors.orange,
         ),
       );
@@ -408,7 +408,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                   controller: _priceController,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   decoration: const InputDecoration(
-                    labelText: 'Precio en Quetzales (Q)',
+                    labelText: 'Precio en Quetzales',
                     hintText: '15.00',
                     prefixText: 'Q ',
                     contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -426,7 +426,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
 
               // Contact Channels Section Header
               Text(
-                'Canales de Contacto (Elige los que desees brindar)',
+                'Canales de Contacto',
                 style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: 13),
               ),
               const SizedBox(height: 8),
@@ -436,7 +436,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                 controller: _whatsappController,
                 keyboardType: TextInputType.phone,
                 decoration: const InputDecoration(
-                  labelText: 'WhatsApp (opcional)',
+                  labelText: 'WhatsApp',
                   hintText: 'Ej. 55551234',
                   prefixIcon: Icon(Icons.chat, size: 18, color: Color(0xFF25D366)),
                   contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -448,7 +448,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
               TextFormField(
                 controller: _instagramController,
                 decoration: const InputDecoration(
-                  labelText: 'Instagram (opcional)',
+                  labelText: 'Instagram',
                   hintText: 'Ej. @mi_emprendimiento o enlace a tu perfil',
                   prefixIcon: Icon(Icons.camera_alt_outlined, size: 18, color: Color(0xFFE1306C)),
                   contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -460,7 +460,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
               TextFormField(
                 controller: _messengerController,
                 decoration: const InputDecoration(
-                  labelText: 'Facebook Messenger (opcional)',
+                  labelText: 'Facebook Messenger',
                   hintText: 'Ej. @usuario o enlace m.me/tu_perfil',
                   prefixIcon: Icon(Icons.message_outlined, size: 18, color: Color(0xFF0084FF)),
                   contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -472,7 +472,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
               TextFormField(
                 controller: _telegramController,
                 decoration: const InputDecoration(
-                  labelText: 'Telegram (opcional)',
+                  labelText: 'Telegram',
                   hintText: 'Ej. @usuario_telegram',
                   prefixIcon: Icon(Icons.send_outlined, size: 18, color: Color(0xFF229ED9)),
                   contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -588,8 +588,8 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
               // Image Upload to Bucket
               Text(
                 widget.isSponsored
-                    ? 'Fotos de Patrocinador (Hasta 3 imágenes)'
-                    : 'Foto del Producto / Servicio (1 imagen)',
+                    ? 'Fotos de Patrocinador · Hasta 3 imágenes'
+                    : 'Foto del Producto o Servicio',
                 style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: 13),
               ),
               const SizedBox(height: 6),
@@ -653,9 +653,9 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
 
               const SizedBox(height: 14),
 
-              // Reference Social Links (Facebook, Instagram, TikTok, etc.)
+              // Reference Social Links
               Text(
-                'Publicaciones de Referencia en Redes Sociales (Opcional)',
+                'Publicaciones de Referencia en Redes Sociales',
                 style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: 13),
               ),
               const SizedBox(height: 6),
@@ -666,7 +666,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                     child: TextField(
                       controller: _socialLinkInputController,
                       decoration: const InputDecoration(
-                        labelText: 'Enlace de publicación (FB, IG, TikTok...)',
+                        labelText: 'Enlace de publicación',
                         hintText: 'https://instagram.com/p/...',
                         prefixIcon: Icon(Icons.link, size: 18),
                         contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -707,7 +707,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                 TextFormField(
                   controller: _videoUrlController,
                   decoration: const InputDecoration(
-                    labelText: 'Enlace de Video Promocional (YouTube, Vimeo, etc.)',
+                    labelText: 'Enlace de Video Promocional',
                     hintText: 'https://youtube.com/watch?v=...',
                     prefixIcon: Icon(Icons.play_circle_outline, size: 18),
                     contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),

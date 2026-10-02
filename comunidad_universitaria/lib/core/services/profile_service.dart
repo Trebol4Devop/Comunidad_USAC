@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/supabase_config.dart';
 import '../models/marketplace_item.dart';
 import '../models/post.dart';
@@ -25,11 +26,9 @@ class ProfileService {
     }
 
     try {
-      var query = SupabaseService.client.from('posts').select('*, comments(count)');
+      var query = SupabaseService.client.from('v_public_posts').select('*');
 
-      if (userId != null && userId.isNotEmpty && userId != 'local_user') {
-        query = query.eq('user_id', userId);
-      } else {
+      if (alias.trim().isNotEmpty) {
         query = query.eq('author_alias', alias.trim());
       }
 
@@ -38,11 +37,9 @@ class ProfileService {
 
       return data.map((item) {
         final map = Map<String, dynamic>.from(item);
-        int commentCount = 0;
-        if (map['comments'] is List && (map['comments'] as List).isNotEmpty) {
-          final countObj = (map['comments'] as List).first;
-          commentCount = countObj['count'] ?? 0;
-        }
+        final commentCount = (map['comment_count'] is int)
+            ? map['comment_count'] as int
+            : int.tryParse(map['comment_count']?.toString() ?? '0') ?? 0;
 
         return Post.fromMap(
           map,
@@ -51,6 +48,28 @@ class ProfileService {
         );
       }).toList();
     } catch (e) {
+      if (e is PostgrestException && (e.code == '42501' || e.message.contains('generate_author_hash'))) {
+        try {
+          var fallbackQuery = SupabaseService.client
+              .from('posts')
+              .select('id, title, category, content, author_alias, author_hash, likes, carrera, image_url, gif_url, is_pinned, quoted_post_id, created_at, moderation_status')
+              .neq('moderation_status', 2);
+          if (alias.trim().isNotEmpty) {
+            fallbackQuery = fallbackQuery.eq('author_alias', alias.trim());
+          }
+          final response = await fallbackQuery.order('created_at', ascending: false).limit(50);
+          final List<dynamic> data = response as List<dynamic>;
+          return data.map((item) {
+            return Post.fromMap(
+              Map<String, dynamic>.from(item),
+              isLikedByMe: false,
+              commentCount: 0,
+            );
+          }).toList();
+        } catch (inner) {
+          debugPrint('Error en fallback directo a posts en perfil: $inner');
+        }
+      }
       debugPrint('Error al obtener posts del usuario: $e');
       return [];
     }

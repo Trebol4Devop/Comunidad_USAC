@@ -10,8 +10,8 @@ import '../widgets/comment_item.dart';
 import '../widgets/create_post_dialog.dart';
 import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/gif_picker_modal.dart';
-import '../../shared/widgets/image_viewer_dialog.dart';
 import '../../shared/widgets/report_dialog.dart';
+import '../widgets/discord/discord_media_attachment.dart';
 
 class PostDetailScreen extends StatefulWidget {
   final Post initialPost;
@@ -54,12 +54,21 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
   Future<void> _loadComments() async {
     setState(() => _isLoadingComments = true);
-    final list = await ForumService.fetchCommentsTree(_post.id);
-    if (mounted) {
-      setState(() {
-        _comments = list;
-        _isLoadingComments = false;
-      });
+    try {
+      final list = await ForumService.fetchCommentsTree(_post.id);
+      if (mounted) {
+        setState(() {
+          _comments = list;
+          _isLoadingComments = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _comments = [];
+          _isLoadingComments = false;
+        });
+      }
     }
   }
 
@@ -547,7 +556,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                                       ),
                                                       if (hasVoted)
                                                         Text(
-                                                          '${(percent * 100).toStringAsFixed(0)}% (${opt.votesCount})',
+                                                          '${(percent * 100).toStringAsFixed(0)}% · ${opt.votesCount} votos',
                                                           style: TextStyle(
                                                             fontSize: 12,
                                                             fontWeight: FontWeight.w600,
@@ -576,66 +585,24 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           // GIF if present
                           if (_post.gifUrl != null && _post.gifUrl!.isNotEmpty) ...[
                             const SizedBox(height: 14),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: Image.network(
-                                _post.gifUrl!,
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                                errorBuilder: (ctx, err, stack) => Container(
-                                  height: 140,
-                                  color: Colors.grey.shade300,
-                                  child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
-                                ),
-                              ),
+                            DiscordMediaAttachment(
+                              imageUrl: _post.gifUrl!,
+                              title: _post.title,
+                              isGif: true,
+                              maxHeight: 340,
+                              maxWidth: 580,
                             ),
                           ],
 
                           // Image if present
                           if (_post.imageUrl != null && _post.imageUrl!.isNotEmpty) ...[
                             const SizedBox(height: 14),
-                            InkWell(
-                              onTap: () => ImageViewerDialog.show(
-                                context,
-                                imageUrl: _post.imageUrl!,
-                                title: _post.title,
-                              ),
-                              child: Stack(
-                                alignment: Alignment.bottomRight,
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(10),
-                                    child: Image.network(
-                                      _post.imageUrl!,
-                                      fit: BoxFit.cover,
-                                      width: double.infinity,
-                                      errorBuilder: (context, error, stackTrace) => Container(
-                                        height: 140,
-                                        color: Colors.grey.shade300,
-                                        child: const Center(
-                                          child: Icon(Icons.broken_image, color: Colors.grey),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    margin: const EdgeInsets.all(8),
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: Colors.black.withValues(alpha: 0.65),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: const [
-                                        Icon(Icons.zoom_in, color: Colors.white, size: 14),
-                                        SizedBox(width: 4),
-                                        Text('Ampliar', style: TextStyle(color: Colors.white, fontSize: 11)),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            DiscordMediaAttachment(
+                              imageUrl: _post.imageUrl!,
+                              title: _post.title,
+                              isGif: false,
+                              maxHeight: 420,
+                              maxWidth: 620,
                             ),
                           ],
 
@@ -819,7 +786,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
-                              'Comentando como: ${widget.activeAlias} (Modo Anónimo)',
+                              'Comentando como: ${widget.activeAlias}',
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,

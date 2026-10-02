@@ -150,7 +150,7 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Explorar Carreras (Servidores)',
+                          'Explorar Carreras',
                           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                         ),
                         Text(
@@ -251,7 +251,7 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
                                 icon: icon,
                                 facultadId: facId,
                                 carreraId: carreraId,
-                                description: 'Servidor oficial de $carreraName ($facultadName).',
+                                description: 'Canal de $carreraName · $facultadName',
                                 color: color,
                               );
 

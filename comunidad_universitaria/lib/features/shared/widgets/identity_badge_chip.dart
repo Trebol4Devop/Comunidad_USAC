@@ -93,7 +93,7 @@ class IdentityBadgeChip extends StatelessWidget {
                       ),
                       const SizedBox(width: 5),
                       Text(
-                        'Modo Anónimo (Tu carné y nombre real están ocultos)',
+                        'Modo Anónimo · Identidad protegida',
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w500,

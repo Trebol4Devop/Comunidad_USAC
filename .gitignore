@@ -4,3 +4,5 @@
 !.env.example
 scripts/.venv/
 scripts/*.json
+*.log
+definition/

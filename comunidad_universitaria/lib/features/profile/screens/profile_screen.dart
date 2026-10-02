@@ -505,8 +505,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                         const SizedBox(width: 4),
                         Text(
                           isAuthenticated
-                              ? 'Cuenta Verificada ($userEmail)'
-                              : 'Modo Anónimo (Identidad Protegida Localmente)',
+                              ? 'Cuenta Verificada · $userEmail'
+                              : 'Modo Anónimo Protegido',
                           style: TextStyle(
                             fontSize: 11,
                             color: isAuthenticated ? const Color(0xFF059669) : Colors.grey.shade600,
@@ -556,7 +556,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             maxLines: 2,
             maxLength: 140,
             decoration: const InputDecoration(
-              labelText: 'Presentación o Bio Estudiantil (Opcional)',
+              labelText: 'Presentación o Bio Estudiantil',
               hintText: 'Ej. Estudiante de 6to semestre apasionado por desarrollo y proyectos comunitarios...',
               prefixIcon: Icon(Icons.edit_note_outlined, size: 18),
               isDense: true,
@@ -594,7 +594,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     children: [
                       Text(
                         (_profile?.isCarneVerified ?? false)
-                            ? 'Estudiante Validado: ${_profile?.studentName} (${_profile?.carne})'
+                            ? 'Estudiante Validado: ${_profile?.studentName} · ${_profile?.carne}'
                             : 'Validación con Carné Universitario',
                         style: TextStyle(
                           fontSize: 12,
@@ -951,15 +951,15 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             tabs: [
               Tab(
                 icon: const Icon(Icons.forum_outlined, size: 16),
-                text: 'Mis Posts (${_myPosts.length})',
+                text: 'Mis Posts · ${_myPosts.length}',
               ),
               Tab(
                 icon: const Icon(Icons.groups_outlined, size: 16),
-                text: 'Mis Grupos (${_myGroups.length})',
+                text: 'Mis Grupos · ${_myGroups.length}',
               ),
               Tab(
                 icon: const Icon(Icons.storefront_outlined, size: 16),
-                text: 'Mis Anuncios (${_myMarketplaceItems.length})',
+                text: 'Mis Anuncios · ${_myMarketplaceItems.length}',
               ),
             ],
           ),
@@ -1174,7 +1174,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             theme: theme,
             icon: Icons.school_outlined,
             iconColor: const Color(0xFF0D9488),
-            title: 'Información Académica (Facultad, Carrera y Sede)',
+            title: 'Información Académica',
             description:
                 'Se utiliza exclusivamente para filtrar y mostrarte contenido relevante: dudas sobre prerrequisitos de tu carrera, grupos de cursos específicos y artículos de marketplace en tu misma sede.',
           ),
@@ -1185,7 +1185,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             theme: theme,
             icon: Icons.chat_outlined,
             iconColor: const Color(0xFF16A34A),
-            title: 'Canales de Contacto (WhatsApp, Redes)',
+            title: 'Canales de Contacto',
             description:
                 'Se almacenan localmente en tu dispositivo como borrador de conveniencia. Solo se adjuntan a los anuncios específicos que tú decidas publicar en el Marketplace o tutorías para que los interesados te contacten directamente.',
           ),

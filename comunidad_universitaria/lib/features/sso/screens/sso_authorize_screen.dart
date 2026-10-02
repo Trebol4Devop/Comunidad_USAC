@@ -268,9 +268,9 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
         isDark: isDark,
         title: 'URL de Redirección No Autorizada',
         description:
-            'La dirección de retorno solicitada (${widget.redirectUri ?? 'vacía'}) no pertenece a la lista de orígenes permitidos por Comunidad USAC para PEMTREE (Open Redirect Protection).',
+            'La dirección de retorno solicitada no pertenece a la lista de orígenes permitidos por Comunidad USAC para PEMTREE.',
         recommendation:
-            'En desarrollo local usa exactamente http://localhost:5173/auth/callback (sin comodines ni asteriscos).',
+            'En desarrollo local utiliza exactamente http://localhost:5173/auth/callback',
       );
     }
 
