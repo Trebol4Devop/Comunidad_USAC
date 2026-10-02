@@ -503,14 +503,17 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                           color: isAuthenticated ? const Color(0xFF059669) : Colors.grey.shade600,
                         ),
                         const SizedBox(width: 4),
-                        Text(
-                          isAuthenticated
-                              ? 'Cuenta Verificada · $userEmail'
-                              : 'Modo Anónimo Protegido',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: isAuthenticated ? const Color(0xFF059669) : Colors.grey.shade600,
-                            fontWeight: FontWeight.w500,
+                        Expanded(
+                          child: Text(
+                            isAuthenticated
+                                ? 'Cuenta Verificada · $userEmail'
+                                : 'Modo Anónimo Protegido',
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isAuthenticated ? const Color(0xFF059669) : Colors.grey.shade600,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                       ],
@@ -721,9 +724,11 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 child: const Icon(Icons.school_outlined, color: Color(0xFF004B87), size: 18),
               ),
               const SizedBox(width: 10),
-              Text(
-                'Información Académica',
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              Expanded(
+                child: Text(
+                  'Información Académica',
+                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
@@ -933,11 +938,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   child: const Icon(Icons.history_edu_outlined, color: Color(0xFF004B87), size: 18),
                 ),
                 const SizedBox(width: 10),
-                Text(
-                  'Mi Actividad y Contenidos',
-                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                Expanded(
+                  child: Text(
+                    'Mi Actividad y Contenidos',
+                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  ),
                 ),
-                const Spacer(),
                 IconButton(
                   icon: const Icon(Icons.refresh, size: 18),
                   tooltip: 'Actualizar actividad',
@@ -964,7 +970,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             ],
           ),
           SizedBox(
-            height: 320,
+            height: 350,
             child: _isLoadingActivity
                 ? const Center(child: CircularProgressIndicator())
                 : TabBarView(
@@ -1289,6 +1295,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   Widget _buildAccountSection(ThemeData theme) {
     final isDark = theme.brightness == Brightness.dark;
     final isAuthenticated = SupabaseService.isAuthenticated;
+    final isDesktop = Responsive.isDesktop(context);
 
     return Material(
       color: isDark ? const Color(0xFF1E293B) : Colors.white,
@@ -1315,9 +1322,11 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 child: const Icon(Icons.settings_outlined, color: Color(0xFF7C3AED), size: 18),
               ),
               const SizedBox(width: 10),
-              Text(
-                'Cuenta y Preferencias',
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              Expanded(
+                child: Text(
+                  'Cuenta y Preferencias',
+                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
@@ -1361,32 +1370,73 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
           // Login or Logout
           if (!isAuthenticated) ...[
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.login, size: 22, color: Color(0xFF004B87)),
-              title: const Text('Iniciar Sesión o Registrarse', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-              subtitle: const Text(
-                'Vincular con Google o Correo para sincronizar tus publicaciones en otros dispositivos',
-                style: TextStyle(fontSize: 11),
-              ),
-              trailing: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF004B87),
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: () {
-                  AuthModal.show(
-                    context,
-                    title: 'Acceso a Cuenta Estudiantil',
-                    subtitle: 'Inicia sesión para sincronizar tus aportes y publicaciones.',
-                    onAuthenticated: () {
-                      _loadFullProfile();
-                    },
-                  );
-                },
-                child: const Text('Acceder'),
-              ),
-            ),
+            isDesktop
+                ? ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.login, size: 22, color: Color(0xFF004B87)),
+                    title: const Text('Iniciar Sesión o Registrarse', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                    subtitle: const Text(
+                      'Vincular con Google o Correo para sincronizar tus publicaciones en otros dispositivos',
+                      style: TextStyle(fontSize: 11),
+                    ),
+                    trailing: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF004B87),
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: () {
+                        AuthModal.show(
+                          context,
+                          title: 'Acceso a Cuenta Estudiantil',
+                          subtitle: 'Inicia sesión para sincronizar tus aportes y publicaciones.',
+                          onAuthenticated: () {
+                            _loadFullProfile();
+                          },
+                        );
+                      },
+                      child: const Text('Acceder'),
+                    ),
+                  )
+                : Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: const [
+                            Icon(Icons.login, size: 20, color: Color(0xFF004B87)),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text('Iniciar Sesión o Registrarse', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Vincular con Google o Correo para sincronizar tus publicaciones en otros dispositivos',
+                          style: TextStyle(fontSize: 11),
+                        ),
+                        const SizedBox(height: 10),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF004B87),
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: () {
+                            AuthModal.show(
+                              context,
+                              title: 'Acceso a Cuenta Estudiantil',
+                              subtitle: 'Inicia sesión para sincronizar tus aportes y publicaciones.',
+                              onAuthenticated: () {
+                                _loadFullProfile();
+                              },
+                            );
+                          },
+                          child: const Text('Acceder'),
+                        ),
+                      ],
+                    ),
+                  ),
           ] else ...[
             ListTile(
               contentPadding: EdgeInsets.zero,

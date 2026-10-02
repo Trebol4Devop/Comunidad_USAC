@@ -160,20 +160,24 @@ class _ReportDialogState extends State<ReportDialog> {
                 ),
               ],
               const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Cancelar'),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade700),
-                    onPressed: _submit,
-                    child: const Text('Enviar Reporte'),
-                  ),
-                ],
+              Align(
+                alignment: Alignment.centerRight,
+                child: Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Cancelar'),
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade700),
+                      onPressed: _submit,
+                      child: const Text('Enviar Reporte'),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

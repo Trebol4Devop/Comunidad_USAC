@@ -219,23 +219,27 @@ class _SponsorRequestDialogState extends State<SponsorRequestDialog> {
 
             const SizedBox(height: 20),
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
-                  child: const Text('Cancelar'),
-                ),
-                const SizedBox(width: 12),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFD97706),
-                    foregroundColor: Colors.white,
+            Align(
+              alignment: Alignment.centerRight,
+              child: Wrap(
+                alignment: WrapAlignment.end,
+                spacing: 12,
+                runSpacing: 8,
+                children: [
+                  TextButton(
+                    onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
+                    child: const Text('Cancelar'),
                   ),
-                  onPressed: _isSubmitting ? null : _submit,
-                  child: Text(_isSubmitting ? 'Enviando...' : 'Enviar Solicitud'),
-                ),
-              ],
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFD97706),
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: _isSubmitting ? null : _submit,
+                    child: Text(_isSubmitting ? 'Enviando...' : 'Enviar Solicitud'),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

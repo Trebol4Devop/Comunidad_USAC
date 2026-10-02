@@ -75,15 +75,24 @@ class _GroupsScreenState extends State<GroupsScreen> {
 
   Future<void> _loadGroups() async {
     setState(() => _isLoading = true);
-    final list = await GroupsService.fetchGroups(
-      carrera: _selectedCarrera,
-      searchQuery: _searchQuery,
-    );
-    if (mounted) {
-      setState(() {
-        _groups = list;
-        _isLoading = false;
-      });
+    try {
+      final list = await GroupsService.fetchGroups(
+        carrera: _selectedCarrera,
+        searchQuery: _searchQuery,
+      );
+      if (mounted) {
+        setState(() {
+          _groups = list;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _groups = [];
+          _isLoading = false;
+        });
+      }
     }
   }
 

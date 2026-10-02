@@ -60,7 +60,9 @@ class _AppShellState extends State<AppShell> {
           children: const [
             Icon(Icons.info_outline, color: Color(0xFF004B87)),
             SizedBox(width: 8),
-            Text('Aviso Comunitario', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Expanded(
+              child: Text('Aviso Comunitario', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            ),
           ],
         ),
         content: const Text(
@@ -103,8 +105,8 @@ class _AppShellState extends State<AppShell> {
               ),
               child: const Icon(Icons.school, color: Colors.white, size: 20),
             ),
-            const SizedBox(width: 10),
-            Flexible(
+            const SizedBox(width: 8),
+            Expanded(
               child: InkWell(
                 onTap: _showDisclaimerModal,
                 borderRadius: BorderRadius.circular(4),
@@ -112,19 +114,17 @@ class _AppShellState extends State<AppShell> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        Flexible(
-                          child: Text(
-                            isDesktop ? 'Comunidad Universitaria' : 'Comunidad USAC',
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                          ),
+                        Text(
+                          isDesktop ? 'Comunidad Universitaria' : 'Comunidad USAC',
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 4),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                           decoration: BoxDecoration(
                             color: theme.colorScheme.primary.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(4),
@@ -195,12 +195,15 @@ class _AppShellState extends State<AppShell> {
                   child: MaxWidthContainer(
                     maxWidth: 1200,
                     padding: EdgeInsets.zero,
-                    child: Row(
-                      children: [
-                        _buildNavTab(index: 0, label: 'Foro Estudiantil', icon: Icons.forum_outlined),
-                        _buildNavTab(index: 1, label: 'Grupos de Estudio', icon: Icons.groups_outlined),
-                        _buildNavTab(index: 2, label: 'Marketplace & Tutorías', icon: Icons.storefront_outlined),
-                      ],
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _buildNavTab(index: 0, label: 'Foro Estudiantil', icon: Icons.forum_outlined),
+                          _buildNavTab(index: 1, label: 'Grupos de Estudio', icon: Icons.groups_outlined),
+                          _buildNavTab(index: 2, label: 'Marketplace & Tutorías', icon: Icons.storefront_outlined),
+                        ],
+                      ),
                     ),
                   ),
                 ),

@@ -178,12 +178,14 @@ class RulesScreen extends StatelessWidget {
                           size: 20,
                         ),
                         SizedBox(width: 8),
-                        Text(
-                          'Descargo de Responsabilidad Legal e Independencia',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF92400E),
-                            fontSize: 14,
+                        Expanded(
+                          child: Text(
+                            'Descargo de Responsabilidad Legal e Independencia',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF92400E),
+                              fontSize: 14,
+                            ),
                           ),
                         ),
                       ],
