@@ -124,19 +124,23 @@ class _AliasModalState extends State<AliasModal> {
                 style: theme.textTheme.bodySmall?.copyWith(fontSize: 11, color: Colors.grey.shade600),
               ),
               const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Cancelar'),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: _save,
-                    child: const Text('Guardar Alias'),
-                  ),
-                ],
+              Align(
+                alignment: Alignment.centerRight,
+                child: Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Cancelar'),
+                    ),
+                    ElevatedButton(
+                      onPressed: _save,
+                      child: const Text('Guardar Alias'),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

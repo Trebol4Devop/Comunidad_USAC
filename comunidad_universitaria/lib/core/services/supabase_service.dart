@@ -3,11 +3,25 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/supabase_config.dart';
 
 class SupabaseService {
-  static SupabaseClient get client => SupabaseConfig.client;
+  @visibleForTesting
+  static SupabaseClient? debugClient;
+
+  static SupabaseClient get client => debugClient ?? SupabaseConfig.client;
+
+  @visibleForTesting
+  static String? debugUserId;
 
   static User? get currentUser => SupabaseConfig.isConfigured ? client.auth.currentUser : null;
-  static String? get currentUserId => currentUser?.id;
+  static String? get currentUserId => debugUserId ?? currentUser?.id;
   static bool get isAuthenticated => currentUser != null && !(currentUser!.isAnonymous);
+
+  @visibleForTesting
+  static void resetForTests() {
+    debugClient = null;
+    debugUserId = null;
+    // ignore: invalid_use_of_visible_for_testing_member
+    SupabaseConfig.debugOverrideConfigured = null;
+  }
 
   static Future<void> ensureSession() async {
     if (!SupabaseConfig.isConfigured) return;

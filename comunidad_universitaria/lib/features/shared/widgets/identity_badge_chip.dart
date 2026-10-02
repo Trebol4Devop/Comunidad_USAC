@@ -92,12 +92,15 @@ class IdentityBadgeChip extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 5),
-                      Text(
-                        'Modo Anónimo · Identidad protegida',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          color: isDark ? Colors.grey.shade400 : const Color(0xFF64748B),
+                      Flexible(
+                        child: Text(
+                          'Modo Anónimo · Identidad protegida',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                            color: isDark ? Colors.grey.shade400 : const Color(0xFF64748B),
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -168,7 +171,9 @@ class IdentityBadgeChip extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Row(
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 4,
                     children: [
                       Text(
                         'Publicando con tu perfil: ',
@@ -177,18 +182,15 @@ class IdentityBadgeChip extends StatelessWidget {
                           color: isDark ? Colors.grey.shade300 : const Color(0xFF065F46),
                         ),
                       ),
-                      Flexible(
-                        child: Text(
-                          displayName,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: isDark ? const Color(0xFF34D399) : const Color(0xFF065F46),
-                          ),
-                          overflow: TextOverflow.ellipsis,
+                      Text(
+                        displayName,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? const Color(0xFF34D399) : const Color(0xFF065F46),
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(width: 4),
                       if (isVerified)
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
@@ -208,15 +210,22 @@ class IdentityBadgeChip extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    isVerified
-                        ? 'Identidad validada con carné institucional USAC'
-                        : 'Perfil estudiantil de contacto directo',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
-                      color: isDark ? Colors.grey.shade400 : const Color(0xFF047857),
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          isVerified
+                              ? 'Identidad validada con carné institucional USAC'
+                              : 'Perfil estudiantil de contacto directo',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                            color: isDark ? Colors.grey.shade400 : const Color(0xFF047857),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
