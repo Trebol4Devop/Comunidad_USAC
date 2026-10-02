@@ -486,7 +486,7 @@ class ForumService {
       final res = await SupabaseService.client
           .from('posts')
           .insert(postMap)
-          .select()
+          .select('id, title, category, content, author_alias, author_hash, likes, carrera, image_url, gif_url, is_pinned, quoted_post_id, reposts_count, moderation_status, created_at')
           .single();
 
       final createdPost = Post.fromMap(Map<String, dynamic>.from(res));
@@ -652,7 +652,7 @@ class ForumService {
       final res = await SupabaseService.client
           .from('comments')
           .insert(commentMap)
-          .select()
+          .select('id, post_id, parent_id, content, author_alias, author_hash, gif_url, created_at, moderation_status')
           .single()
           .timeout(const Duration(seconds: 12));
 

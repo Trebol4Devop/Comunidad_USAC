@@ -13,8 +13,8 @@ void main() {
 
       final hasGeneral = servers.any((s) => s.id == 'todas');
       final hasSistemas = servers.any((s) => s.carreraId == 'sistemas');
-      final hasMedicina = servers.any((s) => s.carreraId == 'medicina');
-      final hasDerecho = servers.any((s) => s.carreraId == 'derecho');
+      final hasMedicina = servers.any((s) => s.id == 'medicina' && s.carreraId == '05-00-01');
+      final hasDerecho = servers.any((s) => s.id == 'derecho' && s.carreraId == '04-00-01');
 
       expect(hasGeneral, isTrue);
       expect(hasSistemas, isTrue);
