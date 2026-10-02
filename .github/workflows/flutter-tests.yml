@@ -1,0 +1,165 @@
+name: Flutter CI & Quality Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+      - 'feature/**'
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ===========================================================================
+  # Job 1: Análisis Estático, Linter y Pruebas Unitarias / Widgets con Cobertura
+  # No requiere secrets. Se ejecuta en cada PR y push.
+  # ===========================================================================
+  flutter-test:
+    name: Flutter Analyze & Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+          cache-key: 'flutter-:os:-:channel:-:version:-:arch:-:hash:'
+
+      - name: Instalar dependencias
+        working-directory: comunidad_universitaria
+        run: flutter pub get
+
+      - name: Análisis estático (Linter)
+        working-directory: comunidad_universitaria
+        run: flutter analyze
+
+      - name: Ejecutar pruebas unitarias y de widgets con cobertura
+        working-directory: comunidad_universitaria
+        run: flutter test --coverage
+
+      - name: Subir reporte de cobertura (LCOV)
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: comunidad_universitaria/coverage/lcov.info
+          retention-days: 14
+
+  # ===========================================================================
+  # Job 2: Pruebas de Integración pgTAP en Base de Datos Supabase (Opcional / Gated)
+  #
+  # SECRETS Y VARIABLES REQUERIDAS:
+  # - ENABLE_DB_TESTS: (Variable en GitHub Settings -> Variables) Fijada en 'true'.
+  # - SUPABASE_ACCESS_TOKEN: (Opcional en GitHub Secrets) Si se desea vincular a un
+  #   proyecto remoto de Supabase (https://supabase.com/dashboard/account/tokens).
+  # - SUPABASE_DB_PASSWORD: (Opcional en GitHub Secrets) Si se interactúa contra DB remota.
+  #
+  # Nota: El job levanta automáticamente el stack local mediante Docker y corre
+  # el runner bash 'scripts/db/run_pgtap.sh' de forma reproducible.
+  # ===========================================================================
+  supabase-db-tests:
+    name: Supabase pgTAP DB Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.event_name == 'workflow_dispatch' || vars.ENABLE_DB_TESTS == 'true' || secrets.SUPABASE_ACCESS_TOKEN != ''
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Iniciar stack local de Supabase
+        run: |
+          supabase start
+
+      - name: Ejecutar suite de integración pgTAP
+        run: |
+          chmod +x scripts/db/run_pgtap.sh
+          ./scripts/db/run_pgtap.sh
+
+      - name: Detener stack de Supabase
+        if: always()
+        run: supabase stop
+
+  # ===========================================================================
+  # Job 3: Pruebas E2E en Linux con integration_test (Opcional / Gated)
+  #
+  # SECRETS Y VARIABLES REQUERIDAS:
+  # - ENABLE_E2E_TESTS: (Variable en GitHub Settings -> Variables) Fijada en 'true'.
+  # - SUPABASE_URL: (Opcional en Secrets) URL del endpoint Supabase (por defecto http://127.0.0.1:54321).
+  # - SUPABASE_ANON_KEY: (Secret en GitHub Secrets) Anon key del stack Supabase de pruebas.
+  #
+  # Ejecuta las pruebas E2E compilando la versión desktop Linux bajo Xvfb (display virtual).
+  # ===========================================================================
+  e2e-linux:
+    name: Flutter E2E Integration Tests (Linux Headless)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: github.event_name == 'workflow_dispatch' || vars.ENABLE_E2E_TESTS == 'true'
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar dependencias del sistema para Flutter Linux y Xvfb
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            clang \
+            cmake \
+            ninja-build \
+            pkg-config \
+            libgtk-3-dev \
+            liblzma-dev \
+            xvfb
+
+      - name: Configurar Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Configurar Supabase CLI (para backend local de pruebas)
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Iniciar Supabase local para flujos reales
+        run: |
+          supabase start
+
+      - name: Instalar dependencias de Flutter
+        working-directory: comunidad_universitaria
+        run: flutter pub get
+
+      - name: Habilitar soporte de Linux Desktop
+        run: flutter config --enable-linux-desktop
+
+      - name: Ejecutar pruebas E2E bajo Xvfb
+        working-directory: comunidad_universitaria
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'http://127.0.0.1:54321' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          chmod +x ../scripts/e2e/run_e2e.sh
+          xvfb-run -a ../scripts/e2e/run_e2e.sh
+
+      - name: Detener Supabase local
+        if: always()
+        run: supabase stop
