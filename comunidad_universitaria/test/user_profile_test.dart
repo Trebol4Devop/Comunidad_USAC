@@ -83,5 +83,50 @@ void main() {
       expect(updated.contactWhatsapp, '50299998888');
       expect(baseProfile.alias, 'Estudiante #1');
     });
+
+    test('Validación de roles isAdmin e isModerator', () {
+      const admin = UserProfile(
+        userId: 'admin-id',
+        alias: 'Super Admin',
+        role: 'admin',
+      );
+      expect(admin.isAdmin, isTrue);
+      expect(admin.isModerator, isTrue);
+
+      const mod = UserProfile(
+        userId: 'mod-id',
+        alias: 'Mod General',
+        role: 'moderator',
+      );
+      expect(mod.isAdmin, isFalse);
+      expect(mod.isModerator, isTrue);
+
+      const student = UserProfile(
+        userId: 'student-id',
+        alias: 'Estudiante',
+        role: 'student',
+      );
+      expect(student.isAdmin, isFalse);
+      expect(student.isModerator, isFalse);
+    });
+
+    test('isCarneVerified soporta tanto is_carne_verified como la clave legacy is_verified', () {
+      final p1 = UserProfile.fromMap({
+        'user_id': 'u1',
+        'is_carne_verified': true,
+      });
+      expect(p1.isCarneVerified, isTrue);
+
+      final p2 = UserProfile.fromMap({
+        'user_id': 'u2',
+        'is_verified': true,
+      });
+      expect(p2.isCarneVerified, isTrue);
+
+      final p3 = UserProfile.fromMap({
+        'user_id': 'u3',
+      });
+      expect(p3.isCarneVerified, isFalse);
+    });
   });
 }

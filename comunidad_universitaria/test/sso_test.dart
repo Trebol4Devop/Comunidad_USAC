@@ -98,6 +98,52 @@ void main() {
         SsoSecurityValidator.isValidRedirectUri('data:text/html,<script>alert(1)</script>'),
         isFalse,
       );
+      expect(
+        SsoSecurityValidator.isValidRedirectUri('ftp://pemtree.com/auth/callback'),
+        isFalse,
+      );
+      expect(
+        SsoSecurityValidator.isValidRedirectUri('file:///etc/passwd'),
+        isFalse,
+      );
+      expect(
+        SsoSecurityValidator.isValidRedirectUri('ws://pemtree.com/socket'),
+        isFalse,
+      );
+      expect(
+        SsoSecurityValidator.isValidRedirectUri('ftp://localhost:5173/auth/callback'),
+        isFalse,
+      );
+
+      // Engaños de prefijo o nombres de dominio similares
+      expect(
+        SsoSecurityValidator.isValidRedirectUri('https://evilpemtree.com/auth/callback'),
+        isFalse,
+      );
+      expect(
+        SsoSecurityValidator.isValidRedirectUri('https://not-netlify.app/callback'),
+        isFalse,
+      );
+      expect(
+        SsoSecurityValidator.isValidRedirectUri('https://fakepemtree.org/callback'),
+        isFalse,
+      );
+
+      // UserInfo con contraseñas o tokens embebidos
+      expect(
+        SsoSecurityValidator.isValidRedirectUri('https://victim:secret@pemtree.com/callback'),
+        isFalse,
+      );
+
+      // Comodines o asteriscos en la URL
+      expect(
+        SsoSecurityValidator.isValidRedirectUri('https://pemtree.com/auth/*'),
+        isFalse,
+      );
+      expect(
+        SsoSecurityValidator.isValidRedirectUri('https://pemtree.com/auth?token=*'),
+        isFalse,
+      );
     });
 
     test('Usa por defecto exactamente http://localhost:5173/auth/callback si redirect_uri es nula o vacía', () {
@@ -212,6 +258,54 @@ void main() {
       );
       expect(find.text('Autorizar / Continuar'), findsOneWidget);
       expect(find.text('Cancelar / Rechazar'), findsOneWidget);
+    });
+
+    testWidgets('Al pulsar Cancelar / Rechazar muestra estado de redirección', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: SsoAuthorizeScreen(
+            clientId: 'pemtree',
+            redirectUri: 'http://localhost:5173/auth/callback',
+            state: 'cancel_csrf_state',
+            activeAlias: 'Estudiante USAC #404',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final cancelBtn = find.text('Cancelar / Rechazar');
+      expect(cancelBtn, findsOneWidget);
+      await tester.tap(cancelBtn);
+      await tester.pump();
+
+      // Debe mostrar la vista de Redirigiendo a PEMTREE...
+      expect(find.text('Redirigiendo a PEMTREE...'), findsOneWidget);
+      expect(find.text('Conectando de forma segura con tu cuenta de estudiante...'), findsOneWidget);
+      expect(find.text('Si no eres redirigido automáticamente, haz clic aquí'), findsOneWidget);
+    });
+
+    testWidgets('Al pulsar Autorizar / Continuar genera sesión e inicia redirección', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: SsoAuthorizeScreen(
+            clientId: 'pemtree',
+            redirectUri: 'http://localhost:5173/auth/callback',
+            state: 'auth_csrf_state',
+            activeAlias: 'Estudiante USAC #404',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final authBtn = find.text('Autorizar / Continuar');
+      expect(authBtn, findsOneWidget);
+      await tester.tap(authBtn);
+      await tester.pump();
+
+      // Debe mostrar la vista de Redirigiendo a PEMTREE...
+      expect(find.text('Redirigiendo a PEMTREE...'), findsOneWidget);
+      expect(find.text('Conectando de forma segura con tu cuenta de estudiante...'), findsOneWidget);
+      expect(find.text('Si no eres redirigido automáticamente, haz clic aquí'), findsOneWidget);
     });
   });
 }
