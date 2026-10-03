@@ -306,5 +306,59 @@ void main() {
       expect(find.text('Tu Seudónimo Estudiantil'), findsOneWidget);
       expect(find.text('Guardar Alias'), findsOneWidget);
     });
+
+    testWidgets('Muestra solo las facultades en el riel de servidores y despliega submenú flotante de carreras', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ForumScreen(
+            activeAlias: 'EstudianteFacultad',
+            onAliasChanged: (_) {},
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Debe mostrar el riel de servidores
+      expect(find.byType(ForumServerRail), findsOneWidget);
+
+      // Verificamos que se muestren las facultades en el riel principal
+      expect(find.text('AGRO'), findsOneWidget);
+      expect(find.text('ARQ'), findsOneWidget);
+      expect(find.text('ECON'), findsOneWidget);
+      expect(find.text('DER'), findsOneWidget);
+      expect(find.text('MED'), findsOneWidget);
+      expect(find.text('FARM'), findsOneWidget);
+      expect(find.text('HUM'), findsOneWidget);
+      expect(find.byIcon(Icons.engineering), findsOneWidget);
+
+      // Tocamos la facultad de Agronomía (AGRO)
+      final agroFinder = find.descendant(
+        of: find.byType(ForumServerRail),
+        matching: find.text('AGRO'),
+      );
+      expect(agroFinder, findsOneWidget);
+      await tester.tap(agroFinder);
+      await tester.pumpAndSettle();
+
+      // Debe desplegarse el submenú flotante con las carreras de Agronomía (PROD, RNAT, FORE, AMBL)
+      expect(find.text('PROD'), findsOneWidget);
+      expect(find.text('RNAT'), findsOneWidget);
+      expect(find.text('FORE'), findsOneWidget);
+      expect(find.text('AMBL'), findsOneWidget);
+
+      // Tocamos la carrera PROD (Sistemas de Producción Agrícola)
+      await tester.tap(find.text('PROD'));
+      await tester.pumpAndSettle();
+
+      // El submenú flotante se cierra y el servidor activo pasa a ser la carrera seleccionada
+      expect(find.text('PROD'), findsNothing);
+      expect(find.text('Sistemas de Producción Agrícola'), findsOneWidget);
+    });
   });
 }
+
