@@ -29,52 +29,75 @@ class FakePostgrestServer {
     int statusCode = 200,
     Map<String, String>? headers,
   }) {
-    _routes.add(_RouteHandler(
-      method: method.toUpperCase(),
-      pattern: pathPattern,
-      handler: (req) async {
-        final result = responseBuilder(req);
-        final dynamic resolved = result is Future ? await result : result;
-        if (resolved is http.Response) {
-          if (resolved.request == null) {
-            return http.Response(
-              resolved.body,
-              resolved.statusCode,
-              headers: resolved.headers,
-              request: req,
-            );
+    _routes.add(
+      _RouteHandler(
+        method: method.toUpperCase(),
+        pattern: pathPattern,
+        handler: (req) async {
+          final result = responseBuilder(req);
+          final dynamic resolved = result is Future ? await result : result;
+          if (resolved is http.Response) {
+            if (resolved.request == null) {
+              return http.Response(
+                resolved.body,
+                resolved.statusCode,
+                headers: resolved.headers,
+                request: req,
+              );
+            }
+            return resolved;
           }
-          return resolved;
-        }
 
-        final resHeaders = <String, String>{
-          'content-type': 'application/json; charset=utf-8',
-          ...?headers,
-        };
+          final resHeaders = <String, String>{
+            'content-type': 'application/json; charset=utf-8',
+            ...?headers,
+          };
 
-        final body = resolved is String ? resolved : jsonEncode(resolved);
-        return http.Response(body, statusCode, headers: resHeaders, request: req);
-      },
-    ));
+          final body = resolved is String ? resolved : jsonEncode(resolved);
+          return http.Response(
+            body,
+            statusCode,
+            headers: resHeaders,
+            request: req,
+          );
+        },
+      ),
+    );
   }
 
   /// Atajo para peticiones GET.
-  void onGet(Pattern pathPattern, FakeResponseBuilder responseBuilder, {int statusCode = 200}) {
+  void onGet(
+    Pattern pathPattern,
+    FakeResponseBuilder responseBuilder, {
+    int statusCode = 200,
+  }) {
     on('GET', pathPattern, responseBuilder, statusCode: statusCode);
   }
 
   /// Atajo para peticiones POST.
-  void onPost(Pattern pathPattern, FakeResponseBuilder responseBuilder, {int statusCode = 200}) {
+  void onPost(
+    Pattern pathPattern,
+    FakeResponseBuilder responseBuilder, {
+    int statusCode = 200,
+  }) {
     on('POST', pathPattern, responseBuilder, statusCode: statusCode);
   }
 
   /// Atajo para peticiones PATCH.
-  void onPatch(Pattern pathPattern, FakeResponseBuilder responseBuilder, {int statusCode = 200}) {
+  void onPatch(
+    Pattern pathPattern,
+    FakeResponseBuilder responseBuilder, {
+    int statusCode = 200,
+  }) {
     on('PATCH', pathPattern, responseBuilder, statusCode: statusCode);
   }
 
   /// Atajo para peticiones DELETE.
-  void onDelete(Pattern pathPattern, FakeResponseBuilder responseBuilder, {int statusCode = 200}) {
+  void onDelete(
+    Pattern pathPattern,
+    FakeResponseBuilder responseBuilder, {
+    int statusCode = 200,
+  }) {
     on('DELETE', pathPattern, responseBuilder, statusCode: statusCode);
   }
 

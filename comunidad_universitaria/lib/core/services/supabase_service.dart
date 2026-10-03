@@ -11,9 +11,11 @@ class SupabaseService {
   @visibleForTesting
   static String? debugUserId;
 
-  static User? get currentUser => SupabaseConfig.isConfigured ? client.auth.currentUser : null;
+  static User? get currentUser =>
+      SupabaseConfig.isConfigured ? client.auth.currentUser : null;
   static String? get currentUserId => debugUserId ?? currentUser?.id;
-  static bool get isAuthenticated => currentUser != null && !(currentUser!.isAnonymous);
+  static bool get isAuthenticated =>
+      currentUser != null && !(currentUser!.isAnonymous);
 
   @visibleForTesting
   static void resetForTests() {
@@ -42,7 +44,9 @@ class SupabaseService {
   static Future<bool> signInWithGoogle({String? redirectTo}) async {
     if (!SupabaseConfig.isConfigured) return false;
     try {
-      final redirectUrl = redirectTo ?? (kIsWeb ? '${Uri.base.origin}/' : 'comunidadusac://login-callback/');
+      final redirectUrl =
+          redirectTo ??
+          (kIsWeb ? '${Uri.base.origin}/' : 'comunidadusac://login-callback/');
       return await client.auth.signInWithOAuth(
         OAuthProvider.google,
         redirectTo: redirectUrl,
@@ -53,7 +57,10 @@ class SupabaseService {
     }
   }
 
-  static Future<String?> signInWithPassword({required String email, required String password}) async {
+  static Future<String?> signInWithPassword({
+    required String email,
+    required String password,
+  }) async {
     if (!SupabaseConfig.isConfigured) return null;
     try {
       final res = await client.auth.signInWithPassword(
@@ -67,7 +74,10 @@ class SupabaseService {
     }
   }
 
-  static Future<AuthResponse?> signUp({required String email, required String password}) async {
+  static Future<AuthResponse?> signUp({
+    required String email,
+    required String password,
+  }) async {
     if (!SupabaseConfig.isConfigured) return null;
     try {
       final res = await client.auth.signUp(
@@ -101,12 +111,47 @@ class SupabaseService {
   static Future<void> resendSignupOtp(String email) async {
     if (!SupabaseConfig.isConfigured) return;
     try {
-      await client.auth.resend(
-        type: OtpType.signup,
-        email: email.trim(),
-      );
+      await client.auth.resend(type: OtpType.signup, email: email.trim());
     } catch (e) {
       debugPrint('Error reenviando código de verificación: $e');
+      rethrow;
+    }
+  }
+
+  static Future<bool> requestPasswordReset(String email) async {
+    if (!SupabaseConfig.isConfigured) return false;
+    try {
+      await client.auth.resetPasswordForEmail(email.trim());
+      return true;
+    } catch (e) {
+      debugPrint('Error solicitando recuperación de contraseña: $e');
+      rethrow;
+    }
+  }
+
+  static Future<AuthResponse?> verifyPasswordResetOtp({
+    required String email,
+    required String token,
+  }) async {
+    if (!SupabaseConfig.isConfigured) return null;
+    try {
+      return await client.auth.verifyOTP(
+        type: OtpType.recovery,
+        email: email.trim(),
+        token: token.trim(),
+      );
+    } catch (e) {
+      debugPrint('Error verificando código de recuperación: $e');
+      rethrow;
+    }
+  }
+
+  static Future<void> updatePassword(String password) async {
+    if (!SupabaseConfig.isConfigured) return;
+    try {
+      await client.auth.updateUser(UserAttributes(password: password));
+    } catch (e) {
+      debugPrint('Error actualizando contraseña: $e');
       rethrow;
     }
   }
@@ -114,7 +159,9 @@ class SupabaseService {
   static Future<void> sendMagicLink(String email) async {
     if (!SupabaseConfig.isConfigured) return;
     try {
-      final redirectUrl = kIsWeb ? '${Uri.base.origin}/' : 'comunidadusac://login-callback/';
+      final redirectUrl = kIsWeb
+          ? '${Uri.base.origin}/'
+          : 'comunidadusac://login-callback/';
       await client.auth.signInWithOtp(
         email: email.trim(),
         emailRedirectTo: redirectUrl,

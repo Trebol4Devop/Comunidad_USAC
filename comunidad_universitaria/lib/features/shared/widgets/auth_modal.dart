@@ -12,7 +12,8 @@ class AuthModal extends StatefulWidget {
   const AuthModal({
     super.key,
     this.title = 'Inicia Sesión para Publicar',
-    this.subtitle = 'Para proteger la comunidad y mantener la autenticidad del Marketplace, debes iniciar sesión.',
+    this.subtitle =
+        'Para proteger la comunidad y mantener la autenticidad del Marketplace, debes iniciar sesión.',
     required this.onAuthenticated,
   });
 
@@ -32,7 +33,9 @@ class AuthModal extends StatefulWidget {
         ),
         builder: (ctx) => AuthModal(
           title: title ?? 'Inicia Sesión para Publicar',
-          subtitle: subtitle ?? 'Para proteger la comunidad y mantener la autenticidad del Marketplace, debes iniciar sesión.',
+          subtitle:
+              subtitle ??
+              'Para proteger la comunidad y mantener la autenticidad del Marketplace, debes iniciar sesión.',
           onAuthenticated: onAuthenticated,
         ),
       );
@@ -41,7 +44,9 @@ class AuthModal extends StatefulWidget {
         context: context,
         builder: (ctx) => AuthModal(
           title: title ?? 'Inicia Sesión para Publicar',
-          subtitle: subtitle ?? 'Para proteger la comunidad y mantener la autenticidad del Marketplace, debes iniciar sesión.',
+          subtitle:
+              subtitle ??
+              'Para proteger la comunidad y mantener la autenticidad del Marketplace, debes iniciar sesión.',
           onAuthenticated: onAuthenticated,
         ),
       );
@@ -57,11 +62,16 @@ class _AuthModalState extends State<AuthModal> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _verificationCodeController = TextEditingController();
+  final _newPasswordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
   bool _isSignUp = false;
   bool _isLoading = false;
   bool _isResending = false;
   bool _awaitingEmailConfirmation = false;
+  bool _showingPasswordRecovery = false;
+  bool _passwordResetCodeSent = false;
+  bool _passwordResetCodeVerified = false;
   String? _errorMessage;
 
   @override
@@ -69,6 +79,8 @@ class _AuthModalState extends State<AuthModal> {
     _emailController.dispose();
     _passwordController.dispose();
     _verificationCodeController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -80,7 +92,9 @@ class _AuthModalState extends State<AuthModal> {
 
     try {
       final currentUrl = kIsWeb ? Uri.base.toString() : null;
-      final success = await SupabaseService.signInWithGoogle(redirectTo: currentUrl);
+      final success = await SupabaseService.signInWithGoogle(
+        redirectTo: currentUrl,
+      );
       if (mounted) {
         setState(() => _isLoading = false);
         if (success) {
@@ -99,7 +113,10 @@ class _AuthModalState extends State<AuthModal> {
   }
 
   String _friendlyAuthError(Object error) {
-    final message = error.toString().replaceAll('Exception: ', '').replaceAll('AuthException: ', '');
+    final message = error
+        .toString()
+        .replaceAll('Exception: ', '')
+        .replaceAll('AuthException: ', '');
     final lowerMessage = message.toLowerCase();
 
     if (lowerMessage.contains('email not confirmed')) {
@@ -108,10 +125,13 @@ class _AuthModalState extends State<AuthModal> {
     if (lowerMessage.contains('invalid login credentials')) {
       return 'Credenciales inválidas. Verifica tu correo y contraseña.';
     }
-    if (lowerMessage.contains('invalid') || lowerMessage.contains('expired') || lowerMessage.contains('otp')) {
+    if (lowerMessage.contains('invalid') ||
+        lowerMessage.contains('expired') ||
+        lowerMessage.contains('otp')) {
       return 'El código no es válido o ya venció. Revisa el correo e inténtalo de nuevo.';
     }
-    if (lowerMessage.contains('rate limit') || lowerMessage.contains('too many')) {
+    if (lowerMessage.contains('rate limit') ||
+        lowerMessage.contains('too many')) {
       return 'Se alcanzó el límite de intentos. Espera un momento antes de volver a intentarlo.';
     }
     return message;
@@ -130,9 +150,14 @@ class _AuthModalState extends State<AuthModal> {
       final password = _passwordController.text;
 
       if (_isSignUp) {
-        final res = await SupabaseService.signUp(email: email, password: password);
+        final res = await SupabaseService.signUp(
+          email: email,
+          password: password,
+        );
         if (res == null) {
-          throw StateError('Supabase no está configurado para registrar cuentas.');
+          throw StateError(
+            'Supabase no está configurado para registrar cuentas.',
+          );
         }
         if (!mounted) return;
 
@@ -154,7 +179,10 @@ class _AuthModalState extends State<AuthModal> {
           });
         }
       } else {
-        await SupabaseService.signInWithPassword(email: email, password: password);
+        await SupabaseService.signInWithPassword(
+          email: email,
+          password: password,
+        );
         if (mounted) {
           setState(() => _isLoading = false);
           Navigator.of(context).pop();
@@ -174,7 +202,10 @@ class _AuthModalState extends State<AuthModal> {
   Future<void> _handleVerifySignupOtp() async {
     final token = _verificationCodeController.text.trim();
     if (!RegExp(r'^\d{6}$').hasMatch(token)) {
-      setState(() => _errorMessage = 'Ingresa el código de 6 dígitos que recibiste por correo.');
+      setState(
+        () => _errorMessage =
+            'Ingresa el código de 6 dígitos que recibiste por correo.',
+      );
       return;
     }
 
@@ -189,7 +220,9 @@ class _AuthModalState extends State<AuthModal> {
         token: token,
       );
       if (response?.session == null) {
-        throw StateError('No se pudo iniciar la sesión después de verificar el correo.');
+        throw StateError(
+          'No se pudo iniciar la sesión después de verificar el correo.',
+        );
       }
       if (mounted) {
         setState(() => _isLoading = false);
@@ -217,13 +250,151 @@ class _AuthModalState extends State<AuthModal> {
       if (mounted) {
         setState(() => _isResending = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Te enviamos un nuevo código de verificación.')),
+          const SnackBar(
+            content: Text('Te enviamos un nuevo código de verificación.'),
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _isResending = false;
+          _errorMessage = _friendlyAuthError(e);
+        });
+      }
+    }
+  }
+
+  Future<void> _handleRequestPasswordReset() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final requested = await SupabaseService.requestPasswordReset(
+        _emailController.text,
+      );
+      if (!requested) {
+        throw StateError(
+          'Supabase no está configurado para recuperar cuentas.',
+        );
+      }
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _passwordResetCodeSent = true;
+          _verificationCodeController.clear();
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = _friendlyAuthError(e);
+        });
+      }
+    }
+  }
+
+  Future<void> _handleResendPasswordResetOtp() async {
+    setState(() {
+      _isResending = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final requested = await SupabaseService.requestPasswordReset(
+        _emailController.text,
+      );
+      if (!requested) {
+        throw StateError(
+          'Supabase no está configurado para recuperar cuentas.',
+        );
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Si la cuenta existe, enviaremos otro código.'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _errorMessage = _friendlyAuthError(e));
+      }
+    } finally {
+      if (mounted) setState(() => _isResending = false);
+    }
+  }
+
+  Future<void> _handleVerifyPasswordResetOtp() async {
+    final token = _verificationCodeController.text.trim();
+    if (!RegExp(r'^\d{6}$').hasMatch(token)) {
+      setState(
+        () => _errorMessage =
+            'Ingresa el código de 6 dígitos que recibiste por correo.',
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final response = await SupabaseService.verifyPasswordResetOtp(
+        email: _emailController.text,
+        token: token,
+      );
+      if (response?.session == null) {
+        throw StateError('No se pudo validar el código de recuperación.');
+      }
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _passwordResetCodeVerified = true;
+          _newPasswordController.clear();
+          _confirmPasswordController.clear();
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = _friendlyAuthError(e);
+        });
+      }
+    }
+  }
+
+  Future<void> _handleUpdatePassword() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      await SupabaseService.updatePassword(_newPasswordController.text);
+      if (mounted) {
+        setState(() => _isLoading = false);
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tu contraseña se actualizó correctamente.'),
+          ),
+        );
+        widget.onAuthenticated();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
           _errorMessage = _friendlyAuthError(e);
         });
       }
@@ -252,7 +423,11 @@ class _AuthModalState extends State<AuthModal> {
                     color: const Color(0xFF004B87).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.lock_outline, color: Color(0xFF004B87), size: 24),
+                  child: const Icon(
+                    Icons.lock_outline,
+                    color: Color(0xFF004B87),
+                    size: 24,
+                  ),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -261,12 +436,17 @@ class _AuthModalState extends State<AuthModal> {
                     children: [
                       Text(
                         widget.title,
-                        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         widget.subtitle,
-                        style: theme.textTheme.bodySmall?.copyWith(fontSize: 11, color: Colors.grey.shade600),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontSize: 11,
+                          color: Colors.grey.shade600,
+                        ),
                       ),
                     ],
                   ),
@@ -286,7 +466,10 @@ class _AuthModalState extends State<AuthModal> {
                 ),
                 child: Text(
                   _errorMessage!,
-                  style: const TextStyle(color: Color(0xFFB91C1C), fontSize: 12),
+                  style: const TextStyle(
+                    color: Color(0xFFB91C1C),
+                    fontSize: 12,
+                  ),
                 ),
               ),
               const SizedBox(height: 14),
@@ -324,21 +507,38 @@ class _AuthModalState extends State<AuthModal> {
                   backgroundColor: const Color(0xFF004B87),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 13),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
                 onPressed: _isLoading ? null : _handleVerifySignupOtp,
                 child: _isLoading
                     ? const SizedBox(
                         width: 18,
                         height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
-                    : const Text('Verificar correo', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    : const Text(
+                        'Verificar correo',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
               ),
               TextButton.icon(
-                onPressed: (_isLoading || _isResending) ? null : _handleResendSignupOtp,
+                onPressed: (_isLoading || _isResending)
+                    ? null
+                    : _handleResendSignupOtp,
                 icon: _isResending
-                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
                     : const Icon(Icons.refresh, size: 18),
                 label: const Text('Reenviar código'),
               ),
@@ -354,15 +554,203 @@ class _AuthModalState extends State<AuthModal> {
                       },
                 child: const Text('Usar otro correo'),
               ),
+            ] else if (_showingPasswordRecovery) ...[
+              if (!_passwordResetCodeSent) ...[
+                Text(
+                  'Ingresa tu correo y te enviaremos instrucciones para recuperar la cuenta.',
+                  style: theme.textTheme.bodyMedium,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    labelText: 'Correo electrónico',
+                    hintText: 'tu_correo@ejemplo.com',
+                    prefixIcon: Icon(Icons.email_outlined, size: 18),
+                  ),
+                  validator: (value) {
+                    if (value == null || !value.contains('@')) {
+                      return 'Ingresa un correo válido';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF004B87),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: _isLoading ? null : _handleRequestPasswordReset,
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Enviar código de recuperación'),
+                ),
+              ] else if (!_passwordResetCodeVerified) ...[
+                Text(
+                  'Si existe una cuenta asociada a ${_emailController.text.trim()}, recibirás un código para continuar.',
+                  style: theme.textTheme.bodyMedium,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _verificationCodeController,
+                  keyboardType: TextInputType.number,
+                  textAlign: TextAlign.center,
+                  maxLength: 6,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  decoration: const InputDecoration(
+                    labelText: 'Código de recuperación',
+                    hintText: '123456',
+                    prefixIcon: Icon(Icons.password_outlined, size: 18),
+                    counterText: '',
+                  ),
+                  validator: (value) {
+                    if (value == null || value.length != 6) {
+                      return 'Ingresa el código de 6 dígitos';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF004B87),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: _isLoading ? null : _handleVerifyPasswordResetOtp,
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Verificar código'),
+                ),
+                TextButton.icon(
+                  onPressed: (_isLoading || _isResending)
+                      ? null
+                      : _handleResendPasswordResetOtp,
+                  icon: _isResending
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.refresh, size: 18),
+                  label: const Text('Reenviar código'),
+                ),
+              ] else ...[
+                Text(
+                  'Elige una contraseña nueva.',
+                  style: theme.textTheme.bodyMedium,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _newPasswordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Nueva contraseña',
+                    prefixIcon: Icon(Icons.lock_outline, size: 18),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.length < 6) {
+                      return 'La contraseña debe tener al menos 6 caracteres';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _confirmPasswordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Confirma la contraseña',
+                    prefixIcon: Icon(Icons.lock_outline, size: 18),
+                  ),
+                  validator: (value) {
+                    if (value != _newPasswordController.text) {
+                      return 'Las contraseñas no coinciden';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF004B87),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: _isLoading ? null : _handleUpdatePassword,
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Actualizar contraseña'),
+                ),
+              ],
+              TextButton(
+                onPressed: _isLoading || _isResending
+                    ? null
+                    : () {
+                        setState(() {
+                          _showingPasswordRecovery = false;
+                          _passwordResetCodeSent = false;
+                          _passwordResetCodeVerified = false;
+                          _errorMessage = null;
+                          _verificationCodeController.clear();
+                        });
+                      },
+                child: const Text('Volver a iniciar sesión'),
+              ),
             ] else ...[
               // Google Sign-In Button
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-                icon: const Icon(Icons.g_mobiledata, size: 24, color: Color(0xFFEA4335)),
-                label: const Text('Continuar con Google', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                icon: const Icon(
+                  Icons.g_mobiledata,
+                  size: 24,
+                  color: Color(0xFFEA4335),
+                ),
+                label: const Text(
+                  'Continuar con Google',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                ),
                 onPressed: _isLoading ? null : _handleGoogleSignIn,
               ),
 
@@ -373,7 +761,10 @@ class _AuthModalState extends State<AuthModal> {
                   Expanded(child: Divider()),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 10),
-                    child: Text('o con correo', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                    child: Text(
+                      'o con correo',
+                      style: TextStyle(fontSize: 11, color: Colors.grey),
+                    ),
                   ),
                   Expanded(child: Divider()),
                 ],
@@ -415,6 +806,25 @@ class _AuthModalState extends State<AuthModal> {
                 },
               ),
 
+              if (!_isSignUp)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: _isLoading
+                        ? null
+                        : () {
+                            setState(() {
+                              _showingPasswordRecovery = true;
+                              _passwordResetCodeSent = false;
+                              _passwordResetCodeVerified = false;
+                              _errorMessage = null;
+                              _verificationCodeController.clear();
+                            });
+                          },
+                    child: const Text('¿Olvidaste tu contraseña?'),
+                  ),
+                ),
+
               const SizedBox(height: 18),
 
               ElevatedButton(
@@ -422,18 +832,28 @@ class _AuthModalState extends State<AuthModal> {
                   backgroundColor: const Color(0xFF004B87),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 13),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
                 onPressed: _isLoading ? null : _handleEmailAuth,
                 child: _isLoading
                     ? const SizedBox(
                         width: 18,
                         height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
                     : Text(
-                        _isSignUp ? 'Crear Cuenta y Publicar' : 'Iniciar Sesión',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        _isSignUp
+                            ? 'Crear Cuenta y Publicar'
+                            : 'Iniciar Sesión',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
                       ),
               ),
 
@@ -463,7 +883,9 @@ class _AuthModalState extends State<AuthModal> {
 
     if (isMobile) {
       return Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
         child: content,
       );
     } else {
