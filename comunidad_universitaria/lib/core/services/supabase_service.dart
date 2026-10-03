@@ -156,6 +156,81 @@ class SupabaseService {
     }
   }
 
+  static Future<List<Factor>> listTotpFactors() async {
+    if (!isAuthenticated) {
+      throw StateError('Inicia sesión para administrar la autenticación TOTP.');
+    }
+    try {
+      final response = await client.auth.mfa.listFactors();
+      return response.all
+          .where((factor) => factor.factorType == FactorType.totp)
+          .toList();
+    } catch (e) {
+      debugPrint('Error consultando factores TOTP: $e');
+      rethrow;
+    }
+  }
+
+  static Future<AuthMFAGetAuthenticatorAssuranceLevelResponse>
+  getTotpAssuranceLevel() async {
+    if (!isAuthenticated) {
+      throw StateError(
+        'Inicia sesión para consultar el nivel de autenticación.',
+      );
+    }
+    return client.auth.mfa.getAuthenticatorAssuranceLevel();
+  }
+
+  static Future<AuthMFAEnrollResponse> beginTotpEnrollment() async {
+    final factors = await listTotpFactors();
+    if (factors.any((factor) => factor.status == FactorStatus.verified)) {
+      throw StateError('Ya hay un autenticador TOTP activo en esta cuenta.');
+    }
+
+    try {
+      for (final factor in factors.where(
+        (factor) => factor.status == FactorStatus.unverified,
+      )) {
+        await client.auth.mfa.unenroll(factor.id);
+      }
+      return await client.auth.mfa.enroll(
+        factorType: FactorType.totp,
+        issuer: 'Comunidad USAC',
+        friendlyName: 'Comunidad USAC',
+      );
+    } catch (e) {
+      debugPrint('Error iniciando inscripción TOTP: $e');
+      rethrow;
+    }
+  }
+
+  static Future<AuthMFAVerifyResponse> verifyTotpEnrollment({
+    required String factorId,
+    required String code,
+  }) => verifyTotpChallenge(factorId: factorId, code: code);
+
+  static Future<AuthMFAVerifyResponse> verifyTotpChallenge({
+    required String factorId,
+    required String code,
+  }) async {
+    if (!isAuthenticated) {
+      throw StateError('Inicia sesión para verificar la autenticación TOTP.');
+    }
+    final normalizedCode = code.trim();
+    if (!RegExp(r'^\d{6}$').hasMatch(normalizedCode)) {
+      throw ArgumentError('El código TOTP debe tener 6 dígitos.');
+    }
+    try {
+      return await client.auth.mfa.challengeAndVerify(
+        factorId: factorId,
+        code: normalizedCode,
+      );
+    } catch (e) {
+      debugPrint('Error verificando código TOTP: $e');
+      rethrow;
+    }
+  }
+
   static Future<void> sendMagicLink(String email) async {
     if (!SupabaseConfig.isConfigured) return;
     try {

@@ -51,6 +51,7 @@ void main() {
       // Alias y modo anónimo protegido
       expect(find.text('Estudiante Sancarlista #505'), findsWidgets);
       expect(find.text('Modo Anónimo Protegido'), findsOneWidget);
+      expect(find.text('Autenticación en dos pasos'), findsNothing);
 
       // Campos de edición principales
       expect(find.text('Seudónimo Visible en la Comunidad'), findsOneWidget);

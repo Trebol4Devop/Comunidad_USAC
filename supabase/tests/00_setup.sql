@@ -46,10 +46,12 @@ begin
 end;
 $$;
 
--- Helper: Autentica la sesión actual como un usuario dado
+-- Helper: Autentica una sesión de prueba (AAL2 por defecto); permite indicar
+-- AAL1 explícitamente para comprobar que las escrituras queden bloqueadas.
 create or replace function tests.authenticate_as(
     p_user_id uuid,
-    p_role text default 'authenticated'
+    p_role text default 'authenticated',
+    p_aal text default 'aal2'
 ) returns void
 language plpgsql
 as $$
@@ -64,6 +66,7 @@ begin
         'role', p_role,
         'email', v_email,
         'aud', 'authenticated',
+        'aal', p_aal,
         'app_metadata', json_build_object('provider', 'email'),
         'user_metadata', '{}'::jsonb
     )::text;

@@ -147,6 +147,88 @@ void main() {
     );
   });
 
+  group('SupabaseService TOTP enrollment', () {
+    test('rejects TOTP enrollment for an anonymous session', () async {
+      await expectLater(
+        SupabaseService.listTotpFactors(),
+        throwsA(isA<StateError>()),
+      );
+    });
+
+    test(
+      'enrolls and verifies a TOTP factor for an authenticated account',
+      () async {
+        fakeServer.onPost(
+          '/auth/v1/token',
+          (_) => {
+            'access_token': 'test-access-token',
+            'token_type': 'bearer',
+            'expires_in': 3600,
+            'refresh_token': 'test-refresh-token',
+            'user': {
+              'id': 'totp-user',
+              'aud': 'authenticated',
+              'role': 'authenticated',
+              'email': 'student@usac.edu.gt',
+              'created_at': '2026-10-03T00:00:00.000Z',
+            },
+          },
+        );
+        await SupabaseService.client.auth.signInWithPassword(
+          email: 'student@usac.edu.gt',
+          password: 'password123',
+        );
+
+        fakeServer.onPost('/auth/v1/factors', (request) {
+          final payload = jsonDecode(request.body) as Map<String, dynamic>;
+          expect(payload['factor_type'], 'totp');
+          expect(payload['issuer'], 'Comunidad USAC');
+          return {
+            'id': 'totp-factor',
+            'type': 'totp',
+            'totp': {
+              'qr_code': '<svg></svg>',
+              'secret': 'test-secret',
+              'uri': 'otpauth://totp/Comunidad%20USAC:test',
+            },
+          };
+        });
+        fakeServer.onPost(
+          '/auth/v1/factors/totp-factor/challenge',
+          (_) => {'id': 'totp-challenge', 'expires_at': 1790985600},
+        );
+        fakeServer.onPost('/auth/v1/factors/totp-factor/verify', (request) {
+          final payload = jsonDecode(request.body) as Map<String, dynamic>;
+          expect(payload['challenge_id'], 'totp-challenge');
+          expect(payload['code'], '123456');
+          return {
+            'access_token': 'aal2-access-token',
+            'token_type': 'bearer',
+            'expires_in': 3600,
+            'refresh_token': 'aal2-refresh-token',
+            'user': {
+              'id': 'totp-user',
+              'aud': 'authenticated',
+              'role': 'authenticated',
+              'email': 'student@usac.edu.gt',
+              'created_at': '2026-10-03T00:00:00.000Z',
+            },
+          };
+        });
+
+        final enrollment = await SupabaseService.beginTotpEnrollment();
+        expect(enrollment.id, 'totp-factor');
+        expect(enrollment.totp?.secret, 'test-secret');
+
+        final response = await SupabaseService.verifyTotpEnrollment(
+          factorId: enrollment.id,
+          code: ' 123456 ',
+        );
+        expect(response.user.id, 'totp-user');
+      },
+    );
+  });
+
   group('SupabaseService.getUserRole', () {
     test(
       'retorna "student" si no hay sesión iniciada (currentUser == null)',

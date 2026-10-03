@@ -6,6 +6,7 @@ import 'core/services/local_storage_service.dart';
 import 'core/services/supabase_service.dart';
 import 'features/navigation/app_shell.dart';
 import 'features/sso/screens/sso_authorize_screen.dart';
+import 'features/shared/widgets/totp_session_guard.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -118,7 +119,8 @@ class _ComunidadUSACAppState extends State<ComunidadUSACApp> {
       darkTheme: AppTheme.darkTheme,
       themeMode: _themeMode,
       onGenerateRoute: _onGenerateRoute,
+      builder: (context, child) =>
+          TotpSessionGuard(child: child ?? const SizedBox.shrink()),
     );
   }
 }
-
