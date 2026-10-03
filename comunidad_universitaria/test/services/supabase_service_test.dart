@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/testing.dart' as http_testing;
 import 'package:comunidad_universitaria/core/config/supabase_config.dart';
 import 'package:comunidad_universitaria/core/services/supabase_service.dart';
 import '../helpers/fake_postgrest.dart';
@@ -229,6 +230,184 @@ void main() {
     );
   });
 
+  group('SupabaseService recovery codes', () {
+    Future<void> signIn({String aal = 'aal2'}) async {
+      fakeServer.onPost('/auth/v1/token', (_) {
+        return {
+          'access_token': _testJwt(aal: aal),
+          'token_type': 'bearer',
+          'expires_in': 3600,
+          'refresh_token': 'test-refresh-token',
+          'user': {
+            'id': 'recovery-user',
+            'aud': 'authenticated',
+            'role': 'authenticated',
+            'email': 'student@usac.edu.gt',
+            'created_at': '2026-10-03T00:00:00.000Z',
+            'app_metadata': {
+              'provider': 'email',
+              'providers': ['email'],
+            },
+            'user_metadata': {},
+          },
+        };
+      });
+      await SupabaseService.client.auth.signInWithPassword(
+        email: 'student@usac.edu.gt',
+        password: 'password123',
+      );
+      SupabaseService.debugRecoveryCodesHttpClient = http_testing.MockClient(
+        fakeServer.handle,
+      );
+    }
+
+    test(
+      'loads remaining count using the current bearer and anon key',
+      () async {
+        await signIn();
+        fakeServer.onGet('/auth/v1/factors/recovery-codes', (request) {
+          expect(
+            request.headers['authorization'],
+            'Bearer ${SupabaseService.client.auth.currentSession!.accessToken}',
+          );
+          expect(request.headers['apikey'], SupabaseConfig.supabaseAnonKey);
+          return {'total': 10, 'remaining': 7};
+        });
+
+        final status = await SupabaseService.getRecoveryCodeStatus();
+
+        expect(status.total, 10);
+        expect(status.remaining, 7);
+      },
+    );
+
+    test('generates recovery codes only for an AAL2 session', () async {
+      await signIn();
+      fakeServer.onPost('/auth/v1/factors/recovery-codes', (request) {
+        expect(request.method, 'POST');
+        return {
+          'codes': ['first-one-time-code', 'second-one-time-code'],
+        };
+      });
+      fakeServer.onGet('/auth/v1/factors/recovery-codes', (_) {
+        return {'total': 10, 'remaining': 2};
+      });
+
+      final codes = await SupabaseService.generateRecoveryCodes();
+
+      expect(codes, ['first-one-time-code', 'second-one-time-code']);
+    });
+
+    test('regenerates the set through Supabase Auth', () async {
+      await signIn();
+      fakeServer.onPost('/auth/v1/factors/recovery-codes/regenerate', (
+        request,
+      ) {
+        expect(request.method, 'POST');
+        return {
+          'codes': ['replacement-code'],
+        };
+      });
+
+      final codes = await SupabaseService.generateRecoveryCodes(
+        regenerate: true,
+      );
+
+      expect(codes, ['replacement-code']);
+    });
+
+    test('rejects generating recovery codes below AAL2', () async {
+      await signIn(aal: 'aal1');
+
+      await expectLater(
+        SupabaseService.generateRecoveryCodes(),
+        throwsA(isA<StateError>()),
+      );
+      expect(
+        fakeServer.recordedRequests.where(
+          (request) => request.url.path.endsWith('/factors/recovery-codes'),
+        ),
+        isEmpty,
+      );
+    });
+
+    test('redeems a recovery code and installs the AAL2 session', () async {
+      await signIn();
+      final aal2Token = _testJwt(aal: 'aal2');
+      fakeServer.onPost('/auth/v1/factors/recovery-codes/verify', (request) {
+        final payload = jsonDecode(request.body) as Map<String, dynamic>;
+        expect(payload, {'code': 'one-time-recovery-code'});
+        return {
+          'access_token': aal2Token,
+          'refresh_token': 'recovered-refresh-token',
+        };
+      });
+      fakeServer.onGet('/auth/v1/user', (_) {
+        return {
+          'id': 'recovery-user',
+          'aud': 'authenticated',
+          'role': 'authenticated',
+          'email': 'student@usac.edu.gt',
+          'created_at': '2026-10-03T00:00:00.000Z',
+          'app_metadata': {
+            'provider': 'email',
+            'providers': ['email'],
+          },
+          'user_metadata': {},
+        };
+      });
+
+      await SupabaseService.verifyRecoveryCode(' one-time-recovery-code ');
+
+      expect(
+        SupabaseService.client.auth.currentSession?.accessToken,
+        aal2Token,
+      );
+      expect(
+        SupabaseService.client.auth.currentSession?.refreshToken,
+        'recovered-refresh-token',
+      );
+    });
+
+    test('preserves recovery-code rate-limit status for the UI', () async {
+      await signIn();
+      fakeServer.onPost(
+        '/auth/v1/factors/recovery-codes/verify',
+        (_) => {'code': 'mfa_recovery_codes_locked'},
+        statusCode: 429,
+      );
+
+      await expectLater(
+        SupabaseService.verifyRecoveryCode('incorrect-code'),
+        throwsA(
+          isA<RecoveryCodeRequestException>().having(
+            (error) => error.statusCode,
+            'statusCode',
+            429,
+          ),
+        ),
+      );
+    });
+
+    test('rejects TOTP removal without a six-digit current code', () async {
+      await signIn();
+
+      await expectLater(
+        SupabaseService.disableTotpWithCurrentCode(
+          factorId: 'verified-factor',
+          code: 'recovery-code',
+        ),
+        throwsA(isA<ArgumentError>()),
+      );
+      expect(
+        fakeServer.recordedRequests.where(
+          (request) => request.url.path.contains('/factors/verified-factor'),
+        ),
+        isEmpty,
+      );
+    });
+  });
+
   group('SupabaseService.getUserRole', () {
     test(
       'retorna "student" si no hay sesión iniciada (currentUser == null)',
@@ -316,4 +495,24 @@ void main() {
       },
     );
   });
+}
+
+String _testJwt({required String aal}) {
+  final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+  final payload = base64Url
+      .encode(
+        utf8.encode(
+          jsonEncode({
+            'sub': 'recovery-user',
+            'aud': 'authenticated',
+            'role': 'authenticated',
+            'aal': aal,
+            'iat': now,
+            'exp': now + 3600,
+            'amr': [],
+          }),
+        ),
+      )
+      .replaceAll('=', '');
+  return 'eyJhbGciOiJub25lIn0.$payload.c2ln';
 }

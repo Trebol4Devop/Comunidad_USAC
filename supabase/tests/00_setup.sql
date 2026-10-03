@@ -46,12 +46,14 @@ begin
 end;
 $$;
 
--- Helper: Autentica una sesión de prueba (AAL2 por defecto); permite indicar
--- AAL1 explícitamente para comprobar que las escrituras queden bloqueadas.
+-- Elimina una sobrecarga de tres argumentos que pudo quedar de una ejecución
+-- anterior de las pruebas locales.
+drop function if exists tests.authenticate_as(uuid, text, text);
+
+-- Helper: Autentica una sesión AAL2 (nivel normal para las pruebas autorizadas).
 create or replace function tests.authenticate_as(
     p_user_id uuid,
-    p_role text default 'authenticated',
-    p_aal text default 'aal2'
+    p_role text default 'authenticated'
 ) returns void
 language plpgsql
 as $$
@@ -66,7 +68,7 @@ begin
         'role', p_role,
         'email', v_email,
         'aud', 'authenticated',
-        'aal', p_aal,
+        'aal', 'aal2',
         'app_metadata', json_build_object('provider', 'email'),
         'user_metadata', '{}'::jsonb
     )::text;
@@ -76,6 +78,22 @@ begin
     perform set_config('request.jwt.claim.sub', p_user_id::text, true);
     perform set_config('request.jwt.claim.role', p_role, true);
     perform set_config('request.jwt.claim.email', v_email, true);
+end;
+$$;
+
+-- Helper para los casos que deben simular una sesión con solo el primer factor.
+create or replace function tests.authenticate_as_aal1(
+    p_user_id uuid
+) returns void
+language plpgsql
+as $$
+declare
+    v_claims jsonb;
+begin
+    perform tests.authenticate_as(p_user_id);
+    v_claims := current_setting('request.jwt.claims', true)::jsonb
+        || jsonb_build_object('aal', 'aal1');
+    perform set_config('request.jwt.claims', v_claims::text, true);
 end;
 $$;
 

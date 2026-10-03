@@ -312,6 +312,15 @@ max_enrolled_factors = 10
 enroll_enabled = true
 verify_enabled = true
 
+# Supabase Auth recovery codes are displayed once and verified server-side.
+[auth.mfa.recovery_codes]
+enroll_enabled = true
+verify_enabled = true
+count = 10
+code_length = 16
+max_verify_attempts = 5
+lockout_duration = "15m"
+
 # Configure MFA via Phone Messaging
 [auth.mfa.phone]
 enroll_enabled = false

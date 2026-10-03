@@ -27,7 +27,12 @@ class _TotpEnrollmentScreenState extends State<TotpEnrollmentScreen> {
   bool _isLoading = true;
   bool _isStarting = false;
   bool _isVerifying = false;
+  bool _isGeneratingRecoveryCodes = false;
+  bool _isRemovingTotp = false;
   bool _isEnrolled = false;
+  int? _recoveryCodesTotal;
+  int? _recoveryCodesRemaining;
+  List<String>? _newRecoveryCodes;
   AuthMFAEnrollResponse? _enrollment;
   String? _errorMessage;
 
@@ -44,13 +49,25 @@ class _TotpEnrollmentScreenState extends State<TotpEnrollmentScreen> {
   }
 
   Future<void> _loadEnrollmentStatus() async {
+    if (mounted) setState(() => _isLoading = true);
     try {
       final factors = await SupabaseService.listTotpFactors();
+      final isEnrolled = factors.any(
+        (factor) => factor.status == FactorStatus.verified,
+      );
+      RecoveryCodeStatus? recoveryCodeStatus;
+      if (isEnrolled) {
+        try {
+          recoveryCodeStatus = await SupabaseService.getRecoveryCodeStatus();
+        } catch (_) {
+          // The TOTP factor remains usable if recovery-code status is unavailable.
+        }
+      }
       if (mounted) {
         setState(() {
-          _isEnrolled = factors.any(
-            (factor) => factor.status == FactorStatus.verified,
-          );
+          _isEnrolled = isEnrolled;
+          _recoveryCodesTotal = recoveryCodeStatus?.total;
+          _recoveryCodesRemaining = recoveryCodeStatus?.remaining;
           _isLoading = false;
         });
       }
@@ -114,24 +131,218 @@ class _TotpEnrollmentScreenState extends State<TotpEnrollmentScreen> {
         code: code,
       );
       if (!mounted) return;
-      if (widget.isRequired) {
-        widget.onEnrollmentComplete?.call();
-        return;
-      }
       setState(() {
         _isVerifying = false;
         _isEnrolled = true;
         _enrollment = null;
         _codeController.clear();
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Autenticador TOTP configurado.')),
-      );
+      await _generateRecoveryCodes();
+      if (!mounted) return;
+      if (_newRecoveryCodes == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Autenticador TOTP configurado.')),
+        );
+      }
     } catch (error) {
       if (mounted) {
         setState(() {
           _isVerifying = false;
           _errorMessage = _friendlyError(error);
+        });
+      }
+    }
+  }
+
+  Future<void> _generateRecoveryCodes({bool regenerate = false}) async {
+    setState(() {
+      _isGeneratingRecoveryCodes = true;
+      _errorMessage = null;
+    });
+    try {
+      final codes = await SupabaseService.generateRecoveryCodes(
+        regenerate: regenerate,
+      );
+      final status = await SupabaseService.getRecoveryCodeStatus();
+      if (!mounted) return;
+      setState(() {
+        _newRecoveryCodes = codes;
+        _recoveryCodesTotal = status.total;
+        _recoveryCodesRemaining = status.remaining;
+        _isGeneratingRecoveryCodes = false;
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isGeneratingRecoveryCodes = false;
+          _errorMessage =
+              'No se pudieron generar los códigos. Comprueba tu sesión e inténtalo de nuevo.';
+        });
+      }
+    }
+  }
+
+  Future<void> _confirmRecoveryCodesSaved() async {
+    setState(() => _newRecoveryCodes = null);
+    if (widget.isRequired) widget.onEnrollmentComplete?.call();
+  }
+
+  Future<void> _manageRecoveryCodes() async {
+    final shouldRegenerate = (_recoveryCodesTotal ?? 0) > 0;
+    if (shouldRegenerate) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Regenerar códigos'),
+          content: const Text(
+            'Los códigos anteriores dejarán de funcionar. Guarda los nuevos '
+            'antes de cerrar esta pantalla. ¿Deseas continuar?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Regenerar'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+    }
+    await _generateRecoveryCodes(regenerate: shouldRegenerate);
+  }
+
+  Widget _buildRecoveryCodesCard(ThemeData theme, List<String> codes) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Icon(
+              Icons.vpn_key_outlined,
+              size: 40,
+              color: theme.colorScheme.primary,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Guarda tus códigos de recuperación',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Cada código se usa una sola vez. Solo se muestran ahora; guárdalos '
+              'en un lugar seguro. Regenerarlos invalida los anteriores.',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            SelectableText(
+              codes.join('\n'),
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontFamily: 'monospace',
+                height: 1.8,
+              ),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () async {
+                await Clipboard.setData(ClipboardData(text: codes.join('\n')));
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Códigos copiados al portapapeles.'),
+                    ),
+                  );
+                }
+              },
+              icon: const Icon(Icons.copy_outlined),
+              label: const Text('Copiar códigos'),
+            ),
+            const SizedBox(height: 8),
+            FilledButton(
+              onPressed: _confirmRecoveryCodesSaved,
+              child: const Text('Ya los guardé'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _removeTotp() async {
+    final codeController = TextEditingController();
+    final code = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Desactivar autenticación TOTP'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Para confirmar, ingresa el código actual de tu app autenticadora. '
+              'Al desactivarlo se cerrará tu sesión y tendrás que configurarlo '
+              'de nuevo al iniciar sesión.',
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: codeController,
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: const InputDecoration(
+                labelText: 'Código TOTP actual',
+                counterText: '',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, codeController.text),
+            child: const Text('Verificar y desactivar'),
+          ),
+        ],
+      ),
+    );
+    codeController.dispose();
+    if (code == null || !mounted) return;
+
+    setState(() {
+      _isRemovingTotp = true;
+      _errorMessage = null;
+    });
+    try {
+      final factors = await SupabaseService.listTotpFactors();
+      final verifiedFactor = factors.cast<Factor?>().firstWhere(
+        (factor) => factor?.status == FactorStatus.verified,
+        orElse: () => null,
+      );
+      if (verifiedFactor == null) {
+        throw StateError('No hay un factor TOTP verificado.');
+      }
+      await SupabaseService.disableTotpWithCurrentCode(
+        factorId: verifiedFactor.id,
+        code: code,
+      );
+      if (mounted) Navigator.of(context).pop();
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isRemovingTotp = false;
+          _errorMessage =
+              'No se pudo desactivar TOTP. Verifica el código actual e inténtalo de nuevo.';
         });
       }
     }
@@ -205,6 +416,8 @@ class _TotpEnrollmentScreenState extends State<TotpEnrollmentScreen> {
                   ],
                   if (_isLoading)
                     const Center(child: CircularProgressIndicator())
+                  else if (_newRecoveryCodes != null)
+                    _buildRecoveryCodesCard(theme, _newRecoveryCodes!)
                   else if (_isEnrolled)
                     Card(
                       child: Padding(
@@ -227,6 +440,61 @@ class _TotpEnrollmentScreenState extends State<TotpEnrollmentScreen> {
                             const Text(
                               'Tu cuenta ya tiene un autenticador TOTP verificado.',
                               textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              _recoveryCodesRemaining == null
+                                  ? 'No se pudo consultar el estado de los códigos de recuperación.'
+                                  : 'Códigos de recuperación disponibles: $_recoveryCodesRemaining de ${_recoveryCodesTotal ?? 0}',
+                              textAlign: TextAlign.center,
+                            ),
+                            if (_recoveryCodesTotal == null) ...[
+                              TextButton(
+                                onPressed: _loadEnrollmentStatus,
+                                child: const Text('Reintentar consulta'),
+                              ),
+                            ],
+                            const SizedBox(height: 12),
+                            OutlinedButton.icon(
+                              onPressed:
+                                  _isGeneratingRecoveryCodes ||
+                                      _isRemovingTotp ||
+                                      _recoveryCodesTotal == null
+                                  ? null
+                                  : _manageRecoveryCodes,
+                              icon: _isGeneratingRecoveryCodes
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(Icons.vpn_key_outlined),
+                              label: Text(
+                                _isGeneratingRecoveryCodes
+                                    ? 'Generando...'
+                                    : (_recoveryCodesTotal ?? 0) > 0
+                                    ? 'Regenerar códigos'
+                                    : 'Generar códigos de recuperación',
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            TextButton.icon(
+                              onPressed:
+                                  _isRemovingTotp || _isGeneratingRecoveryCodes
+                                  ? null
+                                  : _removeTotp,
+                              icon: _isRemovingTotp
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(Icons.delete_outline),
+                              label: const Text('Desactivar TOTP'),
                             ),
                           ],
                         ),

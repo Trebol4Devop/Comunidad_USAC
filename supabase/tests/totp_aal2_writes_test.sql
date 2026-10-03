@@ -27,9 +27,8 @@ begin
 end;
 $$;
 
-select tests.authenticate_as(
-    '77777777-7777-7777-7777-777777777777',
-    p_aal => 'aal1'
+select tests.authenticate_as_aal1(
+    '77777777-7777-7777-7777-777777777777'
 );
 
 select is(
@@ -56,13 +55,11 @@ select throws_ok(
     'AAL1 no puede insertar filas'
 );
 
-select throws_ok(
+select lives_ok(
     $$update public.posts
          set title = 'Modificado sin segundo factor'
        where id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0077'$$,
-    '42501',
-    null,
-    'AAL1 no puede actualizar filas'
+    'La política RLS filtra la actualización AAL1 sin modificar la fila'
 );
 
 select is(
@@ -72,12 +69,10 @@ select is(
     'El intento de actualización AAL1 no cambia la fila'
 );
 
-select throws_ok(
+select lives_ok(
     $$delete from public.posts
        where id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0077'$$,
-    '42501',
-    null,
-    'AAL1 no puede eliminar filas'
+    'La política RLS filtra la eliminación AAL1 y conserva la fila'
 );
 
 select is(
@@ -98,8 +93,7 @@ select throws_ok(
 );
 
 select tests.authenticate_as(
-    '77777777-7777-7777-7777-777777777777',
-    p_aal => 'aal2'
+    '77777777-7777-7777-7777-777777777777'
 );
 
 select lives_ok(
