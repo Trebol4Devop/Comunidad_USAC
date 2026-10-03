@@ -51,7 +51,7 @@ class StorageService {
   ///
   /// Returns the public URL of the uploaded image.
   static Future<String?> uploadImageFile(XFile file, {String folder = 'listings'}) async {
-    if (!SupabaseConfig.isConfigured) return null;
+    if (!SupabaseConfig.isConfigured || !SupabaseService.isAuthenticated) return null;
 
     try {
       final bytes = await file.readAsBytes();
