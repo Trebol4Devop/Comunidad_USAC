@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
 
@@ -55,15 +56,19 @@ class _AuthModalState extends State<AuthModal> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _verificationCodeController = TextEditingController();
 
   bool _isSignUp = false;
   bool _isLoading = false;
+  bool _isResending = false;
+  bool _awaitingEmailConfirmation = false;
   String? _errorMessage;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _verificationCodeController.dispose();
     super.dispose();
   }
 
@@ -93,6 +98,25 @@ class _AuthModalState extends State<AuthModal> {
     }
   }
 
+  String _friendlyAuthError(Object error) {
+    final message = error.toString().replaceAll('Exception: ', '').replaceAll('AuthException: ', '');
+    final lowerMessage = message.toLowerCase();
+
+    if (lowerMessage.contains('email not confirmed')) {
+      return 'Tu correo aún no ha sido confirmado. Ingresa el código que te enviamos.';
+    }
+    if (lowerMessage.contains('invalid login credentials')) {
+      return 'Credenciales inválidas. Verifica tu correo y contraseña.';
+    }
+    if (lowerMessage.contains('invalid') || lowerMessage.contains('expired') || lowerMessage.contains('otp')) {
+      return 'El código no es válido o ya venció. Revisa el correo e inténtalo de nuevo.';
+    }
+    if (lowerMessage.contains('rate limit') || lowerMessage.contains('too many')) {
+      return 'Se alcanzó el límite de intentos. Espera un momento antes de volver a intentarlo.';
+    }
+    return message;
+  }
+
   Future<void> _handleEmailAuth() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -103,54 +127,31 @@ class _AuthModalState extends State<AuthModal> {
 
     try {
       final email = _emailController.text.trim();
-      final password = _passwordController.text.trim();
+      final password = _passwordController.text;
 
       if (_isSignUp) {
         final res = await SupabaseService.signUp(email: email, password: password);
-        if (mounted) {
+        if (res == null) {
+          throw StateError('Supabase no está configurado para registrar cuentas.');
+        }
+        if (!mounted) return;
+
+        if (res.session != null || SupabaseService.isAuthenticated) {
           setState(() => _isLoading = false);
-          if (res?.session != null || SupabaseService.isAuthenticated) {
-            Navigator.of(context).pop();
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Cuenta creada con éxito.'),
-                backgroundColor: Color(0xFF004B87),
-              ),
-            );
-            widget.onAuthenticated();
-          } else {
-            setState(() {
-              _isSignUp = false;
-              _errorMessage = null;
-            });
-            showDialog(
-              context: context,
-              builder: (ctx) => AlertDialog(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                title: const Row(
-                  children: [
-                    Icon(Icons.mark_email_read_outlined, color: Color(0xFF004B87)),
-                    SizedBox(width: 8),
-                    Text('Confirma tu Correo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  ],
-                ),
-                content: Text(
-                  'Hemos enviado un enlace de confirmación a $email.\n\nPor favor revisa tu bandeja de entrada o spam para activar tu cuenta antes de iniciar sesión.',
-                  style: const TextStyle(fontSize: 13),
-                ),
-                actions: [
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF004B87),
-                      foregroundColor: Colors.white,
-                    ),
-                    onPressed: () => Navigator.of(ctx).pop(),
-                    child: const Text('Entendido'),
-                  ),
-                ],
-              ),
-            );
-          }
+          Navigator.of(context).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Cuenta creada con éxito.'),
+              backgroundColor: Color(0xFF004B87),
+            ),
+          );
+          widget.onAuthenticated();
+        } else {
+          setState(() {
+            _isLoading = false;
+            _awaitingEmailConfirmation = true;
+            _verificationCodeController.clear();
+          });
         }
       } else {
         await SupabaseService.signInWithPassword(email: email, password: password);
@@ -162,16 +163,68 @@ class _AuthModalState extends State<AuthModal> {
       }
     } catch (e) {
       if (mounted) {
-        final rawMsg = e.toString().replaceAll('Exception: ', '').replaceAll('AuthException: ', '');
-        String friendlyMsg = rawMsg;
-        if (rawMsg.toLowerCase().contains('email not confirmed')) {
-          friendlyMsg = 'Tu correo aún no ha sido confirmado. Por favor revisa tu bandeja de entrada o carpeta de spam para activar tu cuenta.';
-        } else if (rawMsg.toLowerCase().contains('invalid login credentials')) {
-          friendlyMsg = 'Credenciales inválidas. Verifica tu correo y contraseña.';
-        }
         setState(() {
           _isLoading = false;
-          _errorMessage = friendlyMsg;
+          _errorMessage = _friendlyAuthError(e);
+        });
+      }
+    }
+  }
+
+  Future<void> _handleVerifySignupOtp() async {
+    final token = _verificationCodeController.text.trim();
+    if (!RegExp(r'^\d{6}$').hasMatch(token)) {
+      setState(() => _errorMessage = 'Ingresa el código de 6 dígitos que recibiste por correo.');
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final response = await SupabaseService.verifySignupOtp(
+        email: _emailController.text,
+        token: token,
+      );
+      if (response?.session == null) {
+        throw StateError('No se pudo iniciar la sesión después de verificar el correo.');
+      }
+      if (mounted) {
+        setState(() => _isLoading = false);
+        Navigator.of(context).pop();
+        widget.onAuthenticated();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = _friendlyAuthError(e);
+        });
+      }
+    }
+  }
+
+  Future<void> _handleResendSignupOtp() async {
+    setState(() {
+      _isResending = true;
+      _errorMessage = null;
+    });
+
+    try {
+      await SupabaseService.resendSignupOtp(_emailController.text);
+      if (mounted) {
+        setState(() => _isResending = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Te enviamos un nuevo código de verificación.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isResending = false;
+          _errorMessage = _friendlyAuthError(e);
         });
       }
     }
@@ -239,110 +292,170 @@ class _AuthModalState extends State<AuthModal> {
               const SizedBox(height: 14),
             ],
 
-            // Google Sign-In Button
-            OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            if (_awaitingEmailConfirmation) ...[
+              Text(
+                'Enviamos un código de verificación a ${_emailController.text.trim()}.',
+                style: theme.textTheme.bodyMedium,
+                textAlign: TextAlign.center,
               ),
-              icon: const Icon(Icons.g_mobiledata, size: 24, color: Color(0xFFEA4335)),
-              label: const Text('Continuar con Google', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-              onPressed: _isLoading ? null : _handleGoogleSignIn,
-            ),
-
-            const SizedBox(height: 16),
-
-            Row(
-              children: const [
-                Expanded(child: Divider()),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10),
-                  child: Text('o con correo', style: TextStyle(fontSize: 11, color: Colors.grey)),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _verificationCodeController,
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.center,
+                maxLength: 6,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                decoration: const InputDecoration(
+                  labelText: 'Código de 6 dígitos',
+                  hintText: '123456',
+                  prefixIcon: Icon(Icons.password_outlined, size: 18),
+                  counterText: '',
                 ),
-                Expanded(child: Divider()),
-              ],
-            ),
-
-            const SizedBox(height: 14),
-
-            // Email field
-            TextFormField(
-              controller: _emailController,
-              keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: 'Correo electrónico',
-                hintText: 'tu_correo@ejemplo.com',
-                prefixIcon: Icon(Icons.email_outlined, size: 18),
+                validator: (value) {
+                  if (value == null || value.length != 6) {
+                    return 'Ingresa el código de 6 dígitos';
+                  }
+                  return null;
+                },
               ),
-              validator: (val) {
-                if (val == null || !val.contains('@')) {
-                  return 'Ingresa un correo válido';
-                }
-                return null;
-              },
-            ),
-
-            const SizedBox(height: 12),
-
-            // Password field
-            TextFormField(
-              controller: _passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Contraseña',
-                hintText: '••••••••',
-                prefixIcon: Icon(Icons.lock_outline, size: 18),
+              const SizedBox(height: 12),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF004B87),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                onPressed: _isLoading ? null : _handleVerifySignupOtp,
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Text('Verificar correo', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
               ),
-              validator: (val) {
-                if (val == null || val.length < 6) {
-                  return 'La contraseña debe tener al menos 6 caracteres';
-                }
-                return null;
-              },
-            ),
-
-            const SizedBox(height: 18),
-
-            // Submit Button
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF004B87),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 13),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              TextButton.icon(
+                onPressed: (_isLoading || _isResending) ? null : _handleResendSignupOtp,
+                icon: _isResending
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.refresh, size: 18),
+                label: const Text('Reenviar código'),
               ),
-              onPressed: _isLoading ? null : _handleEmailAuth,
-              child: _isLoading
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                    )
-                  : Text(
-                      _isSignUp ? 'Crear Cuenta y Publicar' : 'Iniciar Sesión',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                    ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // Toggle Sign Up / Sign In
-            TextButton(
-              onPressed: _isLoading
-                  ? null
-                  : () {
-                      setState(() {
-                        _isSignUp = !_isSignUp;
-                        _errorMessage = null;
-                      });
-                    },
-              child: Text(
-                _isSignUp
-                    ? '¿Ya tienes cuenta? Inicia sesión'
-                    : '¿No tienes cuenta? Regístrate aquí',
-                style: const TextStyle(fontSize: 12),
+              TextButton(
+                onPressed: _isLoading || _isResending
+                    ? null
+                    : () {
+                        setState(() {
+                          _awaitingEmailConfirmation = false;
+                          _errorMessage = null;
+                          _verificationCodeController.clear();
+                        });
+                      },
+                child: const Text('Usar otro correo'),
               ),
-            ),
+            ] else ...[
+              // Google Sign-In Button
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                icon: const Icon(Icons.g_mobiledata, size: 24, color: Color(0xFFEA4335)),
+                label: const Text('Continuar con Google', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                onPressed: _isLoading ? null : _handleGoogleSignIn,
+              ),
+
+              const SizedBox(height: 16),
+
+              Row(
+                children: const [
+                  Expanded(child: Divider()),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    child: Text('o con correo', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                  ),
+                  Expanded(child: Divider()),
+                ],
+              ),
+
+              const SizedBox(height: 14),
+
+              TextFormField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  labelText: 'Correo electrónico',
+                  hintText: 'tu_correo@ejemplo.com',
+                  prefixIcon: Icon(Icons.email_outlined, size: 18),
+                ),
+                validator: (val) {
+                  if (val == null || !val.contains('@')) {
+                    return 'Ingresa un correo válido';
+                  }
+                  return null;
+                },
+              ),
+
+              const SizedBox(height: 12),
+
+              TextFormField(
+                controller: _passwordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Contraseña',
+                  hintText: '••••••••',
+                  prefixIcon: Icon(Icons.lock_outline, size: 18),
+                ),
+                validator: (val) {
+                  if (val == null || val.length < 6) {
+                    return 'La contraseña debe tener al menos 6 caracteres';
+                  }
+                  return null;
+                },
+              ),
+
+              const SizedBox(height: 18),
+
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF004B87),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                onPressed: _isLoading ? null : _handleEmailAuth,
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : Text(
+                        _isSignUp ? 'Crear Cuenta y Publicar' : 'Iniciar Sesión',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
+              ),
+
+              const SizedBox(height: 12),
+
+              TextButton(
+                onPressed: _isLoading
+                    ? null
+                    : () {
+                        setState(() {
+                          _isSignUp = !_isSignUp;
+                          _errorMessage = null;
+                        });
+                      },
+                child: Text(
+                  _isSignUp
+                      ? '¿Ya tienes cuenta? Inicia sesión'
+                      : '¿No tienes cuenta? Regístrate aquí',
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ),
+            ],
           ],
         ),
       ),

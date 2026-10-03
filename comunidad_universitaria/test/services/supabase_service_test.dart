@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:comunidad_universitaria/core/config/supabase_config.dart';
@@ -17,6 +19,53 @@ void main() {
 
   tearDown(() async {
     await resetTestState();
+  });
+
+  group('SupabaseService signup email verification', () {
+    test('verifies a signup OTP using the email and token', () async {
+      fakeServer.onPost('/auth/v1/verify', (request) {
+        final payload = jsonDecode(request.body) as Map<String, dynamic>;
+        expect(payload['type'], 'signup');
+        expect(payload['email'], 'student@usac.edu.gt');
+        expect(payload['token'], '123456');
+
+        return {
+          'access_token': 'verified-access-token',
+          'token_type': 'bearer',
+          'expires_in': 3600,
+          'refresh_token': 'verified-refresh-token',
+          'user': {
+            'id': 'verified-user',
+            'aud': 'authenticated',
+            'role': 'authenticated',
+            'email': 'student@usac.edu.gt',
+            'email_confirmed_at': '2026-10-03T00:00:00.000Z',
+            'created_at': '2026-10-03T00:00:00.000Z',
+            'app_metadata': {'provider': 'email', 'providers': ['email']},
+            'user_metadata': {},
+          },
+        };
+      });
+
+      final response = await SupabaseService.verifySignupOtp(
+        email: ' student@usac.edu.gt ',
+        token: ' 123456 ',
+      );
+
+      expect(response?.user?.email, 'student@usac.edu.gt');
+      expect(response?.session, isNotNull);
+    });
+
+    test('resends a signup OTP to the normalized email', () async {
+      fakeServer.onPost('/auth/v1/resend', (request) {
+        final payload = jsonDecode(request.body) as Map<String, dynamic>;
+        expect(payload['type'], 'signup');
+        expect(payload['email'], 'student@usac.edu.gt');
+        return {'message_id': 'confirmation-message'};
+      });
+
+      await SupabaseService.resendSignupOtp(' student@usac.edu.gt ');
+    });
   });
 
   group('SupabaseService.getUserRole', () {

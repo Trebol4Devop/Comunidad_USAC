@@ -1,8 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:comunidad_universitaria/core/config/app_theme.dart';
+import 'package:comunidad_universitaria/core/config/supabase_config.dart';
+import 'package:comunidad_universitaria/core/services/supabase_service.dart';
 import 'package:comunidad_universitaria/features/shared/widgets/auth_modal.dart';
+import '../../helpers/fake_postgrest.dart';
 import '../../helpers/test_setup.dart';
 
 void main() {
@@ -77,6 +82,51 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.widgetWithText(ElevatedButton, 'Iniciar Sesión'), findsOneWidget);
+    });
+
+    testWidgets('muestra la entrada de código cuando el signup necesita confirmación', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      final fakeServer = FakePostgrestServer();
+      SupabaseConfig.debugOverrideConfigured = true;
+      SupabaseService.debugClient = fakeServer.buildClient();
+      fakeServer.onPost('/auth/v1/signup', (request) {
+        final payload = jsonDecode(request.body) as Map<String, dynamic>;
+        expect(payload['email'], 'estudiante@usac.edu.gt');
+        expect(payload['password'], 'password123');
+        return {
+          'id': 'signup-user',
+          'aud': 'authenticated',
+          'role': 'authenticated',
+          'email': 'estudiante@usac.edu.gt',
+          'email_confirmed_at': null,
+          'created_at': '2026-10-03T00:00:00.000Z',
+          'app_metadata': {'provider': 'email', 'providers': ['email']},
+          'user_metadata': {},
+          'identities': [],
+        };
+      });
+
+      await tester.pumpWidget(buildTestModal());
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('¿No tienes cuenta? Regístrate aquí'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Correo electrónico'),
+        'estudiante@usac.edu.gt',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Contraseña'),
+        'password123',
+      );
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Crear Cuenta y Publicar'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Código de 6 dígitos'), findsOneWidget);
+      expect(find.text('Reenviar código'), findsOneWidget);
+      expect(find.textContaining('estudiante@usac.edu.gt'), findsOneWidget);
     });
 
     testWidgets('Valida formato de correo y longitud de contraseña', (tester) async {

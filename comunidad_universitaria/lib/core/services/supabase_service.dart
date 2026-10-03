@@ -81,6 +81,36 @@ class SupabaseService {
     }
   }
 
+  static Future<AuthResponse?> verifySignupOtp({
+    required String email,
+    required String token,
+  }) async {
+    if (!SupabaseConfig.isConfigured) return null;
+    try {
+      return await client.auth.verifyOTP(
+        type: OtpType.signup,
+        email: email.trim(),
+        token: token.trim(),
+      );
+    } catch (e) {
+      debugPrint('Error verificando correo: $e');
+      rethrow;
+    }
+  }
+
+  static Future<void> resendSignupOtp(String email) async {
+    if (!SupabaseConfig.isConfigured) return;
+    try {
+      await client.auth.resend(
+        type: OtpType.signup,
+        email: email.trim(),
+      );
+    } catch (e) {
+      debugPrint('Error reenviando código de verificación: $e');
+      rethrow;
+    }
+  }
+
   static Future<void> sendMagicLink(String email) async {
     if (!SupabaseConfig.isConfigured) return;
     try {

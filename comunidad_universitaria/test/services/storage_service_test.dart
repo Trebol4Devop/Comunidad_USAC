@@ -8,13 +8,32 @@ import 'package:image_picker/image_picker.dart';
 import 'package:comunidad_universitaria/core/config/supabase_config.dart';
 import 'package:comunidad_universitaria/core/services/storage_service.dart';
 import 'package:comunidad_universitaria/core/services/supabase_service.dart';
+import '../helpers/fake_postgrest.dart';
 import '../helpers/test_setup.dart';
 
 void main() {
   setUp(() async {
     await resetTestState();
+    final fakeServer = FakePostgrestServer();
     SupabaseConfig.debugOverrideConfigured = true;
-    SupabaseService.debugUserId = 'uploader-123';
+    SupabaseService.debugClient = fakeServer.buildClient();
+    fakeServer.onPost('/auth/v1/token', (_) => {
+      'access_token': 'test-access-token',
+      'token_type': 'bearer',
+      'expires_in': 3600,
+      'refresh_token': 'test-refresh-token',
+      'user': {
+        'id': 'uploader-123',
+        'aud': 'authenticated',
+        'role': 'authenticated',
+        'email': 'uploader@usac.edu.gt',
+        'created_at': '2026-10-03T00:00:00.000Z',
+      },
+    });
+    await SupabaseService.client.auth.signInWithPassword(
+      email: 'uploader@usac.edu.gt',
+      password: 'password123',
+    );
   });
 
   tearDown(() async {
