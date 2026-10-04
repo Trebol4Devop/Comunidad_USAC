@@ -8,6 +8,7 @@ import 'package:comunidad_universitaria/features/forum/widgets/discord/forum_ser
 import 'package:comunidad_universitaria/features/navigation/app_shell.dart';
 import 'package:comunidad_universitaria/features/rules/screens/rules_screen.dart';
 import 'package:comunidad_universitaria/features/profile/screens/profile_screen.dart';
+import 'package:comunidad_universitaria/features/groups/screens/groups_screen.dart';
 
 void main() {
   setUp(() {
@@ -64,6 +65,41 @@ void main() {
       expect(cat.name, 'dudas-y-pensum');
       expect(cat.label, 'Prerrequisitos & Pensum');
       expect(cat.categoryId, 'prerrequisitos');
+    });
+
+    test('ForumChannel.groupsChannels define los canales de servidor correspondientes a las facultades de la base de datos', () {
+      final channels = ForumChannel.groupsChannels;
+      expect(channels.length, equals(12));
+
+      // Primer canal es Todos los Grupos
+      expect(channels.first.id, equals('todas'));
+      expect(channels.first.name, equals('todos-los-grupos'));
+      expect(channels.first.categoryId, equals('todas'));
+
+      // Verificar facultades oficiales de la BD
+      final hasIngenieria = channels.any((c) => c.id == '08' && c.name == 'ingenieria');
+      final hasMedicina = channels.any((c) => c.id == '05' && c.name == 'ciencias-medicas');
+      final hasEconomicas = channels.any((c) => c.id == '03' && c.name == 'ciencias-economicas');
+      final hasDerecho = channels.any((c) => c.id == '04' && c.name == 'ciencias-juridicas');
+      final hasArquitectura = channels.any((c) => c.id == '02' && c.name == 'arquitectura');
+      final hasAgronomia = channels.any((c) => c.id == '01' && c.name == 'agronomia');
+      final hasFarmacia = channels.any((c) => c.id == '06' && c.name == 'quimica-y-farmacia');
+      final hasHumanidades = channels.any((c) => c.id == '77' && c.name == 'humanidades');
+      final hasOdontologia = channels.any((c) => c.id == '09' && c.name == 'odontologia');
+      final hasVeterinaria = channels.any((c) => c.id == '10' && c.name == 'veterinaria');
+      final hasAreaComun = channels.any((c) => c.id == 'area_comun' && c.name == 'area-comun');
+
+      expect(hasIngenieria, isTrue);
+      expect(hasMedicina, isTrue);
+      expect(hasEconomicas, isTrue);
+      expect(hasDerecho, isTrue);
+      expect(hasArquitectura, isTrue);
+      expect(hasAgronomia, isTrue);
+      expect(hasFarmacia, isTrue);
+      expect(hasHumanidades, isTrue);
+      expect(hasOdontologia, isTrue);
+      expect(hasVeterinaria, isTrue);
+      expect(hasAreaComun, isTrue);
     });
   });
 
@@ -656,6 +692,146 @@ void main() {
         matching: find.text('USAC'),
       );
       expect(usacRailButton, findsOneWidget);
+    });
+
+    testWidgets('Grupos de Estudio se ubica en el riel de servidores directamente abajo de USAC con el símbolo de WhatsApp y texto GRUPOS', (tester) async {
+      expect(ForumServer.groupsServer.id, 'grupos_estudio');
+      expect(ForumServer.groupsServer.color, const Color(0xFF25D366));
+      expect(ForumServer.groupsServer.shortCode, 'GRUPOS');
+
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ForumScreen(
+            activeAlias: 'UsuarioUSAC',
+            onAliasChanged: (_) {},
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // En el riel, verificar el botón de Grupos de Estudio
+      final gruposTooltip = find.byTooltip('Grupos de Estudio (WhatsApp)');
+      expect(gruposTooltip, findsOneWidget);
+
+      final gruposText = find.descendant(
+        of: gruposTooltip,
+        matching: find.text('GRUPOS'),
+      );
+      expect(gruposText, findsOneWidget);
+
+      // Verificar que contiene el símbolo de WhatsApp (chat bubble y phone)
+      final chatBubbleIcon = find.descendant(
+        of: gruposTooltip,
+        matching: find.byIcon(Icons.chat_bubble),
+      );
+      expect(chatBubbleIcon, findsOneWidget);
+
+      final phoneIcon = find.descendant(
+        of: gruposTooltip,
+        matching: find.byIcon(Icons.phone),
+      );
+      expect(phoneIcon, findsOneWidget);
+    });
+
+    testWidgets('Al seleccionar el servidor de Grupos de Estudio en el riel se muestra GroupsScreen con canales de facultades en ForumChannelSidebar y un único botón inferior de compartir', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ForumScreen(
+            activeAlias: 'UsuarioUSAC',
+            onAliasChanged: (_) {},
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Inicialmente se muestra ForumChannelSidebar con los canales de discusión del foro
+      expect(find.byType(ForumChannelSidebar), findsOneWidget);
+      expect(find.text('CANALES DE DISCUSIÓN'), findsOneWidget);
+      expect(find.byType(GroupsScreen), findsNothing);
+
+      // Tocar el botón de Grupos de Estudio en el riel
+      final gruposTooltip = find.byTooltip('Grupos de Estudio (WhatsApp)');
+      await tester.tap(gruposTooltip);
+      await tester.pumpAndSettle();
+
+      // Se muestra GroupsScreen
+      expect(find.byType(GroupsScreen), findsOneWidget);
+      expect(find.text('Directorio de Grupos de Estudio'), findsOneWidget);
+
+      // Único botón de compartir grupo (el FAB inferior, el redundante del banner superior fue eliminado)
+      expect(find.text('Compartir Grupo'), findsOneWidget);
+
+      // El riel de servidores y la barra de canales permanecen visibles
+      expect(find.byType(ForumServerRail), findsOneWidget);
+      expect(find.byType(ForumChannelSidebar), findsOneWidget);
+
+      // La barra lateral muestra los canales de facultades de Grupos de Estudio
+      expect(find.text('FACULTADES Y ÁREAS'), findsOneWidget);
+      expect(find.text('todos-los-grupos'), findsWidgets);
+      expect(find.text('ingenieria'), findsWidgets);
+
+      // Al tocar ingenieria, se selecciona el canal
+      final ingenieriaChannel = find.text('ingenieria').first;
+      await tester.tap(ingenieriaChannel);
+      await tester.pumpAndSettle();
+
+      // Al tocar USAC en el riel se abre el submenú y al seleccionar Todas las Carreras regresa al foro
+      final usacRailButton = find.byTooltip('Todas las Facultades');
+      await tester.tap(usacRailButton);
+      await tester.pumpAndSettle();
+
+      // Seleccionar Todas las Carreras desde el submenú flotante
+      final todasCarreras = find.byTooltip('Todas las Carreras');
+      if (todasCarreras.evaluate().isNotEmpty) {
+        await tester.tap(todasCarreras.first);
+        await tester.pumpAndSettle();
+      }
+
+      expect(find.byType(ForumChannelSidebar), findsOneWidget);
+    });
+
+    testWidgets('En vista móvil, ForumScreen con Grupos de Estudio activo renderiza encabezado móvil con nombre de canal y abre drawer con servidores y canales', (tester) async {
+      tester.view.physicalSize = const Size(400, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ForumScreen(
+            activeAlias: 'UsuarioUSAC',
+            onAliasChanged: (_) {},
+            activeServer: ForumServer.groupsServer,
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Renderiza GroupsScreen
+      expect(find.byType(GroupsScreen), findsOneWidget);
+
+      // Renderiza el encabezado móvil con icono de WhatsApp y canal activo
+      expect(find.text('#todos-los-grupos'), findsOneWidget);
+      expect(find.text('WAPP'), findsOneWidget);
+
+      // El botón de menú abre el drawer que contiene ForumServerRail y ForumChannelSidebar
+      final menuBtn = find.byTooltip('Canales y Servidores');
+      expect(menuBtn, findsOneWidget);
+      await tester.tap(menuBtn);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ForumServerRail), findsOneWidget);
+      expect(find.byType(ForumChannelSidebar), findsOneWidget);
     });
   });
 }
