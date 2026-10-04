@@ -340,12 +340,16 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           if (_post.isPinned) ...[
                             Row(
                               children: [
-                                const Icon(Icons.push_pin, size: 14, color: Color(0xFF004B87)),
+                                Icon(
+                                  Icons.push_pin,
+                                  size: 14,
+                                  color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF004B87),
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
                                   'Publicación Fijada / Anuncio Oficial',
                                   style: theme.textTheme.bodySmall?.copyWith(
-                                    color: const Color(0xFF004B87),
+                                    color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF004B87),
                                     fontWeight: FontWeight.bold,
                                     fontSize: 11,
                                   ),
@@ -484,7 +488,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 children: [
                                   Row(
                                     children: [
-                                      const Icon(Icons.poll_outlined, size: 18, color: Color(0xFF004B87)),
+                                      Icon(
+                                        Icons.poll_outlined,
+                                        size: 18,
+                                        color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF004B87),
+                                      ),
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: Text(
@@ -512,7 +520,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                           decoration: BoxDecoration(
                                             borderRadius: BorderRadius.circular(8),
                                             border: Border.all(
-                                              color: isMyVote ? const Color(0xFF004B87) : Colors.grey.shade300,
+                                              color: isMyVote
+                                                  ? (isDark ? const Color(0xFF60A5FA) : const Color(0xFF004B87))
+                                                  : (isDark ? const Color(0xFF334155) : Colors.grey.shade300),
                                               width: isMyVote ? 1.5 : 1.0,
                                             ),
                                           ),
@@ -525,8 +535,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                                     widthFactor: percent,
                                                     child: Container(
                                                       color: isMyVote
-                                                          ? const Color(0xFF004B87).withValues(alpha: 0.22)
-                                                          : Colors.grey.withValues(alpha: 0.15),
+                                                          ? (isDark
+                                                              ? const Color(0xFF3B82F6).withValues(alpha: 0.35)
+                                                              : const Color(0xFF004B87).withValues(alpha: 0.22))
+                                                          : (isDark
+                                                              ? Colors.white.withValues(alpha: 0.1)
+                                                              : Colors.grey.withValues(alpha: 0.15)),
                                                     ),
                                                   ),
                                                 Padding(
@@ -538,7 +552,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                                         child: Row(
                                                           children: [
                                                             if (isMyVote) ...[
-                                                              const Icon(Icons.check_circle, size: 16, color: Color(0xFF004B87)),
+                                                              Icon(
+                                                                Icons.check_circle,
+                                                                size: 16,
+                                                                color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF004B87),
+                                                              ),
                                                               const SizedBox(width: 8),
                                                             ],
                                                             Flexible(
@@ -560,7 +578,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                                           style: TextStyle(
                                                             fontSize: 12,
                                                             fontWeight: FontWeight.w600,
-                                                            color: isMyVote ? const Color(0xFF004B87) : Colors.grey.shade600,
+                                                            color: isMyVote
+                                                                ? (isDark ? const Color(0xFF93C5FD) : const Color(0xFF004B87))
+                                                                : (isDark ? Colors.grey.shade400 : Colors.grey.shade600),
                                                           ),
                                                         ),
                                                     ],
@@ -871,7 +891,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.gif_box_outlined, color: Color(0xFF004B87)),
+                          icon: Icon(
+                            Icons.gif_box_outlined,
+                            color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF004B87),
+                          ),
                           tooltip: 'Insertar GIF',
                           onPressed: () {
                             GifPickerModal.show(

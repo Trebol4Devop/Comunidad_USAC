@@ -183,6 +183,7 @@ class _GifPickerModalState extends State<GifPickerModal> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final height = MediaQuery.of(context).size.height * 0.75;
 
     return SizedBox(
@@ -207,7 +208,11 @@ class _GifPickerModalState extends State<GifPickerModal> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    const Icon(Icons.gif_box_outlined, color: Color(0xFF004B87), size: 26),
+                    Icon(
+                      Icons.gif_box_outlined,
+                      color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF004B87),
+                      size: 26,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       'Insertar GIF o Sticker',
@@ -258,9 +263,20 @@ class _GifPickerModalState extends State<GifPickerModal> {
                 final cat = categories[i];
                 final isSelected = _selectedCategory == cat['id'];
                 return ChoiceChip(
-                  label: Text(cat['name']!, style: TextStyle(fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+                  label: Text(
+                    cat['name']!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected
+                          ? (isDark ? const Color(0xFF93C5FD) : const Color(0xFF004B87))
+                          : (isDark ? Colors.grey.shade300 : Colors.grey.shade800),
+                    ),
+                  ),
                   selected: isSelected,
-                  selectedColor: const Color(0xFF004B87).withValues(alpha: 0.15),
+                  selectedColor: isDark
+                      ? const Color(0xFF3B82F6).withValues(alpha: 0.25)
+                      : const Color(0xFF004B87).withValues(alpha: 0.15),
                   onSelected: (val) {
                     if (val) setState(() => _selectedCategory = cat['id']!);
                   },

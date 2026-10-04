@@ -702,17 +702,28 @@ class _ForumScreenState extends State<ForumScreen> {
                   height: 36,
                   child: TextField(
                     controller: _searchController,
-                    style: const TextStyle(fontSize: 12),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    ),
                     decoration: InputDecoration(
                       hintText: 'Buscar...',
                       hintStyle: TextStyle(
                         fontSize: 11,
                         color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
                       ),
-                      prefixIcon: const Icon(Icons.search, size: 16),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        size: 16,
+                        color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
+                      ),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
-                              icon: const Icon(Icons.clear, size: 14),
+                              icon: Icon(
+                                Icons.clear,
+                                size: 14,
+                                color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
+                              ),
                               onPressed: () {
                                 _searchController.clear();
                                 setState(() => _searchQuery = '');
@@ -769,17 +780,28 @@ class _ForumScreenState extends State<ForumScreen> {
                     height: 38,
                     child: TextField(
                       controller: _searchController,
-                      style: const TextStyle(fontSize: 13),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
                       decoration: InputDecoration(
                         hintText: 'Buscar en #${_activeChannel.name}...',
                         hintStyle: TextStyle(
                           fontSize: 12,
                           color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
                         ),
-                        prefixIcon: const Icon(Icons.search, size: 18),
+                        prefixIcon: Icon(
+                          Icons.search,
+                          size: 18,
+                          color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
+                        ),
                         suffixIcon: _searchQuery.isNotEmpty
                             ? IconButton(
-                                icon: const Icon(Icons.clear, size: 16),
+                                icon: Icon(
+                                  Icons.clear,
+                                  size: 16,
+                                  color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
+                                ),
                                 onPressed: () {
                                   _searchController.clear();
                                   setState(() => _searchQuery = '');

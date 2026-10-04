@@ -258,10 +258,11 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
         if (newPost != null) {
           widget.onPostCreated(newPost);
           Navigator.of(context).pop();
+          final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Publicación creada exitosamente en el foro.'),
-              backgroundColor: Color(0xFF004B87),
+            SnackBar(
+              content: const Text('Publicación creada exitosamente en el foro.'),
+              backgroundColor: isDarkTheme ? const Color(0xFF2563EB) : const Color(0xFF004B87),
             ),
           );
         }
@@ -357,7 +358,11 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.format_quote, size: 18, color: Color(0xFF004B87)),
+                      Icon(
+                        Icons.format_quote,
+                        size: 18,
+                        color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF004B87),
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Column(
@@ -509,16 +514,22 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                   const SizedBox(width: 8),
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      backgroundColor: _showPollForm ? const Color(0xFF004B87).withValues(alpha: 0.12) : null,
+                      backgroundColor: _showPollForm
+                          ? (isDark ? const Color(0xFF3B82F6).withValues(alpha: 0.25) : const Color(0xFF004B87).withValues(alpha: 0.12))
+                          : null,
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     ),
                     onPressed: () => setState(() => _showPollForm = !_showPollForm),
-                    icon: Icon(Icons.poll_outlined, size: 16, color: _showPollForm ? const Color(0xFF004B87) : null),
+                    icon: Icon(
+                      Icons.poll_outlined,
+                      size: 16,
+                      color: _showPollForm ? (isDark ? const Color(0xFF60A5FA) : const Color(0xFF004B87)) : null,
+                    ),
                     label: Text(
                       'Encuesta',
                       style: TextStyle(
                         fontSize: 12,
-                        color: _showPollForm ? const Color(0xFF004B87) : null,
+                        color: _showPollForm ? (isDark ? const Color(0xFF60A5FA) : const Color(0xFF004B87)) : null,
                         fontWeight: _showPollForm ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
@@ -532,9 +543,11 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF004B87).withValues(alpha: 0.05),
+                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFF004B87).withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFF004B87).withValues(alpha: 0.2)),
+                    border: Border.all(
+                      color: isDark ? const Color(0xFF334155) : const Color(0xFF004B87).withValues(alpha: 0.2),
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -542,9 +555,13 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
+                          Text(
                             'Crear Encuesta Estudiantil',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF004B87)),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF004B87),
+                            ),
                           ),
                           IconButton(
                             icon: const Icon(Icons.close, size: 16),
@@ -685,7 +702,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                     ),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF004B87),
+                        backgroundColor: isDark ? const Color(0xFF5865F2) : theme.colorScheme.primary,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       ),

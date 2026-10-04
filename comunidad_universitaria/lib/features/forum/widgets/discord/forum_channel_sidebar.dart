@@ -77,7 +77,11 @@ class ForumChannelSidebar extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 4),
-                            const Icon(Icons.verified, size: 14, color: Color(0xFF004B87)),
+                            Icon(
+                              Icons.verified,
+                              size: 14,
+                              color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF004B87),
+                            ),
                           ],
                         ),
                         Text(
@@ -146,7 +150,7 @@ class ForumChannelSidebar extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: 16,
-                      backgroundColor: const Color(0xFF004B87),
+                      backgroundColor: isDark ? const Color(0xFF2563EB) : const Color(0xFF004B87),
                       child: Text(
                         activeAlias.isNotEmpty ? activeAlias.characters.first.toUpperCase() : 'U',
                         style: const TextStyle(
