@@ -7,13 +7,29 @@ import 'supabase_service.dart';
 class GroupsService {
   static const String _cacheNamespace = 'student_groups';
 
+  static const Map<String, List<String>> _facultyAliases = {
+    '08': ['sistemas', 'civil', 'industrial', 'mecanica', 'quimica', 'electronica', 'ingenieria'],
+    '05': ['medicina', 'salud', 'medicas'],
+    '04': ['derecho', 'juridicas', 'leyes'],
+    '03': ['economicas', 'auditoria', 'administracion', 'economia'],
+    '02': ['arquitectura', 'diseno'],
+    '01': ['agronomia', 'ambiental', 'agricola'],
+    '06': ['farmacia', 'bioquimica', 'quimica'],
+    '77': ['humanidades', 'pedagogia', 'profesorado'],
+    '09': ['odontologia'],
+    '10': ['veterinaria', 'zootecnia'],
+    'area_comun': ['area_comun', 'basicas'],
+  };
+
   static Future<List<WhatsAppGroup>> fetchGroups({
+    String facultad = 'todas',
     String carrera = 'todas',
     String searchQuery = '',
   }) async {
-    final isDefaultQuery = carrera == 'todas' && searchQuery.trim().isEmpty;
+    final isDefaultQuery = facultad == 'todas' && carrera == 'todas' && searchQuery.trim().isEmpty;
     final cacheKey = CacheService.buildKey({
       'user': SupabaseService.currentUserId ?? 'anon',
+      if (facultad != 'todas') 'facultad': facultad,
       'carrera': carrera,
       'search': searchQuery.trim().toLowerCase(),
     });
@@ -65,7 +81,7 @@ class GroupsService {
         }
       }
 
-      final groups = data.map((item) {
+      var groups = data.map((item) {
         final map = Map<String, dynamic>.from(item);
         final groupId = map['id'].toString();
         return WhatsAppGroup.fromMap(
@@ -73,6 +89,15 @@ class GroupsService {
           isUpvotedByMe: upvotedGroupIds.contains(groupId),
         );
       }).toList();
+
+      if (facultad != 'todas' && carrera == 'todas') {
+        groups = groups.where((g) {
+          if (g.carrera == 'todas' || g.carrera.isEmpty) return true;
+          if (g.carrera.startsWith(facultad)) return true;
+          final facultyKeywords = _facultyAliases[facultad] ?? [];
+          return facultyKeywords.any((kw) => g.carrera.toLowerCase().contains(kw));
+        }).toList();
+      }
 
       CacheService.set(_cacheNamespace, cacheKey, List<WhatsAppGroup>.from(groups));
       if (isDefaultQuery) {
