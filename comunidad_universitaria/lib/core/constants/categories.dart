@@ -392,7 +392,7 @@ class USACConstants {
     {
       'id': 'todas',
       'codigo': '00',
-      'nombre': 'Todas las Facultades / General',
+      'nombre': 'Todas las Facultades',
       'sitio': 'https://usac.edu.gt',
       'carreras': [
         {
@@ -404,7 +404,7 @@ class USACConstants {
         },
         {
           'id': 'area_comun',
-          'nombre': 'Área Común / Cursos Básicos',
+          'nombre': 'Área Común',
           'codigo': '00-00-01',
           'sede': 'Campus Central',
           'modalidades': ['Diario', 'Sabatino', 'Dominical'],
