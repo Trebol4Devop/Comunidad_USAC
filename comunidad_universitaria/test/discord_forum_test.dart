@@ -449,6 +449,85 @@ void main() {
       // Sigue estando intacto en Todas las Facultades
       expect(find.text('Todas las Facultades'), findsOneWidget);
     });
+
+    testWidgets('ForumServerRail posiciona siempre Todas las Facultades al inicio aunque la lista venga desordenada', (tester) async {
+      final scrambledFaculties = [
+        const ForumFaculty(
+          id: '01',
+          name: 'Facultad de Agronomía',
+          shortCode: 'AGRO',
+          icon: Icons.grass,
+          color: Color(0xFF16A34A),
+          careers: [],
+        ),
+        const ForumFaculty(
+          id: '02',
+          name: 'Facultad de Arquitectura',
+          shortCode: 'ARQ',
+          icon: Icons.architecture,
+          color: Color(0xFF059669),
+          careers: [],
+        ),
+        const ForumFaculty(
+          id: 'todas',
+          name: 'Todas las Facultades',
+          shortCode: 'USAC',
+          icon: Icons.school,
+          color: Color(0xFF004B87),
+          careers: [],
+        ),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ForumServerRail(
+              servers: ForumServer.defaultServers,
+              activeServer: ForumServer.defaultServers.first,
+              faculties: scrambledFaculties,
+              onSelectServer: (_) {},
+              onAddServer: (_) {},
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Tooltip del home server debe ser Todas las Facultades
+      expect(find.byTooltip('Todas las Facultades\nVer carreras'), findsOneWidget);
+
+      // 'todas' no debe estar duplicado ni al final en la lista de otras facultades
+      final agroFinder = find.text('AGRO');
+      final arqFinder = find.text('ARQ');
+      expect(agroFinder, findsOneWidget);
+      expect(arqFinder, findsOneWidget);
+    });
+
+    testWidgets('Modo oscuro renderiza elementos del foro con contraste accesible', (tester) async {
+      final foreignServer = ForumServer.defaultServers.firstWhere((s) => s.facultadId != 'todas');
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData.dark(),
+          home: Scaffold(
+            body: ForumServerRail(
+              servers: ForumServer.defaultServers,
+              activeServer: foreignServer, // Servidor de otra facultad para que el home esté inactivo
+              faculties: ForumFaculty.defaultFaculties,
+              onSelectServer: (_) {},
+              onAddServer: (_) {},
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // En modo oscuro cuando el home server está inactivo su icono debe tener color contrastante
+      final homeIcon = tester.widget<Icon>(find.byIcon(ForumFaculty.defaultFaculties.first.icon).first);
+      expect(homeIcon.color, const Color(0xFFDBDEE1));
+    });
   });
 }
 
