@@ -265,8 +265,11 @@ class _ForumServerRailState extends State<ForumServerRail> {
 
     final railBg = isDark ? const Color(0xFF1E1F22) : const Color(0xFFE3E5E8);
     final faculties = widget.faculties ?? ForumFaculty.defaultFaculties;
-    final homeFaculty = faculties.first; // Campus Central · USAC
-    final otherFaculties = faculties.length > 1 ? faculties.sublist(1) : <ForumFaculty>[];
+    final homeFaculty = faculties.firstWhere(
+      (f) => f.id == 'todas',
+      orElse: () => faculties.first,
+    );
+    final otherFaculties = faculties.where((f) => f.id != homeFaculty.id).toList();
 
     final isHomeActive = widget.activeServer.facultadId == homeFaculty.id;
     final isHomeOpen = _openFaculty?.id == homeFaculty.id;
@@ -331,7 +334,9 @@ class _ForumServerRailState extends State<ForumServerRail> {
                     onTap: () => _toggleFacultySubmenu(homeFaculty, itemCtx),
                     child: Icon(
                       homeFaculty.icon,
-                      color: isHomeActive ? Colors.white : theme.colorScheme.primary,
+                      color: isHomeActive
+                          ? Colors.white
+                          : (isDark ? const Color(0xFFDBDEE1) : theme.colorScheme.primary),
                       size: 18,
                     ),
                   ),

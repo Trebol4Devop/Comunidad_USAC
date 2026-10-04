@@ -861,9 +861,21 @@ class ForumService {
       }
 
       // El servidor de hasta arriba SIEMPRE debe ser el de Todas las Facultades
-      if (!faculties.any((f) => f.id == 'todas')) {
-        faculties.insert(0, ForumFaculty.defaultFaculties.first);
+      final defaultRoot = ForumFaculty.defaultFaculties.first;
+      final todasIndex = faculties.indexWhere((f) => f.id == 'todas');
+      ForumFaculty todasFaculty;
+      if (todasIndex != -1) {
+        final existingTodas = faculties.removeAt(todasIndex);
+        todasFaculty = existingTodas.copyWith(
+          name: 'Todas las Facultades',
+          shortCode: 'USAC',
+          icon: Icons.hub_rounded,
+          careers: existingTodas.careers.isNotEmpty ? existingTodas.careers : defaultRoot.careers,
+        );
+      } else {
+        todasFaculty = defaultRoot;
       }
+      faculties.insert(0, todasFaculty);
 
       return faculties;
     } catch (e) {

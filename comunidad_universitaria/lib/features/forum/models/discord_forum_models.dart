@@ -297,6 +297,24 @@ class ForumFaculty {
     required this.careers,
   });
 
+  ForumFaculty copyWith({
+    String? id,
+    String? name,
+    String? shortCode,
+    IconData? icon,
+    Color? color,
+    List<ForumCareerItem>? careers,
+  }) {
+    return ForumFaculty(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      shortCode: shortCode ?? this.shortCode,
+      icon: icon ?? this.icon,
+      color: color ?? this.color,
+      careers: careers ?? this.careers,
+    );
+  }
+
   ForumServer toGeneralServer() {
     return ForumServer(
       id: id == 'todas' ? 'todas' : 'fac_$id',
