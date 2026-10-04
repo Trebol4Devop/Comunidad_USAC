@@ -22,19 +22,41 @@ void main() {
       expect(hasDerecho, isTrue);
     });
 
-    test('ForumChannel.defaultChannels define canales temáticos estructurados estilo Discord', () {
+    test('ForumChannel.defaultChannels define canales temáticos estructurados estilo Discord alineados a categorias_foro', () {
       final channels = ForumChannel.defaultChannels;
       expect(channels.length, greaterThanOrEqualTo(5));
 
-      final hasTodos = channels.any((c) => c.name == 'todos-los-temas');
-      final hasDudas = channels.any((c) => c.name == 'dudas-y-pensum');
-      final hasCatedraticos = channels.any((c) => c.name == 'catedraticos-opiniones');
-      final hasApuntes = channels.any((c) => c.name == 'apuntes-y-recursos');
+      final hasTodos = channels.any((c) => c.name == 'todos-los-temas' && c.categoryId == 'todos');
+      final hasDudas = channels.any((c) => c.name == 'dudas-y-pensum' && c.categoryId == 'prerrequisitos');
+      final hasCatedraticos = channels.any((c) => c.name == 'catedraticos-opiniones' && c.categoryId == 'catedraticos');
+      final hasApuntes = channels.any((c) => c.name == 'apuntes-y-recursos' && c.categoryId == 'apuntes');
+      final hasHorarios = channels.any((c) => c.name == 'horarios-y-secciones' && c.categoryId == 'horarios');
+      final hasGeneral = channels.any((c) => c.name == 'charla-general' && c.categoryId == 'general');
 
       expect(hasTodos, isTrue);
       expect(hasDudas, isTrue);
       expect(hasCatedraticos, isTrue);
       expect(hasApuntes, isTrue);
+      expect(hasHorarios, isTrue);
+      expect(hasGeneral, isTrue);
+    });
+
+    test('ForumServer y ForumChannel no contienen datos simulados ni conteos mock', () {
+      // 1. Servidores sin conteos de miembros inventados
+      for (final s in ForumServer.defaultServers) {
+        expect(s.memberCount, isNull, reason: 'El servidor ${s.id} no debe tener memberCount inventado/simulado');
+      }
+
+      // 2. Área común debe coincidir con la DB (facultadId = todas)
+      final areaComun = ForumServer.defaultServers.firstWhere((s) => s.id == 'area_comun');
+      expect(areaComun.facultadId, equals('todas'), reason: 'En public.carreras, area_comun pertenece a facultad_id = todas');
+
+      // 3. fromDbCategory mapea correctamente registros de DB
+      final cat = ForumChannel.fromDbCategory(id: 'prerrequisitos', nombre: 'Prerrequisitos & Pensum');
+      expect(cat.id, 'prerrequisitos');
+      expect(cat.name, 'dudas-y-pensum');
+      expect(cat.label, 'Prerrequisitos & Pensum');
+      expect(cat.categoryId, 'prerrequisitos');
     });
   });
 
@@ -136,21 +158,27 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // Por defecto el servidor activo es Sistemas
-      expect(find.text('Ingeniería en Sistemas'), findsOneWidget);
+      // Por defecto el servidor activo de hasta arriba es Todas las Facultades
+      expect(find.text('Todas las Facultades'), findsOneWidget);
 
-      // Tocamos el ícono del primer servidor en el riel (Campus Central / USAC General)
-      final campusCentralIcon = find.descendant(
+      // Tocamos la facultad de Agronomía (AGRO) en el riel
+      final agroIcon = find.descendant(
         of: find.byType(ForumServerRail),
-        matching: find.byIcon(Icons.school),
+        matching: find.text('AGRO'),
       );
-      expect(campusCentralIcon, findsOneWidget);
-      await tester.tap(campusCentralIcon);
+      expect(agroIcon, findsOneWidget);
+      await tester.tap(agroIcon);
       await tester.pumpAndSettle();
 
-      // El servidor activo en la barra lateral debe ser ahora Campus Central
-      expect(find.text('Campus Central'), findsOneWidget);
-      expect(find.textContaining('Campus Central ·'), findsOneWidget);
+      // Mientras está abierto el submenú, el área de mensajes y barra lateral mantienen lo actual
+      expect(find.text('Todas las Facultades'), findsOneWidget);
+
+      // Tocamos la carrera PROD
+      await tester.tap(find.text('PROD'));
+      await tester.pumpAndSettle();
+
+      // El servidor activo en la barra lateral debe ser ahora Sistemas de Producción Agrícola
+      expect(find.text('Sistemas de Producción Agrícola'), findsOneWidget);
     });
 
     testWidgets('Abre el diálogo de exploración de carreras y permite filtrar por texto', (tester) async {
@@ -358,6 +386,68 @@ void main() {
       // El submenú flotante se cierra y el servidor activo pasa a ser la carrera seleccionada
       expect(find.text('PROD'), findsNothing);
       expect(find.text('Sistemas de Producción Agrícola'), findsOneWidget);
+    });
+
+    testWidgets('El servidor de hasta arriba es Todas las Facultades y el hero de bienvenida no duplica el nombre del servidor', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ForumScreen(
+            activeAlias: 'EstudianteTopServer',
+            onAliasChanged: (_) {},
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // El servidor de hasta arriba por defecto es Todas las Facultades
+      expect(find.text('Todas las Facultades'), findsOneWidget);
+
+      // El hero no debe duplicar "Todas las Facultades · "
+      expect(find.textContaining('Todas las Facultades ·'), findsNothing);
+
+      // No debe contener "(Toca para ver carreras)"
+      expect(find.textContaining('(Toca para ver carreras)'), findsNothing);
+    });
+
+    testWidgets('Al abrir submenú mantiene visible el contenido actual y cambia solo al seleccionar subservidor', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ForumScreen(
+            activeAlias: 'TesterSubmenu',
+            onAliasChanged: (_) {},
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Abrimos la facultad de Arquitectura (ARQ)
+      final arqFinder = find.descendant(
+        of: find.byType(ForumServerRail),
+        matching: find.text('ARQ'),
+      );
+      expect(arqFinder, findsOneWidget);
+      await tester.tap(arqFinder);
+      await tester.pumpAndSettle();
+
+      // El área central y sidebar mantienen lo que está actualmente sin cambiar
+      expect(find.text('Todas las Facultades'), findsOneWidget);
+
+      // Si tocamos afuera (en el scaffold) para cerrar el submenú sin elegir carrera
+      await tester.tapAt(const Offset(500, 300));
+      await tester.pumpAndSettle();
+
+      // Sigue estando intacto en Todas las Facultades
+      expect(find.text('Todas las Facultades'), findsOneWidget);
     });
   });
 }
