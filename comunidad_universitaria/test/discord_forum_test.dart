@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:comunidad_universitaria/features/forum/models/discord_forum_models.dart';
 import 'package:comunidad_universitaria/features/forum/screens/forum_screen.dart';
 import 'package:comunidad_universitaria/features/forum/widgets/discord/forum_channel_sidebar.dart';
 import 'package:comunidad_universitaria/features/forum/widgets/discord/forum_server_rail.dart';
+import 'package:comunidad_universitaria/features/navigation/app_shell.dart';
+import 'package:comunidad_universitaria/features/rules/screens/rules_screen.dart';
+import 'package:comunidad_universitaria/features/profile/screens/profile_screen.dart';
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({'usac_forum_alias': 'EstudianteTest'});
+  });
   group('Discord Forum Models & Architecture', () {
     test('ForumServer.defaultServers define servidores oficiales por carrera y facultad', () {
       final servers = ForumServer.defaultServers;
@@ -305,7 +312,7 @@ void main() {
       expect(find.text('No tienes publicaciones guardadas'), findsOneWidget);
     });
 
-    testWidgets('Permite abrir modal de cambio de alias desde la barra inferior de perfil', (tester) async {
+    testWidgets('Permite abrir pantalla de Preferencias desde la barra inferior de perfil del foro', (tester) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -321,18 +328,23 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // Botón de editar seudónimo en la barra inferior del sidebar
-      final editAliasBtn = find.descendant(
+      // Botón de preferencias en la barra inferior del sidebar
+      final settingsBtn = find.descendant(
         of: find.byType(ForumChannelSidebar),
-        matching: find.byIcon(Icons.edit_outlined),
+        matching: find.byIcon(Icons.settings_outlined),
       );
-      expect(editAliasBtn, findsOneWidget);
-      await tester.tap(editAliasBtn);
+      expect(settingsBtn, findsOneWidget);
+      await tester.tap(settingsBtn);
       await tester.pumpAndSettle();
 
-      // Debe abrir el AliasModal
-      expect(find.text('Tu Seudónimo Estudiantil'), findsOneWidget);
-      expect(find.text('Guardar Alias'), findsOneWidget);
+      // Debe abrir la pantalla de Preferencias de Usuario con su AppBar y campo de seudónimo
+      expect(find.text('Preferencias de Usuario'), findsOneWidget);
+      expect(find.byTooltip('Regresar'), findsOneWidget);
+
+      // Tocar regresar debe volver al foro
+      await tester.tap(find.byTooltip('Regresar'));
+      await tester.pumpAndSettle();
+      expect(find.text('Preferencias de Usuario'), findsNothing);
     });
 
     testWidgets('Muestra solo las facultades en el riel de servidores y despliega submenú flotante de carreras', (tester) async {
@@ -495,7 +507,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Tooltip del home server debe ser Todas las Facultades
-      expect(find.byTooltip('Todas las Facultades\nVer carreras'), findsOneWidget);
+      expect(find.byTooltip('Todas las Facultades'), findsOneWidget);
 
       // 'todas' no debe estar duplicado ni al final en la lista de otras facultades
       final agroFinder = find.text('AGRO');
@@ -527,6 +539,123 @@ void main() {
       // En modo oscuro cuando el home server está inactivo su icono debe tener color contrastante
       final homeIcon = tester.widget<Icon>(find.byIcon(ForumFaculty.defaultFaculties.first.icon).first);
       expect(homeIcon.color, const Color(0xFFDBDEE1));
+    });
+
+    testWidgets('Navbar no muestra el texto Red Estudiantil Autónoma', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AppShell(
+            activeAlias: 'EstudianteTest',
+            onAliasChanged: (_) {},
+            onToggleTheme: () {},
+            isDarkMode: false,
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Debe mostrar Comunidad y No Oficial
+      expect(find.textContaining('Comunidad'), findsWidgets);
+      expect(find.text('No Oficial'), findsOneWidget);
+
+      // NO debe mostrar Red Estudiantil Autónoma
+      expect(find.textContaining('Red Estudiantil Autónoma'), findsNothing);
+    });
+
+    testWidgets('Flujo de navegación para Normas Comunitarias y Preferencias permite ir y regresar correctamente', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AppShell(
+            activeAlias: 'EstudianteTest',
+            onAliasChanged: (_) {},
+            onToggleTheme: () {},
+            isDarkMode: false,
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // 1. Probar flujo de Normas
+      final rulesBtn = find.byTooltip('Normas y Descargo');
+      expect(rulesBtn, findsOneWidget);
+      await tester.tap(rulesBtn);
+      await tester.pumpAndSettle();
+
+      // Debe mostrar RulesScreen con su AppBar y botón de regresar
+      expect(find.byType(RulesScreen), findsOneWidget);
+      expect(find.text('Normas Comunitarias y Descargo'), findsOneWidget);
+      final backFromRules = find.byTooltip('Regresar');
+      expect(backFromRules, findsOneWidget);
+      await tester.tap(backFromRules);
+      await tester.pumpAndSettle();
+
+      // Regresa a AppShell
+      expect(find.byType(RulesScreen), findsNothing);
+      expect(find.byType(AppShell), findsOneWidget);
+
+      // 2. Probar flujo de Preferencias de Usuario (desde la barra inferior de perfil)
+      final settingsBtn = find.descendant(
+        of: find.byType(ForumChannelSidebar),
+        matching: find.byIcon(Icons.settings_outlined),
+      );
+      expect(settingsBtn, findsOneWidget);
+      await tester.tap(settingsBtn);
+      await tester.pumpAndSettle();
+
+      // Debe mostrar ProfileScreen con su AppBar y botón de regresar
+      expect(find.byType(ProfileScreen), findsOneWidget);
+      expect(find.text('Preferencias de Usuario'), findsOneWidget);
+      final backFromProfile = find.byTooltip('Regresar');
+      expect(backFromProfile, findsOneWidget);
+      await tester.tap(backFromProfile);
+      await tester.pumpAndSettle();
+
+      // Regresa a AppShell
+      expect(find.byType(ProfileScreen), findsNothing);
+      expect(find.byType(AppShell), findsOneWidget);
+    });
+
+    testWidgets('Todas las Carreras usa como símbolo el gorro de estudiante y el texto USAC', (tester) async {
+      final defaultRoot = ForumFaculty.defaultFaculties.first;
+      expect(defaultRoot.icon, Icons.school);
+      expect(defaultRoot.shortCode, 'USAC');
+
+      final carreraTodas = defaultRoot.careers.firstWhere((c) => c.id == 'todas');
+      expect(carreraTodas.name, 'Todas las Carreras');
+      expect(carreraTodas.shortCode, 'USAC');
+      expect(carreraTodas.icon, Icons.school);
+
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ForumScreen(
+            activeAlias: 'UsuarioUSAC',
+            onAliasChanged: (_) {},
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // En el riel, el botón de Todas las Facultades muestra el gorro escolar y USAC
+      final usacRailButton = find.descendant(
+        of: find.byType(ForumServerRail),
+        matching: find.text('USAC'),
+      );
+      expect(usacRailButton, findsOneWidget);
     });
   });
 }
