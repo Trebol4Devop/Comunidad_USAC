@@ -51,11 +51,10 @@ void main() {
       // En móvil muestra título 'Comunidad USAC' y 'No Oficial'
       expect(find.text('Comunidad USAC'), findsOneWidget);
       expect(find.text('No Oficial'), findsOneWidget);
-      expect(find.text('Red Estudiantil Autónoma'), findsOneWidget);
+      expect(find.text('Red Estudiantil Autónoma'), findsNothing);
 
-      // Alias activo visible en AliasBadgeButton
-      expect(find.byType(AliasBadgeButton), findsOneWidget);
-      expect(find.text('Estudiante #101'), findsOneWidget);
+      // Botón de perfil ya no se muestra en el navbar (se ubica en la barra inferior)
+      expect(find.byType(AliasBadgeButton), findsNothing);
 
       // Bottom NavigationBar en móvil
       expect(find.byType(NavigationBar), findsOneWidget);
@@ -171,7 +170,7 @@ void main() {
       expect(themeToggled, isTrue);
     });
 
-    testWidgets('Click en AliasBadgeButton navega hacia ProfileScreen', (tester) async {
+    testWidgets('Navbar no muestra botón de perfil duplicado', (tester) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -181,14 +180,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final aliasButton = find.byType(AliasBadgeButton);
-      expect(aliasButton, findsOneWidget);
-
-      await tester.tap(aliasButton);
-      await tester.pumpAndSettle();
-
-      // Debe abrir la pantalla ProfileScreen
-      expect(find.byType(ProfileScreen), findsOneWidget);
+      expect(find.byType(AliasBadgeButton), findsNothing);
     });
 
     testWidgets('Click en botón de normas navega hacia RulesScreen', (tester) async {
