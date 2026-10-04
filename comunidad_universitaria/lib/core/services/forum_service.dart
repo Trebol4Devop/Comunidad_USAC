@@ -866,11 +866,23 @@ class ForumService {
       ForumFaculty todasFaculty;
       if (todasIndex != -1) {
         final existingTodas = faculties.removeAt(todasIndex);
+        final baseCareers = existingTodas.careers.isNotEmpty ? existingTodas.careers : defaultRoot.careers;
+        final updatedCareers = baseCareers.map((c) {
+          if (c.id == 'todas') {
+            return c.copyWith(
+              name: 'Todas las Carreras',
+              shortCode: 'USAC',
+              icon: Icons.school,
+            );
+          }
+          return c;
+        }).toList();
+
         todasFaculty = existingTodas.copyWith(
           name: 'Todas las Facultades',
           shortCode: 'USAC',
-          icon: Icons.hub_rounded,
-          careers: existingTodas.careers.isNotEmpty ? existingTodas.careers : defaultRoot.careers,
+          icon: Icons.school,
+          careers: updatedCareers,
         );
       } else {
         todasFaculty = defaultRoot;

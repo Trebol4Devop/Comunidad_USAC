@@ -346,9 +346,9 @@ class ForumFaculty {
       careers: [
         ForumCareerItem(
           id: 'todas',
-          name: 'Todas las Carreras y Sedes',
-          shortCode: 'ALL',
-          icon: Icons.apps,
+          name: 'Todas las Carreras',
+          shortCode: 'USAC',
+          icon: Icons.school,
           facultadId: 'todas',
         ),
         ForumCareerItem(
@@ -826,6 +826,24 @@ class ForumCareerItem {
     required this.facultadId,
     this.codigo = '',
   });
+
+  ForumCareerItem copyWith({
+    String? id,
+    String? name,
+    String? shortCode,
+    IconData? icon,
+    String? facultadId,
+    String? codigo,
+  }) {
+    return ForumCareerItem(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      shortCode: shortCode ?? this.shortCode,
+      icon: icon ?? this.icon,
+      facultadId: facultadId ?? this.facultadId,
+      codigo: codigo ?? this.codigo,
+    );
+  }
 
   ForumServer toServer({required Color facultyColor}) {
     return ForumServer(

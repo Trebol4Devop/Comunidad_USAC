@@ -217,7 +217,7 @@ class _ForumServerRailState extends State<ForumServerRail> {
             width: 3,
             height: isActive ? 24 : (isExpandedOpen ? 12 : 0),
             decoration: BoxDecoration(
-              color: isDark ? Colors.white : const Color(0xFF004B87),
+              color: isDark ? const Color(0xFF0066CC) : const Color(0xFF004B87),
               borderRadius: const BorderRadius.horizontal(right: Radius.circular(3)),
             ),
           ),
@@ -324,7 +324,7 @@ class _ForumServerRailState extends State<ForumServerRail> {
               // 1. General USAC Home Server (Campus Central)
               Builder(
                 builder: (itemCtx) => Tooltip(
-                  message: '${homeFaculty.name}\nVer carreras',
+                  message: homeFaculty.name,
                   preferBelow: false,
                   child: _buildItemButton(
                     isActive: isHomeActive,
@@ -332,12 +332,28 @@ class _ForumServerRailState extends State<ForumServerRail> {
                     isDark: isDark,
                     isExpandedOpen: isHomeOpen,
                     onTap: () => _toggleFacultySubmenu(homeFaculty, itemCtx),
-                    child: Icon(
-                      homeFaculty.icon,
-                      color: isHomeActive
-                          ? Colors.white
-                          : (isDark ? const Color(0xFFDBDEE1) : theme.colorScheme.primary),
-                      size: 18,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.school,
+                          size: 15,
+                          color: isHomeActive
+                              ? Colors.white
+                              : (isDark ? const Color(0xFFDBDEE1) : theme.colorScheme.primary),
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          'USAC',
+                          style: TextStyle(
+                            fontSize: 7.0,
+                            fontWeight: FontWeight.bold,
+                            color: isHomeActive
+                                ? Colors.white
+                                : (isDark ? const Color(0xFFDBDEE1) : theme.colorScheme.primary),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -373,7 +389,7 @@ class _ForumServerRailState extends State<ForumServerRail> {
                       padding: const EdgeInsets.only(bottom: 6),
                       child: Builder(
                         builder: (itemCtx) => Tooltip(
-                          message: '${faculty.name}\nVer carreras',
+                          message: faculty.name,
                           preferBelow: false,
                           child: _buildItemButton(
                             isActive: isActive,
