@@ -7,7 +7,6 @@ import '../marketplace/screens/marketplace_screen.dart';
 import '../marketplace/widgets/create_listing_dialog.dart';
 import '../profile/screens/profile_screen.dart';
 import '../rules/screens/rules_screen.dart';
-import '../shared/widgets/alias_badge_button.dart';
 
 class AppShell extends StatefulWidget {
   final String activeAlias;
@@ -140,15 +139,6 @@ class _AppShellState extends State<AppShell> {
                         ),
                       ],
                     ),
-                    Text(
-                      'Red Estudiantil Autónoma',
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
-                        color: isDesktop ? Colors.grey.shade500 : theme.colorScheme.primary,
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -161,13 +151,6 @@ class _AppShellState extends State<AppShell> {
             icon: const Icon(Icons.shield_outlined, size: 20),
             tooltip: 'Normas y Descargo',
             onPressed: _navigateToRules,
-          ),
-
-          // User Alias Pill that links directly to Profile
-          AliasBadgeButton(
-            alias: widget.activeAlias,
-            onAliasChanged: widget.onAliasChanged,
-            onTap: _navigateToProfile,
           ),
           const SizedBox(width: 4),
 
@@ -276,7 +259,7 @@ class _AppShellState extends State<AppShell> {
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
-              color: isSelected ? (widget.isDarkMode ? const Color(0xFF5865F2) : theme.colorScheme.primary) : Colors.transparent,
+              color: isSelected ? theme.colorScheme.primary : Colors.transparent,
               width: 3,
             ),
           ),

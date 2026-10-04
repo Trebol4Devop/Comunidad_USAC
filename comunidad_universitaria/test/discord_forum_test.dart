@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:comunidad_universitaria/features/forum/models/discord_forum_models.dart';
 import 'package:comunidad_universitaria/features/forum/screens/forum_screen.dart';
 import 'package:comunidad_universitaria/features/forum/widgets/discord/forum_channel_sidebar.dart';
 import 'package:comunidad_universitaria/features/forum/widgets/discord/forum_server_rail.dart';
+import 'package:comunidad_universitaria/features/navigation/app_shell.dart';
+import 'package:comunidad_universitaria/features/rules/screens/rules_screen.dart';
+import 'package:comunidad_universitaria/features/profile/screens/profile_screen.dart';
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({'usac_forum_alias': 'EstudianteTest'});
+  });
   group('Discord Forum Models & Architecture', () {
     test('ForumServer.defaultServers define servidores oficiales por carrera y facultad', () {
       final servers = ForumServer.defaultServers;
@@ -22,19 +29,41 @@ void main() {
       expect(hasDerecho, isTrue);
     });
 
-    test('ForumChannel.defaultChannels define canales temáticos estructurados estilo Discord', () {
+    test('ForumChannel.defaultChannels define canales temáticos estructurados estilo Discord alineados a categorias_foro', () {
       final channels = ForumChannel.defaultChannels;
       expect(channels.length, greaterThanOrEqualTo(5));
 
-      final hasTodos = channels.any((c) => c.name == 'todos-los-temas');
-      final hasDudas = channels.any((c) => c.name == 'dudas-y-pensum');
-      final hasCatedraticos = channels.any((c) => c.name == 'catedraticos-opiniones');
-      final hasApuntes = channels.any((c) => c.name == 'apuntes-y-recursos');
+      final hasTodos = channels.any((c) => c.name == 'todos-los-temas' && c.categoryId == 'todos');
+      final hasDudas = channels.any((c) => c.name == 'dudas-y-pensum' && c.categoryId == 'prerrequisitos');
+      final hasCatedraticos = channels.any((c) => c.name == 'catedraticos-opiniones' && c.categoryId == 'catedraticos');
+      final hasApuntes = channels.any((c) => c.name == 'apuntes-y-recursos' && c.categoryId == 'apuntes');
+      final hasHorarios = channels.any((c) => c.name == 'horarios-y-secciones' && c.categoryId == 'horarios');
+      final hasGeneral = channels.any((c) => c.name == 'charla-general' && c.categoryId == 'general');
 
       expect(hasTodos, isTrue);
       expect(hasDudas, isTrue);
       expect(hasCatedraticos, isTrue);
       expect(hasApuntes, isTrue);
+      expect(hasHorarios, isTrue);
+      expect(hasGeneral, isTrue);
+    });
+
+    test('ForumServer y ForumChannel no contienen datos simulados ni conteos mock', () {
+      // 1. Servidores sin conteos de miembros inventados
+      for (final s in ForumServer.defaultServers) {
+        expect(s.memberCount, isNull, reason: 'El servidor ${s.id} no debe tener memberCount inventado/simulado');
+      }
+
+      // 2. Área común debe coincidir con la DB (facultadId = todas)
+      final areaComun = ForumServer.defaultServers.firstWhere((s) => s.id == 'area_comun');
+      expect(areaComun.facultadId, equals('todas'), reason: 'En public.carreras, area_comun pertenece a facultad_id = todas');
+
+      // 3. fromDbCategory mapea correctamente registros de DB
+      final cat = ForumChannel.fromDbCategory(id: 'prerrequisitos', nombre: 'Prerrequisitos & Pensum');
+      expect(cat.id, 'prerrequisitos');
+      expect(cat.name, 'dudas-y-pensum');
+      expect(cat.label, 'Prerrequisitos & Pensum');
+      expect(cat.categoryId, 'prerrequisitos');
     });
   });
 
@@ -136,21 +165,27 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // Por defecto el servidor activo es Sistemas
-      expect(find.text('Ingeniería en Sistemas'), findsOneWidget);
+      // Por defecto el servidor activo de hasta arriba es Todas las Facultades
+      expect(find.text('Todas las Facultades'), findsOneWidget);
 
-      // Tocamos el ícono del primer servidor en el riel (Campus Central / USAC General)
-      final campusCentralIcon = find.descendant(
+      // Tocamos la facultad de Agronomía (AGRO) en el riel
+      final agroIcon = find.descendant(
         of: find.byType(ForumServerRail),
-        matching: find.byIcon(Icons.school),
+        matching: find.text('AGRO'),
       );
-      expect(campusCentralIcon, findsOneWidget);
-      await tester.tap(campusCentralIcon);
+      expect(agroIcon, findsOneWidget);
+      await tester.tap(agroIcon);
       await tester.pumpAndSettle();
 
-      // El servidor activo en la barra lateral debe ser ahora Campus Central
-      expect(find.text('Campus Central'), findsOneWidget);
-      expect(find.textContaining('Campus Central ·'), findsOneWidget);
+      // Mientras está abierto el submenú, el área de mensajes y barra lateral mantienen lo actual
+      expect(find.text('Todas las Facultades'), findsOneWidget);
+
+      // Tocamos la carrera PROD
+      await tester.tap(find.text('PROD'));
+      await tester.pumpAndSettle();
+
+      // El servidor activo en la barra lateral debe ser ahora Sistemas de Producción Agrícola
+      expect(find.text('Sistemas de Producción Agrícola'), findsOneWidget);
     });
 
     testWidgets('Abre el diálogo de exploración de carreras y permite filtrar por texto', (tester) async {
@@ -277,7 +312,7 @@ void main() {
       expect(find.text('No tienes publicaciones guardadas'), findsOneWidget);
     });
 
-    testWidgets('Permite abrir modal de cambio de alias desde la barra inferior de perfil', (tester) async {
+    testWidgets('Permite abrir pantalla de Preferencias desde la barra inferior de perfil del foro', (tester) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -293,18 +328,23 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // Botón de editar seudónimo en la barra inferior del sidebar
-      final editAliasBtn = find.descendant(
+      // Botón de preferencias en la barra inferior del sidebar
+      final settingsBtn = find.descendant(
         of: find.byType(ForumChannelSidebar),
-        matching: find.byIcon(Icons.edit_outlined),
+        matching: find.byIcon(Icons.settings_outlined),
       );
-      expect(editAliasBtn, findsOneWidget);
-      await tester.tap(editAliasBtn);
+      expect(settingsBtn, findsOneWidget);
+      await tester.tap(settingsBtn);
       await tester.pumpAndSettle();
 
-      // Debe abrir el AliasModal
-      expect(find.text('Tu Seudónimo Estudiantil'), findsOneWidget);
-      expect(find.text('Guardar Alias'), findsOneWidget);
+      // Debe abrir la pantalla de Preferencias de Usuario con su AppBar y campo de seudónimo
+      expect(find.text('Preferencias de Usuario'), findsOneWidget);
+      expect(find.byTooltip('Regresar'), findsOneWidget);
+
+      // Tocar regresar debe volver al foro
+      await tester.tap(find.byTooltip('Regresar'));
+      await tester.pumpAndSettle();
+      expect(find.text('Preferencias de Usuario'), findsNothing);
     });
 
     testWidgets('Muestra solo las facultades en el riel de servidores y despliega submenú flotante de carreras', (tester) async {
@@ -358,6 +398,264 @@ void main() {
       // El submenú flotante se cierra y el servidor activo pasa a ser la carrera seleccionada
       expect(find.text('PROD'), findsNothing);
       expect(find.text('Sistemas de Producción Agrícola'), findsOneWidget);
+    });
+
+    testWidgets('El servidor de hasta arriba es Todas las Facultades y el hero de bienvenida no duplica el nombre del servidor', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ForumScreen(
+            activeAlias: 'EstudianteTopServer',
+            onAliasChanged: (_) {},
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // El servidor de hasta arriba por defecto es Todas las Facultades
+      expect(find.text('Todas las Facultades'), findsOneWidget);
+
+      // El hero no debe duplicar "Todas las Facultades · "
+      expect(find.textContaining('Todas las Facultades ·'), findsNothing);
+
+      // No debe contener "(Toca para ver carreras)"
+      expect(find.textContaining('(Toca para ver carreras)'), findsNothing);
+    });
+
+    testWidgets('Al abrir submenú mantiene visible el contenido actual y cambia solo al seleccionar subservidor', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ForumScreen(
+            activeAlias: 'TesterSubmenu',
+            onAliasChanged: (_) {},
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Abrimos la facultad de Arquitectura (ARQ)
+      final arqFinder = find.descendant(
+        of: find.byType(ForumServerRail),
+        matching: find.text('ARQ'),
+      );
+      expect(arqFinder, findsOneWidget);
+      await tester.tap(arqFinder);
+      await tester.pumpAndSettle();
+
+      // El área central y sidebar mantienen lo que está actualmente sin cambiar
+      expect(find.text('Todas las Facultades'), findsOneWidget);
+
+      // Si tocamos afuera (en el scaffold) para cerrar el submenú sin elegir carrera
+      await tester.tapAt(const Offset(500, 300));
+      await tester.pumpAndSettle();
+
+      // Sigue estando intacto en Todas las Facultades
+      expect(find.text('Todas las Facultades'), findsOneWidget);
+    });
+
+    testWidgets('ForumServerRail posiciona siempre Todas las Facultades al inicio aunque la lista venga desordenada', (tester) async {
+      final scrambledFaculties = [
+        const ForumFaculty(
+          id: '01',
+          name: 'Facultad de Agronomía',
+          shortCode: 'AGRO',
+          icon: Icons.grass,
+          color: Color(0xFF16A34A),
+          careers: [],
+        ),
+        const ForumFaculty(
+          id: '02',
+          name: 'Facultad de Arquitectura',
+          shortCode: 'ARQ',
+          icon: Icons.architecture,
+          color: Color(0xFF059669),
+          careers: [],
+        ),
+        const ForumFaculty(
+          id: 'todas',
+          name: 'Todas las Facultades',
+          shortCode: 'USAC',
+          icon: Icons.school,
+          color: Color(0xFF004B87),
+          careers: [],
+        ),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ForumServerRail(
+              servers: ForumServer.defaultServers,
+              activeServer: ForumServer.defaultServers.first,
+              faculties: scrambledFaculties,
+              onSelectServer: (_) {},
+              onAddServer: (_) {},
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Tooltip del home server debe ser Todas las Facultades
+      expect(find.byTooltip('Todas las Facultades'), findsOneWidget);
+
+      // 'todas' no debe estar duplicado ni al final en la lista de otras facultades
+      final agroFinder = find.text('AGRO');
+      final arqFinder = find.text('ARQ');
+      expect(agroFinder, findsOneWidget);
+      expect(arqFinder, findsOneWidget);
+    });
+
+    testWidgets('Modo oscuro renderiza elementos del foro con contraste accesible', (tester) async {
+      final foreignServer = ForumServer.defaultServers.firstWhere((s) => s.facultadId != 'todas');
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData.dark(),
+          home: Scaffold(
+            body: ForumServerRail(
+              servers: ForumServer.defaultServers,
+              activeServer: foreignServer, // Servidor de otra facultad para que el home esté inactivo
+              faculties: ForumFaculty.defaultFaculties,
+              onSelectServer: (_) {},
+              onAddServer: (_) {},
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // En modo oscuro cuando el home server está inactivo su icono debe tener color contrastante
+      final homeIcon = tester.widget<Icon>(find.byIcon(ForumFaculty.defaultFaculties.first.icon).first);
+      expect(homeIcon.color, const Color(0xFFDBDEE1));
+    });
+
+    testWidgets('Navbar no muestra el texto Red Estudiantil Autónoma', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AppShell(
+            activeAlias: 'EstudianteTest',
+            onAliasChanged: (_) {},
+            onToggleTheme: () {},
+            isDarkMode: false,
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Debe mostrar Comunidad y No Oficial
+      expect(find.textContaining('Comunidad'), findsWidgets);
+      expect(find.text('No Oficial'), findsOneWidget);
+
+      // NO debe mostrar Red Estudiantil Autónoma
+      expect(find.textContaining('Red Estudiantil Autónoma'), findsNothing);
+    });
+
+    testWidgets('Flujo de navegación para Normas Comunitarias y Preferencias permite ir y regresar correctamente', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AppShell(
+            activeAlias: 'EstudianteTest',
+            onAliasChanged: (_) {},
+            onToggleTheme: () {},
+            isDarkMode: false,
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // 1. Probar flujo de Normas
+      final rulesBtn = find.byTooltip('Normas y Descargo');
+      expect(rulesBtn, findsOneWidget);
+      await tester.tap(rulesBtn);
+      await tester.pumpAndSettle();
+
+      // Debe mostrar RulesScreen con su AppBar y botón de regresar
+      expect(find.byType(RulesScreen), findsOneWidget);
+      expect(find.text('Normas Comunitarias y Descargo'), findsOneWidget);
+      final backFromRules = find.byTooltip('Regresar');
+      expect(backFromRules, findsOneWidget);
+      await tester.tap(backFromRules);
+      await tester.pumpAndSettle();
+
+      // Regresa a AppShell
+      expect(find.byType(RulesScreen), findsNothing);
+      expect(find.byType(AppShell), findsOneWidget);
+
+      // 2. Probar flujo de Preferencias de Usuario (desde la barra inferior de perfil)
+      final settingsBtn = find.descendant(
+        of: find.byType(ForumChannelSidebar),
+        matching: find.byIcon(Icons.settings_outlined),
+      );
+      expect(settingsBtn, findsOneWidget);
+      await tester.tap(settingsBtn);
+      await tester.pumpAndSettle();
+
+      // Debe mostrar ProfileScreen con su AppBar y botón de regresar
+      expect(find.byType(ProfileScreen), findsOneWidget);
+      expect(find.text('Preferencias de Usuario'), findsOneWidget);
+      final backFromProfile = find.byTooltip('Regresar');
+      expect(backFromProfile, findsOneWidget);
+      await tester.tap(backFromProfile);
+      await tester.pumpAndSettle();
+
+      // Regresa a AppShell
+      expect(find.byType(ProfileScreen), findsNothing);
+      expect(find.byType(AppShell), findsOneWidget);
+    });
+
+    testWidgets('Todas las Carreras usa como símbolo el gorro de estudiante y el texto USAC', (tester) async {
+      final defaultRoot = ForumFaculty.defaultFaculties.first;
+      expect(defaultRoot.icon, Icons.school);
+      expect(defaultRoot.shortCode, 'USAC');
+
+      final carreraTodas = defaultRoot.careers.firstWhere((c) => c.id == 'todas');
+      expect(carreraTodas.name, 'Todas las Carreras');
+      expect(carreraTodas.shortCode, 'USAC');
+      expect(carreraTodas.icon, Icons.school);
+
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ForumScreen(
+            activeAlias: 'UsuarioUSAC',
+            onAliasChanged: (_) {},
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // En el riel, el botón de Todas las Facultades muestra el gorro escolar y USAC
+      final usacRailButton = find.descendant(
+        of: find.byType(ForumServerRail),
+        matching: find.text('USAC'),
+      );
+      expect(usacRailButton, findsOneWidget);
     });
   });
 }

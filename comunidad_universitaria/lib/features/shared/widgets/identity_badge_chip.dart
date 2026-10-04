@@ -47,7 +47,7 @@ class IdentityBadgeChip extends StatelessWidget {
                 borderRadius: BorderRadius.circular(6),
               ),
               child: const Icon(
-                Icons.masks_outlined,
+                Icons.person_outline,
                 size: 16,
                 color: Color(0xFF64748B),
               ),
@@ -61,7 +61,7 @@ class IdentityBadgeChip extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        'Publicando como: ',
+                        'Autor: ',
                         style: TextStyle(
                           fontSize: 11,
                           color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
@@ -94,7 +94,7 @@ class IdentityBadgeChip extends StatelessWidget {
                       const SizedBox(width: 5),
                       Flexible(
                         child: Text(
-                          'Modo Anónimo · Identidad protegida',
+                          'Perfil Estudiantil',
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w500,
@@ -176,7 +176,7 @@ class IdentityBadgeChip extends StatelessWidget {
                     spacing: 4,
                     children: [
                       Text(
-                        'Publicando con tu perfil: ',
+                        'Vendedor: ',
                         style: TextStyle(
                           fontSize: 11,
                           color: isDark ? Colors.grey.shade300 : const Color(0xFF065F46),

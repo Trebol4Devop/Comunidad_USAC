@@ -327,15 +327,23 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     final theme = Theme.of(context);
     final isDesktop = Responsive.isDesktop(context);
 
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1000),
+      appBar: AppBar(
+        title: const Text('Preferencias de Usuario'),
+        leading: Navigator.of(context).canPop()
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                tooltip: 'Regresar',
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1000),
             child: Padding(
               padding: EdgeInsets.symmetric(
                 horizontal: isDesktop ? 32 : 16,
@@ -507,7 +515,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                           child: Text(
                             isAuthenticated
                                 ? 'Cuenta Verificada · $userEmail'
-                                : 'Modo Anónimo Protegido',
+                                : 'Perfil Estudiantil',
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: 11,
@@ -608,7 +616,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                       const SizedBox(height: 2),
                       Text(
                         (_profile?.isCarneVerified ?? false)
-                            ? 'Tu nombre y badge de verificado se muestran en Marketplace. En el Foro sigues 100% anónimo.'
+                            ? 'Tu nombre y badge de verificado se muestran en Marketplace. En el Foro se mantiene tu perfil estudiantil.'
                             : 'Solo consultaremos tu nombre y estado activo en Registro y Estadística. Tus notas y datos personales privados nunca son leídos ni almacenados.',
                         style: TextStyle(
                           fontSize: 10.5,
@@ -1361,7 +1369,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (ctx) => const Scaffold(body: RulesScreen())),
+                MaterialPageRoute(builder: (ctx) => const RulesScreen()),
               );
             },
           ),

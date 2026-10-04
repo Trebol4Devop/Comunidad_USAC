@@ -9,7 +9,7 @@ class ForumServer {
   final String carreraId;
   final String description;
   final Color color;
-  final int memberCount;
+  final int? memberCount;
 
   const ForumServer({
     required this.id,
@@ -20,32 +20,30 @@ class ForumServer {
     required this.carreraId,
     required this.description,
     this.color = const Color(0xFF004B87),
-    this.memberCount = 1250,
+    this.memberCount,
   });
 
-  /// Popular predefined servers across USAC faculties
+  /// Popular predefined servers across USAC faculties aligned with database
   static const List<ForumServer> defaultServers = [
     ForumServer(
       id: 'todas',
-      name: 'Campus Central',
+      name: 'Todas las Facultades',
       shortCode: 'USAC',
       icon: Icons.school,
       facultadId: 'todas',
       carreraId: 'todas',
       description: 'Espacio general para todas las facultades, escuelas y sedes.',
       color: Color(0xFF004B87),
-      memberCount: 8520,
     ),
     ForumServer(
       id: 'area_comun',
       name: 'Área Común',
       shortCode: 'BAS',
       icon: Icons.auto_stories,
-      facultadId: '08',
+      facultadId: 'todas',
       carreraId: 'area_comun',
       description: 'Ciencias básicas, matemáticas, físicas y químicas de primeros semestres.',
       color: Color(0xFF2563EB),
-      memberCount: 4120,
     ),
     ForumServer(
       id: 'sistemas',
@@ -56,7 +54,6 @@ class ForumServer {
       carreraId: 'sistemas',
       description: 'Escuela de Ciencias y Sistemas. Programación, proyectos y tecnología.',
       color: Color(0xFF0284C7),
-      memberCount: 3240,
     ),
     ForumServer(
       id: 'civil',
@@ -67,7 +64,6 @@ class ForumServer {
       carreraId: 'civil',
       description: 'Estructuras, topografía, materiales y diseño vial.',
       color: Color(0xFFD97706),
-      memberCount: 2190,
     ),
     ForumServer(
       id: 'industrial',
@@ -78,7 +74,6 @@ class ForumServer {
       carreraId: 'industrial',
       description: 'Producción, logística, procesos y operaciones.',
       color: Color(0xFFEA580C),
-      memberCount: 1980,
     ),
     ForumServer(
       id: 'medicina',
@@ -89,7 +84,6 @@ class ForumServer {
       carreraId: '05-00-01',
       description: 'Anatomía, fisiología, materias clínicas e internado.',
       color: Color(0xFFDC2626),
-      memberCount: 3410,
     ),
     ForumServer(
       id: 'derecho',
@@ -100,7 +94,6 @@ class ForumServer {
       carreraId: '04-00-01',
       description: 'Leyes, doctrina, ramas del derecho y clínicas jurídicas.',
       color: Color(0xFF7C3AED),
-      memberCount: 3890,
     ),
     ForumServer(
       id: 'arquitectura',
@@ -111,7 +104,6 @@ class ForumServer {
       carreraId: '02-00-01',
       description: 'Arquitectura, diseño, talleres y proyectos.',
       color: Color(0xFF059669),
-      memberCount: 1670,
     ),
     ForumServer(
       id: 'economicas',
@@ -122,7 +114,6 @@ class ForumServer {
       carreraId: '03-00-01',
       description: 'Auditoría, administración, contabilidad y finanzas.',
       color: Color(0xFF0D9488),
-      memberCount: 2950,
     ),
     ForumServer(
       id: 'agronomia',
@@ -133,7 +124,6 @@ class ForumServer {
       carreraId: '01-00-02',
       description: 'Recursos naturales, producción agrícola y gestión ambiental.',
       color: Color(0xFF16A34A),
-      memberCount: 1120,
     ),
   ];
 }
@@ -141,6 +131,7 @@ class ForumServer {
 class ForumChannel {
   final String id;
   final String name;
+  final String label;
   final String categoryId;
   final IconData icon;
   final String description;
@@ -149,17 +140,89 @@ class ForumChannel {
   const ForumChannel({
     required this.id,
     required this.name,
+    this.label = '',
     required this.categoryId,
     required this.icon,
     required this.description,
     this.isSpecial = false,
   });
 
-  /// Default text channels inside each Carrera server
+  /// Factory that builds a ForumChannel directly from a `categorias_foro` database record
+  static ForumChannel fromDbCategory({required String id, required String nombre}) {
+    switch (id) {
+      case 'todos':
+        return ForumChannel(
+          id: id,
+          name: 'todos-los-temas',
+          label: nombre,
+          categoryId: id,
+          icon: Icons.tag,
+          description: 'Visualiza todas las consultas y aportes de esta carrera en un solo lugar.',
+        );
+      case 'prerrequisitos':
+        return ForumChannel(
+          id: id,
+          name: 'dudas-y-pensum',
+          label: nombre,
+          categoryId: id,
+          icon: Icons.school_outlined,
+          description: 'Consultas sobre créditos, asignaciones, prerrequisitos y cierre de pensum.',
+        );
+      case 'catedraticos':
+        return ForumChannel(
+          id: id,
+          name: 'catedraticos-opiniones',
+          label: nombre,
+          categoryId: id,
+          icon: Icons.record_voice_over_outlined,
+          description: 'Experiencias, recomendaciones y estilo de evaluación de docentes y auxiliares.',
+        );
+      case 'apuntes':
+        return ForumChannel(
+          id: id,
+          name: 'apuntes-y-recursos',
+          label: nombre,
+          categoryId: id,
+          icon: Icons.folder_shared_outlined,
+          description: 'Material de estudio, resúmenes, parciales pasados, libros y guías de laboratorio.',
+        );
+      case 'horarios':
+        return ForumChannel(
+          id: id,
+          name: 'horarios-y-secciones',
+          label: nombre,
+          categoryId: id,
+          icon: Icons.schedule_outlined,
+          description: 'Información de traslapes, cupos, secciones y asignación de laboratorios.',
+        );
+      case 'general':
+        return ForumChannel(
+          id: id,
+          name: 'charla-general',
+          label: nombre,
+          categoryId: id,
+          icon: Icons.chat_bubble_outline,
+          description: 'Cafetería estudiantil, avisos generales y vida universitaria en la carrera.',
+        );
+      default:
+        final slug = id.replaceAll('_', '-').toLowerCase();
+        return ForumChannel(
+          id: id,
+          name: slug,
+          label: nombre,
+          categoryId: id,
+          icon: Icons.tag,
+          description: nombre,
+        );
+    }
+  }
+
+  /// Default text channels inside each Carrera server based on DB `categorias_foro`
   static const List<ForumChannel> defaultChannels = [
     ForumChannel(
       id: 'todos',
       name: 'todos-los-temas',
+      label: 'Todas las áreas',
       categoryId: 'todos',
       icon: Icons.tag,
       description: 'Visualiza todas las consultas y aportes de esta carrera en un solo lugar.',
@@ -167,6 +230,7 @@ class ForumChannel {
     ForumChannel(
       id: 'prerrequisitos',
       name: 'dudas-y-pensum',
+      label: 'Prerrequisitos & Pensum',
       categoryId: 'prerrequisitos',
       icon: Icons.school_outlined,
       description: 'Consultas sobre créditos, asignaciones, prerrequisitos y cierre de pensum.',
@@ -174,6 +238,7 @@ class ForumChannel {
     ForumChannel(
       id: 'catedraticos',
       name: 'catedraticos-opiniones',
+      label: 'Catedráticos & Auxiliares',
       categoryId: 'catedraticos',
       icon: Icons.record_voice_over_outlined,
       description: 'Experiencias, recomendaciones y estilo de evaluación de docentes y auxiliares.',
@@ -181,6 +246,7 @@ class ForumChannel {
     ForumChannel(
       id: 'apuntes',
       name: 'apuntes-y-recursos',
+      label: 'Apuntes & Exámenes',
       categoryId: 'apuntes',
       icon: Icons.folder_shared_outlined,
       description: 'Material de estudio, resúmenes, parciales pasados, libros y guías de laboratorio.',
@@ -188,6 +254,7 @@ class ForumChannel {
     ForumChannel(
       id: 'horarios',
       name: 'horarios-y-secciones',
+      label: 'Horarios & Secciones',
       categoryId: 'horarios',
       icon: Icons.schedule_outlined,
       description: 'Información de traslapes, cupos, secciones y asignación de laboratorios.',
@@ -195,6 +262,7 @@ class ForumChannel {
     ForumChannel(
       id: 'general',
       name: 'charla-general',
+      label: 'Consultas Generales',
       categoryId: 'general',
       icon: Icons.chat_bubble_outline,
       description: 'Cafetería estudiantil, avisos generales y vida universitaria en la carrera.',
@@ -204,6 +272,7 @@ class ForumChannel {
   static const ForumChannel bookmarksChannel = ForumChannel(
     id: 'bookmarks',
     name: 'mis-guardados',
+    label: 'Marcadores',
     categoryId: 'bookmarks',
     icon: Icons.bookmark_outline,
     description: 'Publicaciones y recursos que has guardado en tus marcadores.',
@@ -228,10 +297,28 @@ class ForumFaculty {
     required this.careers,
   });
 
+  ForumFaculty copyWith({
+    String? id,
+    String? name,
+    String? shortCode,
+    IconData? icon,
+    Color? color,
+    List<ForumCareerItem>? careers,
+  }) {
+    return ForumFaculty(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      shortCode: shortCode ?? this.shortCode,
+      icon: icon ?? this.icon,
+      color: color ?? this.color,
+      careers: careers ?? this.careers,
+    );
+  }
+
   ForumServer toGeneralServer() {
     return ForumServer(
       id: id == 'todas' ? 'todas' : 'fac_$id',
-      name: id == 'todas' ? 'Campus Central' : name,
+      name: id == 'todas' ? 'Todas las Facultades' : name,
       shortCode: shortCode,
       icon: icon,
       facultadId: id,
@@ -252,21 +339,21 @@ class ForumFaculty {
   static const List<ForumFaculty> defaultFaculties = [
     ForumFaculty(
       id: 'todas',
-      name: 'Campus Central · USAC',
+      name: 'Todas las Facultades',
       shortCode: 'USAC',
       icon: Icons.school,
       color: Color(0xFF004B87),
       careers: [
         ForumCareerItem(
           id: 'todas',
-          name: 'Todas las Carreras y Sedes',
-          shortCode: 'ALL',
-          icon: Icons.apps,
+          name: 'Todas las Carreras',
+          shortCode: 'USAC',
+          icon: Icons.school,
           facultadId: 'todas',
         ),
         ForumCareerItem(
           id: 'area_comun',
-          name: 'Área Común / Cursos Básicos',
+          name: 'Área Común',
           shortCode: 'BAS',
           icon: Icons.auto_stories,
           facultadId: 'todas',
@@ -342,7 +429,7 @@ class ForumFaculty {
       careers: [
         ForumCareerItem(
           id: '03-00-01',
-          name: 'Contaduría Pública y Auditoría (CPA)',
+          name: 'Contaduría Pública y Auditoría',
           shortCode: 'CPA',
           icon: Icons.calculate,
           facultadId: '03',
@@ -393,7 +480,7 @@ class ForumFaculty {
       careers: [
         ForumCareerItem(
           id: '04-00-01',
-          name: 'Ciencias Jurídicas y Sociales (Abogacía)',
+          name: 'Ciencias Jurídicas y Sociales',
           shortCode: 'ABOG',
           icon: Icons.balance,
           facultadId: '04',
@@ -739,6 +826,24 @@ class ForumCareerItem {
     required this.facultadId,
     this.codigo = '',
   });
+
+  ForumCareerItem copyWith({
+    String? id,
+    String? name,
+    String? shortCode,
+    IconData? icon,
+    String? facultadId,
+    String? codigo,
+  }) {
+    return ForumCareerItem(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      shortCode: shortCode ?? this.shortCode,
+      icon: icon ?? this.icon,
+      facultadId: facultadId ?? this.facultadId,
+      codigo: codigo ?? this.codigo,
+    );
+  }
 
   ForumServer toServer({required Color facultyColor}) {
     return ForumServer(

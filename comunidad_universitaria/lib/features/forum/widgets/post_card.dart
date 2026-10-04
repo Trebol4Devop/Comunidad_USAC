@@ -106,12 +106,16 @@ class PostCard extends StatelessWidget {
               if (post.isPinned) ...[
                 Row(
                   children: [
-                    const Icon(Icons.push_pin, size: 14, color: Color(0xFF004B87)),
+                    Icon(
+                      Icons.push_pin,
+                      size: 14,
+                      color: theme.colorScheme.primary,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       'Publicación Fijada',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF004B87),
+                        color: theme.colorScheme.primary,
                         fontWeight: FontWeight.bold,
                         fontSize: 11,
                       ),
@@ -287,7 +291,11 @@ class PostCard extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.poll_outlined, size: 16, color: Color(0xFF004B87)),
+                          Icon(
+                            Icons.poll_outlined,
+                            size: 16,
+                            color: theme.colorScheme.primary,
+                          ),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
@@ -317,7 +325,9 @@ class PostCard extends StatelessWidget {
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: isMyVote ? const Color(0xFF004B87) : Colors.grey.shade300,
+                                  color: isMyVote
+                                      ? theme.colorScheme.primary
+                                      : (isDark ? const Color(0xFF334155) : Colors.grey.shade300),
                                   width: isMyVote ? 1.5 : 1.0,
                                 ),
                               ),
@@ -330,8 +340,12 @@ class PostCard extends StatelessWidget {
                                         widthFactor: percent,
                                         child: Container(
                                           color: isMyVote
-                                              ? const Color(0xFF004B87).withValues(alpha: 0.22)
-                                              : Colors.grey.withValues(alpha: 0.15),
+                                              ? (isDark
+                                                  ? const Color(0xFF3B82F6).withValues(alpha: 0.35)
+                                                  : const Color(0xFF004B87).withValues(alpha: 0.22))
+                                              : (isDark
+                                                  ? Colors.white.withValues(alpha: 0.1)
+                                                  : Colors.grey.withValues(alpha: 0.15)),
                                         ),
                                       ),
                                     Padding(
@@ -343,7 +357,11 @@ class PostCard extends StatelessWidget {
                                             child: Row(
                                               children: [
                                                 if (isMyVote) ...[
-                                                  const Icon(Icons.check_circle, size: 14, color: Color(0xFF004B87)),
+                                                  Icon(
+                                                    Icons.check_circle,
+                                                    size: 14,
+                                                    color: theme.colorScheme.primary,
+                                                  ),
                                                   const SizedBox(width: 6),
                                                 ],
                                                 Flexible(
@@ -365,7 +383,9 @@ class PostCard extends StatelessWidget {
                                               style: TextStyle(
                                                 fontSize: 11,
                                                 fontWeight: FontWeight.w600,
-                                                color: isMyVote ? const Color(0xFF004B87) : Colors.grey.shade600,
+                                                color: isMyVote
+                                                    ? (isDark ? const Color(0xFF93C5FD) : const Color(0xFF004B87))
+                                                    : (isDark ? Colors.grey.shade400 : Colors.grey.shade600),
                                               ),
                                             ),
                                         ],
@@ -424,7 +444,7 @@ class PostCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
                         color: post.isLikedByMe
-                            ? (isDark ? const Color(0xFF5865F2).withValues(alpha: 0.2) : theme.colorScheme.primary.withValues(alpha: 0.12))
+                            ? theme.colorScheme.primary.withValues(alpha: isDark ? 0.25 : 0.12)
                             : (isDark ? const Color(0xFF1E1F22) : const Color(0xFFF1F5F9)),
                         borderRadius: BorderRadius.circular(20),
                       ),
@@ -435,7 +455,7 @@ class PostCard extends StatelessWidget {
                             post.isLikedByMe ? Icons.thumb_up : Icons.thumb_up_alt_outlined,
                             size: 15,
                             color: post.isLikedByMe
-                                ? (isDark ? const Color(0xFF5865F2) : theme.colorScheme.primary)
+                                ? theme.colorScheme.primary
                                 : (isDark ? Colors.grey.shade400 : Colors.grey.shade600),
                           ),
                           const SizedBox(width: 6),
@@ -445,7 +465,7 @@ class PostCard extends StatelessWidget {
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                               color: post.isLikedByMe
-                                  ? (isDark ? const Color(0xFF5865F2) : theme.colorScheme.primary)
+                                  ? theme.colorScheme.primary
                                   : (isDark ? Colors.grey.shade300 : Colors.grey.shade700),
                             ),
                           ),

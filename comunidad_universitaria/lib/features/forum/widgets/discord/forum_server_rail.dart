@@ -5,6 +5,7 @@ import 'forum_carrera_picker_dialog.dart';
 class ForumServerRail extends StatefulWidget {
   final List<ForumServer> servers;
   final ForumServer activeServer;
+  final List<ForumFaculty>? faculties;
   final Function(ForumServer) onSelectServer;
   final Function(ForumServer) onAddServer;
 
@@ -12,6 +13,7 @@ class ForumServerRail extends StatefulWidget {
     super.key,
     required this.servers,
     required this.activeServer,
+    this.faculties,
     required this.onSelectServer,
     required this.onAddServer,
   });
@@ -94,11 +96,8 @@ class _ForumServerRailState extends State<ForumServerRail> {
       _submenuTop = 10.0;
     }
 
-    // Seleccionamos la facultad en el servidor activo si no estaba activa
-    if (widget.activeServer.facultadId != faculty.id) {
-      widget.onSelectServer(faculty.toGeneralServer());
-    }
-
+    // Solo desplegamos el submenú de subservidores.
+    // La pantalla del foro mantiene intacto el servidor actual hasta que se seleccione el nuevo.
     setState(() {
       _openFaculty = faculty;
     });
@@ -218,7 +217,7 @@ class _ForumServerRailState extends State<ForumServerRail> {
             width: 3,
             height: isActive ? 24 : (isExpandedOpen ? 12 : 0),
             decoration: BoxDecoration(
-              color: isDark ? Colors.white : const Color(0xFF004B87),
+              color: isDark ? const Color(0xFF0066CC) : const Color(0xFF004B87),
               borderRadius: const BorderRadius.horizontal(right: Radius.circular(3)),
             ),
           ),
@@ -265,9 +264,12 @@ class _ForumServerRailState extends State<ForumServerRail> {
     final isDark = theme.brightness == Brightness.dark;
 
     final railBg = isDark ? const Color(0xFF1E1F22) : const Color(0xFFE3E5E8);
-    final faculties = ForumFaculty.defaultFaculties;
-    final homeFaculty = faculties.first; // Campus Central · USAC
-    final otherFaculties = faculties.sublist(1); // 10 Facultades oficiales
+    final faculties = widget.faculties ?? ForumFaculty.defaultFaculties;
+    final homeFaculty = faculties.firstWhere(
+      (f) => f.id == 'todas',
+      orElse: () => faculties.first,
+    );
+    final otherFaculties = faculties.where((f) => f.id != homeFaculty.id).toList();
 
     final isHomeActive = widget.activeServer.facultadId == homeFaculty.id;
     final isHomeOpen = _openFaculty?.id == homeFaculty.id;
@@ -322,7 +324,7 @@ class _ForumServerRailState extends State<ForumServerRail> {
               // 1. General USAC Home Server (Campus Central)
               Builder(
                 builder: (itemCtx) => Tooltip(
-                  message: '${homeFaculty.name}\n(Toca para ver carreras)',
+                  message: homeFaculty.name,
                   preferBelow: false,
                   child: _buildItemButton(
                     isActive: isHomeActive,
@@ -330,10 +332,28 @@ class _ForumServerRailState extends State<ForumServerRail> {
                     isDark: isDark,
                     isExpandedOpen: isHomeOpen,
                     onTap: () => _toggleFacultySubmenu(homeFaculty, itemCtx),
-                    child: Icon(
-                      homeFaculty.icon,
-                      color: isHomeActive ? Colors.white : theme.colorScheme.primary,
-                      size: 18,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.school,
+                          size: 15,
+                          color: isHomeActive
+                              ? Colors.white
+                              : (isDark ? const Color(0xFFDBDEE1) : theme.colorScheme.primary),
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          'USAC',
+                          style: TextStyle(
+                            fontSize: 7.0,
+                            fontWeight: FontWeight.bold,
+                            color: isHomeActive
+                                ? Colors.white
+                                : (isDark ? const Color(0xFFDBDEE1) : theme.colorScheme.primary),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -369,7 +389,7 @@ class _ForumServerRailState extends State<ForumServerRail> {
                       padding: const EdgeInsets.only(bottom: 6),
                       child: Builder(
                         builder: (itemCtx) => Tooltip(
-                          message: '${faculty.name}\n(Toca para ver carreras)',
+                          message: faculty.name,
                           preferBelow: false,
                           child: _buildItemButton(
                             isActive: isActive,

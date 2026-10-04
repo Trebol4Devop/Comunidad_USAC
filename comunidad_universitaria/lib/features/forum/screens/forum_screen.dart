@@ -55,6 +55,8 @@ class _ForumScreenState extends State<ForumScreen> {
   late List<ForumServer> _servers;
   late ForumServer _activeServer;
   late ForumChannel _activeChannel;
+  List<ForumChannel> _channels = List.from(ForumChannel.defaultChannels);
+  List<ForumFaculty> _faculties = List.from(ForumFaculty.defaultFaculties);
 
   // Data & Search States
   List<Post> _posts = [];
@@ -68,14 +70,34 @@ class _ForumScreenState extends State<ForumScreen> {
   void initState() {
     super.initState();
     _servers = List.from(ForumServer.defaultServers);
-    _activeServer = widget.activeServer ?? (_servers.length > 2 ? _servers[2] : _servers.first);
+    _activeServer = widget.activeServer ?? _servers.first;
     _activeChannel = widget.activeChannel ?? ForumChannel.defaultChannels.first;
     _searchQuery = widget.searchQuery;
     if (_searchQuery.isNotEmpty) {
       _searchController.text = _searchQuery;
     }
     _loadUserProfile();
+    _loadForumStructure();
     _loadPosts();
+  }
+
+  Future<void> _loadForumStructure() async {
+    try {
+      final channels = await ForumService.fetchForumChannels();
+      final faculties = await ForumService.fetchForumFaculties();
+      if (mounted) {
+        setState(() {
+          _channels = channels;
+          _faculties = faculties;
+          if (!_channels.any((c) => c.id == _activeChannel.id) &&
+              _activeChannel.id != ForumChannel.bookmarksChannel.id) {
+            _activeChannel = _channels.first;
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error cargando estructura del foro desde DB: $e');
+    }
   }
 
   Future<void> _loadUserProfile() async {
@@ -400,6 +422,7 @@ class _ForumScreenState extends State<ForumScreen> {
             ForumServerRail(
               servers: _servers,
               activeServer: _activeServer,
+              faculties: _faculties,
               onSelectServer: _onSelectServer,
               onAddServer: _onAddServer,
             ),
@@ -408,6 +431,7 @@ class _ForumScreenState extends State<ForumScreen> {
             ForumChannelSidebar(
               activeServer: _activeServer,
               activeChannel: _activeChannel,
+              channels: _channels,
               onSelectChannel: _onSelectChannel,
               onServerChanged: _onSelectServer,
               activeAlias: widget.activeAlias,
@@ -438,6 +462,7 @@ class _ForumScreenState extends State<ForumScreen> {
             ForumServerRail(
               servers: _servers,
               activeServer: _activeServer,
+              faculties: _faculties,
               onSelectServer: (srv) {
                 _onSelectServer(srv);
                 if (_scaffoldKey.currentState?.isDrawerOpen == true) {
@@ -450,6 +475,7 @@ class _ForumScreenState extends State<ForumScreen> {
               child: ForumChannelSidebar(
                 activeServer: _activeServer,
                 activeChannel: _activeChannel,
+                channels: _channels,
                 onSelectChannel: _onSelectChannel,
                 onServerChanged: (srv) {
                   _onSelectServer(srv);
@@ -645,7 +671,7 @@ class _ForumScreenState extends State<ForumScreen> {
                   color: isDark ? const Color(0xFF3F4147) : const Color(0xFFEEF2FF),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(_activeChannel.icon, size: 22, color: isDark ? Colors.white : const Color(0xFF5865F2)),
+                child: Icon(_activeChannel.icon, size: 22, color: theme.colorScheme.primary),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -658,12 +684,12 @@ class _ForumScreenState extends State<ForumScreen> {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      '${_activeServer.name} · ${_activeChannel.description}',
+                      _activeChannel.description,
                       style: TextStyle(
                         fontSize: 12,
                         color: isDark ? const Color(0xFF949BA4) : const Color(0xFF64748B),
                       ),
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
@@ -676,17 +702,28 @@ class _ForumScreenState extends State<ForumScreen> {
                   height: 36,
                   child: TextField(
                     controller: _searchController,
-                    style: const TextStyle(fontSize: 12),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    ),
                     decoration: InputDecoration(
                       hintText: 'Buscar...',
                       hintStyle: TextStyle(
                         fontSize: 11,
                         color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
                       ),
-                      prefixIcon: const Icon(Icons.search, size: 16),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        size: 16,
+                        color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
+                      ),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
-                              icon: const Icon(Icons.clear, size: 14),
+                              icon: Icon(
+                                Icons.clear,
+                                size: 14,
+                                color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
+                              ),
                               onPressed: () {
                                 _searchController.clear();
                                 setState(() => _searchQuery = '');
@@ -721,7 +758,7 @@ class _ForumScreenState extends State<ForumScreen> {
                 const SizedBox(width: 10),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF5865F2), // Discord Blurple
+                    backgroundColor: theme.colorScheme.primary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     elevation: 0,
@@ -743,17 +780,28 @@ class _ForumScreenState extends State<ForumScreen> {
                     height: 38,
                     child: TextField(
                       controller: _searchController,
-                      style: const TextStyle(fontSize: 13),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
                       decoration: InputDecoration(
                         hintText: 'Buscar en #${_activeChannel.name}...',
                         hintStyle: TextStyle(
                           fontSize: 12,
                           color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
                         ),
-                        prefixIcon: const Icon(Icons.search, size: 18),
+                        prefixIcon: Icon(
+                          Icons.search,
+                          size: 18,
+                          color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
+                        ),
                         suffixIcon: _searchQuery.isNotEmpty
                             ? IconButton(
-                                icon: const Icon(Icons.clear, size: 16),
+                                icon: Icon(
+                                  Icons.clear,
+                                  size: 16,
+                                  color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
+                                ),
                                 onPressed: () {
                                   _searchController.clear();
                                   setState(() => _searchQuery = '');
@@ -789,7 +837,7 @@ class _ForumScreenState extends State<ForumScreen> {
                 const SizedBox(width: 8),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF5865F2),
+                    backgroundColor: theme.colorScheme.primary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
                     elevation: 0,

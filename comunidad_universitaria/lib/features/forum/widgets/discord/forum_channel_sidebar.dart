@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../../profile/widgets/alias_modal.dart';
+import '../../../profile/screens/profile_screen.dart';
 import '../../models/discord_forum_models.dart';
 import 'forum_carrera_picker_dialog.dart';
 
 class ForumChannelSidebar extends StatelessWidget {
   final ForumServer activeServer;
   final ForumChannel activeChannel;
+  final List<ForumChannel>? channels;
   final Function(ForumChannel) onSelectChannel;
   final Function(ForumServer) onServerChanged;
   final String activeAlias;
@@ -15,6 +16,7 @@ class ForumChannelSidebar extends StatelessWidget {
     super.key,
     required this.activeServer,
     required this.activeChannel,
+    this.channels,
     required this.onSelectChannel,
     required this.onServerChanged,
     required this.activeAlias,
@@ -75,7 +77,11 @@ class ForumChannelSidebar extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 4),
-                            const Icon(Icons.verified, size: 14, color: Color(0xFF004B87)),
+                            Icon(
+                              Icons.verified,
+                              size: 14,
+                              color: theme.colorScheme.primary,
+                            ),
                           ],
                         ),
                         Text(
@@ -105,7 +111,7 @@ class ForumChannelSidebar extends StatelessWidget {
                 const SizedBox(height: 4),
 
                 // Channels
-                ...ForumChannel.defaultChannels.map((channel) {
+                ...(channels ?? ForumChannel.defaultChannels).map((channel) {
                   final isActive = activeChannel.id == channel.id;
                   return _buildChannelTile(
                     channel: channel,
@@ -144,7 +150,7 @@ class ForumChannelSidebar extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: 16,
-                      backgroundColor: const Color(0xFF004B87),
+                      backgroundColor: isDark ? const Color(0xFF2563EB) : const Color(0xFF004B87),
                       child: Text(
                         activeAlias.isNotEmpty ? activeAlias.characters.first.toUpperCase() : 'U',
                         style: const TextStyle(
@@ -197,17 +203,20 @@ class ForumChannelSidebar extends StatelessWidget {
                   ),
                 ),
 
-                // Change Alias / Settings Button
+                // Settings / Preferences Button
                 IconButton(
-                  icon: const Icon(Icons.edit_outlined, size: 16),
-                  tooltip: 'Cambiar Seudónimo',
+                  icon: const Icon(Icons.settings_outlined, size: 16),
+                  tooltip: 'Preferencias de Usuario',
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   onPressed: () {
-                    AliasModal.show(
-                      context,
-                      currentAlias: activeAlias,
-                      onSaved: onAliasChanged,
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ProfileScreen(
+                          activeAlias: activeAlias,
+                          onAliasChanged: onAliasChanged,
+                        ),
+                      ),
                     );
                   },
                 ),

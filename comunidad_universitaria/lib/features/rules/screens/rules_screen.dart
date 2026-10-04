@@ -12,6 +12,16 @@ class RulesScreen extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Normas Comunitarias y Descargo'),
+        leading: Navigator.of(context).canPop()
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                tooltip: 'Regresar',
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
+      ),
       body: SingleChildScrollView(
         child: MaxWidthContainer(
           maxWidth: 900,
