@@ -38,12 +38,14 @@ class ForumChannelSidebar extends StatelessWidget {
         children: [
           // 1. Server Header Banner
           InkWell(
-            onTap: () {
-              ForumCarreraPickerDialog.show(
-                context,
-                onServerSelected: onServerChanged,
-              );
-            },
+            onTap: activeServer.isGroups
+                ? null
+                : () {
+                    ForumCarreraPickerDialog.show(
+                      context,
+                      onServerSelected: onServerChanged,
+                    );
+                  },
             child: Container(
               height: 60,
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -85,7 +87,7 @@ class ForumChannelSidebar extends StatelessWidget {
                           ],
                         ),
                         Text(
-                          activeServer.id == ForumServer.groupsServer.id
+                          activeServer.isGroups
                               ? 'Directorio de WhatsApp · USAC'
                               : 'Servidor Estudiantil · USAC',
                           style: TextStyle(
@@ -97,7 +99,7 @@ class ForumChannelSidebar extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (activeServer.id != ForumServer.groupsServer.id)
+                  if (!activeServer.isGroups)
                     Icon(Icons.keyboard_arrow_down, size: 20, color: Colors.grey.shade500),
                 ],
               ),
@@ -109,9 +111,9 @@ class ForumChannelSidebar extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
               children: [
-                if (activeServer.id == ForumServer.groupsServer.id) ...[
-                  // Category Header: FACULTADES Y ÁREAS
-                  _buildCategoryHeader('FACULTADES Y ÁREAS', isDark),
+                if (activeServer.isGroups) ...[
+                  // Category Header: CANALES Y CATEGORÍAS
+                  _buildCategoryHeader('CANALES Y CATEGORÍAS', isDark),
                   const SizedBox(height: 4),
 
                   // Channels

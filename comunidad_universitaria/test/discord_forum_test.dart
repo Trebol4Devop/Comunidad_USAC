@@ -738,7 +738,7 @@ void main() {
       expect(phoneIcon, findsOneWidget);
     });
 
-    testWidgets('Al seleccionar el servidor de Grupos de Estudio en el riel se muestra GroupsScreen con canales de facultades en ForumChannelSidebar y un único botón inferior de compartir', (tester) async {
+    testWidgets('Al tocar Grupos de Estudio en el riel se despliega submenú de facultades/áreas y al seleccionar una se muestra GroupsScreen con sus carreras como canales', (tester) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -764,26 +764,49 @@ void main() {
       await tester.tap(gruposTooltip);
       await tester.pumpAndSettle();
 
+      // Se despliega el submenú flotante de subservidores de Grupos con todas las facultades
+      expect(find.text('TODAS'), findsOneWidget);
+      expect(find.text('CMED'), findsOneWidget);
+      expect(find.text('ING'), findsNWidgets(2));
+      expect(find.byTooltip('Facultad de Ingeniería'), findsNWidgets(2));
+      expect(find.byTooltip('Facultad de Humanidades'), findsWidgets);
+      expect(find.byTooltip('Facultad de Odontología'), findsWidgets);
+
+      // Seleccionar el subservidor de Ingeniería en el submenú flotante
+      await tester.tap(find.text('ING').last);
+      await tester.pumpAndSettle();
+
       // Se muestra GroupsScreen
       expect(find.byType(GroupsScreen), findsOneWidget);
-      expect(find.text('Directorio de Grupos de Estudio'), findsOneWidget);
+      expect(find.textContaining('¡Te damos la bienvenida a #todos-los-grupos!'), findsOneWidget);
 
-      // Único botón de compartir grupo (el FAB inferior, el redundante del banner superior fue eliminado)
+      // Único botón de compartir grupo en la parte inferior
       expect(find.text('Compartir Grupo'), findsOneWidget);
 
       // El riel de servidores y la barra de canales permanecen visibles
       expect(find.byType(ForumServerRail), findsOneWidget);
       expect(find.byType(ForumChannelSidebar), findsOneWidget);
 
-      // La barra lateral muestra los canales de facultades de Grupos de Estudio
-      expect(find.text('FACULTADES Y ÁREAS'), findsOneWidget);
-      expect(find.text('todos-los-grupos'), findsWidgets);
-      expect(find.text('ingenieria'), findsWidgets);
+      // En el riel, la facultad regular NO se resalta (mantiene su texto de inactiva),
+      // solo el servidor GRUPOS permanece resaltado.
+      final ingRailItem = find.descendant(
+        of: find.byType(ForumServerRail),
+        matching: find.text('ING'),
+      );
+      expect(ingRailItem, findsOneWidget);
 
-      // Al tocar ingenieria, se selecciona el canal
-      final ingenieriaChannel = find.text('ingenieria').first;
-      await tester.tap(ingenieriaChannel);
+      // La barra lateral muestra las categorías/carreras de la facultad como canales
+      expect(find.text('CANALES Y CATEGORÍAS'), findsOneWidget);
+      expect(find.text('todos-los-grupos'), findsWidgets);
+      expect(find.text('sistemas'), findsWidgets);
+
+      // Al tocar un canal de carrera específico (ej. sistemas), se actualiza el canal
+      final sistemasChannel = find.text('sistemas').first;
+      await tester.tap(sistemasChannel);
       await tester.pumpAndSettle();
+
+      // El hero en GroupsScreen ahora da la bienvenida al canal de la carrera
+      expect(find.textContaining('¡Te damos la bienvenida a #sistemas!'), findsOneWidget);
 
       // Al tocar USAC en el riel se abre el submenú y al seleccionar Todas las Carreras regresa al foro
       final usacRailButton = find.byTooltip('Todas las Facultades');
@@ -798,6 +821,7 @@ void main() {
       }
 
       expect(find.byType(ForumChannelSidebar), findsOneWidget);
+      expect(find.text('CANALES DE DISCUSIÓN'), findsOneWidget);
     });
 
     testWidgets('En vista móvil, ForumScreen con Grupos de Estudio activo renderiza encabezado móvil con nombre de canal y abre drawer con servidores y canales', (tester) async {

@@ -25,6 +25,7 @@ class ForumServerRail extends StatefulWidget {
 class _ForumServerRailState extends State<ForumServerRail> {
   final OverlayPortalController _overlayController = OverlayPortalController();
   ForumFaculty? _openFaculty;
+  bool _isGroupsOpen = false;
   double _submenuLeft = 60.0;
   double _submenuTop = 0.0;
 
@@ -43,10 +44,62 @@ class _ForumServerRailState extends State<ForumServerRail> {
     if (mounted) {
       setState(() {
         _openFaculty = null;
+        _isGroupsOpen = false;
       });
     } else {
       _openFaculty = null;
+      _isGroupsOpen = false;
     }
+  }
+
+  void _toggleGroupsSubmenu(BuildContext itemContext) {
+    if (_isGroupsOpen && _overlayController.isShowing) {
+      _closeSubmenu();
+      return;
+    }
+
+    final RenderBox? itemBox = itemContext.findRenderObject() as RenderBox?;
+    final OverlayState? overlayState = Overlay.maybeOf(context);
+    final RenderBox? overlayBox = overlayState?.context.findRenderObject() as RenderBox?;
+
+    if (itemBox != null && overlayBox != null) {
+      final mediaQuery = MediaQuery.of(context);
+      final screenHeight = mediaQuery.size.height;
+      final topPadding = mediaQuery.padding.top;
+      final bottomPadding = mediaQuery.padding.bottom;
+
+      final itemInOverlay = itemBox.localToGlobal(Offset.zero, ancestor: overlayBox);
+
+      _submenuLeft = (itemInOverlay.dx + itemBox.size.width + 6)
+          .clamp(0.0, overlayBox.size.width - 60.0);
+
+      final estimatedContentHeight = 12.0 + (ForumServer.groupsSubservers.length * 42.0);
+      final maxAvailableHeight = screenHeight - topPadding - bottomPadding - 24.0;
+      final effectiveHeight = estimatedContentHeight > maxAvailableHeight
+          ? maxAvailableHeight
+          : estimatedContentHeight;
+
+      double globalTop = itemInOverlay.dy - 4;
+
+      if (globalTop + effectiveHeight > screenHeight - bottomPadding - 12) {
+        globalTop = screenHeight - bottomPadding - 12 - effectiveHeight;
+      }
+      if (globalTop < topPadding + 12) {
+        globalTop = topPadding + 12;
+      }
+
+      _submenuTop = globalTop;
+    } else {
+      _submenuLeft = 60.0;
+      _submenuTop = 10.0;
+    }
+
+    setState(() {
+      _openFaculty = null;
+      _isGroupsOpen = true;
+    });
+
+    _overlayController.show();
   }
 
   void _toggleFacultySubmenu(ForumFaculty faculty, BuildContext itemContext) {
@@ -100,9 +153,103 @@ class _ForumServerRailState extends State<ForumServerRail> {
     // La pantalla del foro mantiene intacto el servidor actual hasta que se seleccione el nuevo.
     setState(() {
       _openFaculty = faculty;
+      _isGroupsOpen = false;
     });
 
     _overlayController.show();
+  }
+
+  Widget _buildFloatingGroupsSubmenu({
+    required ThemeData theme,
+    required bool isDark,
+    required double maxHeight,
+  }) {
+    final railBg = isDark ? const Color(0xFF1E1F22) : const Color(0xFFE3E5E8);
+    final borderColor = isDark ? const Color(0xFF2B2D31) : const Color(0xFFCBD5E1);
+
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        width: 52,
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        decoration: BoxDecoration(
+          color: railBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: borderColor, width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.20),
+              blurRadius: 16,
+              spreadRadius: 1,
+              offset: const Offset(4, 4),
+            ),
+          ],
+        ),
+        child: RawScrollbar(
+          thumbVisibility: false,
+          thickness: 2.0,
+          radius: const Radius.circular(2),
+          thumbColor: isDark
+              ? Colors.white.withValues(alpha: 0.25)
+              : Colors.black.withValues(alpha: 0.20),
+          padding: const EdgeInsets.symmetric(vertical: 2),
+          child: SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final subserver in ForumServer.groupsSubservers)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Tooltip(
+                      message: subserver.name,
+                      preferBelow: false,
+                      child: _buildItemButton(
+                        isActive: widget.activeServer.isGroups &&
+                            widget.activeServer.id == subserver.id,
+                        activeColor: subserver.color,
+                        isDark: isDark,
+                        onTap: () {
+                          widget.onSelectServer(subserver);
+                          _closeSubmenu();
+                        },
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              subserver.icon,
+                              size: 15,
+                              color: (widget.activeServer.isGroups &&
+                                      widget.activeServer.id == subserver.id)
+                                  ? Colors.white
+                                  : (isDark ? Colors.grey.shade300 : Colors.grey.shade700),
+                            ),
+                            const SizedBox(height: 1),
+                            Text(
+                              subserver.shortCode,
+                              maxLines: 1,
+                              overflow: TextOverflow.clip,
+                              style: TextStyle(
+                                fontSize: 7.0,
+                                fontWeight: FontWeight.bold,
+                                color: (widget.activeServer.isGroups &&
+                                        widget.activeServer.id == subserver.id)
+                                    ? Colors.white
+                                    : (isDark ? Colors.grey.shade300 : Colors.grey.shade700),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildFloatingSubmenu({
@@ -114,7 +261,8 @@ class _ForumServerRailState extends State<ForumServerRail> {
     final railBg = isDark ? const Color(0xFF1E1F22) : const Color(0xFFE3E5E8);
     final borderColor = isDark ? const Color(0xFF2B2D31) : const Color(0xFFCBD5E1);
 
-    final isFacultyActive = widget.activeServer.facultadId == faculty.id;
+    final isFacultyActive =
+        widget.activeServer.facultadId == faculty.id && !widget.activeServer.isGroups;
 
     return Material(
       color: Colors.transparent,
@@ -263,24 +411,24 @@ class _ForumServerRailState extends State<ForumServerRail> {
     final phoneColor = isActive ? const Color(0xFF25D366) : Colors.white;
 
     return SizedBox(
-      width: 18,
-      height: 16,
+      width: 16,
+      height: 14,
       child: Stack(
         alignment: Alignment.center,
         children: [
           Icon(
             Icons.chat_bubble,
-            size: 16,
+            size: 14,
             color: iconColor,
           ),
           Positioned(
-            top: 3.5,
-            left: 4.5,
+            top: 2.8,
+            left: 3.8,
             child: Transform.rotate(
               angle: -0.3,
               child: Icon(
                 Icons.phone,
-                size: 8,
+                size: 7,
                 color: phoneColor,
               ),
             ),
@@ -304,7 +452,7 @@ class _ForumServerRailState extends State<ForumServerRail> {
     final otherFaculties = faculties.where((f) => f.id != homeFaculty.id).toList();
 
     final isHomeActive = widget.activeServer.facultadId == homeFaculty.id &&
-        widget.activeServer.id != ForumServer.groupsServer.id;
+        !widget.activeServer.isGroups;
     final isHomeOpen = _openFaculty?.id == homeFaculty.id;
 
     final mediaQuery = MediaQuery.of(context);
@@ -315,10 +463,8 @@ class _ForumServerRailState extends State<ForumServerRail> {
     return OverlayPortal(
       controller: _overlayController,
       overlayChildBuilder: (BuildContext overlayContext) {
-        if (_openFaculty == null) return const SizedBox.shrink();
+        if (_openFaculty == null && !_isGroupsOpen) return const SizedBox.shrink();
 
-        final faculty = _openFaculty!;
-        // Altura máxima acotada para que bajo ningún motivo se salga de la pantalla
         final maxAvailableHeight =
             (screenHeight - topPadding - bottomPadding - 24.0).clamp(80.0, double.infinity);
 
@@ -328,12 +474,18 @@ class _ForumServerRailState extends State<ForumServerRail> {
           child: TapRegion(
             groupId: 'forum_server_submenu',
             onTapOutside: (_) => _closeSubmenu(),
-            child: _buildFloatingSubmenu(
-              faculty: faculty,
-              theme: theme,
-              isDark: isDark,
-              maxHeight: maxAvailableHeight,
-            ),
+            child: _isGroupsOpen
+                ? _buildFloatingGroupsSubmenu(
+                    theme: theme,
+                    isDark: isDark,
+                    maxHeight: maxAvailableHeight,
+                  )
+                : _buildFloatingSubmenu(
+                    faculty: _openFaculty!,
+                    theme: theme,
+                    isDark: isDark,
+                    maxHeight: maxAvailableHeight,
+                  ),
           ),
         );
       },
@@ -393,10 +545,10 @@ class _ForumServerRailState extends State<ForumServerRail> {
               ),
               const SizedBox(height: 6),
 
-              // 2. Grupos de Estudio Server (WhatsApp) - Hasta arriba directamente abajo de USAC
+              // 2. Grupos de Estudio Server (WhatsApp) - Con submenú de subservidores (facultades y áreas)
               Builder(
                 builder: (itemCtx) {
-                  final isGroupsActive = widget.activeServer.id == ForumServer.groupsServer.id;
+                  final isGroupsActive = widget.activeServer.isGroups;
                   return Tooltip(
                     message: 'Grupos de Estudio (WhatsApp)',
                     preferBelow: false,
@@ -404,19 +556,18 @@ class _ForumServerRailState extends State<ForumServerRail> {
                       isActive: isGroupsActive,
                       activeColor: ForumServer.groupsServer.color,
                       isDark: isDark,
-                      onTap: () {
-                        _closeSubmenu();
-                        widget.onSelectServer(ForumServer.groupsServer);
-                      },
+                      isExpandedOpen: _isGroupsOpen,
+                      onTap: () => _toggleGroupsSubmenu(itemCtx),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           _buildWhatsAppSymbol(isActive: isGroupsActive, isDark: isDark),
-                          const SizedBox(height: 1),
                           Text(
                             'GRUPOS',
                             style: TextStyle(
                               fontSize: 6.5,
+                              height: 1.0,
                               fontWeight: FontWeight.bold,
                               color: isGroupsActive
                                   ? Colors.white
@@ -453,7 +604,8 @@ class _ForumServerRailState extends State<ForumServerRail> {
                   itemCount: otherFaculties.length,
                   itemBuilder: (ctx, i) {
                     final faculty = otherFaculties[i];
-                    final isActive = widget.activeServer.facultadId == faculty.id;
+                    final isActive = widget.activeServer.facultadId == faculty.id &&
+                        !widget.activeServer.isGroups;
                     final isOpen = _openFaculty?.id == faculty.id;
 
                     return Padding(

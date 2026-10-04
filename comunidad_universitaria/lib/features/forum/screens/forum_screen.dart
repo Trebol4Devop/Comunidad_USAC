@@ -74,14 +74,18 @@ class _ForumScreenState extends State<ForumScreen> {
     _servers = List.from(ForumServer.defaultServers);
     _activeServer = widget.activeServer ?? _servers.first;
     _activeChannel = widget.activeChannel ?? ForumChannel.defaultChannels.first;
-    _groupsActiveChannel = ForumChannel.groupsChannels.first;
+    final initialGroupsChannels = ForumChannel.groupsChannelsForSubserver(
+      _activeServer.isGroups ? _activeServer : ForumServer.groupsSubservers.first,
+      _faculties,
+    );
+    _groupsActiveChannel = initialGroupsChannels.first;
     _searchQuery = widget.searchQuery;
     if (_searchQuery.isNotEmpty) {
       _searchController.text = _searchQuery;
     }
     _loadUserProfile();
     _loadForumStructure();
-    if (_activeServer.id != ForumServer.groupsServer.id) {
+    if (!_activeServer.isGroups) {
       _loadPosts();
     }
   }
@@ -124,14 +128,14 @@ class _ForumScreenState extends State<ForumScreen> {
     }
     if (widget.activeServer != null && widget.activeServer!.id != _activeServer.id) {
       _activeServer = widget.activeServer!;
-      if (_activeServer.id != ForumServer.groupsServer.id) {
+      if (!_activeServer.isGroups) {
         shouldReload = true;
       }
     }
     if (widget.searchQuery != oldWidget.searchQuery && widget.searchQuery != _searchQuery) {
       _searchQuery = widget.searchQuery;
       _searchController.text = _searchQuery;
-      if (_activeServer.id != ForumServer.groupsServer.id) {
+      if (!_activeServer.isGroups) {
         shouldReload = true;
       }
     }
@@ -184,9 +188,13 @@ class _ForumScreenState extends State<ForumScreen> {
       _activeServer = server;
       _searchQuery = '';
       _searchController.clear();
+      if (server.isGroups) {
+        final subChannels = ForumChannel.groupsChannelsForSubserver(server, _faculties);
+        _groupsActiveChannel = subChannels.first;
+      }
     });
     widget.onServerChanged?.call(server);
-    if (server.id != ForumServer.groupsServer.id) {
+    if (!server.isGroups) {
       _loadPosts();
     }
   }
@@ -201,7 +209,7 @@ class _ForumScreenState extends State<ForumScreen> {
   }
 
   void _onSelectChannel(ForumChannel channel) {
-    if (_activeServer.id == ForumServer.groupsServer.id) {
+    if (_activeServer.isGroups) {
       if (_groupsActiveChannel.id == channel.id) return;
       setState(() {
         _groupsActiveChannel = channel;
@@ -435,10 +443,10 @@ class _ForumScreenState extends State<ForumScreen> {
     // Discord main chat background: #313338 dark, #FFFFFF light
     final feedBg = isDark ? const Color(0xFF313338) : Colors.white;
 
-    final isGroups = _activeServer.id == ForumServer.groupsServer.id;
+    final isGroups = _activeServer.isGroups;
     final currentChannel = isGroups ? _groupsActiveChannel : _activeChannel;
     final currentChannels = isGroups
-        ? ForumChannel.groupsChannelsFromFaculties(_faculties)
+        ? ForumChannel.groupsChannelsForSubserver(_activeServer, _faculties)
         : _channels;
 
     if (isDesktopOrTablet) {
@@ -467,14 +475,17 @@ class _ForumScreenState extends State<ForumScreen> {
               onAliasChanged: widget.onAliasChanged,
             ),
 
-            // 3. Main Content: GroupsScreen if groupsServer, otherwise Channel Feed
+            // 3. Main Content: GroupsScreen if isGroups, otherwise Channel Feed
             if (isGroups)
               Expanded(
                 child: GroupsScreen(
                   activeAlias: widget.activeAlias,
                   onAliasChanged: widget.onAliasChanged,
-                  activeFacultadId: _groupsActiveChannel.categoryId,
+                  activeFacultadId: _activeServer.facultadId,
+                  activeCarreraId: _groupsActiveChannel.categoryId,
                   activeChannelName: _groupsActiveChannel.name,
+                  activeChannelDescription: _groupsActiveChannel.description,
+                  activeChannelIcon: _groupsActiveChannel.icon,
                 ),
               )
             else
@@ -542,8 +553,11 @@ class _ForumScreenState extends State<ForumScreen> {
                   ? GroupsScreen(
                       activeAlias: widget.activeAlias,
                       onAliasChanged: widget.onAliasChanged,
-                      activeFacultadId: _groupsActiveChannel.categoryId,
+                      activeFacultadId: _activeServer.facultadId,
+                      activeCarreraId: _groupsActiveChannel.categoryId,
                       activeChannelName: _groupsActiveChannel.name,
+                      activeChannelDescription: _groupsActiveChannel.description,
+                      activeChannelIcon: _groupsActiveChannel.icon,
                     )
                   : RefreshIndicator(
                       onRefresh: _loadPosts,
