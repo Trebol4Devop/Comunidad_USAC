@@ -6,6 +6,7 @@ import 'forum_carrera_picker_dialog.dart';
 class ForumChannelSidebar extends StatelessWidget {
   final ForumServer activeServer;
   final ForumChannel activeChannel;
+  final List<ForumChannel>? channels;
   final Function(ForumChannel) onSelectChannel;
   final Function(ForumServer) onServerChanged;
   final String activeAlias;
@@ -15,6 +16,7 @@ class ForumChannelSidebar extends StatelessWidget {
     super.key,
     required this.activeServer,
     required this.activeChannel,
+    this.channels,
     required this.onSelectChannel,
     required this.onServerChanged,
     required this.activeAlias,
@@ -105,7 +107,7 @@ class ForumChannelSidebar extends StatelessWidget {
                 const SizedBox(height: 4),
 
                 // Channels
-                ...ForumChannel.defaultChannels.map((channel) {
+                ...(channels ?? ForumChannel.defaultChannels).map((channel) {
                   final isActive = activeChannel.id == channel.id;
                   return _buildChannelTile(
                     channel: channel,

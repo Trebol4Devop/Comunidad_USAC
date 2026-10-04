@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../features/forum/models/discord_forum_models.dart';
 import '../config/supabase_config.dart';
 import '../constants/categories.dart';
 import '../models/post.dart';
@@ -729,6 +731,144 @@ class ForumService {
     } catch (e) {
       debugPrint('Error reportando usuario: $e');
       return false;
+    }
+  }
+
+  /// Obtiene los canales del foro consultando la tabla `categorias_foro` en Supabase
+  static Future<List<ForumChannel>> fetchForumChannels() async {
+    if (!SupabaseConfig.isConfigured) {
+      return List<ForumChannel>.from(ForumChannel.defaultChannels);
+    }
+
+    try {
+      final response = await SupabaseService.client
+          .from('categorias_foro')
+          .select('id, nombre')
+          .order('id')
+          .timeout(const Duration(seconds: 8));
+
+      final List<dynamic> data = response as List<dynamic>;
+      if (data.isEmpty) {
+        return List<ForumChannel>.from(ForumChannel.defaultChannels);
+      }
+
+      // Orden estándar alineado con el flujo de uso del foro
+      const canonicalOrder = ['todos', 'prerrequisitos', 'catedraticos', 'apuntes', 'horarios', 'general'];
+      final List<dynamic> sortedData = List.from(data);
+      sortedData.sort((a, b) {
+        final idA = a['id']?.toString() ?? '';
+        final idB = b['id']?.toString() ?? '';
+        final idxA = canonicalOrder.indexOf(idA);
+        final idxB = canonicalOrder.indexOf(idB);
+        if (idxA != -1 && idxB != -1) return idxA.compareTo(idxB);
+        if (idxA != -1) return -1;
+        if (idxB != -1) return 1;
+        return idA.compareTo(idB);
+      });
+
+      final List<ForumChannel> channels = [];
+      for (final row in sortedData) {
+        final id = row['id']?.toString() ?? '';
+        final nombre = row['nombre']?.toString() ?? id;
+        channels.add(ForumChannel.fromDbCategory(id: id, nombre: nombre));
+      }
+
+      return channels;
+    } catch (e) {
+      debugPrint('Error al obtener canales desde categorias_foro: $e');
+      return List<ForumChannel>.from(ForumChannel.defaultChannels);
+    }
+  }
+
+  /// Obtiene la estructura de servidores de facultades y carreras oficiales desde la DB
+  static Future<List<ForumFaculty>> fetchForumFaculties() async {
+    if (!SupabaseConfig.isConfigured) {
+      return ForumFaculty.defaultFaculties;
+    }
+
+    try {
+      final facsRes = await SupabaseService.client
+          .from('facultades')
+          .select('id, codigo, nombre')
+          .order('codigo')
+          .timeout(const Duration(seconds: 8));
+      final carsRes = await SupabaseService.client
+          .from('carreras')
+          .select('id, facultad_id, codigo, nombre')
+          .order('codigo')
+          .timeout(const Duration(seconds: 8));
+
+      final List<dynamic> facsData = facsRes as List<dynamic>;
+      final List<dynamic> carsData = carsRes as List<dynamic>;
+
+      if (facsData.isEmpty || carsData.isEmpty) {
+        return ForumFaculty.defaultFaculties;
+      }
+
+      // Mapa de metadatos predefinidos (íconos, colores, códigos cortos)
+      final Map<String, ForumCareerItem> careerMeta = {};
+      final Map<String, ForumFaculty> facultyMeta = {};
+      for (final f in ForumFaculty.defaultFaculties) {
+        facultyMeta[f.id] = f;
+        for (final c in f.careers) {
+          careerMeta[c.id] = c;
+        }
+      }
+
+      final Map<String, List<ForumCareerItem>> careersByFacultad = {};
+      for (final row in carsData) {
+        final carId = row['id']?.toString() ?? '';
+        final facId = row['facultad_id']?.toString() ?? '';
+        final nombre = row['nombre']?.toString() ?? '';
+        final codigo = row['codigo']?.toString() ?? '';
+
+        final existing = careerMeta[carId];
+        final shortCode = existing?.shortCode ??
+            (codigo.isNotEmpty && codigo.length <= 6
+                ? codigo
+                : (carId.length > 4 ? carId.substring(0, 4).toUpperCase() : carId.toUpperCase()));
+
+        careersByFacultad.putIfAbsent(facId, () => []).add(
+          ForumCareerItem(
+            id: carId,
+            name: nombre,
+            shortCode: shortCode,
+            icon: existing?.icon ?? Icons.school_outlined,
+            facultadId: facId,
+            codigo: codigo,
+          ),
+        );
+      }
+
+      final List<ForumFaculty> faculties = [];
+      for (final facRow in facsData) {
+        final facId = facRow['id']?.toString() ?? '';
+        final nombre = facRow['nombre']?.toString() ?? '';
+        final codigo = facRow['codigo']?.toString() ?? '';
+        final existing = facultyMeta[facId];
+        final careers = careersByFacultad[facId] ?? existing?.careers ?? [];
+
+        faculties.add(
+          ForumFaculty(
+            id: facId,
+            name: nombre,
+            shortCode: existing?.shortCode ?? (codigo.isNotEmpty ? codigo : facId.toUpperCase()),
+            icon: existing?.icon ?? Icons.school,
+            color: existing?.color ?? const Color(0xFF004B87),
+            careers: careers,
+          ),
+        );
+      }
+
+      // El servidor de hasta arriba SIEMPRE debe ser el de Todas las Facultades
+      if (!faculties.any((f) => f.id == 'todas')) {
+        faculties.insert(0, ForumFaculty.defaultFaculties.first);
+      }
+
+      return faculties;
+    } catch (e) {
+      debugPrint('Error al obtener facultades y carreras de la DB: $e');
+      return ForumFaculty.defaultFaculties;
     }
   }
 }
