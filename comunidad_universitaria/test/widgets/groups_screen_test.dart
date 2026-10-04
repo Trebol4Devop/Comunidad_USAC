@@ -32,9 +32,10 @@ void main() {
     );
   }
 
-  void seedGroupsCache(List<WhatsAppGroup> groups, {String carrera = 'todas'}) {
+  void seedGroupsCache(List<WhatsAppGroup> groups, {String carrera = 'todas', String facultad = 'todas'}) {
     final cacheKey = CacheService.buildKey({
       'user': SupabaseService.currentUserId ?? 'anon',
+      if (facultad != 'todas') 'facultad': facultad,
       'carrera': carrera,
       'search': '',
     });
@@ -70,7 +71,7 @@ void main() {
       expect(find.widgetWithText(FloatingActionButton, 'Compartir Grupo'), findsOneWidget);
     });
 
-    testWidgets('Renderiza en escritorio (1200x800) con botón de compartir en banner', (tester) async {
+    testWidgets('Renderiza en escritorio (1200x800) con único botón inferior de compartir y buscador', (tester) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -80,11 +81,11 @@ void main() {
 
       expect(find.text('Directorio de Grupos de Estudio'), findsOneWidget);
 
-      // En desktop hay botón en el header además del FAB
-      expect(find.text('Compartir Grupo'), findsWidgets);
+      // Único botón de compartir grupo en la parte inferior (se eliminó la redundancia del banner superior)
+      expect(find.text('Compartir Grupo'), findsOneWidget);
 
-      // Selector de Facultad
-      expect(find.byType(DropdownButtonFormField<String>), findsOneWidget);
+      // Las facultades se manejan como canales de servidor en la barra lateral, no como dropdown en la página
+      expect(find.byType(DropdownButtonFormField<String>), findsNothing);
     });
 
     testWidgets('Permite descartar el aviso semestral con el botón cerrar', (tester) async {
@@ -123,7 +124,8 @@ void main() {
         link: 'https://chat.whatsapp.com/TestGroup123',
       );
 
-      // Sembramos la caché para la carrera default
+      // Sembramos la caché para la carrera default y contexto del usuario (08 - sistemas)
+      seedGroupsCache([sampleGroup], carrera: 'sistemas', facultad: '08');
       seedGroupsCache([sampleGroup], carrera: 'sistemas');
       seedGroupsCache([sampleGroup], carrera: 'todas');
 

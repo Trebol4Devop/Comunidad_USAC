@@ -14,11 +14,15 @@ import '../../shared/widgets/empty_state_widget.dart';
 class GroupsScreen extends StatefulWidget {
   final String activeAlias;
   final Function(String newAlias) onAliasChanged;
+  final String? activeFacultadId;
+  final String? activeChannelName;
 
   const GroupsScreen({
     super.key,
     required this.activeAlias,
     required this.onAliasChanged,
+    this.activeFacultadId,
+    this.activeChannelName,
   });
 
   @override
@@ -37,9 +41,26 @@ class _GroupsScreenState extends State<GroupsScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.activeFacultadId != null) {
+      _selectedFacultad = widget.activeFacultadId!;
+    }
     _checkCleanupBanner();
-    _loadUserAcademicContext();
+    if (widget.activeFacultadId == null) {
+      _loadUserAcademicContext();
+    }
     _loadGroups();
+  }
+
+  @override
+  void didUpdateWidget(covariant GroupsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.activeFacultadId != null && widget.activeFacultadId != _selectedFacultad) {
+      setState(() {
+        _selectedFacultad = widget.activeFacultadId!;
+        _selectedCarrera = 'todas';
+      });
+      _loadGroups();
+    }
   }
 
   @override
@@ -64,7 +85,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
 
   Future<void> _loadUserAcademicContext() async {
     final profile = await LocalStorageService.getUserProfile();
-    if (mounted && profile.facultadId.isNotEmpty) {
+    if (mounted && profile.facultadId.isNotEmpty && widget.activeFacultadId == null) {
       setState(() {
         _selectedFacultad = profile.facultadId;
         _selectedCarrera = profile.carreraId.isNotEmpty ? profile.carreraId : 'todas';
@@ -77,6 +98,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
     setState(() => _isLoading = true);
     try {
       final list = await GroupsService.fetchGroups(
+        facultad: _selectedFacultad,
         carrera: _selectedCarrera,
         searchQuery: _searchQuery,
       );
@@ -221,18 +243,6 @@ class _GroupsScreenState extends State<GroupsScreen> {
                           ],
                         ),
                       ),
-                      if (isDesktop) ...[
-                        const SizedBox(width: 16),
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: const Color(0xFF0F5132),
-                          ),
-                          onPressed: _openCreateGroupDialog,
-                          icon: const Icon(Icons.add_link, size: 18),
-                          label: const Text('Compartir Grupo'),
-                        ),
-                      ],
                     ],
                   ),
                 ),
@@ -270,114 +280,29 @@ class _GroupsScreenState extends State<GroupsScreen> {
 
                 const SizedBox(height: 16),
 
-                // Filters
-                if (isMobile) ...[
-                  TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Buscar por curso, catedrático o sección...',
-                      prefixIcon: const Icon(Icons.search, size: 20),
-                      suffixIcon: _searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear, size: 18),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() => _searchQuery = '');
-                                _loadGroups();
-                              },
-                            )
-                          : null,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    ),
-                    onSubmitted: (val) {
-                      setState(() => _searchQuery = val);
-                      _loadGroups();
-                    },
+                // Search Bar (Faculties are selected directly as server channels in the Discord sidebar)
+                TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Buscar por curso, catedrático o sección...',
+                    prefixIcon: const Icon(Icons.search, size: 20),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 18),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _searchQuery = '');
+                              _loadGroups();
+                            },
+                          )
+                        : null,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    initialValue: _selectedFacultad,
-                    isExpanded: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Facultad / Unidad',
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    ),
-                    items: USACConstants.facultades
-                        .map((f) => DropdownMenuItem<String>(
-                              value: f['id'].toString(),
-                              child: Text(
-                                f['nombre'].toString(),
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                            ))
-                        .toList(),
-                    onChanged: (val) {
-                      setState(() {
-                        _selectedFacultad = val ?? 'todas';
-                        _selectedCarrera = 'todas';
-                      });
-                      _loadGroups();
-                    },
-                  ),
-                ] else ...[
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _searchController,
-                          decoration: InputDecoration(
-                            hintText: 'Buscar por curso, catedrático o sección...',
-                            prefixIcon: const Icon(Icons.search, size: 20),
-                            suffixIcon: _searchQuery.isNotEmpty
-                                ? IconButton(
-                                    icon: const Icon(Icons.clear, size: 18),
-                                    onPressed: () {
-                                      _searchController.clear();
-                                      setState(() => _searchQuery = '');
-                                      _loadGroups();
-                                    },
-                                  )
-                                : null,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                          ),
-                          onSubmitted: (val) {
-                            setState(() => _searchQuery = val);
-                            _loadGroups();
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 260),
-                        child: DropdownButtonFormField<String>(
-                          initialValue: _selectedFacultad,
-                          isExpanded: true,
-                          decoration: const InputDecoration(
-                            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                          ),
-                          items: USACConstants.facultades
-                              .map((f) => DropdownMenuItem<String>(
-                                    value: f['id'].toString(),
-                                    child: Text(
-                                      f['nombre'].toString(),
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontSize: 12),
-                                    ),
-                                  ))
-                              .toList(),
-                          onChanged: (val) {
-                            setState(() {
-                              _selectedFacultad = val ?? 'todas';
-                              _selectedCarrera = 'todas';
-                            });
-                            _loadGroups();
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                  onSubmitted: (val) {
+                    setState(() => _searchQuery = val);
+                    _loadGroups();
+                  },
+                ),
 
                 // Career Filter chips if a specific faculty is chosen
                 if (_selectedFacultad != 'todas' && _availableCarreras.length > 1) ...[
