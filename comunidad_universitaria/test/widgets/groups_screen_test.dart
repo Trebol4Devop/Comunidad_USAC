@@ -43,7 +43,7 @@ void main() {
   }
 
   group('GroupsScreen Widget Tests', () {
-    testWidgets('Renderiza en móvil (400x800) con banner superior, aviso semestral y empty state', (tester) async {
+    testWidgets('Renderiza en móvil (400x800) con bienvenida al canal, aviso semestral y empty state', (tester) async {
       tester.view.physicalSize = const Size(400, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -51,16 +51,16 @@ void main() {
       await tester.pumpWidget(buildTestScreen());
       await tester.pumpAndSettle();
 
-      // Banner superior
-      expect(find.text('Directorio de Grupos de Estudio'), findsOneWidget);
-      expect(find.textContaining('Comunidad libre para encontrar y compartir enlaces de grupos'), findsOneWidget);
+      // Bienvenida de canal estilo Discord
+      expect(find.textContaining('¡Te damos la bienvenida a #'), findsOneWidget);
+      expect(find.textContaining('grupos de WhatsApp y estudio USAC'), findsOneWidget);
 
       // Aviso de depuración semestral
       expect(find.textContaining('Para evitar enlaces caídos, los grupos se depuran automáticamente'), findsOneWidget);
       expect(find.byIcon(Icons.close), findsOneWidget);
 
-      // Buscador móvil
-      expect(find.text('Buscar por curso, catedrático o sección...'), findsOneWidget);
+      // Las categorías y buscador fueron trasladados a los canales y subservidores Discord
+      expect(find.byType(TextField), findsNothing);
 
       // Sin conexión/datos reales, GroupsScreen maneja el fallback y muestra EmptyStateWidget
       expect(find.byType(EmptyStateWidget), findsOneWidget);
@@ -71,7 +71,7 @@ void main() {
       expect(find.widgetWithText(FloatingActionButton, 'Compartir Grupo'), findsOneWidget);
     });
 
-    testWidgets('Renderiza en escritorio (1200x800) con único botón inferior de compartir y buscador', (tester) async {
+    testWidgets('Renderiza en escritorio (1200x800) con bienvenida a canal y único botón de compartir', (tester) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -79,9 +79,9 @@ void main() {
       await tester.pumpWidget(buildTestScreen());
       await tester.pumpAndSettle();
 
-      expect(find.text('Directorio de Grupos de Estudio'), findsOneWidget);
+      expect(find.textContaining('¡Te damos la bienvenida a #'), findsOneWidget);
 
-      // Único botón de compartir grupo en la parte inferior (se eliminó la redundancia del banner superior)
+      // Botón de compartir grupo en la parte inferior
       expect(find.text('Compartir Grupo'), findsOneWidget);
 
       // Las facultades se manejan como canales de servidor en la barra lateral, no como dropdown en la página

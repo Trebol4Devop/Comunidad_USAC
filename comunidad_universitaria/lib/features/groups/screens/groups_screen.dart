@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../core/config/supabase_config.dart';
-import '../../../core/constants/categories.dart';
 import '../../../core/models/whatsapp_group.dart';
 import '../../../core/services/groups_service.dart';
 import '../../../core/services/local_storage_service.dart';
@@ -15,14 +14,20 @@ class GroupsScreen extends StatefulWidget {
   final String activeAlias;
   final Function(String newAlias) onAliasChanged;
   final String? activeFacultadId;
+  final String? activeCarreraId;
   final String? activeChannelName;
+  final String? activeChannelDescription;
+  final IconData? activeChannelIcon;
 
   const GroupsScreen({
     super.key,
     required this.activeAlias,
     required this.onAliasChanged,
     this.activeFacultadId,
+    this.activeCarreraId,
     this.activeChannelName,
+    this.activeChannelDescription,
+    this.activeChannelIcon,
   });
 
   @override
@@ -34,15 +39,16 @@ class _GroupsScreenState extends State<GroupsScreen> {
   bool _isLoading = true;
   String _selectedFacultad = 'todas';
   String _selectedCarrera = 'todas';
-  String _searchQuery = '';
   bool _showCleanupBanner = true;
-  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     if (widget.activeFacultadId != null) {
       _selectedFacultad = widget.activeFacultadId!;
+    }
+    if (widget.activeCarreraId != null) {
+      _selectedCarrera = widget.activeCarreraId!;
     }
     _checkCleanupBanner();
     if (widget.activeFacultadId == null) {
@@ -54,19 +60,18 @@ class _GroupsScreenState extends State<GroupsScreen> {
   @override
   void didUpdateWidget(covariant GroupsScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
+    bool shouldReload = false;
     if (widget.activeFacultadId != null && widget.activeFacultadId != _selectedFacultad) {
-      setState(() {
-        _selectedFacultad = widget.activeFacultadId!;
-        _selectedCarrera = 'todas';
-      });
+      _selectedFacultad = widget.activeFacultadId!;
+      shouldReload = true;
+    }
+    if (widget.activeCarreraId != null && widget.activeCarreraId != _selectedCarrera) {
+      _selectedCarrera = widget.activeCarreraId!;
+      shouldReload = true;
+    }
+    if (shouldReload) {
       _loadGroups();
     }
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
   }
 
   Future<void> _checkCleanupBanner() async {
@@ -100,7 +105,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
       final list = await GroupsService.fetchGroups(
         facultad: _selectedFacultad,
         carrera: _selectedCarrera,
-        searchQuery: _searchQuery,
+        searchQuery: '',
       );
       if (mounted) {
         setState(() {
@@ -174,6 +179,8 @@ class _GroupsScreenState extends State<GroupsScreen> {
       context,
       activeAlias: widget.activeAlias,
       onAliasChanged: widget.onAliasChanged,
+      initialFacultad: _selectedFacultad != 'todas' ? _selectedFacultad : null,
+      initialCarrera: _selectedCarrera != 'todas' ? _selectedCarrera : null,
       onGroupCreated: (newGroup) {
         setState(() {
           _groups.insert(0, newGroup);
@@ -182,19 +189,64 @@ class _GroupsScreenState extends State<GroupsScreen> {
     );
   }
 
-  List<Map<String, dynamic>> get _availableCarreras {
-    final fac = USACConstants.facultades.firstWhere(
-      (f) => f['id'] == _selectedFacultad,
-      orElse: () => USACConstants.facultades.first,
+  Widget _buildDiscordWelcomeHero(ThemeData theme, bool isDark) {
+    final channelName = widget.activeChannelName ?? 'todos-los-grupos';
+    final channelDesc = widget.activeChannelDescription ??
+        'Directorio oficial de grupos de WhatsApp y estudio USAC organizados por facultad y curso.';
+    final channelIcon = widget.activeChannelIcon ?? Icons.tag;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF2B2D31) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? const Color(0xFF383A40) : const Color(0xFFE2E8F0),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF3F4147) : const Color(0xFFDCFCE7),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(channelIcon, size: 22, color: const Color(0xFF16A34A)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '¡Te damos la bienvenida a #$channelName!',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  channelDesc,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? const Color(0xFF949BA4) : const Color(0xFF64748B),
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
-    final list = fac['carreras'] as List<dynamic>? ?? [];
-    return list.map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop = Responsive.isDesktop(context);
-    final isMobile = Responsive.isMobile(context);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       body: RefreshIndicator(
@@ -207,45 +259,8 @@ class _GroupsScreenState extends State<GroupsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Top Header Banner
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF0F5132), Color(0xFF198754)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Directorio de Grupos de Estudio',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Comunidad libre para encontrar y compartir enlaces de grupos de WhatsApp, Telegram y Discord organizados por curso y facultad.',
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.9),
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                // Top Welcome Hero banner (estilo Discord)
+                _buildDiscordWelcomeHero(theme, isDark),
 
                 // Semester Cleanup Notice
                 if (_showCleanupBanner) ...[
@@ -274,59 +289,6 @@ class _GroupsScreenState extends State<GroupsScreen> {
                           onPressed: _dismissCleanupBanner,
                         ),
                       ],
-                    ),
-                  ),
-                ],
-
-                const SizedBox(height: 16),
-
-                // Search Bar (Faculties are selected directly as server channels in the Discord sidebar)
-                TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Buscar por curso, catedrático o sección...',
-                    prefixIcon: const Icon(Icons.search, size: 20),
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, size: 18),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() => _searchQuery = '');
-                              _loadGroups();
-                            },
-                          )
-                        : null,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  ),
-                  onSubmitted: (val) {
-                    setState(() => _searchQuery = val);
-                    _loadGroups();
-                  },
-                ),
-
-                // Career Filter chips if a specific faculty is chosen
-                if (_selectedFacultad != 'todas' && _availableCarreras.length > 1) ...[
-                  const SizedBox(height: 10),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: _availableCarreras.map((car) {
-                        final id = car['id'].toString();
-                        final isSelected = _selectedCarrera == id;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: FilterChip(
-                            label: Text(car['nombre'].toString()),
-                            selected: isSelected,
-                            onSelected: (selected) {
-                              setState(() {
-                                _selectedCarrera = selected ? id : 'todas';
-                              });
-                              _loadGroups();
-                            },
-                          ),
-                        );
-                      }).toList(),
                     ),
                   ),
                 ],
