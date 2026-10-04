@@ -84,7 +84,7 @@ class DiscordMediaAttachment extends StatelessWidget {
                                   ? loadingProgress.cumulativeBytesLoaded /
                                       loadingProgress.expectedTotalBytes!
                                   : null,
-                              color: isDark ? const Color(0xFF5865F2) : theme.colorScheme.primary,
+                              color: theme.colorScheme.primary,
                             ),
                           ),
                         );

@@ -67,7 +67,7 @@ class CommentItemWidget extends StatelessWidget {
                       child: Icon(
                         Icons.person,
                         size: 12,
-                        color: isDark ? const Color(0xFF60A5FA) : theme.colorScheme.primary,
+                        color: theme.colorScheme.primary,
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -99,7 +99,7 @@ class CommentItemWidget extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 8,
                                   fontWeight: FontWeight.bold,
-                                  color: isDark ? const Color(0xFF60A5FA) : theme.colorScheme.primary,
+                                  color: theme.colorScheme.primary,
                                 ),
                               ),
                             ),
@@ -126,7 +126,7 @@ class CommentItemWidget extends StatelessWidget {
                             Icon(
                               Icons.reply,
                               size: 14,
-                              color: isDark ? const Color(0xFF60A5FA) : theme.colorScheme.primary,
+                              color: theme.colorScheme.primary,
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -134,7 +134,7 @@ class CommentItemWidget extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: isDark ? const Color(0xFF60A5FA) : theme.colorScheme.primary,
+                                color: theme.colorScheme.primary,
                               ),
                             ),
                           ],

@@ -210,7 +210,7 @@ class _GifPickerModalState extends State<GifPickerModal> {
                   children: [
                     Icon(
                       Icons.gif_box_outlined,
-                      color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF004B87),
+                      color: theme.colorScheme.primary,
                       size: 26,
                     ),
                     const SizedBox(width: 8),

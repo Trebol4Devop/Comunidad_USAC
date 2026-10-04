@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../profile/widgets/alias_modal.dart';
+import '../../../profile/screens/profile_screen.dart';
 import '../../models/discord_forum_models.dart';
 import 'forum_carrera_picker_dialog.dart';
 
@@ -80,7 +80,7 @@ class ForumChannelSidebar extends StatelessWidget {
                             Icon(
                               Icons.verified,
                               size: 14,
-                              color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF004B87),
+                              color: theme.colorScheme.primary,
                             ),
                           ],
                         ),
@@ -203,17 +203,20 @@ class ForumChannelSidebar extends StatelessWidget {
                   ),
                 ),
 
-                // Change Alias / Settings Button
+                // Settings / Preferences Button
                 IconButton(
-                  icon: const Icon(Icons.edit_outlined, size: 16),
-                  tooltip: 'Cambiar Seudónimo',
+                  icon: const Icon(Icons.settings_outlined, size: 16),
+                  tooltip: 'Preferencias de Usuario',
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   onPressed: () {
-                    AliasModal.show(
-                      context,
-                      currentAlias: activeAlias,
-                      onSaved: onAliasChanged,
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ProfileScreen(
+                          activeAlias: activeAlias,
+                          onAliasChanged: onAliasChanged,
+                        ),
+                      ),
                     );
                   },
                 ),

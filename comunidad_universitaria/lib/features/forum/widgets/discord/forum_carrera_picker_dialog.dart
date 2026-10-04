@@ -105,7 +105,7 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
       case '10':
         return const Color(0xFF9333EA);
       default:
-        return isDark ? const Color(0xFF60A5FA) : const Color(0xFF004B87);
+        return isDark ? const Color(0xFF0066CC) : const Color(0xFF004B87);
     }
   }
 
@@ -146,7 +146,7 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
                     ),
                     child: Icon(
                       Icons.explore_outlined,
-                      color: isDark ? const Color(0xFF60A5FA) : theme.colorScheme.primary,
+                      color: theme.colorScheme.primary,
                       size: 24,
                     ),
                   ),

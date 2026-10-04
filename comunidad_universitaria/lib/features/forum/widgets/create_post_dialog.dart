@@ -7,10 +7,8 @@ import '../../../core/services/forum_service.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
-import '../../profile/widgets/alias_modal.dart';
 import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/gif_picker_modal.dart';
-import '../../shared/widgets/identity_badge_chip.dart';
 
 class CreatePostDialog extends StatefulWidget {
   final String activeAlias;
@@ -332,20 +330,6 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
               ),
               const SizedBox(height: 14),
 
-              // Indicador visual de modo de identidad (Foro Anónimo)
-              IdentityBadgeChip(
-                mode: IdentityMode.forumAnonymous,
-                displayName: widget.activeAlias,
-                onSwitchIdentity: () {
-                  AliasModal.show(
-                    context,
-                    currentAlias: widget.activeAlias,
-                    onSaved: widget.onAliasChanged,
-                  );
-                },
-              ),
-              const Divider(height: 20),
-
               // Quote preview banner if quoting a post
               if (widget.quotedPost != null) ...[
                 Container(
@@ -361,7 +345,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                       Icon(
                         Icons.format_quote,
                         size: 18,
-                        color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF004B87),
+                        color: theme.colorScheme.primary,
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -523,13 +507,13 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                     icon: Icon(
                       Icons.poll_outlined,
                       size: 16,
-                      color: _showPollForm ? (isDark ? const Color(0xFF60A5FA) : const Color(0xFF004B87)) : null,
+                      color: _showPollForm ? theme.colorScheme.primary : null,
                     ),
                     label: Text(
                       'Encuesta',
                       style: TextStyle(
                         fontSize: 12,
-                        color: _showPollForm ? (isDark ? const Color(0xFF60A5FA) : const Color(0xFF004B87)) : null,
+                        color: _showPollForm ? theme.colorScheme.primary : null,
                         fontWeight: _showPollForm ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
@@ -560,7 +544,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
-                              color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF004B87),
+                              color: theme.colorScheme.primary,
                             ),
                           ),
                           IconButton(
@@ -702,7 +686,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                     ),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isDark ? const Color(0xFF5865F2) : theme.colorScheme.primary,
+                        backgroundColor: theme.colorScheme.primary,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       ),
@@ -714,7 +698,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                               child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                             )
                           : const Icon(Icons.send, size: 16),
-                      label: Text(_isSubmitting ? 'Publicando...' : 'Publicar Consulta'),
+                      label: Text(_isSubmitting ? 'Publicando...' : 'Publicar'),
                     ),
                   ],
                 ),

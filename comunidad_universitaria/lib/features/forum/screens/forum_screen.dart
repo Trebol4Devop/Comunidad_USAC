@@ -671,7 +671,7 @@ class _ForumScreenState extends State<ForumScreen> {
                   color: isDark ? const Color(0xFF3F4147) : const Color(0xFFEEF2FF),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(_activeChannel.icon, size: 22, color: isDark ? Colors.white : const Color(0xFF5865F2)),
+                child: Icon(_activeChannel.icon, size: 22, color: theme.colorScheme.primary),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -758,7 +758,7 @@ class _ForumScreenState extends State<ForumScreen> {
                 const SizedBox(width: 10),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF5865F2), // Discord Blurple
+                    backgroundColor: theme.colorScheme.primary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     elevation: 0,
@@ -837,7 +837,7 @@ class _ForumScreenState extends State<ForumScreen> {
                 const SizedBox(width: 8),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF5865F2),
+                    backgroundColor: theme.colorScheme.primary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
                     elevation: 0,
