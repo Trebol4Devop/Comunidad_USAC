@@ -8,16 +8,17 @@ class GroupsService {
   static const String _cacheNamespace = 'student_groups';
 
   static const Map<String, List<String>> _facultyAliases = {
-    '08': ['sistemas', 'civil', 'industrial', 'mecanica', 'quimica', 'electronica', 'ingenieria'],
-    '05': ['medicina', 'salud', 'medicas'],
-    '04': ['derecho', 'juridicas', 'leyes'],
+    '08': ['sistemas', 'civil', 'industrial', 'mecanica', 'quimica', 'electronica', 'ingenieria', 'fi'],
+    '05': ['medicina', 'salud', 'medicas', 'cirujano', 'cum'],
+    '04': ['derecho', 'juridicas', 'leyes', 'sociales'],
     '03': ['economicas', 'auditoria', 'administracion', 'economia'],
-    '02': ['arquitectura', 'diseno'],
-    '01': ['agronomia', 'ambiental', 'agricola'],
-    '06': ['farmacia', 'bioquimica', 'quimica'],
-    '77': ['humanidades', 'pedagogia', 'profesorado'],
-    '09': ['odontologia'],
-    '10': ['veterinaria', 'zootecnia'],
+    '02': ['arquitectura', 'diseno', 'farq'],
+    '01': ['agronomia', 'ambiental', 'agricola', 'fausac'],
+    '06': ['farmacia', 'bioquimica', 'quimica', 'quimicas', 'farmaceutica'],
+    '77': ['humanidades', 'pedagogia', 'profesorado', 'filosofia', 'letras', 'fahusac'],
+    '07': ['humanidades', 'pedagogia', 'profesorado', 'filosofia', 'letras', 'fahusac'],
+    '09': ['odontologia', 'dental', 'fousac'],
+    '10': ['veterinaria', 'zootecnia', 'fmvz'],
     'area_comun': ['area_comun', 'basicas'],
   };
 
@@ -91,11 +92,33 @@ class GroupsService {
       }).toList();
 
       if (facultad != 'todas' && carrera == 'todas') {
+        final facultyKeywords = _facultyAliases[facultad] ?? [];
         groups = groups.where((g) {
-          if (g.carrera == 'todas' || g.carrera.isEmpty) return true;
+          // 1. La carrera inicia con el código de la facultad (ej. 08, 08-01-01, 08_todas)
           if (g.carrera.startsWith(facultad)) return true;
-          final facultyKeywords = _facultyAliases[facultad] ?? [];
-          return facultyKeywords.any((kw) => g.carrera.toLowerCase().contains(kw));
+
+          // 2. Si la carrera coincide con algún alias de la facultad (ej. 'sistemas', 'civil', etc.)
+          final carreraLower = g.carrera.toLowerCase().trim();
+          if (carreraLower.isNotEmpty &&
+              carreraLower != 'todas' &&
+              facultyKeywords.any((kw) => carreraLower == kw || carreraLower.contains(kw))) {
+            return true;
+          }
+
+          // 3. Caso especial de Área Común (Ingeniería o general)
+          if (carreraLower == 'area_comun' && (facultad == '08' || facultad == 'area_comun')) {
+            return true;
+          }
+
+          // 4. Si la carrera fue registrada como 'todas' o vacía, SOLO se incluye si su título, curso
+          // o descripción menciona explícitamente palabras clave de esta facultad específica (evitando
+          // que grupos de otras facultades o grupos globales USAC se cuelen en este servidor).
+          if (carreraLower == 'todas' || carreraLower.isEmpty) {
+            final searchable = '${g.title} ${g.curso} ${g.description}'.toLowerCase();
+            return facultyKeywords.any((kw) => searchable.contains(kw));
+          }
+
+          return false;
         }).toList();
       }
 
