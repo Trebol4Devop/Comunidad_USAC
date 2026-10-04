@@ -55,6 +55,8 @@ class _ForumScreenState extends State<ForumScreen> {
   late List<ForumServer> _servers;
   late ForumServer _activeServer;
   late ForumChannel _activeChannel;
+  List<ForumChannel> _channels = List.from(ForumChannel.defaultChannels);
+  List<ForumFaculty> _faculties = List.from(ForumFaculty.defaultFaculties);
 
   // Data & Search States
   List<Post> _posts = [];
@@ -68,14 +70,34 @@ class _ForumScreenState extends State<ForumScreen> {
   void initState() {
     super.initState();
     _servers = List.from(ForumServer.defaultServers);
-    _activeServer = widget.activeServer ?? (_servers.length > 2 ? _servers[2] : _servers.first);
+    _activeServer = widget.activeServer ?? _servers.first;
     _activeChannel = widget.activeChannel ?? ForumChannel.defaultChannels.first;
     _searchQuery = widget.searchQuery;
     if (_searchQuery.isNotEmpty) {
       _searchController.text = _searchQuery;
     }
     _loadUserProfile();
+    _loadForumStructure();
     _loadPosts();
+  }
+
+  Future<void> _loadForumStructure() async {
+    try {
+      final channels = await ForumService.fetchForumChannels();
+      final faculties = await ForumService.fetchForumFaculties();
+      if (mounted) {
+        setState(() {
+          _channels = channels;
+          _faculties = faculties;
+          if (!_channels.any((c) => c.id == _activeChannel.id) &&
+              _activeChannel.id != ForumChannel.bookmarksChannel.id) {
+            _activeChannel = _channels.first;
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error cargando estructura del foro desde DB: $e');
+    }
   }
 
   Future<void> _loadUserProfile() async {
@@ -400,6 +422,7 @@ class _ForumScreenState extends State<ForumScreen> {
             ForumServerRail(
               servers: _servers,
               activeServer: _activeServer,
+              faculties: _faculties,
               onSelectServer: _onSelectServer,
               onAddServer: _onAddServer,
             ),
@@ -408,6 +431,7 @@ class _ForumScreenState extends State<ForumScreen> {
             ForumChannelSidebar(
               activeServer: _activeServer,
               activeChannel: _activeChannel,
+              channels: _channels,
               onSelectChannel: _onSelectChannel,
               onServerChanged: _onSelectServer,
               activeAlias: widget.activeAlias,
@@ -438,6 +462,7 @@ class _ForumScreenState extends State<ForumScreen> {
             ForumServerRail(
               servers: _servers,
               activeServer: _activeServer,
+              faculties: _faculties,
               onSelectServer: (srv) {
                 _onSelectServer(srv);
                 if (_scaffoldKey.currentState?.isDrawerOpen == true) {
@@ -450,6 +475,7 @@ class _ForumScreenState extends State<ForumScreen> {
               child: ForumChannelSidebar(
                 activeServer: _activeServer,
                 activeChannel: _activeChannel,
+                channels: _channels,
                 onSelectChannel: _onSelectChannel,
                 onServerChanged: (srv) {
                   _onSelectServer(srv);
@@ -658,12 +684,12 @@ class _ForumScreenState extends State<ForumScreen> {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      '${_activeServer.name} · ${_activeChannel.description}',
+                      _activeChannel.description,
                       style: TextStyle(
                         fontSize: 12,
                         color: isDark ? const Color(0xFF949BA4) : const Color(0xFF64748B),
                       ),
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],

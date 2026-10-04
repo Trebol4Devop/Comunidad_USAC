@@ -5,6 +5,7 @@ import 'forum_carrera_picker_dialog.dart';
 class ForumServerRail extends StatefulWidget {
   final List<ForumServer> servers;
   final ForumServer activeServer;
+  final List<ForumFaculty>? faculties;
   final Function(ForumServer) onSelectServer;
   final Function(ForumServer) onAddServer;
 
@@ -12,6 +13,7 @@ class ForumServerRail extends StatefulWidget {
     super.key,
     required this.servers,
     required this.activeServer,
+    this.faculties,
     required this.onSelectServer,
     required this.onAddServer,
   });
@@ -94,11 +96,8 @@ class _ForumServerRailState extends State<ForumServerRail> {
       _submenuTop = 10.0;
     }
 
-    // Seleccionamos la facultad en el servidor activo si no estaba activa
-    if (widget.activeServer.facultadId != faculty.id) {
-      widget.onSelectServer(faculty.toGeneralServer());
-    }
-
+    // Solo desplegamos el submenú de subservidores.
+    // La pantalla del foro mantiene intacto el servidor actual hasta que se seleccione el nuevo.
     setState(() {
       _openFaculty = faculty;
     });
@@ -265,9 +264,9 @@ class _ForumServerRailState extends State<ForumServerRail> {
     final isDark = theme.brightness == Brightness.dark;
 
     final railBg = isDark ? const Color(0xFF1E1F22) : const Color(0xFFE3E5E8);
-    final faculties = ForumFaculty.defaultFaculties;
+    final faculties = widget.faculties ?? ForumFaculty.defaultFaculties;
     final homeFaculty = faculties.first; // Campus Central · USAC
-    final otherFaculties = faculties.sublist(1); // 10 Facultades oficiales
+    final otherFaculties = faculties.length > 1 ? faculties.sublist(1) : <ForumFaculty>[];
 
     final isHomeActive = widget.activeServer.facultadId == homeFaculty.id;
     final isHomeOpen = _openFaculty?.id == homeFaculty.id;
@@ -322,7 +321,7 @@ class _ForumServerRailState extends State<ForumServerRail> {
               // 1. General USAC Home Server (Campus Central)
               Builder(
                 builder: (itemCtx) => Tooltip(
-                  message: '${homeFaculty.name}\n(Toca para ver carreras)',
+                  message: '${homeFaculty.name}\nVer carreras',
                   preferBelow: false,
                   child: _buildItemButton(
                     isActive: isHomeActive,
@@ -369,7 +368,7 @@ class _ForumServerRailState extends State<ForumServerRail> {
                       padding: const EdgeInsets.only(bottom: 6),
                       child: Builder(
                         builder: (itemCtx) => Tooltip(
-                          message: '${faculty.name}\n(Toca para ver carreras)',
+                          message: '${faculty.name}\nVer carreras',
                           preferBelow: false,
                           child: _buildItemButton(
                             isActive: isActive,
