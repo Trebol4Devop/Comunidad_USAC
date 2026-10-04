@@ -11,6 +11,7 @@ import '../widgets/discord/forum_channel_sidebar.dart';
 import '../widgets/discord/forum_server_rail.dart';
 import '../widgets/post_card.dart';
 import 'post_detail_screen.dart';
+import '../../groups/screens/groups_screen.dart';
 import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/empty_state_widget.dart';
 
@@ -55,6 +56,7 @@ class _ForumScreenState extends State<ForumScreen> {
   late List<ForumServer> _servers;
   late ForumServer _activeServer;
   late ForumChannel _activeChannel;
+  late ForumChannel _groupsActiveChannel;
   List<ForumChannel> _channels = List.from(ForumChannel.defaultChannels);
   List<ForumFaculty> _faculties = List.from(ForumFaculty.defaultFaculties);
 
@@ -72,13 +74,16 @@ class _ForumScreenState extends State<ForumScreen> {
     _servers = List.from(ForumServer.defaultServers);
     _activeServer = widget.activeServer ?? _servers.first;
     _activeChannel = widget.activeChannel ?? ForumChannel.defaultChannels.first;
+    _groupsActiveChannel = ForumChannel.groupsChannels.first;
     _searchQuery = widget.searchQuery;
     if (_searchQuery.isNotEmpty) {
       _searchController.text = _searchQuery;
     }
     _loadUserProfile();
     _loadForumStructure();
-    _loadPosts();
+    if (_activeServer.id != ForumServer.groupsServer.id) {
+      _loadPosts();
+    }
   }
 
   Future<void> _loadForumStructure() async {
@@ -119,12 +124,16 @@ class _ForumScreenState extends State<ForumScreen> {
     }
     if (widget.activeServer != null && widget.activeServer!.id != _activeServer.id) {
       _activeServer = widget.activeServer!;
-      shouldReload = true;
+      if (_activeServer.id != ForumServer.groupsServer.id) {
+        shouldReload = true;
+      }
     }
     if (widget.searchQuery != oldWidget.searchQuery && widget.searchQuery != _searchQuery) {
       _searchQuery = widget.searchQuery;
       _searchController.text = _searchQuery;
-      shouldReload = true;
+      if (_activeServer.id != ForumServer.groupsServer.id) {
+        shouldReload = true;
+      }
     }
     if (shouldReload) {
       _loadPosts();
@@ -177,7 +186,9 @@ class _ForumScreenState extends State<ForumScreen> {
       _searchController.clear();
     });
     widget.onServerChanged?.call(server);
-    _loadPosts();
+    if (server.id != ForumServer.groupsServer.id) {
+      _loadPosts();
+    }
   }
 
   void _onAddServer(ForumServer newServer) {
@@ -190,6 +201,18 @@ class _ForumScreenState extends State<ForumScreen> {
   }
 
   void _onSelectChannel(ForumChannel channel) {
+    if (_activeServer.id == ForumServer.groupsServer.id) {
+      if (_groupsActiveChannel.id == channel.id) return;
+      setState(() {
+        _groupsActiveChannel = channel;
+      });
+      widget.onChannelChanged?.call(channel);
+      if (_scaffoldKey.currentState?.isDrawerOpen == true) {
+        Navigator.of(context).pop();
+      }
+      return;
+    }
+
     if (_activeChannel.id == channel.id) return;
     setState(() {
       _activeChannel = channel;
@@ -412,6 +435,12 @@ class _ForumScreenState extends State<ForumScreen> {
     // Discord main chat background: #313338 dark, #FFFFFF light
     final feedBg = isDark ? const Color(0xFF313338) : Colors.white;
 
+    final isGroups = _activeServer.id == ForumServer.groupsServer.id;
+    final currentChannel = isGroups ? _groupsActiveChannel : _activeChannel;
+    final currentChannels = isGroups
+        ? ForumChannel.groupsChannelsFromFaculties(_faculties)
+        : _channels;
+
     if (isDesktopOrTablet) {
       return Scaffold(
         backgroundColor: feedBg,
@@ -430,27 +459,37 @@ class _ForumScreenState extends State<ForumScreen> {
             // 2. Channel Sidebar (240px)
             ForumChannelSidebar(
               activeServer: _activeServer,
-              activeChannel: _activeChannel,
-              channels: _channels,
+              activeChannel: currentChannel,
+              channels: currentChannels,
               onSelectChannel: _onSelectChannel,
               onServerChanged: _onSelectServer,
               activeAlias: widget.activeAlias,
               onAliasChanged: widget.onAliasChanged,
             ),
 
-            // 3. Central Channel Feed without redundant pinned header
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: _loadPosts,
-                child: _buildFeedContent(theme, isDark),
+            // 3. Main Content: GroupsScreen if groupsServer, otherwise Channel Feed
+            if (isGroups)
+              Expanded(
+                child: GroupsScreen(
+                  activeAlias: widget.activeAlias,
+                  onAliasChanged: widget.onAliasChanged,
+                  activeFacultadId: _groupsActiveChannel.categoryId,
+                  activeChannelName: _groupsActiveChannel.name,
+                ),
+              )
+            else
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: _loadPosts,
+                  child: _buildFeedContent(theme, isDark),
+                ),
               ),
-            ),
           ],
         ),
       );
     }
 
-    // Mobile layout (< 768px): Unified, sleek Discord mobile layout without double AppBars or redundant FAB
+    // Mobile layout (< 768px): Unified, sleek Discord mobile layout
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: feedBg,
@@ -474,8 +513,8 @@ class _ForumScreenState extends State<ForumScreen> {
             Expanded(
               child: ForumChannelSidebar(
                 activeServer: _activeServer,
-                activeChannel: _activeChannel,
-                channels: _channels,
+                activeChannel: currentChannel,
+                channels: currentChannels,
                 onSelectChannel: _onSelectChannel,
                 onServerChanged: (srv) {
                   _onSelectServer(srv);
@@ -494,17 +533,79 @@ class _ForumScreenState extends State<ForumScreen> {
         top: false,
         child: Column(
           children: [
-            // Pinned Discord Mobile Channel Bar (clean, no second full AppBar)
-            _buildMobileChannelHeader(theme, isDark),
-            // Posts Feed
+            if (isGroups)
+              _buildMobileGroupsHeader(theme, isDark)
+            else
+              _buildMobileChannelHeader(theme, isDark),
             Expanded(
-              child: RefreshIndicator(
-                onRefresh: _loadPosts,
-                child: _buildFeedContent(theme, isDark),
-              ),
+              child: isGroups
+                  ? GroupsScreen(
+                      activeAlias: widget.activeAlias,
+                      onAliasChanged: widget.onAliasChanged,
+                      activeFacultadId: _groupsActiveChannel.categoryId,
+                      activeChannelName: _groupsActiveChannel.name,
+                    )
+                  : RefreshIndicator(
+                      onRefresh: _loadPosts,
+                      child: _buildFeedContent(theme, isDark),
+                    ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildMobileGroupsHeader(ThemeData theme, bool isDark) {
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF313338) : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? const Color(0xFF202225) : const Color(0xFFE2E8F0),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.menu, size: 22),
+            tooltip: 'Canales y Servidores',
+            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+          ),
+          const SizedBox(width: 4),
+          const Icon(
+            Icons.chat,
+            size: 18,
+            color: Color(0xFF25D366),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              '#${_groupsActiveChannel.name}',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: const Color(0xFF25D366).withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: const Text(
+              'WAPP',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF25D366),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

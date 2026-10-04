@@ -258,6 +258,38 @@ class _ForumServerRailState extends State<ForumServerRail> {
     );
   }
 
+  Widget _buildWhatsAppSymbol({required bool isActive, required bool isDark}) {
+    final iconColor = isActive ? Colors.white : const Color(0xFF25D366);
+    final phoneColor = isActive ? const Color(0xFF25D366) : Colors.white;
+
+    return SizedBox(
+      width: 18,
+      height: 16,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Icon(
+            Icons.chat_bubble,
+            size: 16,
+            color: iconColor,
+          ),
+          Positioned(
+            top: 3.5,
+            left: 4.5,
+            child: Transform.rotate(
+              angle: -0.3,
+              child: Icon(
+                Icons.phone,
+                size: 8,
+                color: phoneColor,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -271,7 +303,8 @@ class _ForumServerRailState extends State<ForumServerRail> {
     );
     final otherFaculties = faculties.where((f) => f.id != homeFaculty.id).toList();
 
-    final isHomeActive = widget.activeServer.facultadId == homeFaculty.id;
+    final isHomeActive = widget.activeServer.facultadId == homeFaculty.id &&
+        widget.activeServer.id != ForumServer.groupsServer.id;
     final isHomeOpen = _openFaculty?.id == homeFaculty.id;
 
     final mediaQuery = MediaQuery.of(context);
@@ -357,6 +390,44 @@ class _ForumServerRailState extends State<ForumServerRail> {
                     ),
                   ),
                 ),
+              ),
+              const SizedBox(height: 6),
+
+              // 2. Grupos de Estudio Server (WhatsApp) - Hasta arriba directamente abajo de USAC
+              Builder(
+                builder: (itemCtx) {
+                  final isGroupsActive = widget.activeServer.id == ForumServer.groupsServer.id;
+                  return Tooltip(
+                    message: 'Grupos de Estudio (WhatsApp)',
+                    preferBelow: false,
+                    child: _buildItemButton(
+                      isActive: isGroupsActive,
+                      activeColor: ForumServer.groupsServer.color,
+                      isDark: isDark,
+                      onTap: () {
+                        _closeSubmenu();
+                        widget.onSelectServer(ForumServer.groupsServer);
+                      },
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildWhatsAppSymbol(isActive: isGroupsActive, isDark: isDark),
+                          const SizedBox(height: 1),
+                          Text(
+                            'GRUPOS',
+                            style: TextStyle(
+                              fontSize: 6.5,
+                              fontWeight: FontWeight.bold,
+                              color: isGroupsActive
+                                  ? Colors.white
+                                  : (isDark ? Colors.grey.shade300 : const Color(0xFF0F5132)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 6),
 
