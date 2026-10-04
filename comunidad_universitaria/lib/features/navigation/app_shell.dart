@@ -3,7 +3,6 @@ import '../../core/utils/responsive.dart';
 import '../forum/screens/forum_screen.dart';
 import '../marketplace/screens/marketplace_screen.dart';
 import '../marketplace/widgets/create_listing_dialog.dart';
-import '../profile/screens/profile_screen.dart';
 import '../rules/screens/rules_screen.dart';
 
 class AppShell extends StatefulWidget {
@@ -26,19 +25,6 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
-
-  void _navigateToProfile() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ProfileScreen(
-          activeAlias: widget.activeAlias,
-          onAliasChanged: widget.onAliasChanged,
-          onToggleTheme: widget.onToggleTheme,
-          isDarkMode: widget.isDarkMode,
-        ),
-      ),
-    );
-  }
 
   void _navigateToRules() {
     Navigator.of(context).push(
