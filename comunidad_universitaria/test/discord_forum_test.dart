@@ -723,7 +723,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // En el riel, verificar el botón de Grupos de Estudio
-      final gruposTooltip = find.byTooltip('Grupos de Estudio (WhatsApp)');
+      final gruposTooltip = find.byTooltip('Grupos de Estudio');
       expect(gruposTooltip, findsOneWidget);
 
       final gruposText = find.descendant(
@@ -768,7 +768,7 @@ void main() {
       expect(find.byType(GroupsScreen), findsNothing);
 
       // Tocar el botón de Grupos de Estudio en el riel
-      final gruposTooltip = find.byTooltip('Grupos de Estudio (WhatsApp)');
+      final gruposTooltip = find.byTooltip('Grupos de Estudio');
       await tester.tap(gruposTooltip);
       await tester.pumpAndSettle();
 
@@ -1143,11 +1143,11 @@ void main() {
       await tester.tap(basSubserver);
       await tester.pumpAndSettle();
 
-      // La barra lateral de canales debe actualizar su encabezado a Área Común (Cursos Básicos)
+      // La barra lateral de canales debe actualizar su encabezado a Área Común
       expect(
         find.descendant(
           of: find.byType(ForumChannelSidebar),
-          matching: find.text('Área Común (Cursos Básicos)'),
+          matching: find.text('Área Común'),
         ),
         findsOneWidget,
       );

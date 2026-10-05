@@ -868,10 +868,21 @@ class ForumService {
         var nombre = row['nombre']?.toString() ?? '';
         final codigo = row['codigo']?.toString() ?? '';
 
+        // Limpieza canónica exhaustiva: remover cualquier texto entre paréntesis o redundancias
+        nombre = nombre
+            .replaceAll('(Campus Central)', '')
+            .replaceAll('(Extensión)', ' - Extensión')
+            .replaceAll(RegExp(r'\s*\([^)]*\)'), '')
+            .replaceAll(RegExp(r'\s*[/|-]\s*(Cursos Básicos|General).*', caseSensitive: false), '')
+            .replaceAll(RegExp(r'\s+'), ' ')
+            .trim();
+
         // Normalización canónica: Área Común pertenece exclusivamente a Ingeniería ('08')
-        if (carId == 'area_comun') {
+        if (carId == 'area_comun' ||
+            nombre.toLowerCase().contains('área común') ||
+            nombre.toLowerCase().contains('area comun')) {
           facId = '08';
-          nombre = 'Área Común (Cursos Básicos)';
+          nombre = 'Área Común';
         }
 
         final existing = careerMeta[carId];
@@ -901,7 +912,7 @@ class ForumService {
       final ForumCareerItem defaultAreaComun = careerMeta['area_comun'] ??
           const ForumCareerItem(
             id: 'area_comun',
-            name: 'Área Común (Cursos Básicos)',
+            name: 'Área Común',
             shortCode: 'BAS',
             icon: Icons.auto_stories,
             facultadId: '08',
@@ -913,7 +924,7 @@ class ForumService {
         ingCareers.insert(
           0,
           existingItem.copyWith(
-            name: 'Área Común (Cursos Básicos)',
+            name: 'Área Común',
             shortCode: 'BAS',
             icon: Icons.auto_stories,
             facultadId: '08',
@@ -924,8 +935,16 @@ class ForumService {
       final List<ForumFaculty> faculties = [];
       for (final facRow in facsData) {
         final facId = facRow['id']?.toString() ?? '';
-        final nombre = facRow['nombre']?.toString() ?? '';
+        var nombre = facRow['nombre']?.toString() ?? '';
         final codigo = facRow['codigo']?.toString() ?? '';
+
+        // Limpieza canónica: remover paréntesis y sufijos redundantes de nombres de facultades
+        nombre = nombre
+            .replaceAll(RegExp(r'\s*\([^)]*\)'), '')
+            .replaceAll(RegExp(r'\s*[/|-]\s*General.*', caseSensitive: false), '')
+            .replaceAll(RegExp(r'\s+'), ' ')
+            .trim();
+
         final existing = facultyMeta[facId];
         final careers = careersByFacultad[facId] ?? existing?.careers ?? [];
 

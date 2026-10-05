@@ -309,7 +309,7 @@ class _ForumServerRailState extends State<ForumServerRail> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Tooltip(
-                      message: '${faculty.name} (General)',
+                      message: faculty.name.replaceAll(RegExp(r'\s*\([^)]*\)'), '').trim(),
                       preferBelow: false,
                       child: _buildItemButton(
                         isActive: isFacultyActive && widget.activeServer.carreraId == 'todas',
@@ -351,7 +351,7 @@ class _ForumServerRailState extends State<ForumServerRail> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Tooltip(
-                      message: career.name,
+                      message: career.name.replaceAll(RegExp(r'\s*\([^)]*\)'), '').trim(),
                       preferBelow: false,
                       child: _buildItemButton(
                         isActive: isFacultyActive && widget.activeServer.carreraId == career.id,
@@ -560,7 +560,7 @@ class _ForumServerRailState extends State<ForumServerRail> {
               // 1. General USAC Home Server (Campus Central)
               Builder(
                 builder: (itemCtx) => Tooltip(
-                  message: homeFaculty.name,
+                  message: homeFaculty.name.replaceAll(RegExp(r'\s*\([^)]*\)'), '').trim(),
                   preferBelow: false,
                   child: _buildItemButton(
                     isActive: isHomeActive,
@@ -601,7 +601,7 @@ class _ForumServerRailState extends State<ForumServerRail> {
                 builder: (itemCtx) {
                   final isGroupsActive = widget.activeServer.isGroups;
                   return Tooltip(
-                    message: 'Grupos de Estudio (WhatsApp)',
+                    message: 'Grupos de Estudio',
                     preferBelow: false,
                     child: _buildItemButton(
                       isActive: isGroupsActive,
@@ -664,7 +664,7 @@ class _ForumServerRailState extends State<ForumServerRail> {
                       padding: const EdgeInsets.only(bottom: 6),
                       child: Builder(
                         builder: (itemCtx) => Tooltip(
-                          message: faculty.name,
+                          message: faculty.name.replaceAll(RegExp(r'\s*\([^)]*\)'), '').trim(),
                           preferBelow: false,
                           child: _buildItemButton(
                             isActive: isActive,

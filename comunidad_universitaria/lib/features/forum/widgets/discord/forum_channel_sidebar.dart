@@ -69,7 +69,7 @@ class ForumChannelSidebar extends StatelessWidget {
                           children: [
                             Flexible(
                               child: Text(
-                                activeServer.name,
+                                activeServer.name.replaceAll(RegExp(r'\s*\([^)]*\)'), '').trim(),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(

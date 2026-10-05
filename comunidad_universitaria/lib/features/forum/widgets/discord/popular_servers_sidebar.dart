@@ -269,7 +269,7 @@ class PopularServersSidebar extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            item.server.name,
+                            item.server.name.replaceAll(RegExp(r'\s*\([^)]*\)'), '').trim(),
                             style: TextStyle(
                               fontSize: 11.5,
                               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
@@ -301,7 +301,7 @@ class PopularServersSidebar extends StatelessWidget {
                     ),
                     const SizedBox(height: 1),
                     Text(
-                      item.facultyName,
+                      item.facultyName.replaceAll(RegExp(r'\s*\([^)]*\)'), '').trim(),
                       style: TextStyle(
                         fontSize: 9.5,
                         color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,

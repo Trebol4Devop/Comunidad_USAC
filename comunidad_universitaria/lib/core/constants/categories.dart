@@ -779,7 +779,7 @@ class USACConstants {
         },
         {
           'id': 'area_comun',
-          'nombre': 'Área Común (Cursos Básicos)',
+          'nombre': 'Área Común',
           'codigo': '08-00-00-AC',
           'sede': 'Campus Central',
           'modalidades': ['Diario', 'Sabatino', 'Dominical'],

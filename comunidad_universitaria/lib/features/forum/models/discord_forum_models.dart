@@ -64,7 +64,7 @@ class ForumServer {
     ),
     ForumServer(
       id: 'groups_medicina',
-      name: 'Medicina (Médico y Cirujano)',
+      name: 'Médico y Cirujano',
       shortCode: 'MED',
       icon: Icons.medical_services,
       facultadId: '05',
@@ -135,7 +135,7 @@ class ForumServer {
       icon: Icons.gavel,
       facultadId: '04',
       carreraId: 'todas',
-      description: 'Grupos de WhatsApp de Ciencias Jurídicas y Sociales (Derecho).',
+      description: 'Grupos de WhatsApp de Ciencias Jurídicas y Sociales.',
       color: Color(0xFF7C3AED),
       isGroups: true,
     ),
@@ -146,7 +146,7 @@ class ForumServer {
       icon: Icons.trending_up,
       facultadId: '03',
       carreraId: 'todas',
-      description: 'Grupos de WhatsApp de Auditoría (CPA), Administración y Economía.',
+      description: 'Grupos de WhatsApp de Contaduría Pública y Auditoría, Administración y Economía.',
       color: Color(0xFF0D9488),
       isGroups: true,
     ),
@@ -189,7 +189,7 @@ class ForumServer {
     groupsServer,
     ForumServer(
       id: 'area_comun',
-      name: 'Área Común (Cursos Básicos)',
+      name: 'Área Común',
       shortCode: 'BAS',
       icon: Icons.auto_stories,
       facultadId: '08',
@@ -1049,7 +1049,7 @@ class ForumFaculty {
       careers: [
         ForumCareerItem(
           id: 'area_comun',
-          name: 'Área Común (Cursos Básicos)',
+          name: 'Área Común',
           shortCode: 'BAS',
           icon: Icons.auto_stories,
           facultadId: '08',
@@ -1287,12 +1287,12 @@ class PopularServerItem {
       PopularServerItem(
         server: ForumServer(
           id: 'server_area_comun',
-          name: 'Área Común (Cursos Básicos)',
+          name: 'Área Común',
           shortCode: 'BAS',
           icon: Icons.auto_stories,
           facultadId: '08',
           carreraId: 'area_comun',
-          description: 'Espacio de discusión para Área Común (Cursos Básicos).',
+          description: 'Espacio de discusión para Área Común.',
           color: const Color(0xFF0284C7),
         ),
         facultyName: 'Facultad de Ingeniería',
