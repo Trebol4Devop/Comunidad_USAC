@@ -11,12 +11,12 @@ adicional que ya se acordó e implementó en paralelo.
 |---|---|---|
 | 1 | Flujo invitado y lectura pública | Implementada; pgTAP verifica restricciones de escritura |
 | 2 | Pantallas de login y registro | Integradas en `AuthModal` |
-| 3 | Verificación y reenvío de OTP de correo | Integrados; entrega real depende de la configuración de correo |
-| 4 | Sesión, cierre de sesión y navegación | SDK y logout integrados; mantener acceso invitado sigue siendo el comportamiento esperado |
-| 5 | Perfil y compatibilidad con el esquema | Trigger existente se preserva/restaura en local; pendiente prueba E2E del alta y perfil |
+| 3 | Verificación y reenvío de OTP de correo | Flujo probado con correo capturado por Mailpit local; producción depende del proveedor SMTP |
+| 4 | Sesión, cierre de sesión y navegación | Login/logout probados en Auth local; persistencia tras cerrar y reabrir la app queda pendiente de E2E |
+| 5 | Perfil y compatibilidad con el esquema | Trigger y perfil comprobados en la prueba E2E local; migración de contribuciones guest antiguas sigue siendo una decisión de producto |
 | 6 | Google OAuth con PKCE | Código y callbacks web/móvil preparados; pendiente configurar proveedor/redirects y probar con credenciales reales |
-| 7 | Recuperación de contraseña | Flujo y UI integrados; falta probar entrega real de correo |
-| 8 | Seguridad adicional y pruebas | RLS de perfiles, visitantes y AAL2 cubiertos por pgTAP; 123 pruebas DB y 242 Flutter pasan; quedan validaciones E2E reales |
+| 7 | Recuperación de contraseña | OTP y cambio de contraseña probados de punta a punta con Mailpit local; SMTP de producción pendiente |
+| 8 | Seguridad adicional y pruebas | RLS de perfiles, visitantes y AAL2 cubiertos por pgTAP; 123 pruebas DB y 242 Flutter pasan; falta E2E real de TOTP y Google requiere credenciales externas |
 
 Las pruebas y configuración descritas aquí son locales o simuladas; no
 sustituyen una prueba real contra el proveedor. No se han publicado estas
@@ -72,11 +72,11 @@ función existente `public.handle_new_user_profile()` y garantiza el trigger
 `trg_on_auth_user_created` si falta. No se agregó una tabla de perfiles
 alternativa.
 
-La migración y las pruebas locales cubren el trigger, pero falta verificar el
-flujo completo de registro de una cuenta y comprobar su fila de perfil con un
-usuario de prueba. La política de conservar o migrar contribuciones de cuentas
-guest antiguas debe decidirse antes de vincularlas a cuentas nuevas; no se debe
-atribuir contenido anónimo automáticamente sin esa decisión.
+La prueba E2E local creó una cuenta descartable, confirmó el OTP y comprobó la
+fila en `public.profiles` creada por el trigger. La política de conservar o
+migrar contribuciones de cuentas guest antiguas debe decidirse antes de
+vincularlas a cuentas nuevas; no se debe atribuir contenido anónimo
+automáticamente sin esa decisión.
 
 ## Fase 6 — Google OAuth con PKCE
 
@@ -141,10 +141,10 @@ la registra como plantilla de recuperación local. El flujo hace
 `resetPasswordForEmail`, verifica con `OtpType.recovery` y luego actualiza la
 contraseña en la sesión resultante.
 
-La recuperación por correo depende de que Auth y la entrega de correo estén
-configurados correctamente en cada entorno. Las pruebas simuladas no demuestran
-la entrega real de emails. No se cambió ninguna plantilla ni ajuste en Supabase
-remoto.
+La entrega del OTP de recuperación se comprobó con Auth local y Mailpit. La
+entrega de correo de producción depende de la plantilla y del proveedor SMTP
+configurados en el proyecto correspondiente. No se cambió ninguna plantilla ni
+ajuste en Supabase remoto.
 
 ## MFA TOTP — Subfases 5.1–5.4 y controles de seguridad de Fase 8
 
@@ -229,13 +229,18 @@ En el entorno local levantado por Supabase:
 - El health check local de Supabase Auth respondió HTTP 200 al confirmar que
   el servicio estaba disponible.
 
-Las pruebas de Auth usan respuestas HTTP simuladas. Queda como verificación
-manual pendiente usar un usuario descartable en Supabase local para comprobar la
-entrega del correo de recuperación, el alta del perfil, la sesión y el flujo
-real de TOTP/códigos de recuperación. La prueba externa de Google también
-requiere configurar previamente el proveedor, pero no forma parte de este
-chequeo local. No se debe hacer ninguna de estas pruebas contra el proyecto
-remoto sin autorización.
+Además de las pruebas simuladas, se completó una prueba E2E en Supabase local y
+Mailpit con una cuenta descartable: registro sin sesión previa a confirmar,
+rechazo del login con correo pendiente, recepción y validación del OTP, creación
+del perfil, solicitud y validación del OTP de recuperación, actualización de
+contraseña, login con la nueva contraseña, logout y eliminación de la cuenta de
+prueba.
+
+Queda como verificación manual pendiente probar el flujo real de inscripción,
+desafío y códigos de recuperación TOTP en Auth local. La prueba de Google requiere
+credenciales del proveedor y configuración de redirects; no se ejecutó. El SMTP
+de producción tampoco se probó. No se debe hacer ninguna de estas pruebas contra
+el proyecto remoto sin autorización.
 
 La suite Flutter completa había excedido el límite en un intento anterior; al
 repetirla con un límite mayor terminó correctamente. Después de añadir las
