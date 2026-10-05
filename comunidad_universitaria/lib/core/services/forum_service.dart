@@ -11,7 +11,7 @@ class ForumService {
   static const String _cacheNamespace = 'forum_posts';
 
   static Set<String> _getCareerIdsForFaculty(String facultadId) {
-    if (facultadId == 'todas') return <String>{'todas', 'area_comun'};
+    if (facultadId == 'todas') return <String>{'todas'};
     final careerIds = <String>{};
     final fac = USACConstants.facultades.firstWhere(
       (f) => f['id'] == facultadId,
@@ -31,6 +31,9 @@ class ForumService {
           careerIds.add(c.id);
         }
       }
+    }
+    if (facultadId == '08') {
+      careerIds.add('area_comun');
     }
     return careerIds;
   }
@@ -861,9 +864,15 @@ class ForumService {
       final Map<String, List<ForumCareerItem>> careersByFacultad = {};
       for (final row in carsData) {
         final carId = row['id']?.toString() ?? '';
-        final facId = row['facultad_id']?.toString() ?? '';
-        final nombre = row['nombre']?.toString() ?? '';
+        var facId = row['facultad_id']?.toString() ?? '';
+        var nombre = row['nombre']?.toString() ?? '';
         final codigo = row['codigo']?.toString() ?? '';
+
+        // Normalización canónica: Área Común pertenece exclusivamente a Ingeniería ('08')
+        if (carId == 'area_comun') {
+          facId = '08';
+          nombre = 'Área Común (Cursos Básicos)';
+        }
 
         final existing = careerMeta[carId];
         final shortCode = existing?.shortCode ??
@@ -879,6 +888,35 @@ class ForumService {
             icon: existing?.icon ?? Icons.school_outlined,
             facultadId: facId,
             codigo: codigo,
+          ),
+        );
+      }
+
+      // 'todas' jamás debe tener sub-carreras provenientes de la base de datos
+      careersByFacultad.remove('todas');
+
+      // Garantizar que la Facultad de Ingeniería ('08') tenga siempre Área Común como su primer subservidor
+      final ingCareers = careersByFacultad.putIfAbsent('08', () => []);
+      final areaComunIndex = ingCareers.indexWhere((c) => c.id == 'area_comun');
+      final ForumCareerItem defaultAreaComun = careerMeta['area_comun'] ??
+          const ForumCareerItem(
+            id: 'area_comun',
+            name: 'Área Común (Cursos Básicos)',
+            shortCode: 'BAS',
+            icon: Icons.auto_stories,
+            facultadId: '08',
+          );
+      if (areaComunIndex == -1) {
+        ingCareers.insert(0, defaultAreaComun);
+      } else {
+        final existingItem = ingCareers.removeAt(areaComunIndex);
+        ingCareers.insert(
+          0,
+          existingItem.copyWith(
+            name: 'Área Común (Cursos Básicos)',
+            shortCode: 'BAS',
+            icon: Icons.auto_stories,
+            facultadId: '08',
           ),
         );
       }
@@ -909,23 +947,11 @@ class ForumService {
       ForumFaculty todasFaculty;
       if (todasIndex != -1) {
         final existingTodas = faculties.removeAt(todasIndex);
-        final baseCareers = existingTodas.careers.isNotEmpty ? existingTodas.careers : defaultRoot.careers;
-        final updatedCareers = baseCareers.map((c) {
-          if (c.id == 'todas') {
-            return c.copyWith(
-              name: 'Todas las Carreras',
-              shortCode: 'USAC',
-              icon: Icons.school,
-            );
-          }
-          return c;
-        }).toList();
-
         todasFaculty = existingTodas.copyWith(
           name: 'Todas las Facultades',
           shortCode: 'USAC',
           icon: Icons.school,
-          careers: updatedCareers,
+          careers: defaultRoot.careers,
         );
       } else {
         todasFaculty = defaultRoot;

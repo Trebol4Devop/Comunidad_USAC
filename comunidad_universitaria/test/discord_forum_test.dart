@@ -1108,6 +1108,85 @@ void main() {
         findsOneWidget,
       );
     });
+
+    testWidgets('Facultad de Ingeniería despliega Área Común en su submenú y actualiza la barra lateral al seleccionarla', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ForumScreen(
+            activeAlias: 'EstudianteTester',
+            onAliasChanged: (_) {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Buscamos el botón de Ingeniería (ING) en el riel
+      final ingIcon = find.descendant(
+        of: find.byType(ForumServerRail),
+        matching: find.text('ING'),
+      );
+      expect(ingIcon, findsOneWidget);
+
+      // Al tocar ING, se abre el submenú flotante con las carreras de Ingeniería
+      await tester.tap(ingIcon);
+      await tester.pumpAndSettle();
+
+      // Debe aparecer el botón de Área Común (BAS)
+      final basSubserver = find.text('BAS');
+      expect(basSubserver, findsOneWidget);
+
+      // Tocamos Área Común en el submenú flotante
+      await tester.tap(basSubserver);
+      await tester.pumpAndSettle();
+
+      // La barra lateral de canales debe actualizar su encabezado a Área Común (Cursos Básicos)
+      expect(
+        find.descendant(
+          of: find.byType(ForumChannelSidebar),
+          matching: find.text('Área Común (Cursos Básicos)'),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('El servidor USAC (todas) no despliega submenú y mantiene una única carrera raíz', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ForumScreen(
+            activeAlias: 'EstudianteTester',
+            onAliasChanged: (_) {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final usacIcon = find.descendant(
+        of: find.byType(ForumServerRail),
+        matching: find.text('USAC'),
+      );
+      expect(usacIcon, findsOneWidget);
+
+      await tester.tap(usacIcon);
+      await tester.pumpAndSettle();
+
+      // No debe existir BAS (Área Común) bajo USAC
+      expect(find.text('BAS'), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(ForumChannelSidebar),
+          matching: find.text('Todas las Facultades'),
+        ),
+        findsOneWidget,
+      );
+    });
   });
 }
 
