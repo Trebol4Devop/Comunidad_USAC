@@ -160,6 +160,55 @@ void main() {
     );
 
     testWidgets(
+      'un correo sin confirmar permite ingresar el código y reenviarlo',
+      (tester) async {
+        tester.view.physicalSize = const Size(1200, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
+
+        final fakeServer = FakePostgrestServer();
+        SupabaseConfig.debugOverrideConfigured = true;
+        SupabaseService.debugClient = fakeServer.buildClient();
+        fakeServer.onPost(
+          '/auth/v1/token',
+          (_) => {
+            'code': 'email_not_confirmed',
+            'message': 'Email not confirmed',
+            'status': 400,
+          },
+          statusCode: 400,
+        );
+        fakeServer.onPost('/auth/v1/resend', (request) {
+          final payload = jsonDecode(request.body) as Map<String, dynamic>;
+          expect(payload['type'], 'signup');
+          expect(payload['email'], 'estudiante@usac.edu.gt');
+          return {'message_id': 'confirmation-message'};
+        });
+
+        await tester.pumpWidget(buildTestModal());
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.widgetWithText(TextFormField, 'Correo electrónico'),
+          'estudiante@usac.edu.gt',
+        );
+        await tester.enterText(
+          find.widgetWithText(TextFormField, 'Contraseña'),
+          'password123',
+        );
+        await tester.tap(find.widgetWithText(ElevatedButton, 'Iniciar Sesión'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Código de 6 dígitos'), findsOneWidget);
+        expect(find.text('Reenviar código'), findsOneWidget);
+        expect(find.textContaining('Tu correo aún no ha sido confirmado'), findsOneWidget);
+
+        await tester.tap(find.text('Reenviar código'));
+        await tester.pumpAndSettle();
+        expect(find.text('Te enviamos un nuevo código de verificación.'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
       'permite solicitar recuperación y verificar el código para cambiar contraseña',
       (tester) async {
         tester.view.physicalSize = const Size(1200, 800);

@@ -72,6 +72,51 @@ void main() {
     });
   });
 
+  group('SupabaseService email/password session', () {
+    test('signs in and clears the session on sign out', () async {
+      fakeServer.onPost('/auth/v1/token', (request) {
+        expect(request.url.queryParameters['grant_type'], 'password');
+        final payload = jsonDecode(request.body) as Map<String, dynamic>;
+        expect(payload['email'], 'student@usac.edu.gt');
+        expect(payload['password'], 'password123');
+        return {
+          'access_token': 'login-access-token',
+          'token_type': 'bearer',
+          'expires_in': 3600,
+          'refresh_token': 'login-refresh-token',
+          'user': {
+            'id': 'login-user',
+            'aud': 'authenticated',
+            'role': 'authenticated',
+            'email': 'student@usac.edu.gt',
+            'email_confirmed_at': '2026-10-03T00:00:00.000Z',
+            'created_at': '2026-10-03T00:00:00.000Z',
+            'app_metadata': {'provider': 'email', 'providers': ['email']},
+            'user_metadata': {},
+          },
+        };
+      });
+      fakeServer.onPost('/auth/v1/logout', (_) => {});
+
+      final userId = await SupabaseService.signInWithPassword(
+        email: ' student@usac.edu.gt ',
+        password: 'password123',
+      );
+      expect(userId, 'login-user');
+      expect(SupabaseService.currentUserId, 'login-user');
+
+      await SupabaseService.signOut();
+
+      expect(SupabaseService.currentUser, isNull);
+      expect(
+        fakeServer.recordedRequests.any(
+          (request) => request.url.path.endsWith('/auth/v1/logout'),
+        ),
+        isTrue,
+      );
+    });
+  });
+
   group('SupabaseService password recovery', () {
     test(
       'requests recovery, verifies its OTP, and updates the password',

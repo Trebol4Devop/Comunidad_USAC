@@ -226,9 +226,17 @@ class _AuthModalState extends State<AuthModal> {
       }
     } catch (e) {
       if (mounted) {
+        final errorText = e.toString().toLowerCase();
+        final needsEmailConfirmation =
+            errorText.contains('email not confirmed') ||
+            errorText.contains('email_not_confirmed');
         setState(() {
           _isLoading = false;
           _errorMessage = _friendlyAuthError(e);
+          if (needsEmailConfirmation) {
+            _awaitingEmailConfirmation = true;
+            _verificationCodeController.clear();
+          }
         });
       }
     }

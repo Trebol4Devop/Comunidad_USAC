@@ -135,9 +135,16 @@ Archivos principales:
   guiar al usuario, pero la autorización efectiva de datos debe permanecer en
   Postgres mediante permisos y RLS.
 
-La recuperación por correo depende de que los ajustes de Auth y la entrega de
-correo estén configurados correctamente en el entorno. Las pruebas unitarias
-simuladas no demuestran entrega real de emails.
+La plantilla local `supabase/templates/recovery.html` muestra `{{ .Token }}`,
+coherente con la UI que solicita un OTP de seis dígitos; `supabase/config.toml`
+la registra como plantilla de recuperación local. El flujo hace
+`resetPasswordForEmail`, verifica con `OtpType.recovery` y luego actualiza la
+contraseña en la sesión resultante.
+
+La recuperación por correo depende de que Auth y la entrega de correo estén
+configurados correctamente en cada entorno. Las pruebas simuladas no demuestran
+la entrega real de emails. No se cambió ninguna plantilla ni ajuste en Supabase
+remoto.
 
 ## MFA TOTP — Subfases 5.1–5.4 y controles de seguridad de Fase 8
 
