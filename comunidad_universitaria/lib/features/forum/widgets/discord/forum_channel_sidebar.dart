@@ -38,12 +38,14 @@ class ForumChannelSidebar extends StatelessWidget {
         children: [
           // 1. Server Header Banner
           InkWell(
-            onTap: () {
-              ForumCarreraPickerDialog.show(
-                context,
-                onServerSelected: onServerChanged,
-              );
-            },
+            onTap: activeServer.isGroups
+                ? null
+                : () {
+                    ForumCarreraPickerDialog.show(
+                      context,
+                      onServerSelected: onServerChanged,
+                    );
+                  },
             child: Container(
               height: 60,
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -85,7 +87,9 @@ class ForumChannelSidebar extends StatelessWidget {
                           ],
                         ),
                         Text(
-                          'Servidor Estudiantil · USAC',
+                          activeServer.isGroups
+                              ? 'Directorio de WhatsApp · USAC'
+                              : 'Servidor Estudiantil · USAC',
                           style: TextStyle(
                             fontSize: 10,
                             color: isDark ? const Color(0xFF949BA4) : const Color(0xFF64748B),
@@ -95,7 +99,8 @@ class ForumChannelSidebar extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Icon(Icons.keyboard_arrow_down, size: 20, color: Colors.grey.shade500),
+                  if (!activeServer.isGroups)
+                    Icon(Icons.keyboard_arrow_down, size: 20, color: Colors.grey.shade500),
                 ],
               ),
             ),
@@ -106,34 +111,51 @@ class ForumChannelSidebar extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
               children: [
-                // Category Header: CANALES DE DISCUSIÓN
-                _buildCategoryHeader('CANALES DE DISCUSIÓN', isDark),
-                const SizedBox(height: 4),
+                if (activeServer.isGroups) ...[
+                  // Category Header: CANALES Y CATEGORÍAS
+                  _buildCategoryHeader('CANALES Y CATEGORÍAS', isDark),
+                  const SizedBox(height: 4),
 
-                // Channels
-                ...(channels ?? ForumChannel.defaultChannels).map((channel) {
-                  final isActive = activeChannel.id == channel.id;
-                  return _buildChannelTile(
-                    channel: channel,
-                    isActive: isActive,
+                  // Channels
+                  ...(channels ?? ForumChannel.groupsChannels).map((channel) {
+                    final isActive = activeChannel.id == channel.id;
+                    return _buildChannelTile(
+                      channel: channel,
+                      isActive: isActive,
+                      theme: theme,
+                      isDark: isDark,
+                    );
+                  }),
+                ] else ...[
+                  // Category Header: CANALES DE DISCUSIÓN
+                  _buildCategoryHeader('CANALES DE DISCUSIÓN', isDark),
+                  const SizedBox(height: 4),
+
+                  // Channels
+                  ...(channels ?? ForumChannel.defaultChannels).map((channel) {
+                    final isActive = activeChannel.id == channel.id;
+                    return _buildChannelTile(
+                      channel: channel,
+                      isActive: isActive,
+                      theme: theme,
+                      isDark: isDark,
+                    );
+                  }),
+
+                  const SizedBox(height: 16),
+
+                  // Category Header: ACCESOS RÁPIDOS
+                  _buildCategoryHeader('PERSONAL', isDark),
+                  const SizedBox(height: 4),
+
+                  // Bookmarks Channel
+                  _buildChannelTile(
+                    channel: ForumChannel.bookmarksChannel,
+                    isActive: activeChannel.id == ForumChannel.bookmarksChannel.id,
                     theme: theme,
                     isDark: isDark,
-                  );
-                }),
-
-                const SizedBox(height: 16),
-
-                // Category Header: ACCESOS RÁPIDOS
-                _buildCategoryHeader('PERSONAL', isDark),
-                const SizedBox(height: 4),
-
-                // Bookmarks Channel
-                _buildChannelTile(
-                  channel: ForumChannel.bookmarksChannel,
-                  isActive: activeChannel.id == ForumChannel.bookmarksChannel.id,
-                  theme: theme,
-                  isDark: isDark,
-                ),
+                  ),
+                ],
               ],
             ),
           ),

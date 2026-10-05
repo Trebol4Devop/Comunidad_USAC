@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../core/utils/responsive.dart';
 import '../forum/screens/forum_screen.dart';
-import '../groups/screens/groups_screen.dart';
-import '../groups/widgets/create_group_dialog.dart';
 import '../marketplace/screens/marketplace_screen.dart';
 import '../marketplace/widgets/create_listing_dialog.dart';
-import '../profile/screens/profile_screen.dart';
 import '../rules/screens/rules_screen.dart';
 
 class AppShell extends StatefulWidget {
@@ -28,19 +25,6 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
-
-  void _navigateToProfile() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ProfileScreen(
-          activeAlias: widget.activeAlias,
-          onAliasChanged: widget.onAliasChanged,
-          onToggleTheme: widget.onToggleTheme,
-          isDarkMode: widget.isDarkMode,
-        ),
-      ),
-    );
-  }
 
   void _navigateToRules() {
     Navigator.of(context).push(
@@ -183,8 +167,7 @@ class _AppShellState extends State<AppShell> {
                       child: Row(
                         children: [
                           _buildNavTab(index: 0, label: 'Foro Estudiantil', icon: Icons.forum_outlined),
-                          _buildNavTab(index: 1, label: 'Grupos de Estudio', icon: Icons.groups_outlined),
-                          _buildNavTab(index: 2, label: 'Marketplace & Tutorías', icon: Icons.storefront_outlined),
+                          _buildNavTab(index: 1, label: 'Marketplace & Tutorías', icon: Icons.storefront_outlined),
                         ],
                       ),
                     ),
@@ -202,10 +185,6 @@ class _AppShellState extends State<AppShell> {
             onAliasChanged: widget.onAliasChanged,
             onToggleTheme: widget.onToggleTheme,
             isDarkMode: widget.isDarkMode,
-          ),
-          GroupsScreen(
-            activeAlias: widget.activeAlias,
-            onAliasChanged: widget.onAliasChanged,
           ),
           MarketplaceScreen(
             activeAlias: widget.activeAlias,
@@ -226,11 +205,6 @@ class _AppShellState extends State<AppShell> {
                   icon: Icon(Icons.forum_outlined),
                   selectedIcon: Icon(Icons.forum),
                   label: 'Foro',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.groups_outlined),
-                  selectedIcon: Icon(Icons.groups),
-                  label: 'Grupos',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.storefront_outlined),
@@ -290,23 +264,6 @@ class _AppShellState extends State<AppShell> {
   Widget? _buildContextualFloatingActionButton() {
     switch (_currentIndex) {
       case 1:
-        // Grupos / Directorio: Sugiere un Enlace o Grupo
-        return FloatingActionButton.extended(
-          heroTag: 'shell_groups_fab',
-          onPressed: () {
-            CreateGroupDialog.show(
-              context,
-              activeAlias: widget.activeAlias,
-              onAliasChanged: widget.onAliasChanged,
-              onGroupCreated: (_) => setState(() {}),
-            );
-          },
-          backgroundColor: const Color(0xFF16A34A),
-          foregroundColor: Colors.white,
-          icon: const Icon(Icons.group_add, size: 22),
-          label: const Text('Sugerir Enlace', style: TextStyle(fontWeight: FontWeight.bold)),
-        );
-      case 2:
         // Marketplace: Publica un Artículo
         return FloatingActionButton.extended(
           heroTag: 'shell_market_fab',

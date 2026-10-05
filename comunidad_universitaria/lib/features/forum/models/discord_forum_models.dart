@@ -10,6 +10,7 @@ class ForumServer {
   final String description;
   final Color color;
   final int? memberCount;
+  final bool isGroups;
 
   const ForumServer({
     required this.id,
@@ -21,7 +22,157 @@ class ForumServer {
     required this.description,
     this.color = const Color(0xFF004B87),
     this.memberCount,
+    this.isGroups = false,
   });
+
+  /// Official Grupos de Estudio / WhatsApp Server
+  static const ForumServer groupsServer = ForumServer(
+    id: 'grupos_estudio',
+    name: 'Grupos de Estudio',
+    shortCode: 'GRUPOS',
+    icon: Icons.chat,
+    facultadId: 'todas',
+    carreraId: 'todas',
+    description: 'Directorio oficial de grupos de WhatsApp y estudio USAC organizados por facultad y curso.',
+    color: Color(0xFF25D366),
+    isGroups: true,
+  );
+
+  /// Subservidores oficiales de Grupos de Estudio (facultades y áreas)
+  static const List<ForumServer> groupsSubservers = [
+    ForumServer(
+      id: 'groups_todas',
+      name: 'Todas las Facultades',
+      shortCode: 'TODAS',
+      icon: Icons.school,
+      facultadId: 'todas',
+      carreraId: 'todas',
+      description: 'Grupos de estudio y WhatsApp de todas las facultades de la USAC.',
+      color: Color(0xFF004B87),
+      isGroups: true,
+    ),
+    ForumServer(
+      id: 'groups_humanidades',
+      name: 'Facultad de Humanidades',
+      shortCode: 'HUM',
+      icon: Icons.psychology,
+      facultadId: '07',
+      carreraId: 'todas',
+      description: 'Grupos de estudio para profesorados, pedagogía y licenciaturas de Humanidades.',
+      color: Color(0xFFD97706),
+      isGroups: true,
+    ),
+    ForumServer(
+      id: 'groups_medicina',
+      name: 'Medicina (Médico y Cirujano)',
+      shortCode: 'MED',
+      icon: Icons.medical_services,
+      facultadId: '05',
+      carreraId: '05-00-01',
+      description: 'Grupos de WhatsApp de materias clínicas, ciencias básicas y años de Medicina.',
+      color: Color(0xFFDC2626),
+      isGroups: true,
+    ),
+    ForumServer(
+      id: 'groups_veterinaria',
+      name: 'Medicina Veterinaria y Zootecnia',
+      shortCode: 'VET',
+      icon: Icons.pets,
+      facultadId: '10',
+      carreraId: 'todas',
+      description: 'Grupos de WhatsApp para Medicina Veterinaria y Zootecnia.',
+      color: Color(0xFF9333EA),
+      isGroups: true,
+    ),
+    ForumServer(
+      id: 'groups_odontologia',
+      name: 'Facultad de Odontología',
+      shortCode: 'ODON',
+      icon: Icons.healing,
+      facultadId: '09',
+      carreraId: 'todas',
+      description: 'Grupos de WhatsApp para cursos y clínicas dentales de Odontología.',
+      color: Color(0xFF4F46E5),
+      isGroups: true,
+    ),
+    ForumServer(
+      id: 'groups_ingenieria',
+      name: 'Facultad de Ingeniería',
+      shortCode: 'ING',
+      icon: Icons.engineering,
+      facultadId: '08',
+      carreraId: 'todas',
+      description: 'Grupos de WhatsApp de cursos de Área Común y carreras de Ingeniería.',
+      color: Color(0xFF0284C7),
+      isGroups: true,
+    ),
+    ForumServer(
+      id: 'groups_quimica_farmacia',
+      name: 'Ciencias Químicas y Farmacéuticas',
+      shortCode: 'FARM',
+      icon: Icons.biotech,
+      facultadId: '06',
+      carreraId: 'todas',
+      description: 'Grupos de WhatsApp de Química, Farmacia, Biología, Nutrición y Química Biológica.',
+      color: Color(0xFFE11D48),
+      isGroups: true,
+    ),
+    ForumServer(
+      id: 'groups_ciencias_medicas',
+      name: 'Facultad de Ciencias Médicas',
+      shortCode: 'CMED',
+      icon: Icons.health_and_safety,
+      facultadId: '05',
+      carreraId: 'todas',
+      description: 'Grupos de WhatsApp de la Facultad de Ciencias Médicas, enfermería y fisioterapia.',
+      color: Color(0xFFDC2626),
+      isGroups: true,
+    ),
+    ForumServer(
+      id: 'groups_derecho',
+      name: 'Ciencias Jurídicas y Sociales',
+      shortCode: 'DER',
+      icon: Icons.gavel,
+      facultadId: '04',
+      carreraId: 'todas',
+      description: 'Grupos de WhatsApp de Ciencias Jurídicas y Sociales (Derecho).',
+      color: Color(0xFF7C3AED),
+      isGroups: true,
+    ),
+    ForumServer(
+      id: 'groups_economicas',
+      name: 'Facultad de Ciencias Económicas',
+      shortCode: 'ECON',
+      icon: Icons.trending_up,
+      facultadId: '03',
+      carreraId: 'todas',
+      description: 'Grupos de WhatsApp de Auditoría (CPA), Administración y Economía.',
+      color: Color(0xFF0D9488),
+      isGroups: true,
+    ),
+    ForumServer(
+      id: 'groups_arquitectura',
+      name: 'Facultad de Arquitectura',
+      shortCode: 'ARQ',
+      icon: Icons.architecture,
+      facultadId: '02',
+      carreraId: 'todas',
+      description: 'Grupos de WhatsApp de Licenciatura en Arquitectura y Diseño Gráfico.',
+      color: Color(0xFF059669),
+      isGroups: true,
+    ),
+    ForumServer(
+      id: 'groups_agronomia',
+      name: 'Facultad de Agronomía',
+      shortCode: 'AGRO',
+      icon: Icons.eco,
+      facultadId: '01',
+      carreraId: 'todas',
+      description: 'Grupos de WhatsApp de Sistemas de Producción Agrícola y Recursos Naturales.',
+      color: Color(0xFF16A34A),
+      isGroups: true,
+    ),
+  ];
 
   /// Popular predefined servers across USAC faculties aligned with database
   static const List<ForumServer> defaultServers = [
@@ -35,6 +186,7 @@ class ForumServer {
       description: 'Espacio general para todas las facultades, escuelas y sedes.',
       color: Color(0xFF004B87),
     ),
+    groupsServer,
     ForumServer(
       id: 'area_comun',
       name: 'Área Común',
@@ -278,6 +430,251 @@ class ForumChannel {
     description: 'Publicaciones y recursos que has guardado en tus marcadores.',
     isSpecial: true,
   );
+
+  /// Official Channels for Grupos de Estudio server based on DB `facultades`
+  static const List<ForumChannel> groupsChannels = [
+    ForumChannel(
+      id: 'todas',
+      name: 'todos-los-grupos',
+      label: 'Todas las Facultades',
+      categoryId: 'todas',
+      icon: Icons.tag,
+      description: 'Directorio completo de grupos de WhatsApp de todas las facultades.',
+    ),
+    ForumChannel(
+      id: '08',
+      name: 'ingenieria',
+      label: 'Facultad de Ingeniería',
+      categoryId: '08',
+      icon: Icons.terminal,
+      description: 'Grupos de WhatsApp para cursos y carreras de Ingeniería.',
+    ),
+    ForumChannel(
+      id: '05',
+      name: 'ciencias-medicas',
+      label: 'Ciencias Médicas',
+      categoryId: '05',
+      icon: Icons.medical_services,
+      description: 'Grupos de WhatsApp de Medicina y carreras afines.',
+    ),
+    ForumChannel(
+      id: '03',
+      name: 'ciencias-economicas',
+      label: 'Ciencias Económicas',
+      categoryId: '03',
+      icon: Icons.trending_up,
+      description: 'Grupos de WhatsApp para Auditoría, Administración y Economía.',
+    ),
+    ForumChannel(
+      id: '04',
+      name: 'ciencias-juridicas',
+      label: 'Ciencias Jurídicas y Sociales',
+      categoryId: '04',
+      icon: Icons.gavel,
+      description: 'Grupos de WhatsApp de Derecho y Ciencias Jurídicas.',
+    ),
+    ForumChannel(
+      id: '02',
+      name: 'arquitectura',
+      label: 'Facultad de Arquitectura',
+      categoryId: '02',
+      icon: Icons.architecture,
+      description: 'Grupos de WhatsApp para Arquitectura y Diseño Gráfico.',
+    ),
+    ForumChannel(
+      id: '01',
+      name: 'agronomia',
+      label: 'Facultad de Agronomía',
+      categoryId: '01',
+      icon: Icons.eco,
+      description: 'Grupos de WhatsApp para Recursos Naturales y Agronomía.',
+    ),
+    ForumChannel(
+      id: '06',
+      name: 'quimica-y-farmacia',
+      label: 'Ciencias Químicas y Farmacia',
+      categoryId: '06',
+      icon: Icons.biotech,
+      description: 'Grupos de WhatsApp de Química, Farmacia y Biología.',
+    ),
+    ForumChannel(
+      id: '77',
+      name: 'humanidades',
+      label: 'Facultad de Humanidades',
+      categoryId: '77',
+      icon: Icons.menu_book,
+      description: 'Grupos de WhatsApp para Profesorados y Pedagogía.',
+    ),
+    ForumChannel(
+      id: '09',
+      name: 'odontologia',
+      label: 'Facultad de Odontología',
+      categoryId: '09',
+      icon: Icons.healing,
+      description: 'Grupos de WhatsApp para materias y clínicas de Odontología.',
+    ),
+    ForumChannel(
+      id: '10',
+      name: 'veterinaria',
+      label: 'Veterinaria y Zootecnia',
+      categoryId: '10',
+      icon: Icons.pets,
+      description: 'Grupos de WhatsApp para Medicina Veterinaria y Zootecnia.',
+    ),
+    ForumChannel(
+      id: 'area_comun',
+      name: 'area-comun',
+      label: 'Área Común / Básicas',
+      categoryId: 'area_comun',
+      icon: Icons.auto_stories,
+      description: 'Grupos de WhatsApp de ciencias básicas y cursos comunes.',
+    ),
+  ];
+
+  /// Builds groups channels dynamically from database faculties
+  static List<ForumChannel> groupsChannelsFromFaculties(List<ForumFaculty> faculties) {
+    if (faculties.isEmpty) return groupsChannels;
+    final List<ForumChannel> list = [];
+    for (final f in faculties) {
+      final slug = f.id == 'todas'
+          ? 'todos-los-grupos'
+          : f.name
+              .toLowerCase()
+              .replaceAll('facultad de ', '')
+              .replaceAll('ciencias ', 'ciencias-')
+              .replaceAll(' ', '-')
+              .replaceAll('á', 'a')
+              .replaceAll('é', 'e')
+              .replaceAll('í', 'i')
+              .replaceAll('ó', 'o')
+              .replaceAll('ú', 'u')
+              .replaceAll('ñ', 'n');
+
+      list.add(
+        ForumChannel(
+          id: f.id,
+          name: slug,
+          label: f.name,
+          categoryId: f.id,
+          icon: f.icon,
+          description: 'Grupos de WhatsApp de ${f.name}.',
+        ),
+      );
+    }
+    return list;
+  }
+
+  /// Construye los canales (categorías / carreras) correspondientes a cada subservidor de grupos
+  static List<ForumChannel> groupsChannelsForSubserver(
+    ForumServer server,
+    List<ForumFaculty> faculties,
+  ) {
+    if (server.id == 'groups_medicina') {
+      return const [
+        ForumChannel(
+          id: 'todas',
+          name: 'todos-los-grupos',
+          label: 'Todos los Grupos de Medicina',
+          categoryId: 'todas',
+          icon: Icons.tag,
+          description: 'Todos los grupos de estudio de Médico y Cirujano.',
+        ),
+        ForumChannel(
+          id: '05-00-01',
+          name: 'medico-y-cirujano',
+          label: 'Médico y Cirujano',
+          categoryId: '05-00-01',
+          icon: Icons.medical_services,
+          description: 'Grupos de estudio para Médico y Cirujano.',
+        ),
+        ForumChannel(
+          id: 'area_comun',
+          name: 'ciencias-basicas-salud',
+          label: 'Ciencias Básicas (Fase I)',
+          categoryId: 'area_comun',
+          icon: Icons.auto_stories,
+          description: 'Anatomía, bioquímica, fisiología y cursos de primeros años.',
+        ),
+      ];
+    }
+
+    if (server.facultadId == 'todas') {
+      return const [
+        ForumChannel(
+          id: 'todas',
+          name: 'todos-los-grupos',
+          label: 'Todas las Facultades',
+          categoryId: 'todas',
+          icon: Icons.tag,
+          description: 'Directorio completo de grupos de WhatsApp de todas las facultades.',
+        ),
+        ForumChannel(
+          id: 'area_comun',
+          name: 'area-comun',
+          label: 'Área Común / Básicas',
+          categoryId: 'area_comun',
+          icon: Icons.auto_stories,
+          description: 'Grupos de WhatsApp de ciencias básicas y cursos comunes.',
+        ),
+      ];
+    }
+
+    // Buscamos la facultad correspondiente
+    final fac = faculties.firstWhere(
+      (f) => f.id == server.facultadId,
+      orElse: () => ForumFaculty.defaultFaculties.firstWhere(
+        (f) => f.id == server.facultadId,
+        orElse: () => ForumFaculty.defaultFaculties.first,
+      ),
+    );
+
+    final List<ForumChannel> list = [
+      ForumChannel(
+        id: 'todas',
+        name: 'todos-los-grupos',
+        label: 'Todos los Grupos',
+        categoryId: 'todas',
+        icon: Icons.tag,
+        description: 'Todos los grupos de WhatsApp y estudio de ${fac.name}.',
+      ),
+    ];
+
+    for (final career in fac.careers) {
+      if (career.id == 'todas') continue;
+
+      final slug = career.name
+          .toLowerCase()
+          .replaceAll('licenciatura en ', '')
+          .replaceAll('ingeniería en ', '')
+          .replaceAll('ingeniería ', '')
+          .replaceAll('pem en ', '')
+          .replaceAll('técnico en ', '')
+          .replaceAll('técnico de ', '')
+          .replaceAll('profesorado en ', '')
+          .replaceAll('ciencias y ', '')
+          .replaceAll(' ', '-')
+          .replaceAll('á', 'a')
+          .replaceAll('é', 'e')
+          .replaceAll('í', 'i')
+          .replaceAll('ó', 'o')
+          .replaceAll('ú', 'u')
+          .replaceAll('ñ', 'n')
+          .replaceAll(RegExp(r'[^a-z0-9\-]'), '');
+
+      list.add(
+        ForumChannel(
+          id: career.id,
+          name: slug.isEmpty ? career.shortCode.toLowerCase() : slug,
+          label: career.name,
+          categoryId: career.id,
+          icon: career.icon,
+          description: 'Grupos de WhatsApp para ${career.name}.',
+        ),
+      );
+    }
+
+    return list;
+  }
 }
 
 class ForumFaculty {
