@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
 
@@ -72,6 +75,9 @@ class _AuthModalState extends State<AuthModal> {
   bool _showingPasswordRecovery = false;
   bool _passwordResetCodeSent = false;
   bool _passwordResetCodeVerified = false;
+  bool _waitingForGoogle = false;
+  bool _googleAuthCompleted = false;
+  StreamSubscription<AuthState>? _googleAuthSubscription;
   String? _errorMessage;
 
   @override
@@ -81,31 +87,60 @@ class _AuthModalState extends State<AuthModal> {
     _verificationCodeController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
+    unawaited(_googleAuthSubscription?.cancel());
     super.dispose();
+  }
+
+  void _handleGoogleAuthState(AuthState state) {
+    if (_googleAuthCompleted ||
+        state.event != AuthChangeEvent.signedIn ||
+        state.session?.user.isAnonymous != false) {
+      return;
+    }
+
+    _googleAuthCompleted = true;
+    unawaited(_googleAuthSubscription?.cancel());
+    _googleAuthSubscription = null;
+    if (!mounted) return;
+
+    setState(() => _waitingForGoogle = false);
+    Navigator.of(context).pop();
+    widget.onAuthenticated();
   }
 
   Future<void> _handleGoogleSignIn() async {
     setState(() {
       _isLoading = true;
+      _waitingForGoogle = false;
+      _googleAuthCompleted = false;
       _errorMessage = null;
     });
 
+    await _googleAuthSubscription?.cancel();
+    _googleAuthSubscription = SupabaseService.client.auth.onAuthStateChange
+        .listen(_handleGoogleAuthState);
+
     try {
       final currentUrl = kIsWeb ? Uri.base.toString() : null;
-      final success = await SupabaseService.signInWithGoogle(
+      final launched = await SupabaseService.signInWithGoogle(
         redirectTo: currentUrl,
       );
-      if (mounted) {
-        setState(() => _isLoading = false);
-        if (success) {
-          Navigator.of(context).pop();
-          widget.onAuthenticated();
-        }
+      if (!launched) {
+        throw StateError('No se pudo iniciar el acceso con Google.');
+      }
+      if (mounted && !_googleAuthCompleted) {
+        setState(() {
+          _isLoading = false;
+          _waitingForGoogle = true;
+        });
       }
     } catch (e) {
+      await _googleAuthSubscription?.cancel();
+      _googleAuthSubscription = null;
       if (mounted) {
         setState(() {
           _isLoading = false;
+          _waitingForGoogle = false;
           _errorMessage = 'Error al conectar con Google: ${e.toString()}';
         });
       }
@@ -751,8 +786,18 @@ class _AuthModalState extends State<AuthModal> {
                   'Continuar con Google',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                 ),
-                onPressed: _isLoading ? null : _handleGoogleSignIn,
+                onPressed: (_isLoading || _waitingForGoogle)
+                    ? null
+                    : _handleGoogleSignIn,
               ),
+              if (_waitingForGoogle) ...[
+                const SizedBox(height: 10),
+                const Text(
+                  'Completa el acceso en Google y regresa a Comunidad USAC. '
+                  'La sesión se confirmará al volver a la app.',
+                  textAlign: TextAlign.center,
+                ),
+              ],
 
               const SizedBox(height: 16),
 

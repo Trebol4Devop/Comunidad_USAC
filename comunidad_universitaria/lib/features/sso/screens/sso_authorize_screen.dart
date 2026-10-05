@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../core/services/local_storage_service.dart';
@@ -29,6 +32,9 @@ class SsoAuthorizeScreen extends StatefulWidget {
 class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
   bool _isLoading = false;
   bool _isRedirecting = false;
+  bool _waitingForGoogle = false;
+  bool _googleAuthCompleted = false;
+  StreamSubscription<AuthState>? _googleAuthSubscription;
   String? _redirectingUrl;
   String? _authErrorMessage;
 
@@ -51,6 +57,7 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    unawaited(_googleAuthSubscription?.cancel());
     super.dispose();
   }
 
@@ -84,25 +91,56 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
     return true;
   }
 
+  void _handleGoogleAuthState(AuthState state) {
+    if (_googleAuthCompleted ||
+        state.event != AuthChangeEvent.signedIn ||
+        state.session?.user.isAnonymous != false) {
+      return;
+    }
+
+    _googleAuthCompleted = true;
+    unawaited(_googleAuthSubscription?.cancel());
+    _googleAuthSubscription = null;
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = false;
+      _waitingForGoogle = false;
+    });
+    _loadUserAlias();
+  }
+
   Future<void> _handleGoogleSignIn() async {
     setState(() {
       _isLoading = true;
+      _waitingForGoogle = false;
+      _googleAuthCompleted = false;
       _authErrorMessage = null;
     });
 
+    await _googleAuthSubscription?.cancel();
+    _googleAuthSubscription = SupabaseService.client.auth.onAuthStateChange
+        .listen(_handleGoogleAuthState);
+
     try {
       final currentUrl = kIsWeb ? Uri.base.toString() : null;
-      final success = await SupabaseService.signInWithGoogle(redirectTo: currentUrl);
-      if (mounted) {
-        setState(() => _isLoading = false);
-        if (success) {
-          _loadUserAlias();
-        }
+      final launched = await SupabaseService.signInWithGoogle(redirectTo: currentUrl);
+      if (!launched) {
+        throw StateError('No se pudo iniciar el acceso con Google.');
+      }
+      if (mounted && !_googleAuthCompleted) {
+        setState(() {
+          _isLoading = false;
+          _waitingForGoogle = true;
+        });
       }
     } catch (e) {
+      await _googleAuthSubscription?.cancel();
+      _googleAuthSubscription = null;
       if (mounted) {
         setState(() {
           _isLoading = false;
+          _waitingForGoogle = false;
           _authErrorMessage = 'Error al conectar con Google: $e';
         });
       }
@@ -710,8 +748,17 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
               ),
               icon: const Icon(Icons.g_mobiledata, size: 24, color: Color(0xFFEA4335)),
               label: const Text('Continuar con Google', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-              onPressed: _isLoading ? null : _handleGoogleSignIn,
+              onPressed: (_isLoading || _waitingForGoogle)
+                  ? null
+                  : _handleGoogleSignIn,
             ),
+            if (_waitingForGoogle) ...[
+              const SizedBox(height: 10),
+              const Text(
+                'Completa el acceso en Google y regresa a Comunidad USAC.',
+                textAlign: TextAlign.center,
+              ),
+            ],
 
             const SizedBox(height: 14),
 

@@ -1,23 +1,26 @@
-# Autenticación y seguridad — Fases 1 a 5
+# Autenticación y seguridad — Estado de las fases 1 a 8
 
-Este documento registra lo implementado y verificado en el proyecto hasta la
-Fase 5. No implica que las migraciones se hayan aplicado a Supabase remoto: las
-pruebas y la configuración descritas aquí corresponden al entorno local.
+Este documento registra el código y las pruebas disponibles según la propuesta
+de fases compartida. No implica que las migraciones se hayan aplicado a
+Supabase remoto. El desglose TOTP 5.1–5.4 se conserva como el plan de seguridad
+adicional que ya se acordó e implementó en paralelo.
 
 ## Estado general
 
 | Fase | Alcance | Estado |
 |---|---|---|
-| 1 | Visitantes con acceso de solo lectura | Implementada; pruebas de base de datos aprobadas |
-| 2 | Preparación de base de datos y permisos para cuentas | Migraciones locales presentes; el Worker de Cloudflare R2 sigue pendiente |
-| 3 | Registro, inicio de sesión y confirmación de correo | Integrado en la app; Google depende de configuración del proveedor en Supabase |
-| 4 | Sesión, cierre de sesión y recuperación de contraseña | Integrado en el servicio/modal; falta la prueba manual completa con correo real |
-| 5 | MFA TOTP, requisito AAL2 y códigos de recuperación | Implementada en código; pruebas automatizadas aprobadas; pendiente smoke test manual Auth local |
+| 1 | Flujo invitado y lectura pública | Implementada; pgTAP verifica restricciones de escritura |
+| 2 | Pantallas de login y registro | Integradas en `AuthModal` |
+| 3 | Verificación y reenvío de OTP de correo | Integrados; entrega real depende de la configuración de correo |
+| 4 | Sesión, cierre de sesión y navegación | SDK y logout integrados; mantener acceso invitado sigue siendo el comportamiento esperado |
+| 5 | Perfil y compatibilidad con el esquema | Trigger existente se preserva/restaura en local; pendiente prueba E2E del alta y perfil |
+| 6 | Google OAuth con PKCE | Código y callbacks web/móvil preparados; pendiente configurar proveedor/redirects y probar con credenciales reales |
+| 7 | Recuperación de contraseña | Flujo y UI integrados; falta probar entrega real de correo |
+| 8 | Seguridad adicional y pruebas | RLS/AAL2 y suites automatizadas aprobadas; queda smoke test manual de MFA/códigos en Auth local |
 
-> Las fases 2–4 se resumen por las funcionalidades y migraciones que existen en
-> el repositorio. Este documento describe el estado del código; no sustituye la
-> revisión de cambios de otros colaboradores ni la aprobación para publicar al
-> proyecto remoto.
+Las pruebas y configuración descritas aquí son locales o simuladas; no
+sustituyen una prueba real contra el proveedor. No se han publicado estas
+migraciones al proyecto remoto.
 
 ## Fase 1 — Visitantes solo lectura
 
@@ -43,7 +46,7 @@ rechazo de inserción/modificación/eliminación y bloqueo de RPC para sesiones
 anónimas; además confirma que una cuenta registrada conserva las escrituras
 permitidas por sus políticas.
 
-## Fase 2 — Base de datos y permisos para cuentas
+## Migraciones locales de soporte al esquema y los permisos
 
 Las migraciones locales de octubre preparan y corrigen el esquema usado por la
 app y sus cuentas:
@@ -59,21 +62,62 @@ app y sus cuentas:
   permisos necesarios para que las operaciones de cuentas autenticadas pasen
   por las políticas RLS correspondientes.
 
-**Pendiente asociado a esta fase:** el Worker de Cloudflare R2 no está incluido
-ni probado en esta entrega. La configuración de Supabase Storage no significa
-que ese Worker esté desplegado.
+El Worker de Cloudflare R2 es una tarea separada de este plan de autenticación;
+la configuración de Supabase Storage no significa que ese Worker esté desplegado.
 
-## Fase 3 — Registro e inicio de sesión
+## Fase 5 — Perfil y compatibilidad con el esquema
+
+La migración `20261002000200_restore_auth_user_profile_trigger.sql` usa la
+función existente `public.handle_new_user_profile()` y garantiza el trigger
+`trg_on_auth_user_created` si falta. No se agregó una tabla de perfiles
+alternativa.
+
+La migración y las pruebas locales cubren el trigger, pero falta verificar el
+flujo completo de registro de una cuenta y comprobar su fila de perfil con un
+usuario de prueba. La política de conservar o migrar contribuciones de cuentas
+guest antiguas debe decidirse antes de vincularlas a cuentas nuevas; no se debe
+atribuir contenido anónimo automáticamente sin esa decisión.
+
+## Fase 6 — Google OAuth con PKCE
+
+El flujo ya tenía el botón y la llamada a `signInWithOAuth`; en esta fase se
+completaron los puntos que faltaban en la app:
+
+- `SupabaseConfig.initialize()` fija explícitamente `AuthFlowType.pkce`.
+- `AndroidManifest.xml` ya declaraba `comunidadusac://login-callback/`; se agregó
+  el mismo esquema de retorno a `ios/Runner/Info.plist`.
+- `supabase/config.toml` permite el callback móvil y redirects web locales en
+  `localhost:3000` y `127.0.0.1:3000`.
+- `AuthModal` y `SsoAuthorizeScreen` ahora esperan el evento real
+  `signedIn` de Supabase antes de continuar. Que el navegador se abra solo
+  significa que el OAuth comenzó, no que la cuenta ya inició sesión.
+
+**Configuración manual pendiente para completar la prueba E2E:**
+
+1. En el proyecto correcto de Supabase, habilitar Google y agregar el OAuth
+   Client ID y Client Secret de Google Cloud. No guardar el Client Secret en el
+   repositorio ni compartirlo en el chat.
+2. En Google Cloud, registrar como redirect URI la URL de callback que indique
+   Supabase para ese proyecto (`https://<project-ref>.supabase.co/auth/v1/callback`).
+3. En Supabase Authentication → URL Configuration, agregar los dominios web
+   usados en desarrollo/producción y `comunidadusac://login-callback/` para la
+   vuelta a la app móvil.
+4. Probar con una cuenta Google en web y en dispositivos Android/iOS. Las
+   pruebas unitarias actuales no contactan Google ni prueban el callback real.
+
+No se ejecutó esa configuración ni una autenticación real porque depende de
+credenciales del proveedor y acceso al proyecto remoto correcto.
+
+## Fases 2 y 3 — Pantallas de acceso y verificación de correo
 
 - `comunidad_universitaria/lib/features/shared/widgets/auth_modal.dart`
   contiene los formularios de login y registro.
 - `SupabaseService` implementa registro y login por correo/contraseña,
-  verificación y reenvío del OTP de confirmación, y acceso con Google OAuth.
+  verificación y reenvío del OTP de confirmación.
 - Con confirmación de correo habilitada, el registro solicita el código de seis
   dígitos enviado por Supabase antes de terminar el flujo de la cuenta.
 - La app muestra errores de credenciales, código inválido/expirado y límites de
-  intentos. La integración con Google necesita que el proveedor y las URL de
-  retorno estén configurados en el proyecto Supabase que se vaya a utilizar.
+  intentos. Google se documenta en la Fase 6.
 
 Archivos principales:
 
@@ -81,7 +125,7 @@ Archivos principales:
 - `comunidad_universitaria/lib/features/shared/widgets/auth_modal.dart`
 - `supabase/config.toml`
 
-## Fase 4 — Sesión y recuperación de contraseña
+## Fases 4 y 7 — Sesión y recuperación de contraseña
 
 - `SupabaseService` expone cierre de sesión, solicitud de recuperación por
   correo, verificación del OTP de recuperación y actualización de contraseña.
@@ -95,7 +139,7 @@ La recuperación por correo depende de que los ajustes de Auth y la entrega de
 correo estén configurados correctamente en el entorno. Las pruebas unitarias
 simuladas no demuestran entrega real de emails.
 
-## Fase 5 — MFA con TOTP y recuperación
+## MFA TOTP — Subfases 5.1–5.4 y controles de seguridad de Fase 8
 
 ### 5.1 Inscripción TOTP
 
@@ -172,7 +216,8 @@ En el entorno local levantado por Supabase:
   `flutter test test/services/supabase_service_test.dart` — **PASS**, 16 pruebas.
 - Desde `comunidad_universitaria/`, `flutter analyze` — **PASS**, sin issues.
 - Desde `comunidad_universitaria/`, `flutter test` — **PASS**, 240 pruebas
-  aprobadas en aproximadamente 1 minuto y 54 segundos.
+  aprobadas en aproximadamente 2 minutos y 10 segundos (ejecución posterior a
+  los cambios de OAuth).
 - El health check local de Supabase Auth respondió HTTP 200 al confirmar que
   el servicio estaba disponible.
 
@@ -185,9 +230,9 @@ contra el proyecto remoto.
 
 Una ejecución anterior de la suite Flutter completa había excedido el límite
 de tiempo. Se volvió a ejecutar con un límite mayor y terminó correctamente:
-240 pruebas aprobadas. Algunos tests imprimen mensajes de error simulados como
-parte de sus casos de manejo de fallos; el resultado final de la suite fue
-`All tests passed!`.
+240 pruebas aprobadas. También se repitió después de los cambios de OAuth y
+volvió a pasar. Algunos tests imprimen mensajes de error simulados como parte de
+sus casos de manejo de fallos; el resultado final fue `All tests passed!`.
 
 ## Archivos principales
 
@@ -201,7 +246,11 @@ parte de sus casos de manejo de fallos; el resultado final de la suite fue
 - `supabase/tests/anonymous_read_only_test.sql`
 - `supabase/tests/totp_aal2_writes_test.sql`
 - `comunidad_universitaria/lib/core/services/supabase_service.dart`
+- `comunidad_universitaria/lib/core/config/supabase_config.dart`
 - `comunidad_universitaria/lib/features/shared/widgets/auth_modal.dart`
+- `comunidad_universitaria/lib/features/sso/screens/sso_authorize_screen.dart`
+- `comunidad_universitaria/android/app/src/main/AndroidManifest.xml`
+- `comunidad_universitaria/ios/Runner/Info.plist`
 - `comunidad_universitaria/lib/features/shared/widgets/totp_session_guard.dart`
 - `comunidad_universitaria/lib/features/profile/screens/totp_enrollment_screen.dart`
 - `comunidad_universitaria/test/services/supabase_service_test.dart`
