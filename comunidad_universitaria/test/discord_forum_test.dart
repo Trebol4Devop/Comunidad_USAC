@@ -30,23 +30,23 @@ void main() {
       expect(hasDerecho, isTrue);
     });
 
-    test('ForumChannel.defaultChannels define canales temáticos estructurados estilo Discord alineados a categorias_foro', () {
+    test('ForumChannel.defaultChannels define canales temáticos estructurados estilo Discord alineados a categorias_foro sin charla-general', () {
       final channels = ForumChannel.defaultChannels;
-      expect(channels.length, greaterThanOrEqualTo(5));
+      expect(channels.length, equals(5));
 
       final hasTodos = channels.any((c) => c.name == 'todos-los-temas' && c.categoryId == 'todos');
       final hasDudas = channels.any((c) => c.name == 'dudas-y-pensum' && c.categoryId == 'prerrequisitos');
       final hasCatedraticos = channels.any((c) => c.name == 'catedraticos-opiniones' && c.categoryId == 'catedraticos');
       final hasApuntes = channels.any((c) => c.name == 'apuntes-y-recursos' && c.categoryId == 'apuntes');
       final hasHorarios = channels.any((c) => c.name == 'horarios-y-secciones' && c.categoryId == 'horarios');
-      final hasGeneral = channels.any((c) => c.name == 'charla-general' && c.categoryId == 'general');
+      final hasGeneral = channels.any((c) => c.name == 'charla-general' || c.categoryId == 'general');
 
       expect(hasTodos, isTrue);
       expect(hasDudas, isTrue);
       expect(hasCatedraticos, isTrue);
       expect(hasApuntes, isTrue);
       expect(hasHorarios, isTrue);
-      expect(hasGeneral, isTrue);
+      expect(hasGeneral, isFalse);
     });
 
     test('ForumServer y ForumChannel no contienen datos simulados ni conteos mock', () {
@@ -213,10 +213,10 @@ void main() {
       await tester.tap(agroIcon);
       await tester.pumpAndSettle();
 
-      // Mientras está abierto el submenú, el área de mensajes y barra lateral mantienen lo actual
-      expect(find.text('Todas las Facultades'), findsOneWidget);
+      // Al tocar la facultad en el riel, se abre el servidor de la facultad en general
+      expect(find.text('Facultad de Agronomía'), findsOneWidget);
 
-      // Tocamos la carrera PROD
+      // Tocamos la carrera PROD en el submenú
       await tester.tap(find.text('PROD'));
       await tester.pumpAndSettle();
 
@@ -346,6 +346,9 @@ void main() {
       // El encabezado de bienvenida debe reflejar mis-guardados
       expect(find.text('¡Te damos la bienvenida a #mis-guardados!'), findsOneWidget);
       expect(find.text('No tienes publicaciones guardadas'), findsOneWidget);
+      // mis-guardados no debe permitir crear publicaciones
+      expect(find.text('Publicar'), findsNothing);
+      expect(find.text('Crear Primera Publicación'), findsNothing);
     });
 
     testWidgets('Permite abrir pantalla de Preferencias desde la barra inferior de perfil del foro', (tester) async {
@@ -462,7 +465,7 @@ void main() {
       expect(find.textContaining('(Toca para ver carreras)'), findsNothing);
     });
 
-    testWidgets('Al abrir submenú mantiene visible el contenido actual y cambia solo al seleccionar subservidor', (tester) async {
+    testWidgets('Al tocar una facultad en el riel se abre el servidor completo por facultad y despliega el submenú de subservidores', (tester) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -487,15 +490,15 @@ void main() {
       await tester.tap(arqFinder);
       await tester.pumpAndSettle();
 
-      // El área central y sidebar mantienen lo que está actualmente sin cambiar
-      expect(find.text('Todas las Facultades'), findsOneWidget);
+      // Al tocar la facultad en el riel, se abre el servidor general de la facultad
+      expect(find.text('Facultad de Arquitectura'), findsOneWidget);
 
       // Si tocamos afuera (en el scaffold) para cerrar el submenú sin elegir carrera
       await tester.tapAt(const Offset(500, 300));
       await tester.pumpAndSettle();
 
-      // Sigue estando intacto en Todas las Facultades
-      expect(find.text('Todas las Facultades'), findsOneWidget);
+      // Sigue manteniéndose en Facultad de Arquitectura
+      expect(find.text('Facultad de Arquitectura'), findsOneWidget);
     });
 
     testWidgets('ForumServerRail posiciona siempre Todas las Facultades al inicio aunque la lista venga desordenada', (tester) async {
@@ -856,6 +859,49 @@ void main() {
 
       expect(find.byType(ForumServerRail), findsOneWidget);
       expect(find.byType(ForumChannelSidebar), findsOneWidget);
+    });
+
+    testWidgets('Al cambiar de servidor siempre por predeterminado se abre el canal de todos los temas', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ForumScreen(
+            activeAlias: 'EstudianteTestCanal',
+            onAliasChanged: (_) {},
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Por defecto el canal inicial es todos-los-temas
+      expect(find.text('todos-los-temas'), findsOneWidget);
+      expect(find.text('¡Te damos la bienvenida a #todos-los-temas!'), findsOneWidget);
+
+      // Cambiamos al canal de dudas-y-pensum
+      final dudasTile = find.text('dudas-y-pensum');
+      expect(dudasTile, findsOneWidget);
+      await tester.tap(dudasTile);
+      await tester.pumpAndSettle();
+      expect(find.text('¡Te damos la bienvenida a #dudas-y-pensum!'), findsOneWidget);
+
+      // Ahora tocamos en el riel el servidor principal de Ingeniería (ING)
+      final ingIcon = find.descendant(
+        of: find.byType(ForumServerRail),
+        matching: find.text('ING'),
+      );
+      expect(ingIcon, findsOneWidget);
+      await tester.tap(ingIcon);
+      await tester.pumpAndSettle();
+
+      // Debe abrir Facultad de Ingeniería en general
+      expect(find.text('Facultad de Ingeniería'), findsOneWidget);
+
+      // Y el canal activo debe haberse restablecido por defecto a todos-los-temas
+      expect(find.text('¡Te damos la bienvenida a #todos-los-temas!'), findsOneWidget);
     });
   });
 }

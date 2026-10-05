@@ -103,6 +103,9 @@ class _ForumServerRailState extends State<ForumServerRail> {
   }
 
   void _toggleFacultySubmenu(ForumFaculty faculty, BuildContext itemContext) {
+    // Al pulsar el servidor principal de la facultad, se abre el servidor de dicha facultad en general
+    widget.onSelectServer(faculty.toGeneralServer());
+
     if (_openFaculty?.id == faculty.id && _overlayController.isShowing) {
       _closeSubmenu();
       return;
@@ -124,8 +127,9 @@ class _ForumServerRailState extends State<ForumServerRail> {
           .clamp(0.0, overlayBox.size.width - 60.0);
 
       // Altura exacta acoplada al contenido real:
-      // Padding vertical (12) + N carreras * (38 + 4)
-      final estimatedContentHeight = 12.0 + (faculty.careers.length * 42.0);
+      // Padding vertical (12) + (N carreras + opción general) * (38 + 4)
+      final totalCount = faculty.careers.length + (faculty.id != 'todas' ? 1 : 0);
+      final estimatedContentHeight = 12.0 + (totalCount * 42.0);
       final maxAvailableHeight = screenHeight - topPadding - bottomPadding - 24.0;
       final effectiveHeight = estimatedContentHeight > maxAvailableHeight
           ? maxAvailableHeight
@@ -149,8 +153,6 @@ class _ForumServerRailState extends State<ForumServerRail> {
       _submenuTop = 10.0;
     }
 
-    // Solo desplegamos el submenú de subservidores.
-    // La pantalla del foro mantiene intacto el servidor actual hasta que se seleccione el nuevo.
     setState(() {
       _openFaculty = faculty;
       _isGroupsOpen = false;
@@ -296,6 +298,48 @@ class _ForumServerRailState extends State<ForumServerRail> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                if (faculty.id != 'todas')
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Tooltip(
+                      message: '${faculty.name} (General)',
+                      preferBelow: false,
+                      child: _buildItemButton(
+                        isActive: isFacultyActive && widget.activeServer.carreraId == 'todas',
+                        activeColor: faculty.color,
+                        isDark: isDark,
+                        onTap: () {
+                          widget.onSelectServer(faculty.toGeneralServer());
+                          _closeSubmenu();
+                        },
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              faculty.icon,
+                              size: 15,
+                              color: (isFacultyActive && widget.activeServer.carreraId == 'todas')
+                                  ? Colors.white
+                                  : (isDark ? Colors.grey.shade300 : Colors.grey.shade700),
+                            ),
+                            const SizedBox(height: 1),
+                            Text(
+                              faculty.shortCode,
+                              maxLines: 1,
+                              overflow: TextOverflow.clip,
+                              style: TextStyle(
+                                fontSize: 7.0,
+                                fontWeight: FontWeight.bold,
+                                color: (isFacultyActive && widget.activeServer.carreraId == 'todas')
+                                    ? Colors.white
+                                    : (isDark ? Colors.grey.shade300 : Colors.grey.shade700),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 for (final career in faculty.careers)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 4),

@@ -64,12 +64,6 @@ class USACConstants {
       description:
           'Material de estudio, resúmenes, parciales pasados y guías de laboratorio.',
     ),
-    ForumCategory(
-      id: 'general',
-      label: 'Consultas Generales',
-      description:
-          'Preguntas administrativas, trámites de secretaría y vida universitaria.',
-    ),
   ];
 
   // Categorías del Marketplace Estudiantil

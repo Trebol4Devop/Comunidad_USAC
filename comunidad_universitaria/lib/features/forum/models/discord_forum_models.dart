@@ -411,14 +411,6 @@ class ForumChannel {
       icon: Icons.schedule_outlined,
       description: 'Información de traslapes, cupos, secciones y asignación de laboratorios.',
     ),
-    ForumChannel(
-      id: 'general',
-      name: 'charla-general',
-      label: 'Consultas Generales',
-      categoryId: 'general',
-      icon: Icons.chat_bubble_outline,
-      description: 'Cafetería estudiantil, avisos generales y vida universitaria en la carrera.',
-    ),
   ];
 
   static const ForumChannel bookmarksChannel = ForumChannel(

@@ -10,6 +10,31 @@ import 'supabase_service.dart';
 class ForumService {
   static const String _cacheNamespace = 'forum_posts';
 
+  static Set<String> _getCareerIdsForFaculty(String facultadId) {
+    if (facultadId == 'todas') return <String>{'todas', 'area_comun'};
+    final careerIds = <String>{};
+    final fac = USACConstants.facultades.firstWhere(
+      (f) => f['id'] == facultadId,
+      orElse: () => <String, dynamic>{},
+    );
+    final rawCarreras = fac['carreras'] as List<dynamic>? ?? [];
+    for (final c in rawCarreras) {
+      final cid = c['id']?.toString();
+      if (cid != null && cid.isNotEmpty && cid != 'todas') {
+        careerIds.add(cid);
+      }
+    }
+    final defaultFac = ForumFaculty.findByFacultadId(facultadId);
+    if (defaultFac != null) {
+      for (final c in defaultFac.careers) {
+        if (c.id != 'todas') {
+          careerIds.add(c.id);
+        }
+      }
+    }
+    return careerIds;
+  }
+
   static Future<List<Post>> fetchPosts({
     String category = 'todos',
     String facultad = 'todas',
@@ -57,10 +82,26 @@ class ForumService {
         final bookmarkedIds = (bookmarksRes as List<dynamic>).map((e) => e['post_id'].toString()).toList();
         if (bookmarkedIds.isEmpty) return [];
 
-        final postsRes = await SupabaseService.client
+        var bookmarksQuery = SupabaseService.client
             .from('v_public_posts')
             .select('*')
-            .inFilter('id', bookmarkedIds)
+            .inFilter('id', bookmarkedIds);
+
+        if (carrera != 'todas') {
+          bookmarksQuery = bookmarksQuery.eq('carrera', carrera);
+        } else if (facultad != 'todas') {
+          final careerIds = _getCareerIdsForFaculty(facultad);
+          bookmarksQuery = bookmarksQuery.inFilter('carrera', careerIds.isNotEmpty ? careerIds.toList() : const ['__none__']);
+        }
+
+        if (searchQuery.trim().isNotEmpty) {
+          final q = searchQuery.trim();
+          bookmarksQuery = bookmarksQuery.or('title.ilike.%$q%,content.ilike.%$q%');
+        }
+
+        final postsRes = await bookmarksQuery
+            .order('is_pinned', ascending: false)
+            .order('created_at', ascending: false)
             .timeout(const Duration(seconds: 10));
         final List<dynamic> data = postsRes as List<dynamic>;
         final posts = await _hydratePosts(data, currentUserId);
@@ -79,13 +120,8 @@ class ForumService {
       if (carrera != 'todas') {
         query = query.eq('carrera', carrera);
       } else if (facultad != 'todas') {
-        final fac = USACConstants.facultades.firstWhere(
-          (f) => f['id'] == facultad,
-          orElse: () => USACConstants.facultades.first,
-        );
-        final rawCarreras = fac['carreras'] as List<dynamic>? ?? [];
-        final careerIds = rawCarreras.map((c) => c['id'].toString()).toSet()..add('todas');
-        query = query.inFilter('carrera', careerIds.toList());
+        final careerIds = _getCareerIdsForFaculty(facultad);
+        query = query.inFilter('carrera', careerIds.isNotEmpty ? careerIds.toList() : const ['__none__']);
       }
 
       if (searchQuery.trim().isNotEmpty) {
@@ -118,20 +154,27 @@ class ForumService {
               .select('id, title, category, content, author_alias, author_hash, likes, carrera, image_url, gif_url, is_pinned, quoted_post_id, created_at, moderation_status')
               .neq('moderation_status', 2);
 
-          if (category != 'todos') {
+          if (showOnlyBookmarks) {
+            final currentUserId = SupabaseService.currentUserId;
+            if (currentUserId == null) return [];
+            final bookmarksRes = await SupabaseService.client
+                .from('post_bookmarks')
+                .select('post_id')
+                .eq('user_id', currentUserId)
+                .order('created_at', ascending: false)
+                .timeout(const Duration(seconds: 10));
+            final bookmarkedIds = (bookmarksRes as List<dynamic>).map((e) => e['post_id'].toString()).toList();
+            if (bookmarkedIds.isEmpty) return [];
+            fallbackQuery = fallbackQuery.inFilter('id', bookmarkedIds);
+          } else if (category != 'todos') {
             fallbackQuery = fallbackQuery.eq('category', category);
           }
 
           if (carrera != 'todas') {
             fallbackQuery = fallbackQuery.eq('carrera', carrera);
           } else if (facultad != 'todas') {
-            final fac = USACConstants.facultades.firstWhere(
-              (f) => f['id'] == facultad,
-              orElse: () => USACConstants.facultades.first,
-            );
-            final rawCarreras = fac['carreras'] as List<dynamic>? ?? [];
-            final careerIds = rawCarreras.map((c) => c['id'].toString()).toSet()..add('todas');
-            fallbackQuery = fallbackQuery.inFilter('carrera', careerIds.toList());
+            final careerIds = _getCareerIdsForFaculty(facultad);
+            fallbackQuery = fallbackQuery.inFilter('carrera', careerIds.isNotEmpty ? careerIds.toList() : const ['__none__']);
           }
 
           if (searchQuery.trim().isNotEmpty) {
@@ -751,8 +794,8 @@ class ForumService {
         return List<ForumChannel>.from(ForumChannel.defaultChannels);
       }
 
-      // Orden estándar alineado con el flujo de uso del foro
-      const canonicalOrder = ['todos', 'prerrequisitos', 'catedraticos', 'apuntes', 'horarios', 'general'];
+      // Orden estándar alineado con el flujo de uso del foro (sin charla-general)
+      const canonicalOrder = ['todos', 'prerrequisitos', 'catedraticos', 'apuntes', 'horarios'];
       final List<dynamic> sortedData = List.from(data);
       sortedData.sort((a, b) {
         final idA = a['id']?.toString() ?? '';
@@ -768,6 +811,7 @@ class ForumService {
       final List<ForumChannel> channels = [];
       for (final row in sortedData) {
         final id = row['id']?.toString() ?? '';
+        if (id == 'general') continue; // Redundante con todos los temas
         final nombre = row['nombre']?.toString() ?? id;
         channels.add(ForumChannel.fromDbCategory(id: id, nombre: nombre));
       }

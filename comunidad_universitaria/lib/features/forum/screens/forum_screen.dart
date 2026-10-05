@@ -73,7 +73,11 @@ class _ForumScreenState extends State<ForumScreen> {
     super.initState();
     _servers = List.from(ForumServer.defaultServers);
     _activeServer = widget.activeServer ?? _servers.first;
-    _activeChannel = widget.activeChannel ?? ForumChannel.defaultChannels.first;
+    _activeChannel = widget.activeChannel ??
+        ForumChannel.defaultChannels.firstWhere(
+          (c) => c.id == 'todos',
+          orElse: () => ForumChannel.defaultChannels.first,
+        );
     final initialGroupsChannels = ForumChannel.groupsChannelsForSubserver(
       _activeServer.isGroups ? _activeServer : ForumServer.groupsSubservers.first,
       _faculties,
@@ -98,9 +102,13 @@ class _ForumScreenState extends State<ForumScreen> {
         setState(() {
           _channels = channels;
           _faculties = faculties;
-          if (!_channels.any((c) => c.id == _activeChannel.id) &&
-              _activeChannel.id != ForumChannel.bookmarksChannel.id) {
-            _activeChannel = _channels.first;
+          if (_activeChannel.id == 'general' ||
+              (!_channels.any((c) => c.id == _activeChannel.id) &&
+                  _activeChannel.id != ForumChannel.bookmarksChannel.id)) {
+            _activeChannel = _channels.firstWhere(
+              (c) => c.id == 'todos',
+              orElse: () => _channels.first,
+            );
           }
         });
       }
@@ -191,6 +199,12 @@ class _ForumScreenState extends State<ForumScreen> {
       if (server.isGroups) {
         final subChannels = ForumChannel.groupsChannelsForSubserver(server, _faculties);
         _groupsActiveChannel = subChannels.first;
+      } else {
+        // Siempre por predeterminado se abre el canal de todos los temas
+        _activeChannel = _channels.firstWhere(
+          (c) => c.id == 'todos',
+          orElse: () => _channels.first,
+        );
       }
     });
     widget.onServerChanged?.call(server);
@@ -376,7 +390,9 @@ class _ForumScreenState extends State<ForumScreen> {
       quotedPost: post,
       serverName: _activeServer.name,
       channelName: _activeChannel.name,
-      initialCategory: _activeChannel.isSpecial ? 'general' : _activeChannel.categoryId,
+      initialCategory: _activeChannel.isSpecial
+          ? 'prerrequisitos'
+          : (_activeChannel.id == 'todos' ? 'todos' : _activeChannel.categoryId),
       initialCarrera: _activeServer.carreraId,
       initialFacultad: _activeServer.facultadId,
       onAliasChanged: widget.onAliasChanged,
@@ -389,6 +405,7 @@ class _ForumScreenState extends State<ForumScreen> {
   }
 
   void _openCreateDialog() {
+    if (_activeChannel.isSpecial) return;
     if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
       AuthModal.show(
         context,
@@ -404,12 +421,13 @@ class _ForumScreenState extends State<ForumScreen> {
   }
 
   void _showCreateDialog() {
+    if (_activeChannel.isSpecial) return;
     CreatePostDialog.show(
       context,
       activeAlias: widget.activeAlias,
       serverName: _activeServer.name,
       channelName: _activeChannel.name,
-      initialCategory: _activeChannel.isSpecial ? 'general' : _activeChannel.categoryId,
+      initialCategory: _activeChannel.id == 'todos' ? 'todos' : _activeChannel.categoryId,
       initialCarrera: _activeServer.carreraId,
       initialFacultad: _activeServer.facultadId,
       onAliasChanged: widget.onAliasChanged,
@@ -728,8 +746,8 @@ class _ForumScreenState extends State<ForumScreen> {
             description: _activeChannel.isSpecial
                 ? 'Guarda consultas importantes del foro tocando el icono de marcador.'
                 : 'Sé el primero en iniciar una conversación o formular una duda en este canal.',
-            buttonText: 'Crear Primera Publicación',
-            onButtonPressed: _openCreateDialog,
+            buttonText: _activeChannel.isSpecial ? null : 'Crear Primera Publicación',
+            onButtonPressed: _activeChannel.isSpecial ? null : _openCreateDialog,
           )
         else
           ..._posts.map((post) {
@@ -870,19 +888,21 @@ class _ForumScreenState extends State<ForumScreen> {
                     },
                   ),
                 ),
-                const SizedBox(width: 10),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                if (!_activeChannel.isSpecial) ...[
+                  const SizedBox(width: 10),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    icon: const Icon(Icons.add, size: 16),
+                    label: const Text('Publicar', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    onPressed: _openCreateDialog,
                   ),
-                  icon: const Icon(Icons.add, size: 16),
-                  label: const Text('Publicar', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                  onPressed: _openCreateDialog,
-                ),
+                ],
               ],
             ],
           ),
@@ -949,19 +969,21 @@ class _ForumScreenState extends State<ForumScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                if (!_activeChannel.isSpecial) ...[
+                  const SizedBox(width: 8),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    icon: const Icon(Icons.add, size: 16),
+                    label: const Text('Publicar', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    onPressed: _openCreateDialog,
                   ),
-                  icon: const Icon(Icons.add, size: 16),
-                  label: const Text('Publicar', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                  onPressed: _openCreateDialog,
-                ),
+                ],
               ],
             ),
           ],
