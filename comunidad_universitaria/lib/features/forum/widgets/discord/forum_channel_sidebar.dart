@@ -109,6 +109,8 @@ class ForumChannelSidebar extends StatelessWidget {
           // 2. Channels List
           Expanded(
             child: ListView(
+              primary: false,
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
               children: [
                 if (activeServer.isGroups) ...[

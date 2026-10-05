@@ -642,6 +642,7 @@ class _ForumServerRailState extends State<ForumServerRail> {
               // 2. Lista de Facultades Oficiales USAC
               Flexible(
                 child: ListView.builder(
+                  primary: false,
                   shrinkWrap: true,
                   physics: const ClampingScrollPhysics(),
                   padding: EdgeInsets.zero,
