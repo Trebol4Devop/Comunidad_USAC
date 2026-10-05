@@ -16,7 +16,7 @@ adicional que ya se acordó e implementó en paralelo.
 | 5 | Perfil y compatibilidad con el esquema | Trigger existente se preserva/restaura en local; pendiente prueba E2E del alta y perfil |
 | 6 | Google OAuth con PKCE | Código y callbacks web/móvil preparados; pendiente configurar proveedor/redirects y probar con credenciales reales |
 | 7 | Recuperación de contraseña | Flujo y UI integrados; falta probar entrega real de correo |
-| 8 | Seguridad adicional y pruebas | RLS/AAL2 y suites automatizadas aprobadas; queda smoke test manual de MFA/códigos en Auth local |
+| 8 | Seguridad adicional y pruebas | RLS de perfiles, visitantes y AAL2 cubiertos por pgTAP; 123 pruebas DB y 242 Flutter pasan; quedan validaciones E2E reales |
 
 Las pruebas y configuración descritas aquí son locales o simuladas; no
 sustituyen una prueba real contra el proveedor. No se han publicado estas
@@ -217,29 +217,31 @@ comparar las migraciones con el equipo.
 
 En el entorno local levantado por Supabase:
 
-- `npx --yes supabase test db --local` — **PASS**, 10 archivos y 117 pruebas.
-  Incluye pruebas de lectura de visitantes y escrituras AAL1/AAL2.
+- `npx --yes supabase test db --local` — **PASS**, 11 archivos y 123 pruebas.
+  Incluye RLS de perfiles, lectura de visitantes y escrituras AAL1/AAL2.
 - Desde `comunidad_universitaria/`,
-  `flutter test test/services/supabase_service_test.dart` — **PASS**, 16 pruebas.
+  `flutter test test/widgets/shared/auth_modal_test.dart` — **PASS**, 6 pruebas.
+- Desde `comunidad_universitaria/`,
+  `flutter test test/services/supabase_service_test.dart` — **PASS**, 17 pruebas.
 - Desde `comunidad_universitaria/`, `flutter analyze` — **PASS**, sin issues.
-- Desde `comunidad_universitaria/`, `flutter test` — **PASS**, 240 pruebas
-  aprobadas en aproximadamente 2 minutos y 10 segundos (ejecución posterior a
-  los cambios de OAuth).
+- Desde `comunidad_universitaria/`, `flutter test` — **PASS**, 242 pruebas
+  aprobadas en aproximadamente 2 minutos y 30 segundos.
 - El health check local de Supabase Auth respondió HTTP 200 al confirmar que
   el servicio estaba disponible.
 
-Las pruebas de recuperación de códigos en Flutter usan respuestas HTTP
-simuladas. Por tanto, **queda como verificación manual pendiente** completar el
-flujo real con un usuario descartable en Auth local: inscribir TOTP, generar y
-guardar códigos, iniciar una sesión nueva, probar un código de recuperación y
-comprobar que ese código ya no pueda reutilizarse. No se debe hacer esta prueba
-contra el proyecto remoto.
+Las pruebas de Auth usan respuestas HTTP simuladas. Queda como verificación
+manual pendiente usar un usuario descartable en Supabase local para comprobar la
+entrega del correo de recuperación, el alta del perfil, la sesión y el flujo
+real de TOTP/códigos de recuperación. La prueba externa de Google también
+requiere configurar previamente el proveedor, pero no forma parte de este
+chequeo local. No se debe hacer ninguna de estas pruebas contra el proyecto
+remoto sin autorización.
 
-Una ejecución anterior de la suite Flutter completa había excedido el límite
-de tiempo. Se volvió a ejecutar con un límite mayor y terminó correctamente:
-240 pruebas aprobadas. También se repitió después de los cambios de OAuth y
-volvió a pasar. Algunos tests imprimen mensajes de error simulados como parte de
-sus casos de manejo de fallos; el resultado final fue `All tests passed!`.
+La suite Flutter completa había excedido el límite en un intento anterior; al
+repetirla con un límite mayor terminó correctamente. Después de añadir las
+pruebas de login/logout y correo no confirmado se ejecutó de nuevo: 242 pruebas
+aprobadas. Algunos tests imprimen errores simulados como parte de sus casos de
+fallo; el resultado final fue `All tests passed!`.
 
 ## Archivos principales
 
@@ -251,6 +253,7 @@ sus casos de manejo de fallos; el resultado final fue `All tests passed!`.
 - `supabase/migrations/20261003000000_enforce_anonymous_read_only.sql`
 - `supabase/migrations/20261003010000_require_aal2_for_authenticated_writes.sql`
 - `supabase/tests/anonymous_read_only_test.sql`
+- `supabase/tests/profiles_rls_test.sql`
 - `supabase/tests/totp_aal2_writes_test.sql`
 - `comunidad_universitaria/lib/core/services/supabase_service.dart`
 - `comunidad_universitaria/lib/core/config/supabase_config.dart`
