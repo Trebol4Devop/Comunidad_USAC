@@ -9,6 +9,7 @@ import '../models/discord_forum_models.dart';
 import '../widgets/create_post_dialog.dart';
 import '../widgets/discord/forum_channel_sidebar.dart';
 import '../widgets/discord/forum_server_rail.dart';
+import '../widgets/discord/popular_servers_sidebar.dart';
 import '../widgets/post_card.dart';
 import 'post_detail_screen.dart';
 import '../../groups/screens/groups_screen.dart';
@@ -59,6 +60,8 @@ class _ForumScreenState extends State<ForumScreen> {
   late ForumChannel _groupsActiveChannel;
   List<ForumChannel> _channels = List.from(ForumChannel.defaultChannels);
   List<ForumFaculty> _faculties = List.from(ForumFaculty.defaultFaculties);
+  List<PopularServerItem> _popularServers = PopularServerItem.defaultPopularServers();
+  bool _isLoadingPopular = false;
 
   // Data & Search States
   List<Post> _posts = [];
@@ -67,6 +70,7 @@ class _ForumScreenState extends State<ForumScreen> {
   UserProfile? _currentUserProfile;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _feedScrollController = ScrollController();
 
   @override
   void initState() {
@@ -89,8 +93,24 @@ class _ForumScreenState extends State<ForumScreen> {
     }
     _loadUserProfile();
     _loadForumStructure();
+    _loadPopularServers();
     if (!_activeServer.isGroups) {
       _loadPosts();
+    }
+  }
+
+  Future<void> _loadPopularServers() async {
+    setState(() => _isLoadingPopular = true);
+    try {
+      final popular = await ForumService.fetchPopularServers(faculties: _faculties);
+      if (mounted) {
+        setState(() {
+          _popularServers = popular;
+          _isLoadingPopular = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingPopular = false);
     }
   }
 
@@ -111,6 +131,7 @@ class _ForumScreenState extends State<ForumScreen> {
             );
           }
         });
+        _loadPopularServers();
       }
     } catch (e) {
       debugPrint('Error cargando estructura del foro desde DB: $e');
@@ -155,6 +176,7 @@ class _ForumScreenState extends State<ForumScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _feedScrollController.dispose();
     super.dispose();
   }
 
@@ -457,6 +479,7 @@ class _ForumScreenState extends State<ForumScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final width = MediaQuery.of(context).size.width;
     final isDesktopOrTablet = width >= 768;
+    final showRightSidebar = width >= 1050;
 
     // Discord main chat background: #313338 dark, #FFFFFF light
     final feedBg = isDark ? const Color(0xFF313338) : Colors.white;
@@ -508,10 +531,17 @@ class _ForumScreenState extends State<ForumScreen> {
               )
             else
               Expanded(
-                child: RefreshIndicator(
-                  onRefresh: _loadPosts,
-                  child: _buildFeedContent(theme, isDark),
-                ),
+                child: _buildFeedContainer(theme, isDark),
+              ),
+
+            // 4. Barra lateral derecha fija y general: Top 5 comunidades más populares
+            if (showRightSidebar)
+              PopularServersSidebar(
+                popularServers: _popularServers,
+                activeServer: _activeServer,
+                isLoading: _isLoadingPopular,
+                onSelectServer: _onSelectServer,
+                onRefresh: _loadPopularServers,
               ),
           ],
         ),
@@ -577,10 +607,7 @@ class _ForumScreenState extends State<ForumScreen> {
                       activeChannelDescription: _groupsActiveChannel.description,
                       activeChannelIcon: _groupsActiveChannel.icon,
                     )
-                  : RefreshIndicator(
-                      onRefresh: _loadPosts,
-                      child: _buildFeedContent(theme, isDark),
-                    ),
+                  : _buildFeedContainer(theme, isDark),
             ),
           ],
         ),
@@ -637,6 +664,16 @@ class _ForumScreenState extends State<ForumScreen> {
               ),
             ),
           ),
+          const SizedBox(width: 4),
+          IconButton(
+            icon: const Icon(
+              Icons.local_fire_department_rounded,
+              size: 20,
+              color: Color(0xFFF59E0B),
+            ),
+            tooltip: 'Comunidades Populares',
+            onPressed: () => _showPopularServersModal(context),
+          ),
         ],
       ),
     );
@@ -691,31 +728,57 @@ class _ForumScreenState extends State<ForumScreen> {
               ),
             ),
           ),
+          const SizedBox(width: 4),
+          IconButton(
+            icon: const Icon(
+              Icons.local_fire_department_rounded,
+              size: 20,
+              color: Color(0xFFF59E0B),
+            ),
+            tooltip: 'Comunidades Populares',
+            onPressed: () => _showPopularServersModal(context),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildFeedContent(ThemeData theme, bool isDark) {
-    if (_isLoading) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(40),
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
+  void _showPopularServersModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+          child: SizedBox(
+            height: 480,
+            child: PopularServersSidebar(
+              popularServers: _popularServers,
+              activeServer: _activeServer,
+              isLoading: _isLoadingPopular,
+              isModal: true,
+              onSelectServer: (srv) {
+                Navigator.of(ctx).pop();
+                _onSelectServer(srv);
+              },
+              onRefresh: _loadPopularServers,
+            ),
+          ),
+        );
+      },
+    );
+  }
 
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+  Widget _buildFeedContainer(ThemeData theme, bool isDark) {
+    return Column(
       children: [
+        // Barra superior fija para todos los canales con bienvenida, buscador y botón de publicar
         _buildDiscordWelcomeHero(theme, isDark),
-        const SizedBox(height: 12),
 
         if (_isOffline) ...[
           Container(
-            margin: const EdgeInsets.only(bottom: 12),
+            margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
               color: Colors.amber.shade900.withValues(alpha: 0.15),
@@ -737,7 +800,33 @@ class _ForumScreenState extends State<ForumScreen> {
           ),
         ],
 
-        if (_posts.isEmpty)
+        // Área scrolleable de publicaciones con scrollbar dedicada y física estándar
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: _loadPosts,
+            child: _buildPostsFeed(theme, isDark),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPostsFeed(ThemeData theme, bool isDark) {
+    if (_isLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(40),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (_posts.isEmpty) {
+      return ListView(
+        controller: _feedScrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        children: [
           EmptyStateWidget(
             icon: _activeChannel.icon,
             title: _activeChannel.isSpecial
@@ -748,33 +837,44 @@ class _ForumScreenState extends State<ForumScreen> {
                 : 'Sé el primero en iniciar una conversación o formular una duda en este canal.',
             buttonText: _activeChannel.isSpecial ? null : 'Crear Primera Publicación',
             onButtonPressed: _activeChannel.isSpecial ? null : _openCreateDialog,
-          )
-        else
-          ..._posts.map((post) {
-            return PostCard(
-              key: ValueKey(post.id),
-              post: post,
-              isModerator: _currentUserProfile?.isModerator == true,
-              onTap: () => _openPostDetail(post),
-              onLike: () => _handleToggleLike(post),
-              onBookmark: () => _handleToggleBookmark(post),
-              onRepost: () => _handleQuotePost(post),
-              onVotePoll: (pollId, optionId) => _handleVotePoll(pollId, optionId),
-              onReport: (reason) {
-                if (post.userId != null) {
-                  ForumService.reportUser(
-                    reportedUserId: post.userId!,
-                    reportedAlias: post.authorAlias,
-                    reason: reason,
-                  );
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Reporte enviado con éxito.')),
-                  );
-                }
-              },
-            );
-          }),
-      ],
+          ),
+        ],
+      );
+    }
+
+    return Scrollbar(
+      controller: _feedScrollController,
+      child: ListView.builder(
+        controller: _feedScrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        itemCount: _posts.length,
+        itemBuilder: (ctx, index) {
+          final post = _posts[index];
+          return PostCard(
+            key: ValueKey(post.id),
+            post: post,
+            isModerator: _currentUserProfile?.isModerator == true,
+            onTap: () => _openPostDetail(post),
+            onLike: () => _handleToggleLike(post),
+            onBookmark: () => _handleToggleBookmark(post),
+            onRepost: () => _handleQuotePost(post),
+            onVotePoll: (pollId, optionId) => _handleVotePoll(pollId, optionId),
+            onReport: (reason) {
+              if (post.userId != null) {
+                ForumService.reportUser(
+                  reportedUserId: post.userId!,
+                  reportedAlias: post.authorAlias,
+                  reason: reason,
+                );
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Reporte enviado con éxito.')),
+                );
+              }
+            },
+          );
+        },
+      ),
     );
   }
 
@@ -783,12 +883,15 @@ class _ForumScreenState extends State<ForumScreen> {
     final isDesktop = width >= 800;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF2B2D31) : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark ? const Color(0xFF383A40) : const Color(0xFFE2E8F0),
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? const Color(0xFF202225) : const Color(0xFFE2E8F0),
+            width: 1,
+          ),
         ),
       ),
       child: Column(
