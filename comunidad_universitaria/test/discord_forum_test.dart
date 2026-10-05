@@ -56,9 +56,9 @@ void main() {
         expect(s.memberCount, isNull, reason: 'El servidor ${s.id} no debe tener memberCount inventado/simulado');
       }
 
-      // 2. Área común debe coincidir con la DB (facultadId = todas)
+      // 2. Área común debe pertenecer a Facultad de Ingeniería (facultadId = 08)
       final areaComun = ForumServer.defaultServers.firstWhere((s) => s.id == 'area_comun');
-      expect(areaComun.facultadId, equals('todas'), reason: 'En public.carreras, area_comun pertenece a facultad_id = todas');
+      expect(areaComun.facultadId, equals('08'), reason: 'En USAC, area_comun pertenece como sub-servidor a facultad_id = 08 (Ingeniería)');
 
       // 3. fromDbCategory mapea correctamente registros de DB
       final cat = ForumChannel.fromDbCategory(id: 'prerrequisitos', nombre: 'Prerrequisitos & Pensum');
@@ -922,16 +922,19 @@ void main() {
       }
     });
 
-    testWidgets('En vista escritorio (1200x800) renderiza la barra lateral derecha fija con MÁS POPULARES TOP 5', (tester) async {
+    testWidgets('En vista escritorio (1200x800) renderiza la barra lateral derecha fija con diseño minimalista', (tester) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
+
+      final popularSample = PopularServerItem.defaultPopularServers();
 
       await tester.pumpWidget(
         MaterialApp(
           home: ForumScreen(
             activeAlias: 'EstudianteTester',
             onAliasChanged: (_) {},
+            initialPopularServers: popularSample,
           ),
         ),
       );
@@ -940,10 +943,12 @@ void main() {
       // Debe renderizar la barra lateral derecha fija
       expect(find.byType(PopularServersSidebar), findsOneWidget);
       expect(find.text('MÁS POPULARES'), findsOneWidget);
-      expect(find.text('TOP 5'), findsOneWidget);
+      expect(find.text('${popularSample.length}'), findsOneWidget);
       expect(find.text('Comunidades con mayor actividad y aportes'), findsOneWidget);
 
-      // Debe mostrar las 5 comunidades populares
+      // Debe mostrar las comunidades populares con ranking minimalista #1, #2, etc.
+      expect(find.text('#1'), findsOneWidget);
+      expect(find.text('#2'), findsOneWidget);
       expect(find.text('Ingeniería en Ciencias y Sistemas'), findsWidgets);
       expect(find.text('Médico y Cirujano'), findsWidgets);
       expect(find.text('Ciencias Jurídicas y Sociales'), findsWidgets);
@@ -954,11 +959,14 @@ void main() {
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
 
+      final popularSample = PopularServerItem.defaultPopularServers();
+
       await tester.pumpWidget(
         MaterialApp(
           home: ForumScreen(
             activeAlias: 'EstudianteTester',
             onAliasChanged: (_) {},
+            initialPopularServers: popularSample,
           ),
         ),
       );
@@ -986,11 +994,14 @@ void main() {
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
 
+      final popularSample = PopularServerItem.defaultPopularServers();
+
       await tester.pumpWidget(
         MaterialApp(
           home: ForumScreen(
             activeAlias: 'EstudianteTester',
             onAliasChanged: (_) {},
+            initialPopularServers: popularSample,
           ),
         ),
       );
@@ -1008,7 +1019,90 @@ void main() {
       // Debe desplegarse el modal con la barra de populares
       expect(find.byType(PopularServersSidebar), findsOneWidget);
       expect(find.text('MÁS POPULARES'), findsOneWidget);
-      expect(find.text('TOP 5'), findsOneWidget);
+      expect(find.text('${popularSample.length}'), findsOneWidget);
+    });
+
+    testWidgets('PopularServersSidebar muestra únicamente servidores reales disponibles (sin datos falsos ni relleno)', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      // Solo 2 servidores reales
+      final twoServers = PopularServerItem.defaultPopularServers().take(2).toList();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ForumScreen(
+            activeAlias: 'EstudianteTester',
+            onAliasChanged: (_) {},
+            initialPopularServers: twoServers,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Debe mostrar el conteo real '2' sin inventar 5
+      expect(find.text('2'), findsOneWidget);
+      expect(find.text('#1'), findsOneWidget);
+      expect(find.text('#2'), findsOneWidget);
+      expect(find.text('#3'), findsNothing);
+      expect(find.text('#4'), findsNothing);
+      expect(find.text('#5'), findsNothing);
+    });
+
+    testWidgets('PopularServersSidebar muestra estado vacío limpio cuando no hay comunidades populares registradas', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ForumScreen(
+            activeAlias: 'EstudianteTester',
+            onAliasChanged: (_) {},
+            initialPopularServers: const [],
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Sin actividad registrada aún'), findsOneWidget);
+      expect(find.text('#1'), findsNothing);
+    });
+
+    testWidgets('Facultad con una sola carrera (como Derecho o Odontología) no despliega submenú y selecciona directamente el servidor', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ForumScreen(
+            activeAlias: 'EstudianteTester',
+            onAliasChanged: (_) {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Buscamos el botón de Derecho (DER) en el riel
+      final derIcon = find.descendant(
+        of: find.byType(ForumServerRail),
+        matching: find.text('DER'),
+      );
+      expect(derIcon, findsOneWidget);
+
+      // Al tocar DER, como solo tiene 1 carrera, no debe abrir submenú flotante sino seleccionar directamente
+      await tester.tap(derIcon);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(
+          of: find.byType(ForumChannelSidebar),
+          matching: find.text('Ciencias Jurídicas y Sociales'),
+        ),
+        findsOneWidget,
+      );
     });
   });
 }

@@ -29,6 +29,7 @@ class ForumScreen extends StatefulWidget {
   final bool isEmbeddedInShell;
   final String activeSection;
   final String? activeCommunityId;
+  final List<PopularServerItem>? initialPopularServers;
 
   const ForumScreen({
     super.key,
@@ -44,6 +45,7 @@ class ForumScreen extends StatefulWidget {
     this.isEmbeddedInShell = false,
     this.activeSection = 'featured',
     this.activeCommunityId,
+    this.initialPopularServers,
   });
 
   @override
@@ -60,7 +62,7 @@ class _ForumScreenState extends State<ForumScreen> {
   late ForumChannel _groupsActiveChannel;
   List<ForumChannel> _channels = List.from(ForumChannel.defaultChannels);
   List<ForumFaculty> _faculties = List.from(ForumFaculty.defaultFaculties);
-  List<PopularServerItem> _popularServers = PopularServerItem.defaultPopularServers();
+  List<PopularServerItem> _popularServers = [];
   bool _isLoadingPopular = false;
 
   // Data & Search States
@@ -87,13 +89,18 @@ class _ForumScreenState extends State<ForumScreen> {
       _faculties,
     );
     _groupsActiveChannel = initialGroupsChannels.first;
+    if (widget.initialPopularServers != null) {
+      _popularServers = List.from(widget.initialPopularServers!);
+    }
     _searchQuery = widget.searchQuery;
     if (_searchQuery.isNotEmpty) {
       _searchController.text = _searchQuery;
     }
     _loadUserProfile();
     _loadForumStructure();
-    _loadPopularServers();
+    if (widget.initialPopularServers == null) {
+      _loadPopularServers();
+    }
     if (!_activeServer.isGroups) {
       _loadPosts();
     }
@@ -131,7 +138,9 @@ class _ForumScreenState extends State<ForumScreen> {
             );
           }
         });
-        _loadPopularServers();
+        if (widget.initialPopularServers == null) {
+          _loadPopularServers();
+        }
       }
     } catch (e) {
       debugPrint('Error cargando estructura del foro desde DB: $e');

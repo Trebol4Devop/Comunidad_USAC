@@ -396,13 +396,6 @@ class USACConstants {
           'sede': 'Campus Central',
           'modalidades': ['Diario', 'Sabatino', 'Dominical'],
         },
-        {
-          'id': 'area_comun',
-          'nombre': 'Área Común',
-          'codigo': '00-00-01',
-          'sede': 'Campus Central',
-          'modalidades': ['Diario', 'Sabatino', 'Dominical'],
-        },
       ],
     },
     {

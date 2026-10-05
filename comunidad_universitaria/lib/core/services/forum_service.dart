@@ -949,7 +949,7 @@ class ForumService {
     if (cached != null) return List<PopularServerItem>.from(cached);
 
     if (!SupabaseConfig.isConfigured) {
-      return PopularServerItem.defaultPopularServers();
+      return const [];
     }
 
     try {
@@ -963,7 +963,7 @@ class ForumService {
 
       final data = res as List<dynamic>;
       if (data.isEmpty) {
-        return PopularServerItem.defaultPopularServers();
+        return const [];
       }
 
       final allFaculties = faculties ?? ForumFaculty.defaultFaculties;
@@ -1056,20 +1056,12 @@ class ForumService {
       results.sort((a, b) => b.score.compareTo(a.score));
 
       final top5 = results.take(5).toList();
-      if (top5.length < 5) {
-        for (final def in PopularServerItem.defaultPopularServers()) {
-          if (!top5.any((t) => t.server.carreraId == def.server.carreraId)) {
-            top5.add(def);
-            if (top5.length == 5) break;
-          }
-        }
-      }
 
       CacheService.set(_cacheNamespace, cacheKey, List<PopularServerItem>.from(top5));
       return top5;
     } catch (e) {
       debugPrint('Error obteniendo servidores populares: $e');
-      return PopularServerItem.defaultPopularServers();
+      return const [];
     }
   }
 }

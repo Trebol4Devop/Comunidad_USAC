@@ -106,6 +106,13 @@ class _ForumServerRailState extends State<ForumServerRail> {
     // Al pulsar el servidor principal de la facultad, se abre el servidor de dicha facultad en general
     widget.onSelectServer(faculty.toGeneralServer());
 
+    // Si la facultad solo tiene 1 carrera aparte de la general (o solo una carrera en total),
+    // no tiene sentido desplegar submenú porque es una sola carrera.
+    if (faculty.careers.length <= 1) {
+      _closeSubmenu();
+      return;
+    }
+
     if (_openFaculty?.id == faculty.id && _overlayController.isShowing) {
       _closeSubmenu();
       return;
@@ -497,7 +504,7 @@ class _ForumServerRailState extends State<ForumServerRail> {
 
     final isHomeActive = widget.activeServer.facultadId == homeFaculty.id &&
         !widget.activeServer.isGroups;
-    final isHomeOpen = _openFaculty?.id == homeFaculty.id;
+    final isHomeOpen = _openFaculty?.id == homeFaculty.id && homeFaculty.careers.length > 1;
 
     final mediaQuery = MediaQuery.of(context);
     final screenHeight = mediaQuery.size.height;
@@ -651,7 +658,7 @@ class _ForumServerRailState extends State<ForumServerRail> {
                     final faculty = otherFaculties[i];
                     final isActive = widget.activeServer.facultadId == faculty.id &&
                         !widget.activeServer.isGroups;
-                    final isOpen = _openFaculty?.id == faculty.id;
+                    final isOpen = _openFaculty?.id == faculty.id && faculty.careers.length > 1;
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 6),
