@@ -944,18 +944,18 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Debe renderizar la barra lateral derecha fija
+      // Debe renderizar la barra lateral derecha fija minimalista
       expect(find.byType(PopularServersSidebar), findsOneWidget);
       expect(find.text('MÁS POPULARES'), findsOneWidget);
-      expect(find.text('${popularSample.length}'), findsOneWidget);
-      expect(find.text('Comunidades con mayor actividad y aportes'), findsOneWidget);
+      expect(find.text('Comunidades con mayor actividad y aportes'), findsNothing);
 
-      // Debe mostrar las comunidades populares con ranking minimalista #1, #2, etc.
+      // Debe mostrar las comunidades populares con ranking minimalista #1, #2, etc. sin etiquetas de siglas
       expect(find.text('#1'), findsOneWidget);
       expect(find.text('#2'), findsOneWidget);
       expect(find.text('Ingeniería en Ciencias y Sistemas'), findsWidgets);
       expect(find.text('Médico y Cirujano'), findsWidgets);
       expect(find.text('Ciencias Jurídicas y Sociales'), findsWidgets);
+      expect(find.text('CIST'), findsNothing);
     });
 
     testWidgets('Al tocar un servidor en la barra lateral derecha de populares se navega a ese servidor', (tester) async {
@@ -986,8 +986,13 @@ void main() {
       await tester.pumpAndSettle();
 
       // Debe cambiar el servidor activo a Médico y Cirujano
-      expect(find.text('Médico y Cirujano'), findsWidgets);
-      expect(find.text('MED'), findsWidgets);
+      expect(
+        find.descendant(
+          of: find.byType(ForumChannelSidebar),
+          matching: find.text('Médico y Cirujano'),
+        ),
+        findsOneWidget,
+      );
 
       // Y debe tener abierto por defecto todos-los-temas
       expect(find.text('¡Te damos la bienvenida a #todos-los-temas!'), findsOneWidget);
@@ -1023,7 +1028,7 @@ void main() {
       // Debe desplegarse el modal con la barra de populares
       expect(find.byType(PopularServersSidebar), findsOneWidget);
       expect(find.text('MÁS POPULARES'), findsOneWidget);
-      expect(find.text('${popularSample.length}'), findsOneWidget);
+      expect(find.text('Comunidades con mayor actividad y aportes'), findsNothing);
     });
 
     testWidgets('PopularServersSidebar muestra únicamente servidores reales disponibles (sin datos falsos ni relleno)', (tester) async {
@@ -1045,8 +1050,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Debe mostrar el conteo real '2' sin inventar 5
-      expect(find.text('2'), findsOneWidget);
+      // Debe mostrar exactamente las comunidades disponibles #1 y #2 sin inventar #3, #4 ni #5
       expect(find.text('#1'), findsOneWidget);
       expect(find.text('#2'), findsOneWidget);
       expect(find.text('#3'), findsNothing);

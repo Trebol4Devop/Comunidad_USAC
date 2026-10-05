@@ -42,87 +42,48 @@ class PopularServersSidebar extends StatelessWidget {
               bottom: BorderSide(color: borderColor, width: 1),
             ),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.trending_up_rounded,
-                    size: 15,
-                    color: isDark ? const Color(0xFF949BA4) : const Color(0xFF64748B),
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      'MÁS POPULARES',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.8,
-                        color: isDark ? const Color(0xFF949BA4) : const Color(0xFF475569),
-                      ),
-                    ),
-                  ),
-                  if (popularServers.isNotEmpty) ...[
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                      decoration: BoxDecoration(
-                        color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(
-                          color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
-                          width: 1,
-                        ),
-                      ),
-                      child: Text(
-                        '${popularServers.length}',
-                        style: TextStyle(
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? const Color(0xFF949BA4) : const Color(0xFF64748B),
-                        ),
-                      ),
-                    ),
-                  ],
-                  if (onRefresh != null) ...[
-                    const SizedBox(width: 4),
-                    InkWell(
-                      borderRadius: BorderRadius.circular(6),
-                      onTap: isLoading ? null : onRefresh,
-                      child: Padding(
-                        padding: const EdgeInsets.all(2),
-                        child: isLoading
-                            ? const SizedBox(
-                                width: 11,
-                                height: 11,
-                                child: CircularProgressIndicator(strokeWidth: 1.5),
-                              )
-                            : Icon(
-                                Icons.refresh,
-                                size: 13,
-                                color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
-                              ),
-                      ),
-                    ),
-                  ],
-                ],
+              Icon(
+                Icons.trending_up_rounded,
+                size: 15,
+                color: isDark ? const Color(0xFF949BA4) : const Color(0xFF64748B),
               ),
-              const SizedBox(height: 2),
-              Text(
-                'Comunidades con mayor actividad y aportes',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 10,
-                  height: 1.1,
-                  color: isDark ? const Color(0xFF80848E) : Colors.grey.shade600,
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'MÁS POPULARES',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8,
+                    color: isDark ? const Color(0xFF949BA4) : const Color(0xFF475569),
+                  ),
                 ),
               ),
+              if (onRefresh != null) ...[
+                const SizedBox(width: 4),
+                InkWell(
+                  borderRadius: BorderRadius.circular(6),
+                  onTap: isLoading ? null : onRefresh,
+                  child: Padding(
+                    padding: const EdgeInsets.all(2),
+                    child: isLoading
+                        ? const SizedBox(
+                            width: 11,
+                            height: 11,
+                            child: CircularProgressIndicator(strokeWidth: 1.5),
+                          )
+                        : Icon(
+                            Icons.refresh,
+                            size: 13,
+                            color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
+                          ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -265,39 +226,17 @@ class PopularServersSidebar extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            item.server.name.replaceAll(RegExp(r'\s*\([^)]*\)'), '').trim(),
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                              color: isSelected
-                                  ? theme.colorScheme.primary
-                                  : (isDark ? Colors.white : const Color(0xFF0F172A)),
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                          decoration: BoxDecoration(
-                            color: item.server.color.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                          child: Text(
-                            item.server.shortCode,
-                            style: TextStyle(
-                              fontSize: 8,
-                              fontWeight: FontWeight.w700,
-                              color: item.server.color,
-                            ),
-                          ),
-                        ),
-                      ],
+                    Text(
+                      item.server.name.replaceAll(RegExp(r'\s*\([^)]*\)'), '').trim(),
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                        color: isSelected
+                            ? theme.colorScheme.primary
+                            : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 1),
                     Text(
