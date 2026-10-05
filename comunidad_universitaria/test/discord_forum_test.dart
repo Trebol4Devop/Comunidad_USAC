@@ -5,6 +5,7 @@ import 'package:comunidad_universitaria/features/forum/models/discord_forum_mode
 import 'package:comunidad_universitaria/features/forum/screens/forum_screen.dart';
 import 'package:comunidad_universitaria/features/forum/widgets/discord/forum_channel_sidebar.dart';
 import 'package:comunidad_universitaria/features/forum/widgets/discord/forum_server_rail.dart';
+import 'package:comunidad_universitaria/features/forum/widgets/discord/popular_servers_sidebar.dart';
 import 'package:comunidad_universitaria/features/navigation/app_shell.dart';
 import 'package:comunidad_universitaria/features/rules/screens/rules_screen.dart';
 import 'package:comunidad_universitaria/features/profile/screens/profile_screen.dart';
@@ -406,14 +407,14 @@ void main() {
       expect(find.byType(ForumServerRail), findsOneWidget);
 
       // Verificamos que se muestren las facultades en el riel principal
-      expect(find.text('AGRO'), findsOneWidget);
-      expect(find.text('ARQ'), findsOneWidget);
-      expect(find.text('ECON'), findsOneWidget);
-      expect(find.text('DER'), findsOneWidget);
-      expect(find.text('MED'), findsOneWidget);
-      expect(find.text('FARM'), findsOneWidget);
-      expect(find.text('HUM'), findsOneWidget);
-      expect(find.byIcon(Icons.engineering), findsOneWidget);
+      expect(find.descendant(of: find.byType(ForumServerRail), matching: find.text('AGRO')), findsOneWidget);
+      expect(find.descendant(of: find.byType(ForumServerRail), matching: find.text('ARQ')), findsOneWidget);
+      expect(find.descendant(of: find.byType(ForumServerRail), matching: find.text('ECON')), findsOneWidget);
+      expect(find.descendant(of: find.byType(ForumServerRail), matching: find.text('DER')), findsOneWidget);
+      expect(find.descendant(of: find.byType(ForumServerRail), matching: find.text('MED')), findsOneWidget);
+      expect(find.descendant(of: find.byType(ForumServerRail), matching: find.text('FARM')), findsOneWidget);
+      expect(find.descendant(of: find.byType(ForumServerRail), matching: find.text('HUM')), findsOneWidget);
+      expect(find.descendant(of: find.byType(ForumServerRail), matching: find.byIcon(Icons.engineering)), findsOneWidget);
 
       // Tocamos la facultad de Agronomía (AGRO)
       final agroFinder = find.descendant(
@@ -898,10 +899,116 @@ void main() {
       await tester.pumpAndSettle();
 
       // Debe abrir Facultad de Ingeniería en general
-      expect(find.text('Facultad de Ingeniería'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(ForumChannelSidebar),
+          matching: find.text('Facultad de Ingeniería'),
+        ),
+        findsOneWidget,
+      );
 
       // Y el canal activo debe haberse restablecido por defecto a todos-los-temas
       expect(find.text('¡Te damos la bienvenida a #todos-los-temas!'), findsOneWidget);
+    });
+
+    test('PopularServerItem.defaultPopularServers define exactamente 5 servidores populares con métricas y shortcode', () {
+      final popular = PopularServerItem.defaultPopularServers();
+      expect(popular.length, equals(5));
+      for (final item in popular) {
+        expect(item.server.name.isNotEmpty, isTrue);
+        expect(item.postCount, greaterThan(0));
+        expect(item.likesCount, greaterThan(0));
+        expect(item.score, greaterThan(0));
+      }
+    });
+
+    testWidgets('En vista escritorio (1200x800) renderiza la barra lateral derecha fija con MÁS POPULARES TOP 5', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ForumScreen(
+            activeAlias: 'EstudianteTester',
+            onAliasChanged: (_) {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Debe renderizar la barra lateral derecha fija
+      expect(find.byType(PopularServersSidebar), findsOneWidget);
+      expect(find.text('MÁS POPULARES'), findsOneWidget);
+      expect(find.text('TOP 5'), findsOneWidget);
+      expect(find.text('Comunidades con mayor actividad y aportes'), findsOneWidget);
+
+      // Debe mostrar las 5 comunidades populares
+      expect(find.text('Ingeniería en Ciencias y Sistemas'), findsWidgets);
+      expect(find.text('Médico y Cirujano'), findsWidgets);
+      expect(find.text('Ciencias Jurídicas y Sociales'), findsWidgets);
+    });
+
+    testWidgets('Al tocar un servidor en la barra lateral derecha de populares se navega a ese servidor', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ForumScreen(
+            activeAlias: 'EstudianteTester',
+            onAliasChanged: (_) {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Tocamos Médico y Cirujano dentro de la barra lateral derecha de populares
+      final medCard = find.descendant(
+        of: find.byType(PopularServersSidebar),
+        matching: find.text('Médico y Cirujano'),
+      );
+      expect(medCard, findsOneWidget);
+      await tester.tap(medCard);
+      await tester.pumpAndSettle();
+
+      // Debe cambiar el servidor activo a Médico y Cirujano
+      expect(find.text('Médico y Cirujano'), findsWidgets);
+      expect(find.text('MED'), findsWidgets);
+
+      // Y debe tener abierto por defecto todos-los-temas
+      expect(find.text('¡Te damos la bienvenida a #todos-los-temas!'), findsOneWidget);
+    });
+
+    testWidgets('En vista móvil (400x800) el botón de fuego en la cabecera abre el modal con las comunidades populares', (tester) async {
+      tester.view.physicalSize = const Size(400, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ForumScreen(
+            activeAlias: 'EstudianteTester',
+            onAliasChanged: (_) {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // En móvil no se muestra la barra fija a la derecha
+      expect(find.byType(PopularServersSidebar), findsNothing);
+
+      // Tocamos el botón de fuego en la cabecera móvil
+      final fireBtn = find.byIcon(Icons.local_fire_department_rounded);
+      expect(fireBtn, findsOneWidget);
+      await tester.tap(fireBtn);
+      await tester.pumpAndSettle();
+
+      // Debe desplegarse el modal con la barra de populares
+      expect(find.byType(PopularServersSidebar), findsOneWidget);
+      expect(find.text('MÁS POPULARES'), findsOneWidget);
+      expect(find.text('TOP 5'), findsOneWidget);
     });
   });
 }
