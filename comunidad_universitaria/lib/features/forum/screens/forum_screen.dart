@@ -891,9 +891,143 @@ class _ForumScreenState extends State<ForumScreen> {
     final width = MediaQuery.of(context).size.width;
     final isDesktop = width >= 800;
 
+    if (isDesktop) {
+      return Container(
+        height: 56,
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF2B2D31) : const Color(0xFFF8FAFC),
+          border: Border(
+            bottom: BorderSide(
+              color: isDark ? const Color(0xFF202225) : const Color(0xFFE2E8F0),
+              width: 1,
+            ),
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF383A40) : const Color(0xFFEEF2FF),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Icon(_activeChannel.icon, size: 16, color: theme.colorScheme.primary),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '¡Te damos la bienvenida a #${_activeChannel.name}!',
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _activeChannel.description,
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      color: isDark ? const Color(0xFF949BA4) : const Color(0xFF64748B),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            SizedBox(
+              width: 180,
+              height: 32,
+              child: TextField(
+                controller: _searchController,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Buscar...',
+                  hintStyle: TextStyle(
+                    fontSize: 11,
+                    color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    size: 15,
+                    color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
+                  ),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          padding: EdgeInsets.zero,
+                          icon: Icon(
+                            Icons.clear,
+                            size: 13,
+                            color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
+                          ),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _searchQuery = '');
+                            _loadPosts();
+                          },
+                        )
+                      : null,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 8),
+                  filled: true,
+                  fillColor: isDark ? const Color(0xFF1E1F22) : Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(6),
+                    borderSide: BorderSide(
+                      color: isDark ? const Color(0xFF383A40) : const Color(0xFFCBD5E1),
+                      width: 1,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(6),
+                    borderSide: BorderSide(
+                      color: isDark ? const Color(0xFF383A40) : const Color(0xFFCBD5E1),
+                      width: 1,
+                    ),
+                  ),
+                ),
+                onSubmitted: (val) {
+                  setState(() => _searchQuery = val);
+                  _loadPosts();
+                },
+              ),
+            ),
+            if (!_activeChannel.isSpecial) ...[
+              const SizedBox(width: 8),
+              SizedBox(
+                height: 32,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                  ),
+                  icon: const Icon(Icons.add, size: 15),
+                  label: const Text('Publicar', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
+                  onPressed: _openCreateDialog,
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF2B2D31) : const Color(0xFFF8FAFC),
         border: Border(
@@ -907,198 +1041,94 @@ class _ForumScreenState extends State<ForumScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF3F4147) : const Color(0xFFEEF2FF),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(_activeChannel.icon, size: 22, color: theme.colorScheme.primary),
-              ),
-              const SizedBox(width: 12),
+              Icon(_activeChannel.icon, size: 18, color: theme.colorScheme.primary),
+              const SizedBox(width: 8),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '¡Te damos la bienvenida a #${_activeChannel.name}!',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      _activeChannel.description,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isDark ? const Color(0xFF949BA4) : const Color(0xFF64748B),
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                child: Text(
+                  '¡Te damos la bienvenida a #${_activeChannel.name}!',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              if (isDesktop) ...[
-                const SizedBox(width: 14),
+              if (!_activeChannel.isSpecial)
                 SizedBox(
-                  width: 180,
-                  height: 36,
-                  child: TextField(
-                    controller: _searchController,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'Buscar...',
-                      hintStyle: TextStyle(
-                        fontSize: 11,
-                        color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
-                      ),
-                      prefixIcon: Icon(
-                        Icons.search,
-                        size: 16,
-                        color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
-                      ),
-                      suffixIcon: _searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: Icon(
-                                Icons.clear,
-                                size: 14,
-                                color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
-                              ),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() => _searchQuery = '');
-                                _loadPosts();
-                              },
-                            )
-                          : null,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                      filled: true,
-                      fillColor: isDark ? const Color(0xFF1E1F22) : Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: isDark ? const Color(0xFF383A40) : const Color(0xFFCBD5E1),
-                          width: 1,
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: isDark ? const Color(0xFF383A40) : const Color(0xFFCBD5E1),
-                          width: 1,
-                        ),
-                      ),
-                    ),
-                    onSubmitted: (val) {
-                      setState(() => _searchQuery = val);
-                      _loadPosts();
-                    },
-                  ),
-                ),
-                if (!_activeChannel.isSpecial) ...[
-                  const SizedBox(width: 10),
-                  ElevatedButton.icon(
+                  height: 30,
+                  child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: theme.colorScheme.primary,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                     ),
-                    icon: const Icon(Icons.add, size: 16),
-                    label: const Text('Publicar', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    icon: const Icon(Icons.add, size: 14),
+                    label: const Text('Publicar', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                     onPressed: _openCreateDialog,
                   ),
-                ],
-              ],
+                ),
             ],
           ),
-          if (!isDesktop) ...[
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 38,
-                    child: TextField(
-                      controller: _searchController,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Buscar en #${_activeChannel.name}...',
-                        hintStyle: TextStyle(
-                          fontSize: 12,
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 34,
+            child: TextField(
+              controller: _searchController,
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? Colors.white : const Color(0xFF0F172A),
+              ),
+              decoration: InputDecoration(
+                hintText: 'Buscar en #${_activeChannel.name}...',
+                hintStyle: TextStyle(
+                  fontSize: 11.5,
+                  color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
+                ),
+                prefixIcon: Icon(
+                  Icons.search,
+                  size: 16,
+                  color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
+                ),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        padding: EdgeInsets.zero,
+                        icon: Icon(
+                          Icons.clear,
+                          size: 14,
                           color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
                         ),
-                        prefixIcon: Icon(
-                          Icons.search,
-                          size: 18,
-                          color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
-                        ),
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? IconButton(
-                                icon: Icon(
-                                  Icons.clear,
-                                  size: 16,
-                                  color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
-                                ),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  setState(() => _searchQuery = '');
-                                  _loadPosts();
-                                },
-                              )
-                            : null,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                        filled: true,
-                        fillColor: isDark ? const Color(0xFF1E1F22) : Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                            color: isDark ? const Color(0xFF383A40) : const Color(0xFFCBD5E1),
-                            width: 1,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                            color: isDark ? const Color(0xFF383A40) : const Color(0xFFCBD5E1),
-                            width: 1,
-                          ),
-                        ),
-                      ),
-                      onSubmitted: (val) {
-                        setState(() => _searchQuery = val);
-                        _loadPosts();
-                      },
-                    ),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() => _searchQuery = '');
+                          _loadPosts();
+                        },
+                      )
+                    : null,
+                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 8),
+                filled: true,
+                fillColor: isDark ? const Color(0xFF1E1F22) : Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(6),
+                  borderSide: BorderSide(
+                    color: isDark ? const Color(0xFF383A40) : const Color(0xFFCBD5E1),
+                    width: 1,
                   ),
                 ),
-                if (!_activeChannel.isSpecial) ...[
-                  const SizedBox(width: 8),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    icon: const Icon(Icons.add, size: 16),
-                    label: const Text('Publicar', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                    onPressed: _openCreateDialog,
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(6),
+                  borderSide: BorderSide(
+                    color: isDark ? const Color(0xFF383A40) : const Color(0xFFCBD5E1),
+                    width: 1,
                   ),
-                ],
-              ],
+                ),
+              ),
+              onSubmitted: (val) {
+                setState(() => _searchQuery = val);
+                _loadPosts();
+              },
             ),
-          ],
+          ),
         ],
       ),
     );

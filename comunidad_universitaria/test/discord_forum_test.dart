@@ -68,9 +68,9 @@ void main() {
       expect(cat.categoryId, 'prerrequisitos');
     });
 
-    test('ForumChannel.groupsChannels define los canales de servidor correspondientes a las facultades de la base de datos', () {
+    test('ForumChannel.groupsChannels define los canales de servidor correspondientes a las facultades oficiales de la base de datos', () {
       final channels = ForumChannel.groupsChannels;
-      expect(channels.length, equals(12));
+      expect(channels.length, equals(11));
 
       // Primer canal es Todos los Grupos
       expect(channels.first.id, equals('todas'));
@@ -88,7 +88,7 @@ void main() {
       final hasHumanidades = channels.any((c) => c.id == '77' && c.name == 'humanidades');
       final hasOdontologia = channels.any((c) => c.id == '09' && c.name == 'odontologia');
       final hasVeterinaria = channels.any((c) => c.id == '10' && c.name == 'veterinaria');
-      final hasAreaComun = channels.any((c) => c.id == 'area_comun' && c.name == 'area-comun');
+      final hasAreaComunAsTopLevel = channels.any((c) => c.id == 'area_comun');
 
       expect(hasIngenieria, isTrue);
       expect(hasMedicina, isTrue);
@@ -100,7 +100,11 @@ void main() {
       expect(hasHumanidades, isTrue);
       expect(hasOdontologia, isTrue);
       expect(hasVeterinaria, isTrue);
-      expect(hasAreaComun, isTrue);
+      expect(hasAreaComunAsTopLevel, isFalse, reason: 'Área común debe estar dentro del servidor de ingeniería, no al nivel raíz');
+
+      // Área Común debe estar dentro de la Facultad de Ingeniería (08)
+      final ingFaculty = ForumFaculty.defaultFaculties.firstWhere((f) => f.id == '08');
+      expect(ingFaculty.careers.any((c) => c.id == 'area_comun'), isTrue);
     });
   });
 

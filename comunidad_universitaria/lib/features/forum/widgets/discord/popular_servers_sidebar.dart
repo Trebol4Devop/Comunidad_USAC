@@ -35,23 +35,26 @@ class PopularServersSidebar extends StatelessWidget {
       children: [
         // Encabezado minimalista de la barra lateral
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          height: 56,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(color: borderColor, width: 1),
             ),
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   Icon(
                     Icons.trending_up_rounded,
-                    size: 16,
+                    size: 15,
                     color: isDark ? const Color(0xFF949BA4) : const Color(0xFF64748B),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       'MÁS POPULARES',
@@ -67,7 +70,7 @@ class PopularServersSidebar extends StatelessWidget {
                   ),
                   if (popularServers.isNotEmpty) ...[
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                       decoration: BoxDecoration(
                         color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(4),
@@ -79,7 +82,7 @@ class PopularServersSidebar extends StatelessWidget {
                       child: Text(
                         '${popularServers.length}',
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 9.5,
                           fontWeight: FontWeight.w700,
                           color: isDark ? const Color(0xFF949BA4) : const Color(0xFF64748B),
                         ),
@@ -92,16 +95,16 @@ class PopularServersSidebar extends StatelessWidget {
                       borderRadius: BorderRadius.circular(6),
                       onTap: isLoading ? null : onRefresh,
                       child: Padding(
-                        padding: const EdgeInsets.all(4),
+                        padding: const EdgeInsets.all(2),
                         child: isLoading
                             ? const SizedBox(
-                                width: 12,
-                                height: 12,
+                                width: 11,
+                                height: 11,
                                 child: CircularProgressIndicator(strokeWidth: 1.5),
                               )
                             : Icon(
                                 Icons.refresh,
-                                size: 14,
+                                size: 13,
                                 color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
                               ),
                       ),
@@ -109,11 +112,14 @@ class PopularServersSidebar extends StatelessWidget {
                   ],
                 ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text(
                 'Comunidades con mayor actividad y aportes',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 10,
+                  height: 1.1,
                   color: isDark ? const Color(0xFF80848E) : Colors.grey.shade600,
                 ),
               ),

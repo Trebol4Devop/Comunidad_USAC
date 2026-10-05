@@ -779,7 +779,7 @@ class USACConstants {
         },
         {
           'id': 'area_comun',
-          'nombre': 'Área Común de Ingeniería',
+          'nombre': 'Área Común (Cursos Básicos)',
           'codigo': '08-00-00-AC',
           'sede': 'Campus Central',
           'modalidades': ['Diario', 'Sabatino', 'Dominical'],

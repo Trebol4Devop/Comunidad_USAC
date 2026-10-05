@@ -189,7 +189,7 @@ class ForumServer {
     groupsServer,
     ForumServer(
       id: 'area_comun',
-      name: 'Área Común de Ingeniería',
+      name: 'Área Común (Cursos Básicos)',
       shortCode: 'BAS',
       icon: Icons.auto_stories,
       facultadId: '08',
@@ -513,14 +513,6 @@ class ForumChannel {
       icon: Icons.pets,
       description: 'Grupos de WhatsApp para Medicina Veterinaria y Zootecnia.',
     ),
-    ForumChannel(
-      id: 'area_comun',
-      name: 'area-comun',
-      label: 'Área Común / Básicas',
-      categoryId: 'area_comun',
-      icon: Icons.auto_stories,
-      description: 'Grupos de WhatsApp de ciencias básicas y cursos comunes.',
-    ),
   ];
 
   /// Builds groups channels dynamically from database faculties
@@ -579,14 +571,6 @@ class ForumChannel {
           icon: Icons.medical_services,
           description: 'Grupos de estudio para Médico y Cirujano.',
         ),
-        ForumChannel(
-          id: 'area_comun',
-          name: 'ciencias-basicas-salud',
-          label: 'Ciencias Básicas (Fase I)',
-          categoryId: 'area_comun',
-          icon: Icons.auto_stories,
-          description: 'Anatomía, bioquímica, fisiología y cursos de primeros años.',
-        ),
       ];
     }
 
@@ -599,14 +583,6 @@ class ForumChannel {
           categoryId: 'todas',
           icon: Icons.tag,
           description: 'Directorio completo de grupos de WhatsApp de todas las facultades.',
-        ),
-        ForumChannel(
-          id: 'area_comun',
-          name: 'area-comun',
-          label: 'Área Común / Básicas',
-          categoryId: 'area_comun',
-          icon: Icons.auto_stories,
-          description: 'Grupos de WhatsApp de ciencias básicas y cursos comunes.',
         ),
       ];
     }
@@ -1073,7 +1049,7 @@ class ForumFaculty {
       careers: [
         ForumCareerItem(
           id: 'area_comun',
-          name: 'Área Común de Ingeniería',
+          name: 'Área Común (Cursos Básicos)',
           shortCode: 'BAS',
           icon: Icons.auto_stories,
           facultadId: '08',
@@ -1311,12 +1287,12 @@ class PopularServerItem {
       PopularServerItem(
         server: ForumServer(
           id: 'server_area_comun',
-          name: 'Área Común de Ingeniería',
+          name: 'Área Común (Cursos Básicos)',
           shortCode: 'BAS',
           icon: Icons.auto_stories,
           facultadId: '08',
           carreraId: 'area_comun',
-          description: 'Espacio de discusión para Área Común de Ingeniería.',
+          description: 'Espacio de discusión para Área Común (Cursos Básicos).',
           color: const Color(0xFF0284C7),
         ),
         facultyName: 'Facultad de Ingeniería',

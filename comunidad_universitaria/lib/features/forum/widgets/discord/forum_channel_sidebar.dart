@@ -47,13 +47,13 @@ class ForumChannelSidebar extends StatelessWidget {
                     );
                   },
             child: Container(
-              height: 60,
+              height: 56,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
                     color: isDark ? const Color(0xFF202225) : const Color(0xFFE2E8F0),
-                    width: 1.5,
+                    width: 1,
                   ),
                 ),
               ),
