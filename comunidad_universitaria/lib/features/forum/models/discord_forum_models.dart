@@ -1248,3 +1248,107 @@ class ForumCareerItem {
   }
 }
 
+class PopularServerItem {
+  final ForumServer server;
+  final String facultyName;
+  final int postCount;
+  final int likesCount;
+  final double score;
+  final DateTime? latestPostDate;
+
+  const PopularServerItem({
+    required this.server,
+    required this.facultyName,
+    required this.postCount,
+    required this.likesCount,
+    required this.score,
+    this.latestPostDate,
+  });
+
+  static List<PopularServerItem> defaultPopularServers() {
+    return [
+      PopularServerItem(
+        server: ForumServer(
+          id: 'server_sistemas',
+          name: 'Ingeniería en Ciencias y Sistemas',
+          shortCode: 'SIST',
+          icon: Icons.terminal,
+          facultadId: '08',
+          carreraId: 'sistemas',
+          description: 'Espacio de discusión para Ingeniería en Ciencias y Sistemas.',
+          color: const Color(0xFF0284C7),
+        ),
+        facultyName: 'Facultad de Ingeniería',
+        postCount: 48,
+        likesCount: 230,
+        score: 211.0,
+      ),
+      PopularServerItem(
+        server: ForumServer(
+          id: 'server_05-00-01',
+          name: 'Médico y Cirujano',
+          shortCode: 'MED',
+          icon: Icons.medical_services,
+          facultadId: '05',
+          carreraId: '05-00-01',
+          description: 'Espacio de discusión para Médico y Cirujano.',
+          color: const Color(0xFFDC2626),
+        ),
+        facultyName: 'Ciencias Médicas',
+        postCount: 39,
+        likesCount: 185,
+        score: 170.5,
+      ),
+      PopularServerItem(
+        server: ForumServer(
+          id: 'server_04-00-01',
+          name: 'Ciencias Jurídicas y Sociales',
+          shortCode: 'ABOG',
+          icon: Icons.balance,
+          facultadId: '04',
+          carreraId: '04-00-01',
+          description: 'Espacio de discusión para Ciencias Jurídicas y Sociales.',
+          color: const Color(0xFF7C3AED),
+        ),
+        facultyName: 'Ciencias Jurídicas y Sociales',
+        postCount: 32,
+        likesCount: 142,
+        score: 135.0,
+      ),
+      PopularServerItem(
+        server: ForumServer(
+          id: 'server_area_comun',
+          name: 'Área Común de Ingeniería',
+          shortCode: 'BAS',
+          icon: Icons.auto_stories,
+          facultadId: '08',
+          carreraId: 'area_comun',
+          description: 'Espacio de discusión para Área Común de Ingeniería.',
+          color: const Color(0xFF0284C7),
+        ),
+        facultyName: 'Facultad de Ingeniería',
+        postCount: 28,
+        likesCount: 116,
+        score: 114.0,
+      ),
+      PopularServerItem(
+        server: ForumServer(
+          id: 'server_03-00-01',
+          name: 'Contaduría Pública y Auditoría',
+          shortCode: 'CPA',
+          icon: Icons.calculate,
+          facultadId: '03',
+          carreraId: '03-00-01',
+          description: 'Espacio de discusión para Contaduría Pública y Auditoría.',
+          color: const Color(0xFF0D9488),
+        ),
+        facultyName: 'Ciencias Económicas',
+        postCount: 22,
+        likesCount: 94,
+        score: 91.0,
+      ),
+    ];
+  }
+}
+
+

@@ -938,4 +938,138 @@ class ForumService {
       return ForumFaculty.defaultFaculties;
     }
   }
+
+  /// Obtiene los 5 servidores o subservidores más populares del foro,
+  /// basado en cantidad de publicaciones, volumen de reacciones y frescura/recencia temporal.
+  static Future<List<PopularServerItem>> fetchPopularServers({
+    List<ForumFaculty>? faculties,
+  }) async {
+    const cacheKey = 'popular_servers_top5';
+    final cached = CacheService.get<List<PopularServerItem>>(_cacheNamespace, cacheKey);
+    if (cached != null) return List<PopularServerItem>.from(cached);
+
+    if (!SupabaseConfig.isConfigured) {
+      return PopularServerItem.defaultPopularServers();
+    }
+
+    try {
+      final res = await SupabaseService.client
+          .from('posts')
+          .select('id, carrera, likes, created_at')
+          .neq('moderation_status', 2)
+          .order('created_at', ascending: false)
+          .limit(300)
+          .timeout(const Duration(seconds: 8));
+
+      final data = res as List<dynamic>;
+      if (data.isEmpty) {
+        return PopularServerItem.defaultPopularServers();
+      }
+
+      final allFaculties = faculties ?? ForumFaculty.defaultFaculties;
+
+      final Map<String, int> postsCountByCarrera = {};
+      final Map<String, int> likesCountByCarrera = {};
+      final Map<String, double> scoreByCarrera = {};
+      final Map<String, DateTime> latestDateByCarrera = {};
+      final now = DateTime.now();
+
+      for (final row in data) {
+        final carrera = row['carrera']?.toString() ?? 'todas';
+        final likes = (row['likes'] is int)
+            ? row['likes'] as int
+            : int.tryParse(row['likes']?.toString() ?? '0') ?? 0;
+        final createdAtStr = row['created_at']?.toString();
+        final createdAt = createdAtStr != null ? DateTime.tryParse(createdAtStr) : null;
+
+        postsCountByCarrera[carrera] = (postsCountByCarrera[carrera] ?? 0) + 1;
+        likesCountByCarrera[carrera] = (likesCountByCarrera[carrera] ?? 0) + likes;
+
+        double recencyBonus = 0.5;
+        if (createdAt != null) {
+          final diff = now.difference(createdAt);
+          if (diff.inHours <= 24) {
+            recencyBonus = 5.0;
+          } else if (diff.inDays <= 3) {
+            recencyBonus = 3.0;
+          } else if (diff.inDays <= 7) {
+            recencyBonus = 2.0;
+          } else if (diff.inDays <= 30) {
+            recencyBonus = 1.0;
+          }
+
+          if (latestDateByCarrera[carrera] == null || createdAt.isAfter(latestDateByCarrera[carrera]!)) {
+            latestDateByCarrera[carrera] = createdAt;
+          }
+        }
+
+        final postScore = 2.0 + (likes * 1.0) + recencyBonus;
+        scoreByCarrera[carrera] = (scoreByCarrera[carrera] ?? 0.0) + postScore;
+      }
+
+      final List<PopularServerItem> results = [];
+
+      for (final entry in scoreByCarrera.entries) {
+        final carreraId = entry.key;
+        final score = entry.value;
+        final pCount = postsCountByCarrera[carreraId] ?? 0;
+        final lCount = likesCountByCarrera[carreraId] ?? 0;
+        final lDate = latestDateByCarrera[carreraId];
+
+        ForumFaculty? foundFac;
+        ForumCareerItem? foundCareer;
+
+        for (final f in allFaculties) {
+          for (final c in f.careers) {
+            if (c.id == carreraId) {
+              foundFac = f;
+              foundCareer = c;
+              break;
+            }
+          }
+          if (foundCareer != null) break;
+        }
+
+        if (foundCareer != null && foundFac != null) {
+          final server = ForumServer(
+            id: 'server_${foundCareer.id}',
+            name: foundCareer.name,
+            shortCode: foundCareer.shortCode,
+            icon: foundCareer.icon,
+            facultadId: foundFac.id,
+            carreraId: foundCareer.id,
+            description: 'Espacio de discusión para ${foundCareer.name}.',
+            color: foundFac.color,
+          );
+
+          results.add(PopularServerItem(
+            server: server,
+            facultyName: foundFac.name,
+            postCount: pCount,
+            likesCount: lCount,
+            score: score,
+            latestPostDate: lDate,
+          ));
+        }
+      }
+
+      results.sort((a, b) => b.score.compareTo(a.score));
+
+      final top5 = results.take(5).toList();
+      if (top5.length < 5) {
+        for (final def in PopularServerItem.defaultPopularServers()) {
+          if (!top5.any((t) => t.server.carreraId == def.server.carreraId)) {
+            top5.add(def);
+            if (top5.length == 5) break;
+          }
+        }
+      }
+
+      CacheService.set(_cacheNamespace, cacheKey, List<PopularServerItem>.from(top5));
+      return top5;
+    } catch (e) {
+      debugPrint('Error obteniendo servidores populares: $e');
+      return PopularServerItem.defaultPopularServers();
+    }
+  }
 }
