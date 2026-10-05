@@ -9,6 +9,7 @@ import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
 import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/gif_picker_modal.dart';
+import '../models/discord_forum_models.dart';
 
 class CreatePostDialog extends StatefulWidget {
   final String activeAlias;
@@ -110,14 +111,33 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
   late String _selectedCarrera;
   bool _isSubmitting = false;
 
+  bool get _canSelectCarrera =>
+      widget.initialFacultad != null &&
+      widget.initialFacultad != 'todas' &&
+      (widget.initialCarrera == null || widget.initialCarrera == 'todas');
+
+  List<ForumCareerItem> get _availableCareers {
+    final fac = ForumFaculty.findByFacultadId(_selectedFacultad);
+    return fac?.careers.where((c) => c.id != 'todas').toList() ?? [];
+  }
+
   @override
   void initState() {
     super.initState();
-    _selectedCategory = (widget.initialCategory != null && widget.initialCategory != 'todos')
+    _selectedCategory = (widget.initialCategory != null &&
+            widget.initialCategory != 'general' &&
+            widget.initialCategory != 'bookmarks')
         ? widget.initialCategory!
-        : 'general';
+        : 'todos';
     _selectedFacultad = widget.initialFacultad ?? '08';
     _selectedCarrera = widget.initialCarrera ?? 'todas';
+
+    final careers = _availableCareers;
+    if (_canSelectCarrera && careers.isNotEmpty) {
+      if (!careers.any((c) => c.id == _selectedCarrera)) {
+        _selectedCarrera = careers.first.id;
+      }
+    }
 
     if (widget.quotedPost != null) {
       _titleController.text = 'Re: ${widget.quotedPost!.title}';
@@ -135,13 +155,26 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
     super.dispose();
   }
 
+  bool get _canSelectChannel {
+    if (widget.channelName != null &&
+        widget.channelName!.isNotEmpty &&
+        widget.channelName != 'todos-los-temas') {
+      return false;
+    }
+    return widget.initialCategory == null ||
+        widget.initialCategory == 'todos' ||
+        widget.initialCategory == 'general';
+  }
+
   String get _channelLabel {
-    if (widget.channelName != null && widget.channelName!.isNotEmpty) {
+    if (widget.channelName != null &&
+        widget.channelName!.isNotEmpty &&
+        widget.channelName != 'todos-los-temas') {
       return widget.channelName!;
     }
     final cat = USACConstants.forumCategories.firstWhere(
       (c) => c.id == _selectedCategory,
-      orElse: () => USACConstants.forumCategories.last,
+      orElse: () => USACConstants.forumCategories.first,
     );
     return cat.label;
   }
@@ -370,64 +403,128 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                 ),
               ],
 
-              // Canal y Servidor bloqueados automáticamente según el contexto de navegación
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.tag, size: 22, color: theme.colorScheme.primary),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  '#$_channelLabel',
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                                decoration: BoxDecoration(
-                                  color: theme.colorScheme.primary.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: const Text(
-                                  'Canal asignado',
-                                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Servidor: $_serverLabel',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-                            ),
-                          ),
-                        ],
-                      ),
+              // Canal y Servidor: selector si está en todos los temas o guardados, o asignado si viene de un canal específico
+              if (_canSelectChannel) ...[
+                DropdownButtonFormField<String>(
+                  isExpanded: true,
+                  value: _selectedCategory,
+                  decoration: InputDecoration(
+                    labelText: 'Canal de publicación',
+                    prefixIcon: Icon(Icons.tag, size: 20, color: theme.colorScheme.primary),
+                    helperText: 'Publica tu consulta en el canal correspondiente dentro de $_serverLabel.',
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'todos',
+                      child: Text('#todos-los-temas · Todas las áreas / General', overflow: TextOverflow.ellipsis),
                     ),
-                    Icon(Icons.lock_outline, size: 16, color: Colors.grey.shade400),
+                    DropdownMenuItem(
+                      value: 'prerrequisitos',
+                      child: Text('#dudas-y-pensum · Dudas & Pensum', overflow: TextOverflow.ellipsis),
+                    ),
+                    DropdownMenuItem(
+                      value: 'catedraticos',
+                      child: Text('#catedraticos-opiniones · Catedráticos', overflow: TextOverflow.ellipsis),
+                    ),
+                    DropdownMenuItem(
+                      value: 'apuntes',
+                      child: Text('#apuntes-y-recursos · Apuntes & Exámenes', overflow: TextOverflow.ellipsis),
+                    ),
+                    DropdownMenuItem(
+                      value: 'horarios',
+                      child: Text('#horarios-y-secciones · Horarios & Secciones', overflow: TextOverflow.ellipsis),
+                    ),
                   ],
+                  onChanged: (val) {
+                    if (val != null) {
+                      setState(() => _selectedCategory = val);
+                    }
+                  },
                 ),
-              ),
+              ] else ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.tag, size: 22, color: theme.colorScheme.primary),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    '#$_channelLabel',
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Text(
+                                    'Canal asignado',
+                                    style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Servidor: $_serverLabel',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.lock_outline, size: 16, color: Colors.grey.shade400),
+                    ],
+                  ),
+                ),
+              ],
+
+              // Selector de carrera de la facultad si se está publicando desde el servidor general de una facultad
+              if (_canSelectCarrera && _availableCareers.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  isExpanded: true,
+                  value: _selectedCarrera,
+                  decoration: InputDecoration(
+                    labelText: 'Carrera o Especialidad',
+                    prefixIcon: Icon(Icons.school_outlined, size: 20, color: theme.colorScheme.primary),
+                    helperText: 'Selecciona la carrera correspondiente dentro de $_serverLabel.',
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                  items: _availableCareers.map((c) {
+                    return DropdownMenuItem<String>(
+                      value: c.id,
+                      child: Text(c.name, overflow: TextOverflow.ellipsis),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    if (val != null) {
+                      setState(() => _selectedCarrera = val);
+                    }
+                  },
+                ),
+              ],
 
               const SizedBox(height: 14),
-
-              const SizedBox(height: 12),
 
               // Post Title
               TextFormField(

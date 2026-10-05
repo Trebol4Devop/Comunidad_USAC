@@ -41,12 +41,27 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
       final facId = fac['id']?.toString() ?? 'todas';
       final carreras = fac['carreras'] as List<dynamic>? ?? [];
 
+      final cleanFacNombre = facNombre
+          .replaceAll(RegExp(r'\s*\([^)]*\)'), '')
+          .replaceAll(RegExp(r'\s*[/|-]\s*General.*', caseSensitive: false), '')
+          .replaceAll(RegExp(r'\s+'), ' ')
+          .trim();
+
       for (var c in carreras) {
+        var cName = c['nombre']?.toString() ?? 'Carrera';
+        cName = cName
+            .replaceAll('(Campus Central)', '')
+            .replaceAll('(Extensión)', ' - Extensión')
+            .replaceAll(RegExp(r'\s*\([^)]*\)'), '')
+            .replaceAll(RegExp(r'\s*[/|-]\s*(Cursos Básicos|General).*', caseSensitive: false), '')
+            .replaceAll(RegExp(r'\s+'), ' ')
+            .trim();
+
         results.add({
           'facultadId': facId,
-          'facultadNombre': facNombre,
+          'facultadNombre': cleanFacNombre,
           'carreraId': c['id']?.toString() ?? 'todas',
-          'carreraNombre': c['nombre']?.toString() ?? 'Carrera',
+          'carreraNombre': cName,
           'codigo': c['codigo']?.toString() ?? '',
           'sede': c['sede']?.toString() ?? 'Campus Central',
         });

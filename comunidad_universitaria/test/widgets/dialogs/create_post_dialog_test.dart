@@ -173,5 +173,52 @@ void main() {
       // Volvemos a tener 2 opciones
       expect(find.byIcon(Icons.delete_outline), findsNothing);
     });
+
+    testWidgets('Al abrir desde todos-los-temas permite seleccionar canal de destino incluyendo todos-los-temas y excluyendo charla-general', (tester) async {
+      tester.view.physicalSize = const Size(600, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        buildTestDialog(
+          channelName: 'todos-los-temas',
+          initialCategory: 'todos',
+          initialFacultad: '08',
+          initialCarrera: 'sistemas',
+          serverName: 'Ingeniería en Sistemas',
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Debe mostrar el selector de canal de publicación
+      expect(find.byType(DropdownButtonFormField<String>), findsOneWidget);
+      expect(find.text('Canal de publicación'), findsOneWidget);
+      expect(find.textContaining('todos-los-temas'), findsOneWidget);
+
+      // Verificamos que charla-general no exista en el formulario
+      expect(find.textContaining('charla-general'), findsNothing);
+    });
+
+    testWidgets('Al abrir desde el servidor general de facultad permite seleccionar carrera o área de la facultad', (tester) async {
+      tester.view.physicalSize = const Size(600, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        buildTestDialog(
+          channelName: 'todos-los-temas',
+          initialCategory: 'todos',
+          initialFacultad: '08',
+          initialCarrera: 'todas',
+          serverName: 'Facultad de Ingeniería',
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Debe mostrar 2 dropdowns: Canal de publicación y Carrera o Especialidad
+      expect(find.byType(DropdownButtonFormField<String>), findsNWidgets(2));
+      expect(find.text('Canal de publicación'), findsOneWidget);
+      expect(find.text('Carrera o Especialidad'), findsOneWidget);
+    });
   });
 }

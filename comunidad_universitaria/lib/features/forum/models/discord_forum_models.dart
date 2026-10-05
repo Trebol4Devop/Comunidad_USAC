@@ -64,7 +64,7 @@ class ForumServer {
     ),
     ForumServer(
       id: 'groups_medicina',
-      name: 'Medicina (Médico y Cirujano)',
+      name: 'Médico y Cirujano',
       shortCode: 'MED',
       icon: Icons.medical_services,
       facultadId: '05',
@@ -135,7 +135,7 @@ class ForumServer {
       icon: Icons.gavel,
       facultadId: '04',
       carreraId: 'todas',
-      description: 'Grupos de WhatsApp de Ciencias Jurídicas y Sociales (Derecho).',
+      description: 'Grupos de WhatsApp de Ciencias Jurídicas y Sociales.',
       color: Color(0xFF7C3AED),
       isGroups: true,
     ),
@@ -146,7 +146,7 @@ class ForumServer {
       icon: Icons.trending_up,
       facultadId: '03',
       carreraId: 'todas',
-      description: 'Grupos de WhatsApp de Auditoría (CPA), Administración y Economía.',
+      description: 'Grupos de WhatsApp de Contaduría Pública y Auditoría, Administración y Economía.',
       color: Color(0xFF0D9488),
       isGroups: true,
     ),
@@ -192,10 +192,10 @@ class ForumServer {
       name: 'Área Común',
       shortCode: 'BAS',
       icon: Icons.auto_stories,
-      facultadId: 'todas',
+      facultadId: '08',
       carreraId: 'area_comun',
       description: 'Ciencias básicas, matemáticas, físicas y químicas de primeros semestres.',
-      color: Color(0xFF2563EB),
+      color: Color(0xFF0284C7),
     ),
     ForumServer(
       id: 'sistemas',
@@ -411,14 +411,6 @@ class ForumChannel {
       icon: Icons.schedule_outlined,
       description: 'Información de traslapes, cupos, secciones y asignación de laboratorios.',
     ),
-    ForumChannel(
-      id: 'general',
-      name: 'charla-general',
-      label: 'Consultas Generales',
-      categoryId: 'general',
-      icon: Icons.chat_bubble_outline,
-      description: 'Cafetería estudiantil, avisos generales y vida universitaria en la carrera.',
-    ),
   ];
 
   static const ForumChannel bookmarksChannel = ForumChannel(
@@ -521,14 +513,6 @@ class ForumChannel {
       icon: Icons.pets,
       description: 'Grupos de WhatsApp para Medicina Veterinaria y Zootecnia.',
     ),
-    ForumChannel(
-      id: 'area_comun',
-      name: 'area-comun',
-      label: 'Área Común / Básicas',
-      categoryId: 'area_comun',
-      icon: Icons.auto_stories,
-      description: 'Grupos de WhatsApp de ciencias básicas y cursos comunes.',
-    ),
   ];
 
   /// Builds groups channels dynamically from database faculties
@@ -587,14 +571,6 @@ class ForumChannel {
           icon: Icons.medical_services,
           description: 'Grupos de estudio para Médico y Cirujano.',
         ),
-        ForumChannel(
-          id: 'area_comun',
-          name: 'ciencias-basicas-salud',
-          label: 'Ciencias Básicas (Fase I)',
-          categoryId: 'area_comun',
-          icon: Icons.auto_stories,
-          description: 'Anatomía, bioquímica, fisiología y cursos de primeros años.',
-        ),
       ];
     }
 
@@ -607,14 +583,6 @@ class ForumChannel {
           categoryId: 'todas',
           icon: Icons.tag,
           description: 'Directorio completo de grupos de WhatsApp de todas las facultades.',
-        ),
-        ForumChannel(
-          id: 'area_comun',
-          name: 'area-comun',
-          label: 'Área Común / Básicas',
-          categoryId: 'area_comun',
-          icon: Icons.auto_stories,
-          description: 'Grupos de WhatsApp de ciencias básicas y cursos comunes.',
         ),
       ];
     }
@@ -746,13 +714,6 @@ class ForumFaculty {
           name: 'Todas las Carreras',
           shortCode: 'USAC',
           icon: Icons.school,
-          facultadId: 'todas',
-        ),
-        ForumCareerItem(
-          id: 'area_comun',
-          name: 'Área Común',
-          shortCode: 'BAS',
-          icon: Icons.auto_stories,
           facultadId: 'todas',
         ),
       ],
@@ -1088,7 +1049,7 @@ class ForumFaculty {
       careers: [
         ForumCareerItem(
           id: 'area_comun',
-          name: 'Área Común de Ingeniería',
+          name: 'Área Común',
           shortCode: 'BAS',
           icon: Icons.auto_stories,
           facultadId: '08',
@@ -1255,4 +1216,108 @@ class ForumCareerItem {
     );
   }
 }
+
+class PopularServerItem {
+  final ForumServer server;
+  final String facultyName;
+  final int postCount;
+  final int likesCount;
+  final double score;
+  final DateTime? latestPostDate;
+
+  const PopularServerItem({
+    required this.server,
+    required this.facultyName,
+    required this.postCount,
+    required this.likesCount,
+    required this.score,
+    this.latestPostDate,
+  });
+
+  static List<PopularServerItem> defaultPopularServers() {
+    return [
+      PopularServerItem(
+        server: ForumServer(
+          id: 'server_sistemas',
+          name: 'Ingeniería en Ciencias y Sistemas',
+          shortCode: 'SIST',
+          icon: Icons.terminal,
+          facultadId: '08',
+          carreraId: 'sistemas',
+          description: 'Espacio de discusión para Ingeniería en Ciencias y Sistemas.',
+          color: const Color(0xFF0284C7),
+        ),
+        facultyName: 'Facultad de Ingeniería',
+        postCount: 48,
+        likesCount: 230,
+        score: 211.0,
+      ),
+      PopularServerItem(
+        server: ForumServer(
+          id: 'server_05-00-01',
+          name: 'Médico y Cirujano',
+          shortCode: 'MED',
+          icon: Icons.medical_services,
+          facultadId: '05',
+          carreraId: '05-00-01',
+          description: 'Espacio de discusión para Médico y Cirujano.',
+          color: const Color(0xFFDC2626),
+        ),
+        facultyName: 'Ciencias Médicas',
+        postCount: 39,
+        likesCount: 185,
+        score: 170.5,
+      ),
+      PopularServerItem(
+        server: ForumServer(
+          id: 'server_04-00-01',
+          name: 'Ciencias Jurídicas y Sociales',
+          shortCode: 'ABOG',
+          icon: Icons.balance,
+          facultadId: '04',
+          carreraId: '04-00-01',
+          description: 'Espacio de discusión para Ciencias Jurídicas y Sociales.',
+          color: const Color(0xFF7C3AED),
+        ),
+        facultyName: 'Ciencias Jurídicas y Sociales',
+        postCount: 32,
+        likesCount: 142,
+        score: 135.0,
+      ),
+      PopularServerItem(
+        server: ForumServer(
+          id: 'server_area_comun',
+          name: 'Área Común',
+          shortCode: 'BAS',
+          icon: Icons.auto_stories,
+          facultadId: '08',
+          carreraId: 'area_comun',
+          description: 'Espacio de discusión para Área Común.',
+          color: const Color(0xFF0284C7),
+        ),
+        facultyName: 'Facultad de Ingeniería',
+        postCount: 28,
+        likesCount: 116,
+        score: 114.0,
+      ),
+      PopularServerItem(
+        server: ForumServer(
+          id: 'server_03-00-01',
+          name: 'Contaduría Pública y Auditoría',
+          shortCode: 'CPA',
+          icon: Icons.calculate,
+          facultadId: '03',
+          carreraId: '03-00-01',
+          description: 'Espacio de discusión para Contaduría Pública y Auditoría.',
+          color: const Color(0xFF0D9488),
+        ),
+        facultyName: 'Ciencias Económicas',
+        postCount: 22,
+        likesCount: 94,
+        score: 91.0,
+      ),
+    ];
+  }
+}
+
 

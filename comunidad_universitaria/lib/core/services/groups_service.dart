@@ -8,7 +8,7 @@ class GroupsService {
   static const String _cacheNamespace = 'student_groups';
 
   static const Map<String, List<String>> _facultyAliases = {
-    '08': ['sistemas', 'civil', 'industrial', 'mecanica', 'quimica', 'electronica', 'ingenieria', 'fi'],
+    '08': ['sistemas', 'civil', 'industrial', 'mecanica', 'quimica', 'electronica', 'ingenieria', 'fi', 'area_comun', 'basicas'],
     '05': ['medicina', 'salud', 'medicas', 'cirujano', 'cum'],
     '04': ['derecho', 'juridicas', 'leyes', 'sociales'],
     '03': ['economicas', 'auditoria', 'administracion', 'economia'],

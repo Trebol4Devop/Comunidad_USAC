@@ -103,6 +103,16 @@ class _ForumServerRailState extends State<ForumServerRail> {
   }
 
   void _toggleFacultySubmenu(ForumFaculty faculty, BuildContext itemContext) {
+    // Al pulsar el servidor principal de la facultad, se abre el servidor de dicha facultad en general
+    widget.onSelectServer(faculty.toGeneralServer());
+
+    // Si la facultad solo tiene 1 carrera aparte de la general (o solo una carrera en total),
+    // no tiene sentido desplegar submenú porque es una sola carrera.
+    if (faculty.careers.length <= 1) {
+      _closeSubmenu();
+      return;
+    }
+
     if (_openFaculty?.id == faculty.id && _overlayController.isShowing) {
       _closeSubmenu();
       return;
@@ -124,8 +134,9 @@ class _ForumServerRailState extends State<ForumServerRail> {
           .clamp(0.0, overlayBox.size.width - 60.0);
 
       // Altura exacta acoplada al contenido real:
-      // Padding vertical (12) + N carreras * (38 + 4)
-      final estimatedContentHeight = 12.0 + (faculty.careers.length * 42.0);
+      // Padding vertical (12) + (N carreras + opción general) * (38 + 4)
+      final totalCount = faculty.careers.length + (faculty.id != 'todas' ? 1 : 0);
+      final estimatedContentHeight = 12.0 + (totalCount * 42.0);
       final maxAvailableHeight = screenHeight - topPadding - bottomPadding - 24.0;
       final effectiveHeight = estimatedContentHeight > maxAvailableHeight
           ? maxAvailableHeight
@@ -149,8 +160,6 @@ class _ForumServerRailState extends State<ForumServerRail> {
       _submenuTop = 10.0;
     }
 
-    // Solo desplegamos el submenú de subservidores.
-    // La pantalla del foro mantiene intacto el servidor actual hasta que se seleccione el nuevo.
     setState(() {
       _openFaculty = faculty;
       _isGroupsOpen = false;
@@ -296,11 +305,53 @@ class _ForumServerRailState extends State<ForumServerRail> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                if (faculty.id != 'todas')
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Tooltip(
+                      message: faculty.name.replaceAll(RegExp(r'\s*\([^)]*\)'), '').trim(),
+                      preferBelow: false,
+                      child: _buildItemButton(
+                        isActive: isFacultyActive && widget.activeServer.carreraId == 'todas',
+                        activeColor: faculty.color,
+                        isDark: isDark,
+                        onTap: () {
+                          widget.onSelectServer(faculty.toGeneralServer());
+                          _closeSubmenu();
+                        },
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              faculty.icon,
+                              size: 15,
+                              color: (isFacultyActive && widget.activeServer.carreraId == 'todas')
+                                  ? Colors.white
+                                  : (isDark ? Colors.grey.shade300 : Colors.grey.shade700),
+                            ),
+                            const SizedBox(height: 1),
+                            Text(
+                              faculty.shortCode,
+                              maxLines: 1,
+                              overflow: TextOverflow.clip,
+                              style: TextStyle(
+                                fontSize: 7.0,
+                                fontWeight: FontWeight.bold,
+                                color: (isFacultyActive && widget.activeServer.carreraId == 'todas')
+                                    ? Colors.white
+                                    : (isDark ? Colors.grey.shade300 : Colors.grey.shade700),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 for (final career in faculty.careers)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Tooltip(
-                      message: career.name,
+                      message: career.name.replaceAll(RegExp(r'\s*\([^)]*\)'), '').trim(),
                       preferBelow: false,
                       child: _buildItemButton(
                         isActive: isFacultyActive && widget.activeServer.carreraId == career.id,
@@ -453,7 +504,7 @@ class _ForumServerRailState extends State<ForumServerRail> {
 
     final isHomeActive = widget.activeServer.facultadId == homeFaculty.id &&
         !widget.activeServer.isGroups;
-    final isHomeOpen = _openFaculty?.id == homeFaculty.id;
+    final isHomeOpen = _openFaculty?.id == homeFaculty.id && homeFaculty.careers.length > 1;
 
     final mediaQuery = MediaQuery.of(context);
     final screenHeight = mediaQuery.size.height;
@@ -509,7 +560,7 @@ class _ForumServerRailState extends State<ForumServerRail> {
               // 1. General USAC Home Server (Campus Central)
               Builder(
                 builder: (itemCtx) => Tooltip(
-                  message: homeFaculty.name,
+                  message: homeFaculty.name.replaceAll(RegExp(r'\s*\([^)]*\)'), '').trim(),
                   preferBelow: false,
                   child: _buildItemButton(
                     isActive: isHomeActive,
@@ -550,7 +601,7 @@ class _ForumServerRailState extends State<ForumServerRail> {
                 builder: (itemCtx) {
                   final isGroupsActive = widget.activeServer.isGroups;
                   return Tooltip(
-                    message: 'Grupos de Estudio (WhatsApp)',
+                    message: 'Grupos de Estudio',
                     preferBelow: false,
                     child: _buildItemButton(
                       isActive: isGroupsActive,
@@ -598,6 +649,7 @@ class _ForumServerRailState extends State<ForumServerRail> {
               // 2. Lista de Facultades Oficiales USAC
               Flexible(
                 child: ListView.builder(
+                  primary: false,
                   shrinkWrap: true,
                   physics: const ClampingScrollPhysics(),
                   padding: EdgeInsets.zero,
@@ -606,13 +658,13 @@ class _ForumServerRailState extends State<ForumServerRail> {
                     final faculty = otherFaculties[i];
                     final isActive = widget.activeServer.facultadId == faculty.id &&
                         !widget.activeServer.isGroups;
-                    final isOpen = _openFaculty?.id == faculty.id;
+                    final isOpen = _openFaculty?.id == faculty.id && faculty.careers.length > 1;
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 6),
                       child: Builder(
                         builder: (itemCtx) => Tooltip(
-                          message: faculty.name,
+                          message: faculty.name.replaceAll(RegExp(r'\s*\([^)]*\)'), '').trim(),
                           preferBelow: false,
                           child: _buildItemButton(
                             isActive: isActive,

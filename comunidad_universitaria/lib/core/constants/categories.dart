@@ -64,12 +64,6 @@ class USACConstants {
       description:
           'Material de estudio, resúmenes, parciales pasados y guías de laboratorio.',
     ),
-    ForumCategory(
-      id: 'general',
-      label: 'Consultas Generales',
-      description:
-          'Preguntas administrativas, trámites de secretaría y vida universitaria.',
-    ),
   ];
 
   // Categorías del Marketplace Estudiantil
@@ -399,13 +393,6 @@ class USACConstants {
           'id': 'todas',
           'nombre': 'Todas las Carreras',
           'codigo': '00-00-00',
-          'sede': 'Campus Central',
-          'modalidades': ['Diario', 'Sabatino', 'Dominical'],
-        },
-        {
-          'id': 'area_comun',
-          'nombre': 'Área Común',
-          'codigo': '00-00-01',
           'sede': 'Campus Central',
           'modalidades': ['Diario', 'Sabatino', 'Dominical'],
         },
@@ -792,7 +779,7 @@ class USACConstants {
         },
         {
           'id': 'area_comun',
-          'nombre': 'Área Común de Ingeniería',
+          'nombre': 'Área Común',
           'codigo': '08-00-00-AC',
           'sede': 'Campus Central',
           'modalidades': ['Diario', 'Sabatino', 'Dominical'],

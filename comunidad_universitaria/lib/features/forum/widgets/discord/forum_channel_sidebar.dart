@@ -47,13 +47,13 @@ class ForumChannelSidebar extends StatelessWidget {
                     );
                   },
             child: Container(
-              height: 60,
+              height: 56,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
                     color: isDark ? const Color(0xFF202225) : const Color(0xFFE2E8F0),
-                    width: 1.5,
+                    width: 1,
                   ),
                 ),
               ),
@@ -69,7 +69,7 @@ class ForumChannelSidebar extends StatelessWidget {
                           children: [
                             Flexible(
                               child: Text(
-                                activeServer.name,
+                                activeServer.name.replaceAll(RegExp(r'\s*\([^)]*\)'), '').trim(),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
@@ -109,6 +109,8 @@ class ForumChannelSidebar extends StatelessWidget {
           // 2. Channels List
           Expanded(
             child: ListView(
+              primary: false,
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
               children: [
                 if (activeServer.isGroups) ...[
