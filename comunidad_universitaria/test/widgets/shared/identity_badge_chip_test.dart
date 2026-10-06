@@ -29,10 +29,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byIcon(Icons.masks_outlined), findsOneWidget);
-      expect(find.text('Publicando como: '), findsOneWidget);
+      expect(find.byIcon(Icons.person_outline), findsOneWidget);
+      expect(find.text('Autor: '), findsOneWidget);
       expect(find.text('Estudiante Rebelde #404'), findsOneWidget);
-      expect(find.text('Modo Anónimo · Identidad protegida'), findsOneWidget);
+      expect(find.text('Perfil Estudiantil'), findsOneWidget);
       expect(find.text('Cambiar'), findsOneWidget);
 
       await tester.tap(find.text('Cambiar'));
@@ -57,7 +57,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byIcon(Icons.verified_user_outlined), findsOneWidget);
-      expect(find.text('Publicando con tu perfil: '), findsOneWidget);
+      expect(find.text('Vendedor: '), findsOneWidget);
       expect(find.text('Emprendedor Sancarlista'), findsOneWidget);
       expect(find.text('Perfil estudiantil de contacto directo'), findsOneWidget);
       expect(find.text('Verificado'), findsNothing);

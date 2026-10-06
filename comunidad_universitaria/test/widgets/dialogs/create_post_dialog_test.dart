@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:comunidad_universitaria/core/config/app_theme.dart';
 import 'package:comunidad_universitaria/core/models/post.dart';
 import 'package:comunidad_universitaria/features/forum/widgets/create_post_dialog.dart';
-import 'package:comunidad_universitaria/features/shared/widgets/identity_badge_chip.dart';
 import '../../helpers/test_setup.dart';
 
 void main() {
@@ -55,10 +54,6 @@ void main() {
       expect(find.text('Nueva Consulta en el Foro'), findsOneWidget);
       expect(find.text('Foro Estudiantil USAC · Espacio Libre'), findsOneWidget);
 
-      // Identity badge
-      expect(find.byType(IdentityBadgeChip), findsOneWidget);
-      expect(find.text('Estudiante Ingenioso #101'), findsOneWidget);
-
       // Campos de texto
       expect(find.widgetWithText(TextFormField, 'Título de la consulta o aporte'), findsOneWidget);
       expect(find.widgetWithText(TextFormField, 'Detalle o descripción'), findsOneWidget);
@@ -70,7 +65,7 @@ void main() {
 
       // Botones de acción
       expect(find.text('Cancelar'), findsOneWidget);
-      expect(find.text('Publicar Consulta'), findsOneWidget);
+      expect(find.text('Publicar'), findsOneWidget);
     });
 
     testWidgets('Renderiza en vista escritorio (1200x800) en modo cita con post previo', (tester) async {
@@ -115,7 +110,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Tap publicar sin llenar campos
-      await tester.tap(find.text('Publicar Consulta'));
+      await tester.tap(find.text('Publicar'));
       await tester.pumpAndSettle();
 
       // Debe mostrar mensajes de validación
@@ -125,14 +120,14 @@ void main() {
       // Llenamos el título con < 5 caracteres
       final titleField = find.widgetWithText(TextFormField, 'Título de la consulta o aporte');
       await tester.enterText(titleField, 'Hola');
-      await tester.tap(find.text('Publicar Consulta'));
+      await tester.tap(find.text('Publicar'));
       await tester.pumpAndSettle();
 
       expect(find.text('El título debe tener al menos 5 caracteres.'), findsOneWidget);
 
       // Llenamos con título válido
       await tester.enterText(titleField, '¿Horarios de Cálculo 1?');
-      await tester.tap(find.text('Publicar Consulta'));
+      await tester.tap(find.text('Publicar'));
       await tester.pumpAndSettle();
 
       expect(find.text('El título debe tener al menos 5 caracteres.'), findsNothing);
@@ -177,6 +172,53 @@ void main() {
 
       // Volvemos a tener 2 opciones
       expect(find.byIcon(Icons.delete_outline), findsNothing);
+    });
+
+    testWidgets('Al abrir desde todos-los-temas permite seleccionar canal de destino incluyendo todos-los-temas y excluyendo charla-general', (tester) async {
+      tester.view.physicalSize = const Size(600, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        buildTestDialog(
+          channelName: 'todos-los-temas',
+          initialCategory: 'todos',
+          initialFacultad: '08',
+          initialCarrera: 'sistemas',
+          serverName: 'Ingeniería en Sistemas',
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Debe mostrar el selector de canal de publicación
+      expect(find.byType(DropdownButtonFormField<String>), findsOneWidget);
+      expect(find.text('Canal de publicación'), findsOneWidget);
+      expect(find.textContaining('todos-los-temas'), findsOneWidget);
+
+      // Verificamos que charla-general no exista en el formulario
+      expect(find.textContaining('charla-general'), findsNothing);
+    });
+
+    testWidgets('Al abrir desde el servidor general de facultad permite seleccionar carrera o área de la facultad', (tester) async {
+      tester.view.physicalSize = const Size(600, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        buildTestDialog(
+          channelName: 'todos-los-temas',
+          initialCategory: 'todos',
+          initialFacultad: '08',
+          initialCarrera: 'todas',
+          serverName: 'Facultad de Ingeniería',
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Debe mostrar 2 dropdowns: Canal de publicación y Carrera o Especialidad
+      expect(find.byType(DropdownButtonFormField<String>), findsNWidgets(2));
+      expect(find.text('Canal de publicación'), findsOneWidget);
+      expect(find.text('Carrera o Especialidad'), findsOneWidget);
     });
   });
 }

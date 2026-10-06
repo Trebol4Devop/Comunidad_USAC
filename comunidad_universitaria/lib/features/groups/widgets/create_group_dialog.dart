@@ -14,12 +14,16 @@ class CreateGroupDialog extends StatefulWidget {
   final String activeAlias;
   final Function(String newAlias) onAliasChanged;
   final Function(WhatsAppGroup newGroup) onGroupCreated;
+  final String? initialFacultad;
+  final String? initialCarrera;
 
   const CreateGroupDialog({
     super.key,
     required this.activeAlias,
     required this.onAliasChanged,
     required this.onGroupCreated,
+    this.initialFacultad,
+    this.initialCarrera,
   });
 
   static Future<void> show(
@@ -27,6 +31,8 @@ class CreateGroupDialog extends StatefulWidget {
     required String activeAlias,
     required Function(String) onAliasChanged,
     required Function(WhatsAppGroup) onGroupCreated,
+    String? initialFacultad,
+    String? initialCarrera,
   }) {
     if (Responsive.isMobile(context)) {
       return showModalBottomSheet(
@@ -41,6 +47,8 @@ class CreateGroupDialog extends StatefulWidget {
           activeAlias: activeAlias,
           onAliasChanged: onAliasChanged,
           onGroupCreated: onGroupCreated,
+          initialFacultad: initialFacultad,
+          initialCarrera: initialCarrera,
         ),
       );
     } else {
@@ -50,6 +58,8 @@ class CreateGroupDialog extends StatefulWidget {
           activeAlias: activeAlias,
           onAliasChanged: onAliasChanged,
           onGroupCreated: onGroupCreated,
+          initialFacultad: initialFacultad,
+          initialCarrera: initialCarrera,
         ),
       );
     }
@@ -74,6 +84,17 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
   String _selectedFacultad = '08';
   String _selectedCarrera = 'todas';
   bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialFacultad != null && widget.initialFacultad!.isNotEmpty) {
+      _selectedFacultad = widget.initialFacultad!;
+    }
+    if (widget.initialCarrera != null && widget.initialCarrera!.isNotEmpty) {
+      _selectedCarrera = widget.initialCarrera!;
+    }
+  }
 
   @override
   void dispose() {
@@ -162,10 +183,14 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
       sectionName = 'Comunidad Abierta';
     }
 
+    final carreraToSave = (_selectedCarrera == 'todas' && _selectedFacultad != 'todas')
+        ? '${_selectedFacultad}_todas'
+        : _selectedCarrera;
+
     try {
       final created = await GroupsService.createGroup(
         title: title,
-        carrera: _selectedCarrera,
+        carrera: carreraToSave,
         curso: cursoName,
         section: sectionName,
         link: _linkController.text.trim(),

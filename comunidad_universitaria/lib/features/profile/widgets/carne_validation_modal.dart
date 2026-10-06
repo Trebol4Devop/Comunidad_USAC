@@ -285,9 +285,9 @@ class _CarneValidationModalState extends State<CarneValidationModal> {
                             setState(() => _consentChecked = val ?? false);
                           },
                         ),
-                        const Expanded(
+                        Expanded(
                           child: Text(
-                            'Entiendo que mi nombre real solo se mostrará en Marketplace como "Verificado" y no en el Foro Anónimo.',
+                            'Entiendo que mi nombre real solo se mostrará en Marketplace como "Verificado" y no en el Foro.',
                             style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
                           ),
                         ),

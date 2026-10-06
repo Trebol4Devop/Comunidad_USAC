@@ -41,12 +41,27 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
       final facId = fac['id']?.toString() ?? 'todas';
       final carreras = fac['carreras'] as List<dynamic>? ?? [];
 
+      final cleanFacNombre = facNombre
+          .replaceAll(RegExp(r'\s*\([^)]*\)'), '')
+          .replaceAll(RegExp(r'\s*[/|-]\s*General.*', caseSensitive: false), '')
+          .replaceAll(RegExp(r'\s+'), ' ')
+          .trim();
+
       for (var c in carreras) {
+        var cName = c['nombre']?.toString() ?? 'Carrera';
+        cName = cName
+            .replaceAll('(Campus Central)', '')
+            .replaceAll('(Extensión)', ' - Extensión')
+            .replaceAll(RegExp(r'\s*\([^)]*\)'), '')
+            .replaceAll(RegExp(r'\s*[/|-]\s*(Cursos Básicos|General).*', caseSensitive: false), '')
+            .replaceAll(RegExp(r'\s+'), ' ')
+            .trim();
+
         results.add({
           'facultadId': facId,
-          'facultadNombre': facNombre,
+          'facultadNombre': cleanFacNombre,
           'carreraId': c['id']?.toString() ?? 'todas',
-          'carreraNombre': c['nombre']?.toString() ?? 'Carrera',
+          'carreraNombre': cName,
           'codigo': c['codigo']?.toString() ?? '',
           'sede': c['sede']?.toString() ?? 'Campus Central',
         });
@@ -82,7 +97,7 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
     }
   }
 
-  Color _getColorForFacultad(String facId) {
+  Color _getColorForFacultad(String facId, {bool isDark = false}) {
     switch (facId) {
       case '01':
         return const Color(0xFF16A34A);
@@ -105,7 +120,7 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
       case '10':
         return const Color(0xFF9333EA);
       default:
-        return const Color(0xFF004B87);
+        return isDark ? const Color(0xFF0066CC) : const Color(0xFF004B87);
     }
   }
 
@@ -139,10 +154,16 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                      color: isDark
+                          ? const Color(0xFF3B82F6).withValues(alpha: 0.2)
+                          : theme.colorScheme.primary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(Icons.explore_outlined, color: theme.colorScheme.primary, size: 24),
+                    child: Icon(
+                      Icons.explore_outlined,
+                      color: theme.colorScheme.primary,
+                      size: 24,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -170,12 +191,28 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
               TextField(
                 controller: _searchController,
                 autofocus: true,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
                 decoration: InputDecoration(
                   hintText: 'Buscar por carrera, facultad o código...',
-                  prefixIcon: const Icon(Icons.search, size: 20),
+                  hintStyle: TextStyle(
+                    fontSize: 13,
+                    color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    size: 20,
+                    color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                  ),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(Icons.clear, size: 18),
+                          icon: Icon(
+                            Icons.clear,
+                            size: 18,
+                            color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                          ),
                           onPressed: () {
                             _searchController.clear();
                             setState(() => _searchQuery = '');
@@ -187,7 +224,15 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
+                    borderSide: BorderSide(
+                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                    ),
                   ),
                 ),
                 onChanged: (val) => setState(() => _searchQuery = val),
@@ -207,11 +252,14 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
                       )
                     : ListView.separated(
                         itemCount: filtered.length,
-                        separatorBuilder: (ctx, i) => const Divider(height: 1),
+                        separatorBuilder: (ctx, i) => Divider(
+                          height: 1,
+                          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                        ),
                         itemBuilder: (ctx, i) {
                           final item = filtered[i];
                           final facId = item['facultadId'] as String;
-                          final color = _getColorForFacultad(facId);
+                          final color = _getColorForFacultad(facId, isDark: isDark);
                           final icon = _getIconForFacultad(facId);
                           final carreraName = item['carreraNombre'] as String;
                           final facultadName = item['facultadNombre'] as String;

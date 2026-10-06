@@ -1,5 +1,6 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../features/forum/models/discord_forum_models.dart';
 import '../config/supabase_config.dart';
 import '../constants/categories.dart';
 import '../models/post.dart';
@@ -8,6 +9,34 @@ import 'supabase_service.dart';
 
 class ForumService {
   static const String _cacheNamespace = 'forum_posts';
+
+  static Set<String> _getCareerIdsForFaculty(String facultadId) {
+    if (facultadId == 'todas') return <String>{'todas'};
+    final careerIds = <String>{};
+    final fac = USACConstants.facultades.firstWhere(
+      (f) => f['id'] == facultadId,
+      orElse: () => <String, dynamic>{},
+    );
+    final rawCarreras = fac['carreras'] as List<dynamic>? ?? [];
+    for (final c in rawCarreras) {
+      final cid = c['id']?.toString();
+      if (cid != null && cid.isNotEmpty && cid != 'todas') {
+        careerIds.add(cid);
+      }
+    }
+    final defaultFac = ForumFaculty.findByFacultadId(facultadId);
+    if (defaultFac != null) {
+      for (final c in defaultFac.careers) {
+        if (c.id != 'todas') {
+          careerIds.add(c.id);
+        }
+      }
+    }
+    if (facultadId == '08') {
+      careerIds.add('area_comun');
+    }
+    return careerIds;
+  }
 
   static Future<List<Post>> fetchPosts({
     String category = 'todos',
@@ -56,10 +85,26 @@ class ForumService {
         final bookmarkedIds = (bookmarksRes as List<dynamic>).map((e) => e['post_id'].toString()).toList();
         if (bookmarkedIds.isEmpty) return [];
 
-        final postsRes = await SupabaseService.client
+        var bookmarksQuery = SupabaseService.client
             .from('v_public_posts')
             .select('*')
-            .inFilter('id', bookmarkedIds)
+            .inFilter('id', bookmarkedIds);
+
+        if (carrera != 'todas') {
+          bookmarksQuery = bookmarksQuery.eq('carrera', carrera);
+        } else if (facultad != 'todas') {
+          final careerIds = _getCareerIdsForFaculty(facultad);
+          bookmarksQuery = bookmarksQuery.inFilter('carrera', careerIds.isNotEmpty ? careerIds.toList() : const ['__none__']);
+        }
+
+        if (searchQuery.trim().isNotEmpty) {
+          final q = searchQuery.trim();
+          bookmarksQuery = bookmarksQuery.or('title.ilike.%$q%,content.ilike.%$q%');
+        }
+
+        final postsRes = await bookmarksQuery
+            .order('is_pinned', ascending: false)
+            .order('created_at', ascending: false)
             .timeout(const Duration(seconds: 10));
         final List<dynamic> data = postsRes as List<dynamic>;
         final posts = await _hydratePosts(data, currentUserId);
@@ -78,13 +123,8 @@ class ForumService {
       if (carrera != 'todas') {
         query = query.eq('carrera', carrera);
       } else if (facultad != 'todas') {
-        final fac = USACConstants.facultades.firstWhere(
-          (f) => f['id'] == facultad,
-          orElse: () => USACConstants.facultades.first,
-        );
-        final rawCarreras = fac['carreras'] as List<dynamic>? ?? [];
-        final careerIds = rawCarreras.map((c) => c['id'].toString()).toSet()..add('todas');
-        query = query.inFilter('carrera', careerIds.toList());
+        final careerIds = _getCareerIdsForFaculty(facultad);
+        query = query.inFilter('carrera', careerIds.isNotEmpty ? careerIds.toList() : const ['__none__']);
       }
 
       if (searchQuery.trim().isNotEmpty) {
@@ -117,20 +157,27 @@ class ForumService {
               .select('id, title, category, content, author_alias, author_hash, likes, carrera, image_url, gif_url, is_pinned, quoted_post_id, created_at, moderation_status')
               .neq('moderation_status', 2);
 
-          if (category != 'todos') {
+          if (showOnlyBookmarks) {
+            final currentUserId = SupabaseService.currentUserId;
+            if (currentUserId == null) return [];
+            final bookmarksRes = await SupabaseService.client
+                .from('post_bookmarks')
+                .select('post_id')
+                .eq('user_id', currentUserId)
+                .order('created_at', ascending: false)
+                .timeout(const Duration(seconds: 10));
+            final bookmarkedIds = (bookmarksRes as List<dynamic>).map((e) => e['post_id'].toString()).toList();
+            if (bookmarkedIds.isEmpty) return [];
+            fallbackQuery = fallbackQuery.inFilter('id', bookmarkedIds);
+          } else if (category != 'todos') {
             fallbackQuery = fallbackQuery.eq('category', category);
           }
 
           if (carrera != 'todas') {
             fallbackQuery = fallbackQuery.eq('carrera', carrera);
           } else if (facultad != 'todas') {
-            final fac = USACConstants.facultades.firstWhere(
-              (f) => f['id'] == facultad,
-              orElse: () => USACConstants.facultades.first,
-            );
-            final rawCarreras = fac['carreras'] as List<dynamic>? ?? [];
-            final careerIds = rawCarreras.map((c) => c['id'].toString()).toSet()..add('todas');
-            fallbackQuery = fallbackQuery.inFilter('carrera', careerIds.toList());
+            final careerIds = _getCareerIdsForFaculty(facultad);
+            fallbackQuery = fallbackQuery.inFilter('carrera', careerIds.isNotEmpty ? careerIds.toList() : const ['__none__']);
           }
 
           if (searchQuery.trim().isNotEmpty) {
@@ -729,6 +776,337 @@ class ForumService {
     } catch (e) {
       debugPrint('Error reportando usuario: $e');
       return false;
+    }
+  }
+
+  /// Obtiene los canales del foro consultando la tabla `categorias_foro` en Supabase
+  static Future<List<ForumChannel>> fetchForumChannels() async {
+    if (!SupabaseConfig.isConfigured) {
+      return List<ForumChannel>.from(ForumChannel.defaultChannels);
+    }
+
+    try {
+      final response = await SupabaseService.client
+          .from('categorias_foro')
+          .select('id, nombre')
+          .order('id')
+          .timeout(const Duration(seconds: 8));
+
+      final List<dynamic> data = response as List<dynamic>;
+      if (data.isEmpty) {
+        return List<ForumChannel>.from(ForumChannel.defaultChannels);
+      }
+
+      // Orden estándar alineado con el flujo de uso del foro (sin charla-general)
+      const canonicalOrder = ['todos', 'prerrequisitos', 'catedraticos', 'apuntes', 'horarios'];
+      final List<dynamic> sortedData = List.from(data);
+      sortedData.sort((a, b) {
+        final idA = a['id']?.toString() ?? '';
+        final idB = b['id']?.toString() ?? '';
+        final idxA = canonicalOrder.indexOf(idA);
+        final idxB = canonicalOrder.indexOf(idB);
+        if (idxA != -1 && idxB != -1) return idxA.compareTo(idxB);
+        if (idxA != -1) return -1;
+        if (idxB != -1) return 1;
+        return idA.compareTo(idB);
+      });
+
+      final List<ForumChannel> channels = [];
+      for (final row in sortedData) {
+        final id = row['id']?.toString() ?? '';
+        if (id == 'general') continue; // Redundante con todos los temas
+        final nombre = row['nombre']?.toString() ?? id;
+        channels.add(ForumChannel.fromDbCategory(id: id, nombre: nombre));
+      }
+
+      return channels;
+    } catch (e) {
+      debugPrint('Error al obtener canales desde categorias_foro: $e');
+      return List<ForumChannel>.from(ForumChannel.defaultChannels);
+    }
+  }
+
+  /// Obtiene la estructura de servidores de facultades y carreras oficiales desde la DB
+  static Future<List<ForumFaculty>> fetchForumFaculties() async {
+    if (!SupabaseConfig.isConfigured) {
+      return ForumFaculty.defaultFaculties;
+    }
+
+    try {
+      final facsRes = await SupabaseService.client
+          .from('facultades')
+          .select('id, codigo, nombre')
+          .order('codigo')
+          .timeout(const Duration(seconds: 8));
+      final carsRes = await SupabaseService.client
+          .from('carreras')
+          .select('id, facultad_id, codigo, nombre')
+          .order('codigo')
+          .timeout(const Duration(seconds: 8));
+
+      final List<dynamic> facsData = facsRes as List<dynamic>;
+      final List<dynamic> carsData = carsRes as List<dynamic>;
+
+      if (facsData.isEmpty || carsData.isEmpty) {
+        return ForumFaculty.defaultFaculties;
+      }
+
+      // Mapa de metadatos predefinidos (íconos, colores, códigos cortos)
+      final Map<String, ForumCareerItem> careerMeta = {};
+      final Map<String, ForumFaculty> facultyMeta = {};
+      for (final f in ForumFaculty.defaultFaculties) {
+        facultyMeta[f.id] = f;
+        for (final c in f.careers) {
+          careerMeta[c.id] = c;
+        }
+      }
+
+      final Map<String, List<ForumCareerItem>> careersByFacultad = {};
+      for (final row in carsData) {
+        final carId = row['id']?.toString() ?? '';
+        var facId = row['facultad_id']?.toString() ?? '';
+        var nombre = row['nombre']?.toString() ?? '';
+        final codigo = row['codigo']?.toString() ?? '';
+
+        // Limpieza canónica exhaustiva: remover cualquier texto entre paréntesis o redundancias
+        nombre = nombre
+            .replaceAll('(Campus Central)', '')
+            .replaceAll('(Extensión)', ' - Extensión')
+            .replaceAll(RegExp(r'\s*\([^)]*\)'), '')
+            .replaceAll(RegExp(r'\s*[/|-]\s*(Cursos Básicos|General).*', caseSensitive: false), '')
+            .replaceAll(RegExp(r'\s+'), ' ')
+            .trim();
+
+        // Normalización canónica: Área Común pertenece exclusivamente a Ingeniería ('08')
+        if (carId == 'area_comun' ||
+            nombre.toLowerCase().contains('área común') ||
+            nombre.toLowerCase().contains('area comun')) {
+          facId = '08';
+          nombre = 'Área Común';
+        }
+
+        final existing = careerMeta[carId];
+        final shortCode = existing?.shortCode ??
+            (codigo.isNotEmpty && codigo.length <= 6
+                ? codigo
+                : (carId.length > 4 ? carId.substring(0, 4).toUpperCase() : carId.toUpperCase()));
+
+        careersByFacultad.putIfAbsent(facId, () => []).add(
+          ForumCareerItem(
+            id: carId,
+            name: nombre,
+            shortCode: shortCode,
+            icon: existing?.icon ?? Icons.school_outlined,
+            facultadId: facId,
+            codigo: codigo,
+          ),
+        );
+      }
+
+      // 'todas' jamás debe tener sub-carreras provenientes de la base de datos
+      careersByFacultad.remove('todas');
+
+      // Garantizar que la Facultad de Ingeniería ('08') tenga siempre Área Común como su primer subservidor
+      final ingCareers = careersByFacultad.putIfAbsent('08', () => []);
+      final areaComunIndex = ingCareers.indexWhere((c) => c.id == 'area_comun');
+      final ForumCareerItem defaultAreaComun = careerMeta['area_comun'] ??
+          const ForumCareerItem(
+            id: 'area_comun',
+            name: 'Área Común',
+            shortCode: 'BAS',
+            icon: Icons.auto_stories,
+            facultadId: '08',
+          );
+      if (areaComunIndex == -1) {
+        ingCareers.insert(0, defaultAreaComun);
+      } else {
+        final existingItem = ingCareers.removeAt(areaComunIndex);
+        ingCareers.insert(
+          0,
+          existingItem.copyWith(
+            name: 'Área Común',
+            shortCode: 'BAS',
+            icon: Icons.auto_stories,
+            facultadId: '08',
+          ),
+        );
+      }
+
+      final List<ForumFaculty> faculties = [];
+      for (final facRow in facsData) {
+        final facId = facRow['id']?.toString() ?? '';
+        var nombre = facRow['nombre']?.toString() ?? '';
+        final codigo = facRow['codigo']?.toString() ?? '';
+
+        // Limpieza canónica: remover paréntesis y sufijos redundantes de nombres de facultades
+        nombre = nombre
+            .replaceAll(RegExp(r'\s*\([^)]*\)'), '')
+            .replaceAll(RegExp(r'\s*[/|-]\s*General.*', caseSensitive: false), '')
+            .replaceAll(RegExp(r'\s+'), ' ')
+            .trim();
+
+        final existing = facultyMeta[facId];
+        final careers = careersByFacultad[facId] ?? existing?.careers ?? [];
+
+        faculties.add(
+          ForumFaculty(
+            id: facId,
+            name: nombre,
+            shortCode: existing?.shortCode ?? (codigo.isNotEmpty ? codigo : facId.toUpperCase()),
+            icon: existing?.icon ?? Icons.school,
+            color: existing?.color ?? const Color(0xFF004B87),
+            careers: careers,
+          ),
+        );
+      }
+
+      // El servidor de hasta arriba SIEMPRE debe ser el de Todas las Facultades
+      final defaultRoot = ForumFaculty.defaultFaculties.first;
+      final todasIndex = faculties.indexWhere((f) => f.id == 'todas');
+      ForumFaculty todasFaculty;
+      if (todasIndex != -1) {
+        final existingTodas = faculties.removeAt(todasIndex);
+        todasFaculty = existingTodas.copyWith(
+          name: 'Todas las Facultades',
+          shortCode: 'USAC',
+          icon: Icons.school,
+          careers: defaultRoot.careers,
+        );
+      } else {
+        todasFaculty = defaultRoot;
+      }
+      faculties.insert(0, todasFaculty);
+
+      return faculties;
+    } catch (e) {
+      debugPrint('Error al obtener facultades y carreras de la DB: $e');
+      return ForumFaculty.defaultFaculties;
+    }
+  }
+
+  /// Obtiene los 5 servidores o subservidores más populares del foro,
+  /// basado en cantidad de publicaciones, volumen de reacciones y frescura/recencia temporal.
+  static Future<List<PopularServerItem>> fetchPopularServers({
+    List<ForumFaculty>? faculties,
+  }) async {
+    const cacheKey = 'popular_servers_top5';
+    final cached = CacheService.get<List<PopularServerItem>>(_cacheNamespace, cacheKey);
+    if (cached != null) return List<PopularServerItem>.from(cached);
+
+    if (!SupabaseConfig.isConfigured) {
+      return const [];
+    }
+
+    try {
+      final res = await SupabaseService.client
+          .from('posts')
+          .select('id, carrera, likes, created_at')
+          .neq('moderation_status', 2)
+          .order('created_at', ascending: false)
+          .limit(300)
+          .timeout(const Duration(seconds: 8));
+
+      final data = res as List<dynamic>;
+      if (data.isEmpty) {
+        return const [];
+      }
+
+      final allFaculties = faculties ?? ForumFaculty.defaultFaculties;
+
+      final Map<String, int> postsCountByCarrera = {};
+      final Map<String, int> likesCountByCarrera = {};
+      final Map<String, double> scoreByCarrera = {};
+      final Map<String, DateTime> latestDateByCarrera = {};
+      final now = DateTime.now();
+
+      for (final row in data) {
+        final carrera = row['carrera']?.toString() ?? 'todas';
+        final likes = (row['likes'] is int)
+            ? row['likes'] as int
+            : int.tryParse(row['likes']?.toString() ?? '0') ?? 0;
+        final createdAtStr = row['created_at']?.toString();
+        final createdAt = createdAtStr != null ? DateTime.tryParse(createdAtStr) : null;
+
+        postsCountByCarrera[carrera] = (postsCountByCarrera[carrera] ?? 0) + 1;
+        likesCountByCarrera[carrera] = (likesCountByCarrera[carrera] ?? 0) + likes;
+
+        double recencyBonus = 0.5;
+        if (createdAt != null) {
+          final diff = now.difference(createdAt);
+          if (diff.inHours <= 24) {
+            recencyBonus = 5.0;
+          } else if (diff.inDays <= 3) {
+            recencyBonus = 3.0;
+          } else if (diff.inDays <= 7) {
+            recencyBonus = 2.0;
+          } else if (diff.inDays <= 30) {
+            recencyBonus = 1.0;
+          }
+
+          if (latestDateByCarrera[carrera] == null || createdAt.isAfter(latestDateByCarrera[carrera]!)) {
+            latestDateByCarrera[carrera] = createdAt;
+          }
+        }
+
+        final postScore = 2.0 + (likes * 1.0) + recencyBonus;
+        scoreByCarrera[carrera] = (scoreByCarrera[carrera] ?? 0.0) + postScore;
+      }
+
+      final List<PopularServerItem> results = [];
+
+      for (final entry in scoreByCarrera.entries) {
+        final carreraId = entry.key;
+        final score = entry.value;
+        final pCount = postsCountByCarrera[carreraId] ?? 0;
+        final lCount = likesCountByCarrera[carreraId] ?? 0;
+        final lDate = latestDateByCarrera[carreraId];
+
+        ForumFaculty? foundFac;
+        ForumCareerItem? foundCareer;
+
+        for (final f in allFaculties) {
+          for (final c in f.careers) {
+            if (c.id == carreraId) {
+              foundFac = f;
+              foundCareer = c;
+              break;
+            }
+          }
+          if (foundCareer != null) break;
+        }
+
+        if (foundCareer != null && foundFac != null) {
+          final server = ForumServer(
+            id: 'server_${foundCareer.id}',
+            name: foundCareer.name,
+            shortCode: foundCareer.shortCode,
+            icon: foundCareer.icon,
+            facultadId: foundFac.id,
+            carreraId: foundCareer.id,
+            description: 'Espacio de discusión para ${foundCareer.name}.',
+            color: foundFac.color,
+          );
+
+          results.add(PopularServerItem(
+            server: server,
+            facultyName: foundFac.name,
+            postCount: pCount,
+            likesCount: lCount,
+            score: score,
+            latestPostDate: lDate,
+          ));
+        }
+      }
+
+      results.sort((a, b) => b.score.compareTo(a.score));
+
+      final top5 = results.take(5).toList();
+
+      CacheService.set(_cacheNamespace, cacheKey, List<PopularServerItem>.from(top5));
+      return top5;
+    } catch (e) {
+      debugPrint('Error obteniendo servidores populares: $e');
+      return const [];
     }
   }
 }

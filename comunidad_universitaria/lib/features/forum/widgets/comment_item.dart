@@ -61,8 +61,14 @@ class CommentItemWidget extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: 11,
-                      backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.15),
-                      child: Icon(Icons.person, size: 12, color: theme.colorScheme.primary),
+                      backgroundColor: isDark
+                          ? const Color(0xFF3B82F6).withValues(alpha: 0.2)
+                          : theme.colorScheme.primary.withValues(alpha: 0.15),
+                      child: Icon(
+                        Icons.person,
+                        size: 12,
+                        color: theme.colorScheme.primary,
+                      ),
                     ),
                     const SizedBox(width: 6),
                     Expanded(
@@ -83,7 +89,9 @@ class CommentItemWidget extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                                color: isDark
+                                    ? const Color(0xFF3B82F6).withValues(alpha: 0.25)
+                                    : theme.colorScheme.primary.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
@@ -115,7 +123,11 @@ class CommentItemWidget extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.reply, size: 14, color: theme.colorScheme.primary),
+                            Icon(
+                              Icons.reply,
+                              size: 14,
+                              color: theme.colorScheme.primary,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               'Responder',

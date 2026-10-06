@@ -128,4 +128,66 @@ void main() {
       expect(reportData!['reporter_id'], 'group-creator-id');
     });
   });
+
+  group('GroupsService.fetchGroups', () {
+    test('en un subservidor de facultad específico solo devuelve los grupos de esa facultad y no los de todo', () async {
+      final mockGroups = [
+        TestFixtures.whatsAppGroupMap(
+          id: 'g-ing-1',
+          title: 'Física 1',
+          carrera: 'sistemas',
+          curso: 'Física 1',
+        ),
+        TestFixtures.whatsAppGroupMap(
+          id: 'g-ing-2',
+          title: 'Cálculo 1',
+          carrera: '08_todas',
+          curso: 'Cálculo 1',
+        ),
+        TestFixtures.whatsAppGroupMap(
+          id: 'g-med-1',
+          title: 'Anatomía Humana 1',
+          carrera: 'medicina',
+          curso: 'Anatomía',
+        ),
+        TestFixtures.whatsAppGroupMap(
+          id: 'g-der-1',
+          title: 'Derecho Romano',
+          carrera: 'derecho',
+          curso: 'Derecho Romano',
+        ),
+        TestFixtures.whatsAppGroupMap(
+          id: 'g-gen-1',
+          title: 'Avisos Generales USAC',
+          carrera: 'todas',
+          curso: 'General',
+        ),
+      ];
+
+      fakeServer.onGet('/rest/v1/student_groups', (req) => mockGroups);
+
+      // Consulta canal #todos-los-grupos de Ingeniería (08)
+      final ingGroups = await GroupsService.fetchGroups(facultad: '08', carrera: 'todas');
+      final ingIds = ingGroups.map((g) => g.id).toList();
+      expect(ingIds, contains('g-ing-1'));
+      expect(ingIds, contains('g-ing-2'));
+      expect(ingIds, isNot(contains('g-med-1')));
+      expect(ingIds, isNot(contains('g-der-1')));
+      expect(ingIds, isNot(contains('g-gen-1')));
+
+      // Consulta canal #todos-los-grupos de Medicina (05)
+      final medGroups = await GroupsService.fetchGroups(facultad: '05', carrera: 'todas');
+      final medIds = medGroups.map((g) => g.id).toList();
+      expect(medIds, contains('g-med-1'));
+      expect(medIds, isNot(contains('g-ing-1')));
+      expect(medIds, isNot(contains('g-ing-2')));
+      expect(medIds, isNot(contains('g-der-1')));
+      expect(medIds, isNot(contains('g-gen-1')));
+
+      // Consulta canal #todos-los-grupos de Todas las Facultades (todas)
+      final allGroups = await GroupsService.fetchGroups(facultad: 'todas', carrera: 'todas');
+      expect(allGroups.length, equals(5));
+    });
+  });
 }
+

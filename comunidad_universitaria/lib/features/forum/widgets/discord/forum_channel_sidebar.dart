@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../../profile/widgets/alias_modal.dart';
+import '../../../profile/screens/profile_screen.dart';
 import '../../models/discord_forum_models.dart';
 import 'forum_carrera_picker_dialog.dart';
 
 class ForumChannelSidebar extends StatelessWidget {
   final ForumServer activeServer;
   final ForumChannel activeChannel;
+  final List<ForumChannel>? channels;
   final Function(ForumChannel) onSelectChannel;
   final Function(ForumServer) onServerChanged;
   final String activeAlias;
@@ -15,6 +16,7 @@ class ForumChannelSidebar extends StatelessWidget {
     super.key,
     required this.activeServer,
     required this.activeChannel,
+    this.channels,
     required this.onSelectChannel,
     required this.onServerChanged,
     required this.activeAlias,
@@ -36,20 +38,22 @@ class ForumChannelSidebar extends StatelessWidget {
         children: [
           // 1. Server Header Banner
           InkWell(
-            onTap: () {
-              ForumCarreraPickerDialog.show(
-                context,
-                onServerSelected: onServerChanged,
-              );
-            },
+            onTap: activeServer.isGroups
+                ? null
+                : () {
+                    ForumCarreraPickerDialog.show(
+                      context,
+                      onServerSelected: onServerChanged,
+                    );
+                  },
             child: Container(
-              height: 60,
+              height: 56,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
                     color: isDark ? const Color(0xFF202225) : const Color(0xFFE2E8F0),
-                    width: 1.5,
+                    width: 1,
                   ),
                 ),
               ),
@@ -65,7 +69,7 @@ class ForumChannelSidebar extends StatelessWidget {
                           children: [
                             Flexible(
                               child: Text(
-                                activeServer.name,
+                                activeServer.name.replaceAll(RegExp(r'\s*\([^)]*\)'), '').trim(),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
@@ -75,11 +79,17 @@ class ForumChannelSidebar extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 4),
-                            const Icon(Icons.verified, size: 14, color: Color(0xFF004B87)),
+                            Icon(
+                              Icons.verified,
+                              size: 14,
+                              color: theme.colorScheme.primary,
+                            ),
                           ],
                         ),
                         Text(
-                          'Servidor Estudiantil · USAC',
+                          activeServer.isGroups
+                              ? 'Directorio de WhatsApp · USAC'
+                              : 'Servidor Estudiantil · USAC',
                           style: TextStyle(
                             fontSize: 10,
                             color: isDark ? const Color(0xFF949BA4) : const Color(0xFF64748B),
@@ -89,7 +99,8 @@ class ForumChannelSidebar extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Icon(Icons.keyboard_arrow_down, size: 20, color: Colors.grey.shade500),
+                  if (!activeServer.isGroups)
+                    Icon(Icons.keyboard_arrow_down, size: 20, color: Colors.grey.shade500),
                 ],
               ),
             ),
@@ -98,36 +109,55 @@ class ForumChannelSidebar extends StatelessWidget {
           // 2. Channels List
           Expanded(
             child: ListView(
+              primary: false,
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
               children: [
-                // Category Header: CANALES DE DISCUSIÓN
-                _buildCategoryHeader('CANALES DE DISCUSIÓN', isDark),
-                const SizedBox(height: 4),
+                if (activeServer.isGroups) ...[
+                  // Category Header: CANALES Y CATEGORÍAS
+                  _buildCategoryHeader('CANALES Y CATEGORÍAS', isDark),
+                  const SizedBox(height: 4),
 
-                // Channels
-                ...ForumChannel.defaultChannels.map((channel) {
-                  final isActive = activeChannel.id == channel.id;
-                  return _buildChannelTile(
-                    channel: channel,
-                    isActive: isActive,
+                  // Channels
+                  ...(channels ?? ForumChannel.groupsChannels).map((channel) {
+                    final isActive = activeChannel.id == channel.id;
+                    return _buildChannelTile(
+                      channel: channel,
+                      isActive: isActive,
+                      theme: theme,
+                      isDark: isDark,
+                    );
+                  }),
+                ] else ...[
+                  // Category Header: CANALES DE DISCUSIÓN
+                  _buildCategoryHeader('CANALES DE DISCUSIÓN', isDark),
+                  const SizedBox(height: 4),
+
+                  // Channels
+                  ...(channels ?? ForumChannel.defaultChannels).map((channel) {
+                    final isActive = activeChannel.id == channel.id;
+                    return _buildChannelTile(
+                      channel: channel,
+                      isActive: isActive,
+                      theme: theme,
+                      isDark: isDark,
+                    );
+                  }),
+
+                  const SizedBox(height: 16),
+
+                  // Category Header: ACCESOS RÁPIDOS
+                  _buildCategoryHeader('PERSONAL', isDark),
+                  const SizedBox(height: 4),
+
+                  // Bookmarks Channel
+                  _buildChannelTile(
+                    channel: ForumChannel.bookmarksChannel,
+                    isActive: activeChannel.id == ForumChannel.bookmarksChannel.id,
                     theme: theme,
                     isDark: isDark,
-                  );
-                }),
-
-                const SizedBox(height: 16),
-
-                // Category Header: ACCESOS RÁPIDOS
-                _buildCategoryHeader('PERSONAL', isDark),
-                const SizedBox(height: 4),
-
-                // Bookmarks Channel
-                _buildChannelTile(
-                  channel: ForumChannel.bookmarksChannel,
-                  isActive: activeChannel.id == ForumChannel.bookmarksChannel.id,
-                  theme: theme,
-                  isDark: isDark,
-                ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -144,7 +174,7 @@ class ForumChannelSidebar extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: 16,
-                      backgroundColor: const Color(0xFF004B87),
+                      backgroundColor: isDark ? const Color(0xFF2563EB) : const Color(0xFF004B87),
                       child: Text(
                         activeAlias.isNotEmpty ? activeAlias.characters.first.toUpperCase() : 'U',
                         style: const TextStyle(
@@ -197,17 +227,20 @@ class ForumChannelSidebar extends StatelessWidget {
                   ),
                 ),
 
-                // Change Alias / Settings Button
+                // Settings / Preferences Button
                 IconButton(
-                  icon: const Icon(Icons.edit_outlined, size: 16),
-                  tooltip: 'Cambiar Seudónimo',
+                  icon: const Icon(Icons.settings_outlined, size: 16),
+                  tooltip: 'Preferencias de Usuario',
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   onPressed: () {
-                    AliasModal.show(
-                      context,
-                      currentAlias: activeAlias,
-                      onSaved: onAliasChanged,
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ProfileScreen(
+                          activeAlias: activeAlias,
+                          onAliasChanged: onAliasChanged,
+                        ),
+                      ),
                     );
                   },
                 ),

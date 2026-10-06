@@ -128,16 +128,17 @@ class _ComunidadUSACAppState extends State<ComunidadUSACApp> {
   }
 }
 
-/// Permite arrastrar el contenido con mouse, touch, trackpad y stylus.
+/// Permite scroll fluido con mouse (drag & wheel), touch, trackpad y stylus en todas las interfaces
 class AppScrollBehavior extends MaterialScrollBehavior {
   const AppScrollBehavior();
 
   @override
   Set<PointerDeviceKind> get dragDevices => {
-    PointerDeviceKind.touch,
-    PointerDeviceKind.mouse,
-    PointerDeviceKind.trackpad,
-    PointerDeviceKind.stylus,
-    PointerDeviceKind.invertedStylus,
-  };
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.trackpad,
+        PointerDeviceKind.stylus,
+        PointerDeviceKind.invertedStylus,
+      };
 }
+

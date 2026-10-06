@@ -3,10 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:comunidad_universitaria/core/config/app_theme.dart';
 import 'package:comunidad_universitaria/features/forum/screens/forum_screen.dart';
-import 'package:comunidad_universitaria/features/groups/screens/groups_screen.dart';
 import 'package:comunidad_universitaria/features/marketplace/screens/marketplace_screen.dart';
 import 'package:comunidad_universitaria/features/navigation/app_shell.dart';
-import 'package:comunidad_universitaria/features/profile/screens/profile_screen.dart';
 import 'package:comunidad_universitaria/features/rules/screens/rules_screen.dart';
 import 'package:comunidad_universitaria/features/shared/widgets/alias_badge_button.dart';
 import '../helpers/test_setup.dart';
@@ -51,16 +49,15 @@ void main() {
       // En móvil muestra título 'Comunidad USAC' y 'No Oficial'
       expect(find.text('Comunidad USAC'), findsOneWidget);
       expect(find.text('No Oficial'), findsOneWidget);
-      expect(find.text('Red Estudiantil Autónoma'), findsOneWidget);
+      expect(find.text('Red Estudiantil Autónoma'), findsNothing);
 
-      // Alias activo visible en AliasBadgeButton
-      expect(find.byType(AliasBadgeButton), findsOneWidget);
-      expect(find.text('Estudiante #101'), findsOneWidget);
+      // Botón de perfil ya no se muestra en el navbar (se ubica en la barra inferior)
+      expect(find.byType(AliasBadgeButton), findsNothing);
 
-      // Bottom NavigationBar en móvil
+      // Bottom NavigationBar en móvil (solo Foro y Marketplace; Grupos está en el riel de servidores del Foro)
       expect(find.byType(NavigationBar), findsOneWidget);
       expect(find.text('Foro'), findsOneWidget);
-      expect(find.text('Grupos'), findsOneWidget);
+      expect(find.text('Grupos'), findsNothing);
       expect(find.text('Marketplace'), findsOneWidget);
 
       // En el tab inicial (Foro), no hay FloatingActionButton
@@ -83,9 +80,9 @@ void main() {
       // No debe tener NavigationBar inferior
       expect(find.byType(NavigationBar), findsNothing);
 
-      // Pestañas de escritorio
+      // Pestañas de escritorio (Grupos de Estudio está en la barra lateral izquierda)
       expect(find.text('Foro Estudiantil'), findsOneWidget);
-      expect(find.text('Grupos de Estudio'), findsOneWidget);
+      expect(find.text('Grupos de Estudio'), findsNothing);
       expect(find.text('Marketplace & Tutorías'), findsOneWidget);
     });
 
@@ -102,15 +99,7 @@ void main() {
       // Tab 0: ForumScreen activo por defecto
       expect(find.byType(ForumScreen), findsOneWidget);
 
-      // Cambiar a Tab 1: Grupos
-      final gruposTab = find.text('Grupos');
-      await tester.tap(gruposTab);
-      await tester.pumpAndSettle();
-
-      // Debe mostrar el FAB contextual de grupos 'Sugerir Enlace'
-      expect(find.widgetWithText(FloatingActionButton, 'Sugerir Enlace'), findsOneWidget);
-
-      // Cambiar a Tab 2: Marketplace
+      // Cambiar a Tab 1: Marketplace
       final marketTab = find.text('Marketplace');
       await tester.tap(marketTab);
       await tester.pumpAndSettle();
@@ -129,19 +118,19 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Seleccionar Grupos de Estudio
-      final tabGrupos = find.text('Grupos de Estudio');
-      await tester.tap(tabGrupos);
-      await tester.pumpAndSettle();
-
-      expect(find.byType(GroupsScreen), findsOneWidget);
-
       // Seleccionar Marketplace & Tutorías
       final tabMarket = find.text('Marketplace & Tutorías');
       await tester.tap(tabMarket);
       await tester.pumpAndSettle();
 
       expect(find.byType(MarketplaceScreen), findsOneWidget);
+
+      // Regresar a Foro Estudiantil
+      final tabForo = find.text('Foro Estudiantil');
+      await tester.tap(tabForo);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ForumScreen), findsOneWidget);
     });
 
     testWidgets('Botón de cambio de tema dispara callback onToggleTheme', (tester) async {
@@ -171,7 +160,7 @@ void main() {
       expect(themeToggled, isTrue);
     });
 
-    testWidgets('Click en AliasBadgeButton navega hacia ProfileScreen', (tester) async {
+    testWidgets('Navbar no muestra botón de perfil duplicado', (tester) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -181,14 +170,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final aliasButton = find.byType(AliasBadgeButton);
-      expect(aliasButton, findsOneWidget);
-
-      await tester.tap(aliasButton);
-      await tester.pumpAndSettle();
-
-      // Debe abrir la pantalla ProfileScreen
-      expect(find.byType(ProfileScreen), findsOneWidget);
+      expect(find.byType(AliasBadgeButton), findsNothing);
     });
 
     testWidgets('Click en botón de normas navega hacia RulesScreen', (tester) async {

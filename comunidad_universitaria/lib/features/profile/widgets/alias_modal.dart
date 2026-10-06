@@ -64,6 +64,7 @@ class _AliasModalState extends State<AliasModal> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -121,7 +122,10 @@ class _AliasModalState extends State<AliasModal> {
               const SizedBox(height: 8),
               Text(
                 'Nota: Tu seudónimo protege tu privacidad frente a otros estudiantes. El contenido inapropiado o que viole las normas puede ser moderado.',
-                style: theme.textTheme.bodySmall?.copyWith(fontSize: 11, color: Colors.grey.shade600),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontSize: 11,
+                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                ),
               ),
               const SizedBox(height: 20),
               Align(

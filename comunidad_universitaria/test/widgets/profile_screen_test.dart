@@ -83,10 +83,9 @@ void main() {
       await tester.pumpWidget(buildTestProfile());
       await tester.pumpAndSettle();
 
-      // Alias y modo anónimo protegido
+      // Alias y estado de perfil
       expect(find.text('Estudiante Sancarlista #505'), findsWidgets);
-      expect(find.text('Modo Anónimo Protegido'), findsOneWidget);
-      expect(find.text('Autenticación en dos pasos'), findsNothing);
+      expect(find.text('Perfil Estudiantil'), findsOneWidget);
 
       // Campos de edición principales
       expect(find.text('Seudónimo Visible en la Comunidad'), findsOneWidget);
