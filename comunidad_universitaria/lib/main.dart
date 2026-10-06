@@ -1,4 +1,5 @@
 import 'dart:ui';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'core/config/app_theme.dart';
@@ -7,6 +8,7 @@ import 'core/services/local_storage_service.dart';
 import 'core/services/supabase_service.dart';
 import 'features/navigation/app_shell.dart';
 import 'features/sso/screens/sso_authorize_screen.dart';
+import 'features/shared/widgets/totp_session_guard.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -120,6 +122,8 @@ class _ComunidadUSACAppState extends State<ComunidadUSACApp> {
       themeMode: _themeMode,
       scrollBehavior: const AppScrollBehavior(),
       onGenerateRoute: _onGenerateRoute,
+      builder: (context, child) =>
+          TotpSessionGuard(child: child ?? const SizedBox.shrink()),
     );
   }
 }

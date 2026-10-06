@@ -40,6 +40,41 @@ void main() {
   }
 
   group('ProfileScreen Widget Tests', () {
+    testWidgets('permite volver a la pantalla principal desde el perfil', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => ProfileScreen(
+                      activeAlias: 'Estudiante Sancarlista #505',
+                      onAliasChanged: (_) {},
+                    ),
+                  ),
+                ),
+                child: const Text('Abrir perfil'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Abrir perfil'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Editar perfil'), findsOneWidget);
+      expect(find.byType(BackButton), findsOneWidget);
+
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Abrir perfil'), findsOneWidget);
+    });
+
     testWidgets('Renderiza en móvil (400x800) con todas las secciones de perfil', (tester) async {
       tester.view.physicalSize = const Size(400, 800);
       tester.view.devicePixelRatio = 1.0;

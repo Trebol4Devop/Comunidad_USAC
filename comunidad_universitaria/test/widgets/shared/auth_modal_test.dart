@@ -1,8 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:comunidad_universitaria/core/config/app_theme.dart';
+import 'package:comunidad_universitaria/core/config/supabase_config.dart';
+import 'package:comunidad_universitaria/core/services/supabase_service.dart';
 import 'package:comunidad_universitaria/features/shared/widgets/auth_modal.dart';
+import '../../helpers/fake_postgrest.dart';
 import '../../helpers/test_setup.dart';
 
 void main() {
@@ -22,7 +27,8 @@ void main() {
       home: Scaffold(
         body: AuthModal(
           title: title ?? 'Inicia Sesión para Publicar',
-          subtitle: subtitle ?? 'Para proteger la comunidad, debes iniciar sesión.',
+          subtitle:
+              subtitle ?? 'Para proteger la comunidad, debes iniciar sesión.',
           onAuthenticated: onAuthenticated ?? () {},
         ),
       ),
@@ -30,29 +36,44 @@ void main() {
   }
 
   group('AuthModal Widget Tests', () {
-    testWidgets('Renderiza en vista móvil (400x800) con campos y opciones de login', (tester) async {
-      tester.view.physicalSize = const Size(400, 800);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
+    testWidgets(
+      'Renderiza en vista móvil (400x800) con campos y opciones de login',
+      (tester) async {
+        tester.view.physicalSize = const Size(400, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
 
-      await tester.pumpWidget(buildTestModal());
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(buildTestModal());
+        await tester.pumpAndSettle();
 
-      expect(find.text('Inicia Sesión para Publicar'), findsOneWidget);
-      expect(find.text('Para proteger la comunidad, debes iniciar sesión.'), findsOneWidget);
+        expect(find.text('Inicia Sesión para Publicar'), findsOneWidget);
+        expect(
+          find.text('Para proteger la comunidad, debes iniciar sesión.'),
+          findsOneWidget,
+        );
 
-      // Botón Google
-      expect(find.text('Continuar con Google'), findsOneWidget);
-      expect(find.text('o con correo'), findsOneWidget);
+        // Botón Google
+        expect(find.text('Continuar con Google'), findsOneWidget);
+        expect(find.text('o con correo'), findsOneWidget);
 
-      // Campos de texto
-      expect(find.widgetWithText(TextFormField, 'Correo electrónico'), findsOneWidget);
-      expect(find.widgetWithText(TextFormField, 'Contraseña'), findsOneWidget);
+        // Campos de texto
+        expect(
+          find.widgetWithText(TextFormField, 'Correo electrónico'),
+          findsOneWidget,
+        );
+        expect(
+          find.widgetWithText(TextFormField, 'Contraseña'),
+          findsOneWidget,
+        );
 
-      // Botón de submit y toggle
-      expect(find.widgetWithText(ElevatedButton, 'Iniciar Sesión'), findsOneWidget);
-      expect(find.text('¿No tienes cuenta? Regístrate aquí'), findsOneWidget);
-    });
+        // Botón de submit y toggle
+        expect(
+          find.widgetWithText(ElevatedButton, 'Iniciar Sesión'),
+          findsOneWidget,
+        );
+        expect(find.text('¿No tienes cuenta? Regístrate aquí'), findsOneWidget);
+      },
+    );
 
     testWidgets('Alterna entre Iniciar Sesión y Crear Cuenta', (tester) async {
       tester.view.physicalSize = const Size(1200, 800);
@@ -69,17 +90,192 @@ void main() {
       await tester.tap(toggleBtn);
       await tester.pumpAndSettle();
 
-      expect(find.widgetWithText(ElevatedButton, 'Crear Cuenta y Publicar'), findsOneWidget);
+      expect(
+        find.widgetWithText(ElevatedButton, 'Crear Cuenta y Publicar'),
+        findsOneWidget,
+      );
       expect(find.text('¿Ya tienes cuenta? Inicia sesión'), findsOneWidget);
 
       // Volver a modo login
       await tester.tap(find.text('¿Ya tienes cuenta? Inicia sesión'));
       await tester.pumpAndSettle();
 
-      expect(find.widgetWithText(ElevatedButton, 'Iniciar Sesión'), findsOneWidget);
+      expect(
+        find.widgetWithText(ElevatedButton, 'Iniciar Sesión'),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('Valida formato de correo y longitud de contraseña', (tester) async {
+    testWidgets(
+      'muestra la entrada de código cuando el signup necesita confirmación',
+      (tester) async {
+        tester.view.physicalSize = const Size(1200, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
+
+        final fakeServer = FakePostgrestServer();
+        SupabaseConfig.debugOverrideConfigured = true;
+        SupabaseService.debugClient = fakeServer.buildClient();
+        fakeServer.onPost('/auth/v1/signup', (request) {
+          final payload = jsonDecode(request.body) as Map<String, dynamic>;
+          expect(payload['email'], 'estudiante@usac.edu.gt');
+          expect(payload['password'], 'password123');
+          return {
+            'id': 'signup-user',
+            'aud': 'authenticated',
+            'role': 'authenticated',
+            'email': 'estudiante@usac.edu.gt',
+            'email_confirmed_at': null,
+            'created_at': '2026-10-03T00:00:00.000Z',
+            'app_metadata': {
+              'provider': 'email',
+              'providers': ['email'],
+            },
+            'user_metadata': {},
+            'identities': [],
+          };
+        });
+
+        await tester.pumpWidget(buildTestModal());
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('¿No tienes cuenta? Regístrate aquí'));
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.widgetWithText(TextFormField, 'Correo electrónico'),
+          'estudiante@usac.edu.gt',
+        );
+        await tester.enterText(
+          find.widgetWithText(TextFormField, 'Contraseña'),
+          'password123',
+        );
+        await tester.tap(
+          find.widgetWithText(ElevatedButton, 'Crear Cuenta y Publicar'),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Código de 6 dígitos'), findsOneWidget);
+        expect(find.text('Reenviar código'), findsOneWidget);
+        expect(find.textContaining('estudiante@usac.edu.gt'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'un correo sin confirmar permite ingresar el código y reenviarlo',
+      (tester) async {
+        tester.view.physicalSize = const Size(1200, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
+
+        final fakeServer = FakePostgrestServer();
+        SupabaseConfig.debugOverrideConfigured = true;
+        SupabaseService.debugClient = fakeServer.buildClient();
+        fakeServer.onPost(
+          '/auth/v1/token',
+          (_) => {
+            'code': 'email_not_confirmed',
+            'message': 'Email not confirmed',
+            'status': 400,
+          },
+          statusCode: 400,
+        );
+        fakeServer.onPost('/auth/v1/resend', (request) {
+          final payload = jsonDecode(request.body) as Map<String, dynamic>;
+          expect(payload['type'], 'signup');
+          expect(payload['email'], 'estudiante@usac.edu.gt');
+          return {'message_id': 'confirmation-message'};
+        });
+
+        await tester.pumpWidget(buildTestModal());
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.widgetWithText(TextFormField, 'Correo electrónico'),
+          'estudiante@usac.edu.gt',
+        );
+        await tester.enterText(
+          find.widgetWithText(TextFormField, 'Contraseña'),
+          'password123',
+        );
+        await tester.tap(find.widgetWithText(ElevatedButton, 'Iniciar Sesión'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Código de 6 dígitos'), findsOneWidget);
+        expect(find.text('Reenviar código'), findsOneWidget);
+        expect(find.textContaining('Tu correo aún no ha sido confirmado'), findsOneWidget);
+
+        await tester.tap(find.text('Reenviar código'));
+        await tester.pumpAndSettle();
+        expect(find.text('Te enviamos un nuevo código de verificación.'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'permite solicitar recuperación y verificar el código para cambiar contraseña',
+      (tester) async {
+        tester.view.physicalSize = const Size(1200, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
+
+        final fakeServer = FakePostgrestServer();
+        SupabaseConfig.debugOverrideConfigured = true;
+        SupabaseService.debugClient = fakeServer.buildClient();
+        fakeServer.onPost(
+          '/auth/v1/recover',
+          (_) => {'message_id': 'recovery-message'},
+        );
+        fakeServer.onPost('/auth/v1/verify', (request) {
+          final payload = jsonDecode(request.body) as Map<String, dynamic>;
+          expect(payload['type'], 'recovery');
+          expect(payload['email'], 'estudiante@usac.edu.gt');
+          expect(payload['token'], '654321');
+          return {
+            'access_token': 'recovery-access-token',
+            'token_type': 'bearer',
+            'expires_in': 3600,
+            'refresh_token': 'recovery-refresh-token',
+            'user': {
+              'id': 'recovery-user',
+              'aud': 'authenticated',
+              'role': 'authenticated',
+              'email': 'estudiante@usac.edu.gt',
+              'email_confirmed_at': '2026-10-03T00:00:00.000Z',
+              'created_at': '2026-10-03T00:00:00.000Z',
+              'app_metadata': {
+                'provider': 'email',
+                'providers': ['email'],
+              },
+              'user_metadata': {},
+            },
+          };
+        });
+
+        await tester.pumpWidget(buildTestModal());
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.widgetWithText(TextFormField, 'Correo electrónico'),
+          'estudiante@usac.edu.gt',
+        );
+        await tester.tap(find.text('¿Olvidaste tu contraseña?'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Enviar código de recuperación'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Código de recuperación'), findsOneWidget);
+        await tester.enterText(
+          find.widgetWithText(TextFormField, 'Código de recuperación'),
+          '654321',
+        );
+        await tester.tap(find.text('Verificar código'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Nueva contraseña'), findsOneWidget);
+        expect(find.text('Confirma la contraseña'), findsOneWidget);
+        expect(find.text('Actualizar contraseña'), findsOneWidget);
+      },
+    );
+
+    testWidgets('Valida formato de correo y longitud de contraseña', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(600, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -92,10 +288,16 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Ingresa un correo válido'), findsOneWidget);
-      expect(find.text('La contraseña debe tener al menos 6 caracteres'), findsOneWidget);
+      expect(
+        find.text('La contraseña debe tener al menos 6 caracteres'),
+        findsOneWidget,
+      );
 
       // Correo inválido sin @
-      final emailField = find.widgetWithText(TextFormField, 'Correo electrónico');
+      final emailField = find.widgetWithText(
+        TextFormField,
+        'Correo electrónico',
+      );
       await tester.enterText(emailField, 'correousac.gt');
       await tester.tap(find.widgetWithText(ElevatedButton, 'Iniciar Sesión'));
       await tester.pumpAndSettle();
@@ -110,7 +312,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Ingresa un correo válido'), findsNothing);
-      expect(find.text('La contraseña debe tener al menos 6 caracteres'), findsOneWidget);
+      expect(
+        find.text('La contraseña debe tener al menos 6 caracteres'),
+        findsOneWidget,
+      );
     });
   });
 }

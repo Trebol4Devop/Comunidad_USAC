@@ -13,6 +13,7 @@ import '../../../core/utils/time_utils.dart';
 import '../../forum/screens/post_detail_screen.dart';
 import '../../rules/screens/rules_screen.dart';
 import '../../shared/widgets/auth_modal.dart';
+import 'totp_enrollment_screen.dart';
 import '../../shared/widgets/empty_state_widget.dart';
 import '../widgets/carne_validation_modal.dart';
 
@@ -326,6 +327,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDesktop = Responsive.isDesktop(context);
+    final appBar = AppBar(title: const Text('Editar perfil'));
 
     return Scaffold(
       appBar: AppBar(
@@ -1446,6 +1448,27 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     ),
                   ),
           ] else ...[
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.security_outlined, size: 22, color: Color(0xFF004B87)),
+              title: const Text(
+                'Autenticación en dos pasos',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+              ),
+              subtitle: const Text(
+                'Configura un autenticador TOTP para proteger tu cuenta',
+                style: TextStyle(fontSize: 11),
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const TotpEnrollmentScreen(),
+                  ),
+                );
+              },
+            ),
+            const Divider(),
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.logout, size: 22, color: Color(0xFFDC2626)),
