@@ -163,23 +163,51 @@ class _TotpEnrollmentScreenState extends State<TotpEnrollmentScreen> {
       final codes = await SupabaseService.generateRecoveryCodes(
         regenerate: regenerate,
       );
-      final status = await SupabaseService.getRecoveryCodeStatus();
       if (!mounted) return;
       setState(() {
         _newRecoveryCodes = codes;
-        _recoveryCodesTotal = status.total;
-        _recoveryCodesRemaining = status.remaining;
+        _recoveryCodesTotal = codes.length;
+        _recoveryCodesRemaining = codes.length;
         _isGeneratingRecoveryCodes = false;
       });
-    } catch (_) {
+    } catch (error) {
       if (mounted) {
         setState(() {
           _isGeneratingRecoveryCodes = false;
-          _errorMessage =
-              'No se pudieron generar los códigos. Comprueba tu sesión e inténtalo de nuevo.';
+          _errorMessage = _recoveryCodeError(error);
         });
       }
     }
+  }
+
+  String _recoveryCodeError(Object error) {
+    if (error is RecoveryCodeAssuranceException) {
+      final nextLevel =
+          error.nextLevel == null || error.nextLevel == error.currentLevel
+          ? ''
+          : ' Nivel siguiente: ${error.nextLevel}.';
+      return 'La sesión actual está en ${error.currentLevel}; se requiere aal2. '
+          'Completa la verificación TOTP y vuelve a intentarlo.$nextLevel';
+    }
+    if (error is RecoveryCodeRequestException) {
+      final diagnostic = error.errorCode == null
+          ? ''
+          : ' Código: ${error.errorCode}.';
+      final explanation = switch (error.statusCode) {
+        401 => 'La sesión no fue aceptada; vuelve a iniciar sesión.',
+        403 =>
+          'Auth rechazó la operación; verifica que la sesión esté en aal2.',
+        404 || 405 =>
+          'Esta versión/configuración de Supabase Auth podría no ofrecer el endpoint de códigos de recuperación.',
+        429 =>
+          'Se alcanzó el límite de solicitudes; espera antes de reintentar.',
+        _ => 'Supabase Auth rechazó la solicitud.',
+      };
+      return '$explanation (HTTP ${error.statusCode}.$diagnostic) '
+          'Tu autenticador TOTP sigue activo.';
+    }
+    return 'No se pudieron generar los códigos (${error.runtimeType}). '
+        'Tu autenticador TOTP sigue activo; comprueba la sesión y vuelve a intentarlo.';
   }
 
   Future<void> _confirmRecoveryCodesSaved() async {

@@ -13,9 +13,20 @@ class RecoveryCodeStatus {
 }
 
 class RecoveryCodeRequestException implements Exception {
-  const RecoveryCodeRequestException(this.statusCode);
+  const RecoveryCodeRequestException(this.statusCode, {this.errorCode});
 
   final int statusCode;
+  final String? errorCode;
+}
+
+class RecoveryCodeAssuranceException extends StateError {
+  RecoveryCodeAssuranceException({
+    required this.currentLevel,
+    required this.nextLevel,
+  }) : super('Se requiere una sesión AAL2 para administrar códigos.');
+
+  final String currentLevel;
+  final String? nextLevel;
 }
 
 class SupabaseService {
@@ -277,7 +288,10 @@ class SupabaseService {
   }) async {
     final assurance = await getTotpAssuranceLevel();
     if (assurance.currentLevel != AuthenticatorAssuranceLevels.aal2) {
-      throw StateError('Se requiere una sesión AAL2 para administrar códigos.');
+      throw RecoveryCodeAssuranceException(
+        currentLevel: assurance.currentLevel?.name ?? 'desconocido',
+        nextLevel: assurance.nextLevel?.name,
+      );
     }
 
     final response = await _recoveryCodesRequest(
@@ -384,12 +398,31 @@ class SupabaseService {
       final response = await http.Response.fromStream(streamedResponse);
       if ((response.statusCode < 200 || response.statusCode >= 300) &&
           !(allowNotFound && response.statusCode == 404)) {
-        throw RecoveryCodeRequestException(response.statusCode);
+        throw RecoveryCodeRequestException(
+          response.statusCode,
+          errorCode: _readRecoveryCodeErrorCode(response.body),
+        );
       }
       return response;
     } finally {
       if (debugRecoveryCodesHttpClient == null) httpClient.close();
     }
+  }
+
+  static String? _readRecoveryCodeErrorCode(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is! Map<String, dynamic>) return null;
+      final data = decoded['data'];
+      final payload = data is Map<String, dynamic> ? data : decoded;
+      final value = payload['error_code'];
+      if (value is String && RegExp(r'^[a-zA-Z0-9_-]{1,64}$').hasMatch(value)) {
+        return value;
+      }
+    } catch (_) {
+      // Error bodies are not logged or exposed; only a bounded code is retained.
+    }
+    return null;
   }
 
   static Map<String, dynamic> _decodeRecoveryCodesPayload(

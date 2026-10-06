@@ -91,7 +91,10 @@ void main() {
             'email': 'student@usac.edu.gt',
             'email_confirmed_at': '2026-10-03T00:00:00.000Z',
             'created_at': '2026-10-03T00:00:00.000Z',
-            'app_metadata': {'provider': 'email', 'providers': ['email']},
+            'app_metadata': {
+              'provider': 'email',
+              'providers': ['email'],
+            },
             'user_metadata': {},
           },
         };
@@ -366,7 +369,13 @@ void main() {
 
       await expectLater(
         SupabaseService.generateRecoveryCodes(),
-        throwsA(isA<StateError>()),
+        throwsA(
+          isA<RecoveryCodeAssuranceException>().having(
+            (error) => error.currentLevel,
+            'currentLevel',
+            'aal1',
+          ),
+        ),
       );
       expect(
         fakeServer.recordedRequests.where(
@@ -418,21 +427,51 @@ void main() {
       await signIn();
       fakeServer.onPost(
         '/auth/v1/factors/recovery-codes/verify',
-        (_) => {'code': 'mfa_recovery_codes_locked'},
+        (_) => {'error_code': 'mfa_recovery_codes_locked'},
         statusCode: 429,
       );
 
       await expectLater(
         SupabaseService.verifyRecoveryCode('incorrect-code'),
         throwsA(
-          isA<RecoveryCodeRequestException>().having(
-            (error) => error.statusCode,
-            'statusCode',
-            429,
-          ),
+          isA<RecoveryCodeRequestException>()
+              .having((error) => error.statusCode, 'statusCode', 429)
+              .having(
+                (error) => error.errorCode,
+                'errorCode',
+                'mfa_recovery_codes_locked',
+              ),
         ),
       );
     });
+
+    test(
+      'preserves only the bounded HTTP error code for recovery generation',
+      () async {
+        await signIn();
+        fakeServer.onPost(
+          '/auth/v1/factors/recovery-codes',
+          (_) => {
+            'error_code': 'mfa_recovery_codes_not_enabled',
+            'codes': ['must-not-be-retained'],
+          },
+          statusCode: 404,
+        );
+
+        await expectLater(
+          SupabaseService.generateRecoveryCodes(),
+          throwsA(
+            isA<RecoveryCodeRequestException>()
+                .having((error) => error.statusCode, 'statusCode', 404)
+                .having(
+                  (error) => error.errorCode,
+                  'errorCode',
+                  'mfa_recovery_codes_not_enabled',
+                ),
+          ),
+        );
+      },
+    );
 
     test('rejects TOTP removal without a six-digit current code', () async {
       await signIn();
