@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'core/config/app_theme.dart';
@@ -118,9 +120,24 @@ class _ComunidadUSACAppState extends State<ComunidadUSACApp> {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: _themeMode,
+      scrollBehavior: const AppScrollBehavior(),
       onGenerateRoute: _onGenerateRoute,
       builder: (context, child) =>
           TotpSessionGuard(child: child ?? const SizedBox.shrink()),
     );
   }
+}
+
+/// Permite arrastrar el contenido con mouse, touch, trackpad y stylus.
+class AppScrollBehavior extends MaterialScrollBehavior {
+  const AppScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.trackpad,
+    PointerDeviceKind.stylus,
+    PointerDeviceKind.invertedStylus,
+  };
 }
