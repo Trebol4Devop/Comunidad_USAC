@@ -78,6 +78,7 @@ Leyenda de estado: Cubierto · Parcial · Pendiente.
 |---|---|---|---|
 | UX-PRD-010 Visitante solo lectura | `core/services/supabase_service.dart`; migración `enforce_anonymous_read_only.sql` | `supabase/tests/anonymous_read_only_test.sql`; `integration_test/guest_navigation_test.dart` | Cubierto |
 | UX-PRD-011 Escritura requiere AAL2 | `shared/widgets/totp_session_guard.dart` | `test/widgets/totp_session_guard_test.dart`; `supabase/tests/totp_aal2_writes_test.sql` | Cubierto |
+| UX-PRD-026 No lucro, financiamiento y datos | `features/rules/screens/rules_screen.dart`; `features/profile/screens/profile_screen.dart` (`UX-PRF-011`) | Pendiente | Parcial |
 | UX-MAP-001 Deep links | `main.dart` (`_onGenerateRoute`) | `test/sso_test.dart` | Parcial |
 | UX-MAP-002 Retorno en subpantallas | `features/forum/screens/post_detail_screen.dart` | `integration_test/forum_flow_test.dart` | Parcial |
 | UX-MAP-003 Enlaces externos | `core/utils/url_utils.dart` | `test/utils/storage_url_test.dart` | Parcial |
@@ -128,15 +129,31 @@ Leyenda de estado: Cubierto · Parcial · Pendiente.
 
 ### 4.5 Perfil y cuenta
 
-| Requisito | Implementación | Prueba | Estado |
+| Requisito | Implementacion | Prueba | Estado |
 |---|---|---|---|
 | UX-PRF-001/002 Avatar y alias | `features/profile/screens/profile_screen.dart`; `features/profile/widgets/alias_modal.dart` | `test/widgets/profile_screen_test.dart`; `test/widgets/shared/alias_modal_test.dart` | Cubierto |
 | UX-PRF-003 Alias en la nube `[Mejora]` | `core/services/local_storage_service.dart`; `profile_service.dart` | `test/services/local_storage_service_test.dart` | Pendiente |
 | UX-PRF-006 Facultad/carrera/sede | `features/profile/screens/profile_screen.dart`; `core/models/facultad.dart` | `test/models/facultad_model_test.dart` | Parcial |
-| UX-PRF-008/009/010 Actividad y eliminación | `core/services/{forum,groups,marketplace}_service.dart` | `test/widgets/profile_screen_test.dart` | Parcial |
-| UX-PRF-013 Verificación con carné | `features/profile/widgets/carne_validation_modal.dart` | `test/widgets/shared/carne_validation_modal_test.dart` | Parcial |
+| UX-PRF-008/009/010 Actividad y eliminacion | `core/services/{forum,groups,marketplace}_service.dart` | `test/widgets/profile_screen_test.dart` | Parcial |
+| UX-PRF-013 Verificacion con carne | `features/profile/widgets/carne_validation_modal.dart` | `test/widgets/shared/carne_validation_modal_test.dart` | Parcial |
 | UX-PRF-014 MFA en perfil | `features/profile/screens/totp_enrollment_screen.dart` | `test/widgets/totp_enrollment_screen_test.dart` | Cubierto |
-| UX-PRF-015 Sesión / logout | `core/services/supabase_service.dart` | `test/services/supabase_service_test.dart`; `integration_test/profile_flow_test.dart` | Cubierto |
+| UX-PRF-015 Sesion / logout | `core/services/supabase_service.dart` | `test/services/supabase_service_test.dart`; `integration_test/profile_flow_test.dart` | Cubierto |
+| UX-PRF-016 Menu inicial: bienvenida y 'Omitir' `[Mejora]` | pantalla `OnboardingScreen` (nuevo); clave `usac_onboarding_done` en `SharedPreferences` | Pendiente | Pendiente |
+| UX-PRF-017 Contexto academico en primer uso `[Mejora]` | reutiliza selectores de `profile_screen.dart`; `core/models/facultad.dart` | Pendiente | Pendiente |
+| UX-PRF-018 Seleccion de intereses de contenido `[Mejora]` | tabla `user_interests` (nuevo); almacenamiento local como fallback | Pendiente | Pendiente |
+| UX-PRF-019 Preferencias de notificaciones en primer uso `[Mejora]` | tabla `notification_preferences` (nuevo); `SharedPreferences` como fallback | Pendiente | Pendiente |
+| UX-PRF-020 Identidad inicial: alias y avatar `[Mejora]` | reutiliza `alias_modal.dart`; `AvatarPickerModal` de `profile_screen.dart` | Pendiente | Pendiente |
+| UX-PRF-021 Cierre del menu inicial y primer feed `[Mejora]` | `OnboardingScreen` (nuevo); logica de fallback a area comun en `forum_screen.dart` | Pendiente | Pendiente |
+| UX-PRF-022 Centro de preferencias e intereses `[Mejora]` | pantalla `PreferencesScreen` (nuevo); `ListTile` en `profile_screen.dart:1337` | Pendiente | Pendiente |
+| UX-PRF-023 Gestion de intereses: anadir, quitar y restablecer `[Mejora]` | tabla `user_interests` (nuevo); `PreferencesScreen` (nuevo) | Pendiente | Pendiente |
+| UX-PRF-024 Contenido silenciado y 'Deshacer' `[Mejora]` | tabla `content_mutes` (nuevo); `PreferencesScreen` (nuevo) | Pendiente | Pendiente |
+| UX-PRF-025 Preferencias de patrocinios: frecuencia y transparencia `[Mejora]` | tabla `notification_preferences` (nuevo) tipo `sponsor_frequency`; `PreferencesScreen` (nuevo) | Pendiente | Pendiente |
+| UX-PRF-026 Sincronizacion de preferencias `[Mejora]` | Supabase upsert en `user_interests`, `content_mutes`, `notification_preferences` (todos nuevo); `cache_service.dart` para encolado offline | Pendiente | Pendiente |
+| UX-PRF-027 Modelo de categorias personalizadas por pantalla (opt-in) `[Mejora]` | `forum_screen.dart`; `marketplace_screen.dart`; `groups_screen.dart`; `user_interests` (nuevo); `PreferencesScreen` (nuevo) | Pendiente | Pendiente |
+| UX-PRF-028 Control "+ Categorias" y selector por pantalla `[Mejora]` | `forum_screen.dart`; `marketplace_screen.dart`; `groups_screen.dart`; selector de categorias (nuevo) | Pendiente | Pendiente |
+| UX-PRF-029 Sugerencias contextuales de categorias `[Mejora]` | `core/models/facultad.dart`; `PreferencesScreen` (nuevo) | Pendiente | Pendiente |
+| UX-PRF-030 Estado sin resultados en pantalla filtrada `[Mejora]` | `shared/widgets/empty_state_widget.dart`; `forum_screen.dart`; `marketplace_screen.dart`; `groups_screen.dart` | Pendiente | Pendiente |
+
 
 ### 4.6 Autenticación y SSO
 
@@ -266,6 +283,16 @@ prioritarios para el siguiente ciclo de trabajo.
 | UX-SPN-013 | Vigencia y renovación de promociones | tabla `sponsored_promotions` (nuevo) |
 | UX-SPN-014 | Suspensión y baja del patrocinador | estado de suspensión en `profiles` (nuevo) |
 | UX-SPN-015 | Notificaciones de ciclo de vida | tabla de notificaciones (nuevo) |
+| UX-PRF-016 a UX-PRF-021 | Menú inicial de nuevos usuarios (contexto, intereses, notificaciones, identidad y cierre) | `OnboardingScreen` (nuevo); clave `usac_onboarding_done` |
+| UX-PRF-022 | Centro de preferencias e intereses (hub unificado) | `PreferencesScreen` (nuevo); `profile_screen.dart:1337` |
+| UX-PRF-023 | Gestión de intereses: añadir, quitar y restablecer | tabla `user_interests` (nuevo) |
+| UX-PRF-024 | Contenido silenciado y "Deshacer" | tabla `content_mutes` (nuevo) |
+| UX-PRF-025 | Preferencias de patrocinios (frecuencia y transparencia) | `notification_preferences` (nuevo) |
+| UX-PRF-026 | Sincronización de preferencias (local + nube) | Supabase; `cache_service.dart` |
+| UX-PRF-027 | Modelo opt-in de categorías personalizadas por pantalla (arranque mínimo) | `forum_screen.dart`; `marketplace_screen.dart`; `groups_screen.dart`; `user_interests` (nuevo) |
+| UX-PRF-028 | Control "+ Categorías" y selector con búsqueda en cada pantalla | `forum_screen.dart`; `marketplace_screen.dart`; `groups_screen.dart`; selector (nuevo) |
+| UX-PRF-029 | Sugerencias contextuales de categorías sin preselección | `core/models/facultad.dart`; `PreferencesScreen` (nuevo) |
+| UX-PRF-030 | Estado sin resultados con "Añadir categorías" y "Ver todo" | `empty_state_widget.dart`; `forum_screen.dart`; `marketplace_screen.dart`; `groups_screen.dart` |
 
 ---
 

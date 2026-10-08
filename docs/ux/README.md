@@ -22,12 +22,12 @@ uniforme (sección 3). Los requisitos son atómicos, verificables y trazables.
 | Archivo | Contenido |
 |---|---|
 | [`README.md`](README.md) | Este archivo: convenciones, plantilla, glosario y matriz de roles |
-| [`01-producto.md`](01-producto.md) | Visión, propuesta de valor, alcance, no-objetivos, supuestos, métricas de éxito |
+| [`01-producto.md`](01-producto.md) | Visión, propuesta de valor, alcance, no-objetivos, supuestos, transparencia y financiamiento, métricas de éxito |
 | [`02-navegacion.md`](02-navegacion.md) | Mapa de navegación, jerarquía de pantallas, puntos de entrada |
 | [`03-foro.md`](03-foro.md) | Foro estudiantil (feed, canales, posts, comentarios, encuestas) |
 | [`04-marketplace.md`](04-marketplace.md) | Marketplace y tutorías (catálogo, publicar, contacto, patrocinios) |
 | [`05-grupos.md`](05-grupos.md) | Directorio de grupos de estudio (WhatsApp/Telegram/Discord/Drive) |
-| [`06-perfil-y-cuenta.md`](06-perfil-y-cuenta.md) | Perfil, alias, avatar, carné, actividad propia |
+| [`06-perfil-y-cuenta.md`](06-perfil-y-cuenta.md) | Perfil, alias, avatar, carné, actividad propia, menú inicial de nuevos usuarios e intereses |
 | [`07-autenticacion.md`](07-autenticacion.md) | Login, registro, OTP, recuperación, logout, MFA TOTP, SSO |
 | [`08-navegacion-shell-y-reglas.md`](08-navegacion-shell-y-reglas.md) | Cascarón de navegación, tema, normas y descargos |
 | [`09-sistema-diseno.md`](09-sistema-diseno.md) | Design tokens, componentes, temas claro/oscuro, breakpoints |
@@ -128,12 +128,12 @@ Ver [`07-autenticacion.md`](07-autenticacion.md).
 | Documento | Requisitos | Versión | Última actualización |
 |---|---:|---|---|
 | README | — | v1.0 | 2026-10-07 |
-| 01-producto | 16 (`UX-PRD`) | v1.1 | 2026-10-07 |
+| 01-producto | 17 (`UX-PRD`) | v1.2 | 2026-10-08 |
 | 02-navegacion | 3 (`UX-MAP`) | v1.0 | 2026-10-07 |
 | 03-foro | 24 (`UX-FORO`) | v1.1 | 2026-10-07 |
 | 04-marketplace | 15 (`UX-MKT`) | v1.0 | 2026-10-07 |
 | 05-grupos | 12 (`UX-GRP`) | v1.1 | 2026-10-07 |
-| 06-perfil-y-cuenta | 15 (`UX-PRF`) | v1.0 | 2026-10-07 |
+| 06-perfil-y-cuenta | 30 (`UX-PRF`) | v1.2 | 2026-10-08 |
 | 07-autenticacion | 15 (`UX-AUTH`) | v1.0 | 2026-10-07 |
 | 08-navegacion-shell-y-reglas | 13 (`UX-NAV`, `UX-REG`) | v1.0 | 2026-10-07 |
 | 09-sistema-diseno | 8 (`UX-DSN`) | v1.1 | 2026-10-07 |
@@ -141,7 +141,7 @@ Ver [`07-autenticacion.md`](07-autenticacion.md).
 | 11-metricas-y-trazabilidad | 3 (`UX-MET`) | v1.0 | 2026-10-07 |
 | 12-patrocinios | 16 (`UX-SPN`) | v1.1 | 2026-10-08 |
 
-**Total: 156 requisitos identificados.** Cada área usa un prefijo propio para
+**Total: 172 requisitos identificados.** Cada área usa un prefijo propio para
 evitar colisiones de identificadores (p. ej. navegación-estructura es `UX-MAP`,
 mientras que el cascarón es `UX-NAV`).
 

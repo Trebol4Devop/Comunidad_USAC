@@ -139,6 +139,15 @@ el detalle de cada capacidad se especifica en el documento de su área.
 - **UX-PRD-025 — Publicidad honesta y no intrusiva.** El contenido patrocinado
   siempre se etiqueta, respeta límites de frecuencia y puede ocultarse/reportarse;
   nunca se disfraza de contenido orgánico. [ver `12-patrocinios.md`](12-patrocinios.md)
+- **UX-PRD-026 — Sin fines de lucro, financiamiento transparente y protección de
+  datos.** Comunidad Universitaria USAC es un proyecto **sin fines de lucro** que
+  se financia mediante **patrocinios y donaciones**. **No vende datos**, **no
+  utiliza rastreadores publicitarios** y **no reporta información a las
+  autoridades de la USAC**, salvo cuando lo exija una **obligación legal**. Esta
+  declaración es canónica y se refleja en la tarjeta de privacidad
+  ([`06-perfil-y-cuenta.md`](06-perfil-y-cuenta.md), `UX-PRF-011`) y en el descargo
+  legal ([`08-navegacion-shell-y-reglas.md`](08-navegacion-shell-y-reglas.md),
+  `UX-REG-003`).
 
 ---
 

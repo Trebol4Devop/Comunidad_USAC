@@ -396,18 +396,21 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
   - Texto legal en 12px con interlineado 1.45:
     > _"Comunidad Universitaria es una plataforma y directorio estudiantil independiente y sin fines de lucro. No representa, no forma parte ni actúa en nombre de las autoridades de la Universidad de San Carlos de Guatemala. Los datos de pensums, materias y facultades se basan en publicaciones de libre acceso con carácter exclusivamente informativo._
     >
+    > _El proyecto se financia mediante patrocinios y donaciones; no vende datos, no utiliza rastreadores publicitarios y no reporta información a las autoridades de la USAC, salvo que lo exija una obligación legal._
+    >
     > _Los administradores de la plataforma no se hacen responsables de los acuerdos particulares, compras, ventas o contenidos intercambiados en enlaces de terceros."_
 - **Interacciones:** Lectura del descargo legal; no requiere acciones de aceptación forzada en esta pantalla.
 - **Estados:** Fijo e inalterable en la sección inferior de la pantalla.
 - **Validaciones y reglas de negocio:**
   - Este texto protege legalmente a los desarrolladores y moderadores estudiantiles frente a reclamaciones institucionales o disputas mercantiles entre particulares en Guatemala.
+  - La declaración de no lucro, financiamiento por patrocinios y donaciones, no venta de datos, no rastreadores publicitarios y no reporte a las autoridades de la USAC (salvo obligación legal) es canónica en UX-PRD-026 ([`01-producto.md`](01-producto.md)).
 - **Accesibilidad:**
   - Contraste cromático de texto ámbar oscuro `#92400E` sobre fondo `#FFFBEB` que supera 7:1 (nivel AAA de WCAG 2.2).
   - Semántica de bloque de aviso legal prioritario.
 - **Responsive:**
   - Se adapta fluidamente a lo ancho del contenedor central (hasta 900px en escritorio).
 - **Criterios de aceptación (Gherkin):**
-  - **Given** una autoridad académica o estudiante que lee el marco legal de la aplicación, When examina el recuadro de descargo en RulesScreen, Then verifica que la plataforma declara explícitamente no representar a la administración de la USAC ni custodiar dinero de transacciones.
+  - **Given** una autoridad académica o estudiante que lee el marco legal de la aplicación, When examina el recuadro de descargo en RulesScreen, Then verifica que la plataforma declara explícitamente no representar a la administración de la USAC, no custodiar dinero de transacciones, no vender datos ni usar rastreadores publicitarios y no reportar a las autoridades salvo obligación legal, financiándose por patrocinios y donaciones.
   - **Given** un usuario navegando en modo oscuro en RulesScreen, When llega a la tarjeta de descargo, Then el contenedor mantiene tonalidades cálidas calibradas para una lectura descansada y de alto contraste.
 
 ---
@@ -468,7 +471,7 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
 - **Responsive:**
   - Soporte completo de gestos táctiles de deslizamiento lateral en iOS/Android y teclas Alt+Flecha Izquierda / Backspace en entorno web y desktop.
 - **Criterios de aceptación (Gherkin):**
-  - **Given** un estudiante que se encuentra editando su biografía en ProfileScreen, When pulsa "Normas de Convivencia y Descargo" para consultar un lineamiento y luego presiona la flecha de retroceso, Then regresa a ProfileScreen encontrando el texto de su biografía intacto.
+  - **Given** un estudiante que se encuentra editando su alias en ProfileScreen, When pulsa "Normas de Convivencia y Descargo" para consultar un lineamiento y luego presiona la flecha de retroceso, Then regresa a ProfileScreen encontrando el texto de su alias intacto.
   - **Given** un usuario que accede a RulesScreen mediante un enlace directo web o deep link sin historial previo (`canPop == false`), When se renderiza la cabecera, Then el AppBar no muestra una flecha de regreso inútil y ofrece en su lugar un botón para dirigirse al inicio de la aplicación.
 
 ---
