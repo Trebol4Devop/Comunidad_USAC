@@ -22,13 +22,13 @@ uniforme (sección 3). Los requisitos son atómicos, verificables y trazables.
 | Archivo | Contenido |
 |---|---|
 | [`README.md`](README.md) | Este archivo: convenciones, plantilla, glosario y matriz de roles |
-| [`01-producto.md`](01-producto.md) | Visión, propuesta de valor, alcance, no-objetivos, supuestos, transparencia y financiamiento, métricas de éxito |
+| [`01-producto.md`](01-producto.md) | Visión, propuesta de valor, alcance, no-objetivos, supuestos, roles y acceso (institucional/personal), transparencia y financiamiento, métricas de éxito |
 | [`02-navegacion.md`](02-navegacion.md) | Mapa de navegación, jerarquía de pantallas, puntos de entrada |
 | [`03-foro.md`](03-foro.md) | Foro estudiantil (feed, canales, posts, comentarios, encuestas) |
-| [`04-marketplace.md`](04-marketplace.md) | Marketplace y tutorías (catálogo, publicar, contacto, patrocinios) |
+| [`04-marketplace.md`](04-marketplace.md) | Marketplace y tutorías (catálogo, publicar, contacto, carta de presentación del vendedor, patrocinios) |
 | [`05-grupos.md`](05-grupos.md) | Directorio de grupos de estudio (WhatsApp/Telegram/Discord/Drive) |
-| [`06-perfil-y-cuenta.md`](06-perfil-y-cuenta.md) | Perfil, alias, avatar, carné, actividad propia, menú inicial de nuevos usuarios, intereses y tarjeta de presentación (visibilidad por campo) |
-| [`07-autenticacion.md`](07-autenticacion.md) | Login, registro, OTP, recuperación, logout, MFA TOTP, SSO |
+| [`06-perfil-y-cuenta.md`](06-perfil-y-cuenta.md) | Perfil, alias, avatar, carné, vendedor externo, actividad propia, menú inicial de nuevos usuarios, intereses y tarjeta de presentación (visibilidad por campo) |
+| [`07-autenticacion.md`](07-autenticacion.md) | Login, registro, acceso por dominio de correo, OTP, recuperación, logout, MFA TOTP, SSO |
 | [`08-navegacion-shell-y-reglas.md`](08-navegacion-shell-y-reglas.md) | Cascarón de navegación, tema, normas y descargos |
 | [`09-sistema-diseno.md`](09-sistema-diseno.md) | Design tokens, componentes, temas claro/oscuro, breakpoints |
 | [`10-transversales.md`](10-transversales.md) | Errores, estados vacíos, red/offline, accesibilidad, i18n, rendimiento |
@@ -92,14 +92,14 @@ Formato: **`UX-<AREA>-###`**
 
 Detalle completo en [`01-producto.md`](01-producto.md).
 
-| Capacidad | Visitante | Estudiante | Verificado | Moderador | Admin |
-|---|:--:|:--:|:--:|:--:|:--:|
-| Leer foro / marketplace / grupos | Sí | Sí | Sí | Sí | Sí |
-| Publicar / comentar / votar | No | Sí | Sí | Sí | Sí |
-| Publicar en marketplace con nombre verificado | No | No | Sí | Sí | Sí |
-| Moderar contenido y reportes | No | No | No | Sí | Sí |
-| Solicitar patrocinio | No | Sí | Sí | Sí | Sí |
-| Gestión global | No | No | No | No | Sí |
+| Capacidad | Visitante | Estudiante | Verificado | Vendedor externo | Moderador | Admin |
+|---|:--:|:--:|:--:|:--:|:--:|:--:|
+| Leer foro / marketplace / grupos | Sí | Sí | Sí | Sí | Sí | Sí |
+| Publicar en foro / comentar / votar | No | Sí | Sí | N/A | Sí | Sí |
+| Publicar en marketplace (requiere verificación) | No | No | Sí (carné) | Sí (docs) | Sí | Sí |
+| Moderar contenido y reportes | No | No | No | No | Sí | Sí |
+| Solicitar patrocinio | No | Sí | Sí | Sí | Sí | Sí |
+| Gestión global | No | No | No | No | No | Sí |
 
 **Guards transversales:** toda escritura exige sesión **AAL2** (MFA TOTP).
 Ver [`07-autenticacion.md`](07-autenticacion.md).
@@ -114,12 +114,14 @@ Ver [`07-autenticacion.md`](07-autenticacion.md).
 | **AAL** | *Authenticator Assurance Level*: AAL1 = sesión básica; AAL2 = con segundo factor (TOTP). |
 | **AAL2 guard** | Capa que bloquea escritura/navegación hasta elevar la sesión con TOTP. |
 | **Carrera / canal** | En el foro, canal temático dentro de un servidor de facultad. |
+| **Correo institucional / personal** | Institucional otorga acceso a lectura/foro sin verificar carné (lista configurable); personal exige verificación inmediata para acceder. |
 | **MFA / TOTP** | Autenticación multifactor por aplicación de códigos temporales. |
 | **OTP** | Código de un solo uso enviado por correo. |
 | **PKCE** | Extensión de OAuth 2.0 para clientes públicos. |
 | **Punto seguro** | Punto de encuentro físico verificado del campus para intercambios. |
 | **Sede / servidor** | Unidad académica (facultad o centro universitario) usada como "servidor" del foro. |
 | **SSO / PEMTREE** | Proveedor de identidad académica y app satélite que la consume. |
+| **Vendedor externo verificado** | Persona no estudiante admitida por un administrador para vender y patrocinar en la comunidad. |
 
 ---
 
@@ -127,21 +129,21 @@ Ver [`07-autenticacion.md`](07-autenticacion.md).
 
 | Documento | Requisitos | Versión | Última actualización |
 |---|---:|---|---|
-| README | — | v1.0 | 2026-10-07 |
-| 01-producto | 17 (`UX-PRD`) | v1.2 | 2026-10-08 |
+| README | — | v1.1 | 2026-10-08 |
+| 01-producto | 18 (`UX-PRD`) | v1.3 | 2026-10-08 |
 | 02-navegacion | 3 (`UX-MAP`) | v1.0 | 2026-10-07 |
 | 03-foro | 24 (`UX-FORO`) | v1.1 | 2026-10-07 |
-| 04-marketplace | 15 (`UX-MKT`) | v1.0 | 2026-10-07 |
+| 04-marketplace | 17 (`UX-MKT`) | v1.2 | 2026-10-08 |
 | 05-grupos | 12 (`UX-GRP`) | v1.1 | 2026-10-07 |
-| 06-perfil-y-cuenta | 34 (`UX-PRF`) | v1.3 | 2026-10-08 |
-| 07-autenticacion | 15 (`UX-AUTH`) | v1.0 | 2026-10-07 |
+| 06-perfil-y-cuenta | 35 (`UX-PRF`) | v1.4 | 2026-10-08 |
+| 07-autenticacion | 16 (`UX-AUTH`) | v1.1 | 2026-10-08 |
 | 08-navegacion-shell-y-reglas | 13 (`UX-NAV`, `UX-REG`) | v1.0 | 2026-10-07 |
 | 09-sistema-diseno | 8 (`UX-DSN`) | v1.1 | 2026-10-07 |
 | 10-transversales | 16 (`UX-X`) | v1.1 | 2026-10-07 |
-| 11-metricas-y-trazabilidad | 3 (`UX-MET`) | v1.0 | 2026-10-07 |
-| 12-patrocinios | 16 (`UX-SPN`) | v1.1 | 2026-10-08 |
+| 11-metricas-y-trazabilidad | 3 (`UX-MET`) | v1.1 | 2026-10-08 |
+| 12-patrocinios | 16 (`UX-SPN`) | v1.2 | 2026-10-08 |
 
-**Total: 176 requisitos identificados.** Cada área usa un prefijo propio para
+**Total: 181 requisitos identificados.** Cada área usa un prefijo propio para
 evitar colisiones de identificadores (p. ej. navegación-estructura es `UX-MAP`,
 mientras que el cascarón es `UX-NAV`).
 

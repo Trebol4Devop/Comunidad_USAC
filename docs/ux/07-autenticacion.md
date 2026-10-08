@@ -31,21 +31,23 @@ Este documento formaliza y eleva la experiencia analizada en el **Inventario UX*
 
 ## 3. Matriz de capacidades de acceso y seguridad por rol
 
-| Capacidad                                 |  Visitante (Sin sesión)  |  Estudiante en Gracia (AAL1)  | Estudiante Activo (AAL2) | Estudiante Verificado (AAL2) | Moderador (AAL2) | Administrador (AAL2) |
-| ----------------------------------------- | :----------------------: | :---------------------------: | :----------------------: | :--------------------------: | :--------------: | :------------------: |
-| Explorar foro, marketplace y grupos       |          Hecho           |             Hecho             |          Hecho           |            Hecho             |      Hecho       |        Hecho         |
-| Buscar contenidos y filtrar facultades    |          Hecho           |             Hecho             |          Hecho           |            Hecho             |      Hecho       |        Hecho         |
-| Iniciar sesión (Correo / Google)          |          Hecho           |              N/A              |           N/A            |             N/A              |       N/A        |         N/A          |
-| Crear nueva cuenta comunitaria            |          Hecho           |              N/A              |           N/A            |             N/A              |       N/A        |         N/A          |
-| Publicar temas y comentarios en el foro   |  Falta _(interceptado)_  | Hecho _(hasta vencer gracia)_ |          Hecho           |            Hecho             |      Hecho       |        Hecho         |
-| Votar en encuestas y reacciones (_likes_) |  Falta _(interceptado)_  | Hecho _(hasta vencer gracia)_ |          Hecho           |            Hecho             |      Hecho       |        Hecho         |
-| Publicar artículos en el marketplace      |  Falta _(interceptado)_  |    Falta _(requiere AAL2)_    |          Hecho           |     Hecho _(con carné)_      |      Hecho       |        Hecho         |
-| Registrar nuevos grupos de WhatsApp       |  Falta _(interceptado)_  |    Falta _(requiere AAL2)_    |          Hecho           |            Hecho             |      Hecho       |        Hecho         |
-| Votar reputación de grupos (_upvote_)     |  Falta _(interceptado)_  | Hecho _(hasta vencer gracia)_ |          Hecho           |            Hecho             |      Hecho       |        Hecho         |
-| Gestionar códigos de respaldo TOTP        |          Falta           |             Falta             |          Hecho           |            Hecho             |      Hecho       |        Hecho         |
-| Desactivar segundo factor TOTP            |          Falta           |             Falta             |          Hecho           |            Hecho             |      Hecho       |        Hecho         |
-| Autorizar accesos SSO (PEMTREE)           | Falta _(login embebido)_ |   Hecho _(AAL1 suficiente)_   |          Hecho           |            Hecho             |      Hecho       |        Hecho         |
-| Acceder a funciones de moderación         |          Falta           |             Falta             |          Falta           |            Falta             |      Hecho       |        Hecho         |
+| Capacidad                                 |  Visitante (Sin sesión)  |  Estudiante en Gracia (AAL1)  | Estudiante Activo (AAL2) | Estudiante Verificado (AAL2) | Vendedor externo verificado (AAL2) | Moderador (AAL2) | Administrador (AAL2) |
+| ----------------------------------------- | :----------------------: | :---------------------------: | :----------------------: | :--------------------------: | :--------------------------------: | :--------------: | :------------------: |
+| Explorar foro, marketplace y grupos       |          Hecho           |             Hecho             |          Hecho           |            Hecho             |               Hecho                |      Hecho       |        Hecho         |
+| Buscar contenidos y filtrar facultades    |          Hecho           |             Hecho             |          Hecho           |            Hecho             |               Hecho                |      Hecho       |        Hecho         |
+| Iniciar sesión (Correo / Google)          |          Hecho           |              N/A              |           N/A            |             N/A              |                N/A                 |       N/A        |         N/A          |
+| Crear nueva cuenta comunitaria            |          Hecho           |              N/A              |           N/A            |             N/A              |                N/A                 |       N/A        |         N/A          |
+| Publicar temas y comentarios en el foro   |  Falta _(interceptado)_  | Hecho _(hasta vencer gracia)_ |          Hecho           |            Hecho             |            Falta / N-A             |      Hecho       |        Hecho         |
+| Votar en encuestas y reacciones (_likes_) |  Falta _(interceptado)_  | Hecho _(hasta vencer gracia)_ |          Hecho           |            Hecho             |            Falta / N-A             |      Hecho       |        Hecho         |
+| Publicar artículos en el marketplace      |  Falta _(interceptado)_  |    Falta _(requiere AAL2)_    | Falta _(requiere verificación)_ |     Hecho _(carné)_      |               Hecho                |      Hecho       |        Hecho         |
+| Registrar nuevos grupos de WhatsApp       |  Falta _(interceptado)_  |    Falta _(requiere AAL2)_    |          Hecho           |            Hecho             |            Falta / N-A             |      Hecho       |        Hecho         |
+| Votar reputación de grupos (_upvote_)     |  Falta _(interceptado)_  | Hecho _(hasta vencer gracia)_ |          Hecho           |            Hecho             |            Falta / N-A             |      Hecho       |        Hecho         |
+| Gestionar códigos de respaldo TOTP        |          Falta           |             Falta             |          Hecho           |            Hecho             |               Hecho                |      Hecho       |        Hecho         |
+| Desactivar segundo factor TOTP            |          Falta           |             Falta             |          Hecho           |            Hecho             |               Hecho                |      Hecho       |        Hecho         |
+| Autorizar accesos SSO (PEMTREE)           | Falta _(login embebido)_ |   Hecho _(AAL1 suficiente)_   |          Hecho           |            Hecho             |            Falta / N-A             |      Hecho       |        Hecho         |
+| Acceder a funciones de moderación         |          Falta           |             Falta             |          Falta           |            Falta             |               Falta                |      Hecho       |        Hecho         |
+
+*Nota: El acceso pleno al foro con correo personal exige la validación de carné (UX-AUTH-016). La admisión de vendedores externos no estudiantes está cubierta en UX-PRF-035.*
 
 ---
 
@@ -176,7 +178,7 @@ flowchart TD
 - **UI / contenido:**
   - Encabezado: Título "Crear Cuenta Estudiantil" e icono de birrete universitario (`Icons.school_outlined`).
   - Subtítulo: "Únete a la plataforma colaborativa e independiente de la comunidad USAC".
-  - Campo de texto para Correo: Etiqueta "Correo electrónico", texto de ayuda "tu_correo@ejemplo.com", icono prefijo `Icons.email_outlined`. Se admiten tanto correos institucionales de la USAC (`@ingenieria.usac.edu.gt`, `@profesor.usac.edu.gt`, `@medicina.usac.edu.gt`) como correos personales reconocidos.
+  - Campo de texto para Correo: Etiqueta "Correo electrónico", texto de ayuda "tu_correo@ejemplo.com", icono prefijo `Icons.email_outlined`. Se admiten correos institucionales de la lista USAC configurable por administradores (otorgan acceso directo al foro) y correos personales (exigirán validación de carné para acceso, ver UX-AUTH-016).
   - Campo de texto para Contraseña: Etiqueta "Contraseña (mínimo 6 caracteres)", icono prefijo `Icons.lock_outline`, botón sufijo interactivo para alternar entre ver/ocultar caracteres (`Icons.visibility` / `Icons.visibility_off`).
   - Indicador visual de seguridad de contraseña: Barra delgada reactiva que pasa de rojo (débil: < 6 caracteres), amarillo (aceptable: 6-8 caracteres) a verde (fuerte: > 8 caracteres con combinación de números y letras).
   - Texto legal al pie: "Al registrarte aceptas las [Normas de Convivencia](rules) de la Comunidad USAC".
@@ -196,6 +198,7 @@ flowchart TD
   - Respaldo técnico: [`auth_modal.dart:175-210`](../../comunidad_universitaria/lib/features/shared/widgets/auth_modal.dart#L175-L210) y [`supabase_service.dart:185-215`](../../comunidad_universitaria/lib/core/services/supabase_service.dart#L185-L215).
   - El correo es normalizado (recorte de espacios y minúsculas) antes del envío.
   - La contraseña no puede contener espacios en blanco iniciales o finales.
+  - El sistema clasifica el correo ingresado como institucional o personal comparando su dominio contra la lista configurable gestionada por administradores.
 - **Accesibilidad:**
   - Contraste superior a 4.5:1 en todos los textos e iconos.
   - La alternancia de visibilidad de contraseña anuncia: "Contraseña visible" o "Contraseña oculta".
@@ -738,6 +741,20 @@ flowchart TD
 
 ---
 
+### UX-AUTH-016 — Acceso según dominio de correo (institucional o personal) y lista configurable (nuevo)
+
+- **Actor/rol:** Visitante (aspirante a registro o inicio de sesión).
+- **Estado objetivo:** al registrar o iniciar sesión, el sistema clasifica el dominio del correo contra la lista institucional USAC configurable por administradores: (a) institucional: crea la cuenta y concede acceso al foro y a la lectura general sin exigir carné (la verificación de carné sigue siendo necesaria para vender); (b) personal: la verificación de carné es obligatoria para acceder y la cuenta queda "pendiente de verificación" hasta validarla (UX-PRF-013).
+- **UI/contenido:** aviso contextual "Correo institucional detectado" o "Correo personal: requiere verificación de carné para acceder"; sección de administración de la lista de dominios institucionales para administradores (nuevo).
+- **Interacciones:** institucional -> entra a la app; personal -> se abre CarneValidationModal (UX-PRF-013); si el usuario cancela, permanece en modo visitante (solo lectura) con opción de reintentar.
+- **Validaciones y reglas de negocio:** dominio normalizado en minúsculas; la lista de dominios la gestionan los administradores; el dominio personal nunca otorga acceso pleno sin carné.
+- **Criterios de aceptación (Gherkin):**
+  - **Given** un registro con correo institucional, **When** completa el proceso, **Then** crea la cuenta y accede al foro.
+  - **Given** un registro con correo personal sin verificar, **When** intenta acceder, **Then** queda bloqueado en modo visitante.
+  - **Given** un registro con correo personal, **When** valida su carné, **Then** accede plenamente a la app.
+
+---
+
 ## 6. Matriz de trazabilidad técnica y reglas de seguridad
 
 ### 6.1 Mapeo de Requisitos a Código y Mecanismos de Seguridad
@@ -759,6 +776,7 @@ flowchart TD
 | **UX-AUTH-013** | `lib/features/sso/sso_security_validator.dart`             | `SsoSecurityValidator.isValidRedirectUri`                    |    N/A    | Unit test exhaustivo de vectores Open Redirect |
 | **UX-AUTH-014** | `lib/features/sso/screens/sso_authorize_screen.dart`       | `buildSuccessRedirectUrl` (Tokens en fragmento `#`)          | AAL1/AAL2 | Widget test de pantalla de consentimiento      |
 | **UX-AUTH-015** | `lib/features/sso/screens/sso_authorize_screen.dart`       | Getter configurable de `effectiveRedirectUri`                |    N/A    | Widget test de banner y selector de entorno    |
+| **UX-AUTH-016** | `lib/features/shared/widgets/auth_modal.dart` (clasificación por dominio, nuevo) | Lista configurable de dominios institucionales (nuevo) | AAL1 | Widget test de acceso por dominio |
 
 ---
 

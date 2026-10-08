@@ -29,13 +29,13 @@
 ## 2. Identidad y cuenta de patrocinador (UX-SPN-001…010)
 
 ### UX-SPN-001 — Perfil público de patrocinador
-- **Actor / rol:** Patrocinador; visible para todos
+- **Actor / rol:** Patrocinador (estudiante verificado o vendedor externo verificado); visible para todos
 - **Prioridad:** Must
 - **Estado objetivo:** todo patrocinador tiene un **perfil público** con: logotipo,
   nombre comercial, descripción corta, categoría, sede/facultades donde opera,
   canales de contacto y su catálogo de anuncios patrocinados. Es el destino de los
   enlaces que aparecen en Foro y Grupos.
-- **Precondiciones:** cuenta con rol/atributo de patrocinador aprobado.
+- **Precondiciones:** cuenta con rol/atributo de patrocinador aprobado (requiere estar previamente verificado mediante carné o admisión externa).
 - **UI / contenido:** encabezado con logo, nombre, distintivo **"Patrocinador"**
   verificado; bio; chips de categoría y sede; grid del catálogo; botones de
   contacto; botón "Ver todos sus anuncios".
@@ -210,9 +210,9 @@
 ## 3. Ciclo de vida y administración del patrocinador (UX-SPN-011…016)
 
 ### UX-SPN-011 — Solicitud de cuenta de patrocinador
-- **Actor / rol:** Estudiante / Emprendedor
+- **Actor / rol:** Estudiante registrado (con o sin carné) / Vendedor externo verificado
 - **Prioridad:** Must
-- **Estado objetivo:** el usuario autenticado llena un formulario de solicitud para
+- **Estado objetivo:** el usuario que desea patrocinar llena un formulario de solicitud para
   obtener el rol de patrocinador; la solicitud queda en estado `pending` hasta la
   aprobación o rechazo por parte del admin. El usuario recibe confirmación
   inmediata y puede consultar el estado de su solicitud en cualquier momento.
@@ -222,7 +222,7 @@
   (`status CHECK('pending','in_review','approved','rejected')`), pero la capa
   Flutter no bloquea el reenvío. Se requiere consultar la existencia de una
   solicitud previa antes de abrir el formulario.
-- **Precondiciones:** usuario autenticado con AAL2; no posee ya el rol de
+- **Precondiciones:** usuario autenticado con AAL2; si es estudiante sin carné verificado debe validarlo (UX-PRF-013) antes de activar el patrocinio; si es no estudiante debe estar admitido como Vendedor externo verificado (UX-PRF-035); no posee ya el rol de
   patrocinador ni una solicitud activa (`status IN ('pending','in_review')`).
 - **UI / contenido:** botón "Convertirme en patrocinador" en el perfil o en el
   Marketplace; diálogo `sponsor_request_dialog.dart` (existente) con los campos

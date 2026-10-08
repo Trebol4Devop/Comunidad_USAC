@@ -90,12 +90,10 @@ representa ni cuenta con afiliación oficial de las autoridades universitarias.
 - **UX-PRD-011 — Estudiante registrado.**
   - **Estado objetivo:** puede escribir en foro y marketplace, personalizar
     perfil y unirse/reportar grupos.
-  - **Restricción:** toda escritura exige sesión **AAL2** (MFA TOTP).
+  - **Regla:** El acceso se define por el dominio del correo (ver UX-AUTH-016 en 07-autenticacion.md): los correos de la lista institucional USAC (configurable por administradores) crean la cuenta y habilitan el foro y la lectura general sin carné; los correos personales exigen la verificación de carné para completar el acceso. Toda escritura exige AAL2.
 
 - **UX-PRD-012 — Estudiante verificado.**
-  - **Estado objetivo:** estudiante con carné validado; en marketplace sus
-    publicaciones muestran el distintivo de identidad verificada y su nombre
-    validado en lugar del alias. [ver UX-PRF-* y UX-MKT-*]
+  - **Estado objetivo:** estudiante con carné validado (obligatorio para vender y para acceder cuando el correo es personal). En el Marketplace puede publicar con su nombre validado y distintivo de verificación; en el Foro conserva su seudónimo.
 
 - **UX-PRD-013 — Moderador.**
   - **Estado objetivo:** dispone de herramientas para revisar contenido en
@@ -106,14 +104,19 @@ representa ni cuenta con afiliación oficial de las autoridades universitarias.
   - **Estado objetivo:** acceso completo de moderación y gestión.
 
 - **UX-PRD-015 — Patrocinador.**
-  - **Estado objetivo:** cuenta comercial aprobada con **perfil público** propio y
-    un panel para publicar promociones. Su contenido puede aparecer **destacado en
-    el carrusel del Marketplace**, como **publicación patrocinada en el Foro** y
-    como **aparición ocasional en Grupos**, siempre etiquetado como patrocinado.
+  - **Estado objetivo:** puede solicitarlo cualquier estudiante (con carné verificado) y cualquier Vendedor externo verificado (UX-PRD-016); requiere aprobación de un administrador. Beneficios: destacar en el Marketplace (primera plana), publicar anuncios en el Foro y apariciones en Grupos, siempre etiquetados. Detalle en 12-patrocinios.md.
   - **Regla:** requiere solicitud y aprobación previas; todo su contenido pasa por
     moderación y no puede auto-aprobarse.
   - **Detalle:** ver el modelo transversal en
     [`12-patrocinios.md`](12-patrocinios.md) (`UX-SPN`).
+
+- **UX-PRD-016 — Vendedor externo verificado (nuevo).**
+  - **Estado objetivo:** persona no estudiante que vende productos o servicios en la comunidad USAC. Ingresa identificándose con documentos personales y es admitida por un administrador; queda catalogada como verificada.
+  - **Regla:** requiere admisión explícita de un administrador; al aprobarse obtiene el distintivo "Vendedor externo verificado", puede publicar y vender en el Marketplace y postularse a patrocinador. No accede al foro como estudiante ni a canales académicos.
+  - **Detalle:** ver UX-PRF-035 en 06-perfil-y-cuenta.md y UX-MKT-014/016 en 04-marketplace.md.
+  - **Criterios de aceptación:**
+    - **Given** un no estudiante con documentos, **When** es admitido por un admin, **Then** obtiene el distintivo verificable.
+    - **Given** un no estudiante, **When** no ha sido admitido, **Then** no puede publicar.
 
 ### 4.2 Matriz de capacidades
 La matriz resumida vive en [`README.md`](README.md#4-roles-y-matriz-de-capacidades-resumen);

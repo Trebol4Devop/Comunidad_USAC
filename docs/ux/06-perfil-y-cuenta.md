@@ -404,27 +404,29 @@ flowchart TD
 ---
 
 ### UX-PRF-013 — Verificación de identidad estudiantil con carné universitario
-- **Actor / rol:** Estudiante registrado, Estudiante verificado, Moderador, Administrador
+- **Actor / rol:** Estudiante registrado (con correo personal o institucional), Visitante interceptado
 - **Prioridad:** Must
-- **Estado objetivo:** El estudiante puede validar voluntariamente su carné universitario para acreditarse como vendedor confiable en el Marketplace. La interfaz exhibe de forma transparente el estado actual (validado vs. pendiente), solicita consentimiento informado previo para la comprobación y, al validarse, muestra con orgullo el distintivo verde `"Estudiante Validado"` junto al nombre oficial y número de carné.
-- **Precondiciones:** Acceso al perfil desde `ProfileScreen` o desde el flujo de publicación de Marketplace.
+- **Estado objetivo:** La verificación con carné universitario cumple un doble propósito: es obligatoria para vender en el Marketplace (aplica para cualquier estudiante) y es obligatoria para completar el acceso general si la cuenta se registró con un correo personal (UX-AUTH-016). Para correos institucionales, el uso general es libre, pero la verificación sigue siendo requisito para vender. La interfaz exhibe de forma transparente el estado actual (validado vs. pendiente), solicita consentimiento informado previo para la comprobación y, al validarse, muestra el distintivo verde `"Vendedor Verificado"` (o `"Estudiante Validado"`) junto al nombre oficial y número de carné.
+- **Precondiciones:** Acceso al perfil, intento de publicación en Marketplace, o flujo de inicio de sesión de un correo personal (UX-AUTH-016).
 - **UI / contenido:**
   - Tarjeta de validación en la cabecera:
     - *Estado no verificado:* Borde azul cielo (`#0284C7` al 30%), fondo azul sutil, icono `Icons.verified_user_outlined`, título `"Validación con Carné Universitario"`, texto explicativo de privacidad (`"Solo consultaremos tu nombre y estado activo en Registro y Estadística. Tus notas y datos personales privados nunca son leídos ni almacenados."`) y botón azul `"Validar"`.
-    - *Estado verificado:* Borde verde esmeralda (`#059669` al 30%), fondo verde sutil, icono `Icons.verified`, título `"Estudiante Validado: <Nombre> · <Carné>"`, texto explicativo (`"Tu nombre y badge de verificado se muestran en Marketplace. En el Foro se mantiene tu perfil estudiantil."`) y botón verde `"Verificar"`.
+    - *Estado verificado:* Borde verde esmeralda (`#059669` al 30%), fondo verde sutil, icono `Icons.verified`, título `"Estudiante Validado: <Nombre> · <Carné>"`, texto explicativo (`"Tu nombre y badge de verificado se muestran en Marketplace. En el Foro se mantiene tu perfil estudiantil."`).
   - Modal `CarneValidationModal`: cuadro de consentimiento obligatorio, campo de número de carné (mínimo 6 dígitos), campo de nombre completo del estudiante y botón de validación.
 - **Interacciones:**
-  - Pulsar `"Validar"` abre `CarneValidationModal`.
-  - Al completar la validación y pulsar aceptar, el perfil actualiza `isCarneVerified = true`, guarda los datos y reconfigura la tarjeta de cabecera a verde esmeralda.
+  - Pulsar `"Validar"` o ser interceptado abre `CarneValidationModal`.
+  - Al completar la validación y pulsar aceptar, el perfil actualiza `isCarneVerified = true`, guarda los datos y reconfigura la tarjeta de cabecera a verde esmeralda (y concede el acceso pleno si provenía de correo personal).
 - **Estados:** Sin verificar | Modal abierto | Verificando (con animación) | Verificado exitosamente | Error en formato de carné.
 - **Validaciones y reglas de negocio:**
   - Requiere aceptación explícita del consentimiento informado antes de habilitar la verificación.
   - El carné debe ser numérico y tener al menos 6 dígitos.
+  - Un correo personal no puede eludir esta verificación para acceder a la app; un correo institucional puede posponerla hasta que intente vender.
   - El nombre validado **únicamente** se publica en anuncios comerciales de Marketplace ([ver `04-marketplace.md`](04-marketplace.md)); en el Foro Estudiantil el usuario continúa participando bajo su seudónimo anónimo.
 - **Accesibilidad:** Contrastes reforzados para los estados azul y verde. Lectura accesible del estado de validación. Foco automático en el modal.
 - **Responsive:** En móvil se apila el botón bajo el texto descriptivo si el ancho es insuficiente; en pantallas anchas se distribuye en una fila horizontal compacta.
 - **Criterios de aceptación (Gherkin):**
   - **Given** un estudiante no validado en la pantalla de perfil, **When** abre el diálogo de carné, acepta el consentimiento informado e ingresa su carné y nombre, **Then** su perfil pasa al estado "Estudiante Validado" con distintivo verde institucional.
+  - **Given** un estudiante con correo personal que inicia sesión, **When** es interceptado por `CarneValidationModal` y valida su carné, **Then** obtiene acceso pleno a la plataforma.
   - **Given** un estudiante que ingresa un carné de menos de 6 dígitos o no marca el consentimiento, **When** intenta validar, **Then** el sistema deshabilita el botón de acción e impide la validación.
 
 ---
@@ -441,7 +443,7 @@ flowchart TD
     - Subtítulo descriptivo: `"Configura un autenticador TOTP para proteger tu cuenta"`.
     - Icono indicador `Icons.chevron_right`.
 - **Interacciones:**
-  - Al presionar la opción, se realiza navegación a `TotpEnrollmentScreen(isRequired: false)` ([ver detalle en `07-autenticacion.md`](07-autenticacion.md#ux-auth-005)).
+  - Al presionar la opción, se realiza navegación a `TotpEnrollmentScreen(isRequired: false)` ([ver detalle en `07-autenticacion.md`](07-autenticacion.md#ux-auth-005--recuperación-y-restablecimiento-de-contraseña-mediante-otp-con-cuenta-regresiva-mejora)).
   - Si el usuario no tiene TOTP activo, la pantalla le permite generar un nuevo secreto alfanumérico y código QR.
   - Si ya cuenta con TOTP, la pantalla le permite consultar la cantidad de códigos de respaldo restantes, regenerarlos o desactivar el factor.
   - Al regresar a `ProfileScreen`, el perfil recarga el estado de sesión sin anomalías.
@@ -529,7 +531,7 @@ flowchart TD
 - **Actor / rol:** Estudiante registrado (primer inicio de sesión)
 - **Prioridad:** Must
 - **Precondiciones:** Menú inicial activo (UX-PRF-016). Catálogo `USACConstants.facultades` disponible en memoria.
-- **Estado objetivo:** El paso 1 del menú inicial solicita al estudiante su sede, facultad y carrera usando los mismos tres selectores de [UX-PRF-006](06-perfil-y-cuenta.md#ux-prf-006--seleccion-de-informacion-academica-facultad-carrera-y-sede). Los valores seleccionados se persisten en el perfil y acotan el feed inicial; no se duplica la lógica, se reutiliza el mismo componente.
+- **Estado objetivo:** El paso 1 del menú inicial solicita al estudiante su sede, facultad y carrera usando los mismos tres selectores de [UX-PRF-006](06-perfil-y-cuenta.md#ux-prf-006--selección-de-información-académica-facultad-carrera-y-sede). Los valores seleccionados se persisten en el perfil y acotan el feed inicial; no se duplica la lógica, se reutiliza el mismo componente.
 - **UI / contenido:**
   - Título de paso: "Paso 1 de 5: Tu contexto académico".
   - Tres selectores idénticos a UX-PRF-006: Sede, Facultad, Carrera.
@@ -555,7 +557,7 @@ flowchart TD
 - **Actor / rol:** Estudiante registrado (primer inicio de sesión)
 - **Prioridad:** Must
 - **Precondiciones:** Menú inicial activo (UX-PRF-016). Paso 1 completado o saltado (UX-PRF-017).
-- **Estado objetivo:** El paso 2 del menú inicial permite al estudiante seleccionar sus intereses de contenido en tres bloques: (a) canales del Foro Estudiantil ([ver `03-foro.md`](03-foro.md#ux-foro-001--feed-central-y-selector-de-canales-tematicos-canonicos)), (b) categorías de Marketplace ([ver `04-marketplace.md`](04-marketplace.md#ux-mkt-004--barra-de-busqueda-textual-y-filtros-facetados-de-catalogo)) y (c) cursos/carreras de Grupos ([ver `05-grupos.md`](05-grupos.md#ux-grp-002--filtrado-por-facultad-carrera-y-busqueda-de-cursos)). Los intereses seleccionados acotan el feed inicial sin eliminar el acceso completo.
+- **Estado objetivo:** El paso 2 del menú inicial permite al estudiante seleccionar sus intereses de contenido en tres bloques: (a) canales del Foro Estudiantil ([ver `03-foro.md`](03-foro.md#ux-foro-001--feed-central-y-selector-de-canales-temáticos-canónicos)), (b) categorías de Marketplace ([ver `04-marketplace.md`](04-marketplace.md#ux-mkt-004--barra-de-búsqueda-textual-y-filtros-facetados-de-catálogo)) y (c) cursos/carreras de Grupos ([ver `05-grupos.md`](05-grupos.md#ux-grp-002--filtrado-por-facultad-carrera-y-búsqueda-de-cursos)). Los intereses seleccionados acotan el feed inicial sin eliminar el acceso completo.
 - **UI / contenido:**
   - Título de paso: "Paso 2 de 5: Qué te interesa ver".
   - Bloque A — "Canales del Foro": chips seleccionables con los 5 canales canónicos (`# todos-los-temas`, `# dudas-y-pensum`, `# catedraticos-opiniones`, `# apuntes-y-recursos`, `# horarios-y-secciones`) más "Área común" ([ver `03-foro.md`](03-foro.md)).
@@ -614,7 +616,7 @@ flowchart TD
 - **Actor / rol:** Estudiante registrado (primer inicio de sesión)
 - **Prioridad:** Should
 - **Precondiciones:** Menú inicial activo. Paso 3 completado o saltado (UX-PRF-019).
-- **Estado objetivo:** El paso 4 del menú inicial permite al estudiante establecer su alias y avatar público seudónimo, reutilizando los componentes ya definidos en [UX-PRF-002](06-perfil-y-cuenta.md#ux-prf-002--edicion-de-alias-con-generador-de-seudonimos-aleatorios) y [UX-PRF-004](06-perfil-y-cuenta.md#ux-prf-004--personalizacion-visual-del-avatar-color-e-icono-estudiantil) sin duplicar lógica. Si el usuario omite este paso, conserva el alias autogenerado y el avatar predeterminado.
+- **Estado objetivo:** El paso 4 del menú inicial permite al estudiante establecer su alias y avatar público seudónimo, reutilizando los componentes ya definidos en [UX-PRF-002](06-perfil-y-cuenta.md#ux-prf-002--edición-de-alias-con-generador-de-seudónimos-aleatorios) y [UX-PRF-004](06-perfil-y-cuenta.md#ux-prf-004--personalización-visual-del-avatar-color-e-icono-estudiantil) sin duplicar lógica. Si el usuario omite este paso, conserva el alias autogenerado y el avatar predeterminado.
 - **UI / contenido:**
   - Título de paso: "Paso 4 de 5: Tu identidad en la comunidad".
   - Vista previa en tiempo real del avatar circular con el icono e insignia actual.
@@ -748,14 +750,14 @@ flowchart TD
 - **Actor / rol:** Todos
 - **Prioridad:** Should
 - **Precondiciones:** `PreferencesScreen` (UX-PRF-022) activa.
-- **Estado objetivo:** La sección "Preferencias de patrocinios" dentro de `PreferencesScreen` permite al estudiante controlar la frecuencia de aparición de contenido patrocinado y acceder a la información de transparencia, enlazando directamente con [UX-SPN-004](12-patrocinios.md#ux-spn-004--frecuencia-rotacion-y-no-intrusion) (frecuencia y rotación) y [UX-SPN-005](12-patrocinios.md#ux-spn-005--transparencia-y-control-del-usuario) (transparencia y control del usuario).
+- **Estado objetivo:** La sección "Preferencias de patrocinios" dentro de `PreferencesScreen` permite al estudiante controlar la frecuencia de aparición de contenido patrocinado y acceder a la información de transparencia, enlazando directamente con [UX-SPN-004](12-patrocinios.md#ux-spn-004--frecuencia-rotación-y-no-intrusión) (frecuencia y rotación) y [UX-SPN-005](12-patrocinios.md#ux-spn-005--transparencia-y-control-del-usuario) (transparencia y control del usuario).
 - **UI / contenido:**
   - Subtítulo de sección: "Patrocinios".
   - Selector de frecuencia preferida con tres opciones en botonera segmentada: "Normal (1 de cada 6)", "Reducida (1 de cada 10)", "Mínima (1 de cada 15)". La opción "Normal" corresponde al tope de frecuencia definido en UX-SPN-004.
   - Interruptor "Mostrar explicación al ver un patrocinio" que habilita el enlace "¿Por qué veo esto?" definido en UX-SPN-005.
   - Enlace informativo "¿Cómo funciona el contenido patrocinado?" que abre una hoja inferior con la política de patrocinios de la plataforma.
 - **Interacciones:**
-  - Cambiar la opción de frecuencia actualiza la preferencia de forma inmediata; el servicio de inserción de patrocinios respeta el valor configurado ([ver UX-SPN-004](12-patrocinios.md#ux-spn-004--frecuencia-rotacion-y-no-intrusion)).
+  - Cambiar la opción de frecuencia actualiza la preferencia de forma inmediata; el servicio de inserción de patrocinios respeta el valor configurado ([ver UX-SPN-004](12-patrocinios.md#ux-spn-004--frecuencia-rotación-y-no-intrusión)).
   - El interruptor de transparencia habilita o deshabilita el icono "?" en las unidades patrocinadas del feed ([ver UX-SPN-005](12-patrocinios.md#ux-spn-005--transparencia-y-control-del-usuario)).
 - **Estados:** Frecuencia Normal (default) | Frecuencia Reducida | Frecuencia Mínima | Transparencia activada | Transparencia desactivada.
 - **Validaciones y reglas de negocio:**
@@ -913,19 +915,19 @@ flowchart TD
 - **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
 - **Prioridad:** Must
 - **Problema actual [Mejora]:** El avatar del autor no es interactivo en `post_card.dart` (avatar línea 132, `authorAlias` línea 148), `comment_item.dart` (avatar línea 62, `authorAlias` línea 79), `marketplace_card.dart` (avatar línea 406, `authorAlias` línea 423) ni en la fila de autoría de `group_card.dart` (línea 243, invocado desde `groups_screen.dart`). Tocar el avatar no despliega información del autor, de modo que no existe una tarjeta de presentación consistente y respetuosa del anonimato.
-- **Estado objetivo:** Tocar el avatar de otro usuario en el Foro, el Marketplace o los Grupos abre la tarjeta de presentación de perfil (`ProfileCardSheet` (nuevo)), un modal que muestra únicamente lo que el dueño haya aceptado revelar. Por defecto la tarjeta muestra solo avatar, seudónimo y rol/insignias; todo lo demás es opt-in por campo (UX-PRF-032/033). En móvil se presenta como hoja inferior (`showModalBottomSheet`) y en desktop como diálogo/popover centrado ([ver UX-X-012 en `10-transversales.md`](10-transversales.md)). La tarjeta no ofrece grafo social: el espectador solo puede "Reportar" y "Silenciar"; no hay seguir, agregar ni mensajería.
+- **Estado objetivo:** Tocar el avatar de otro usuario en el Foro, el Marketplace o los Grupos abre la tarjeta de presentación de perfil (`ProfileCardSheet` (nuevo)), un modal que muestra únicamente lo que el dueño haya aceptado revelar. Por defecto la tarjeta muestra solo avatar, seudónimo y rol/insignias (incluyendo el origen de verificación: "Vendedor Verificado (carné)" o "Vendedor externo verificado") y el badge de "Patrocinador" si aplica. Todo lo demás es opt-in por campo (UX-PRF-032/033). En móvil se presenta como hoja inferior (`showModalBottomSheet`) y en desktop como diálogo/popover centrado ([ver UX-X-012 en `10-transversales.md`](10-transversales.md)). La tarjeta no ofrece grafo social: el espectador solo puede "Reportar" y "Silenciar"; no hay seguir, agregar ni mensajería.
 - **Precondiciones:** El usuario observa una tarjeta de publicación, comentario, anuncio o grupo con avatar de autor. El perfil del autor es consultable por su identificador público.
 - **UI / contenido:**
   - Componente `ProfileCardSheet` (nuevo), reutilizado por Foro, Marketplace y Grupos.
   - Cabecera con avatar circular, seudónimo (`authorAlias`) y chip de rol/insignias.
   - Cuerpo con los campos revelados según consentimiento (UX-PRF-032/033); si no hay ningún campo revelado, muestra el texto "Este usuario mantiene su perfil anónimo".
-  - Pie con dos acciones: "Reportar" (abre `ReportDialog`) y "Silenciar" (agrega el autor a `content_mutes` (nuevo) o a la lista local de silenciados, [ver UX-PRF-024](#ux-prf-024--contenido-silenciado-y-opcion-deshacer)).
+  - Pie con dos acciones: "Reportar" (abre `ReportDialog`) y "Silenciar" (agrega el autor a `content_mutes` (nuevo) o a la lista local de silenciados, [ver UX-PRF-024](#ux-prf-024--contenido-silenciado-y-opción-deshacer)).
   - Botón de cierre (`Icons.close`) en desktop y tirador de arrastre en móvil.
 - **Interacciones:**
   - Tocar el avatar abre la tarjeta; tocar fuera, el botón de cierre, la tecla `Escape` o deslizar hacia abajo la cierran.
   - "Reportar" abre `ReportDialog` sin cerrar la tarjeta hasta confirmar.
   - "Silenciar" oculta de inmediato el contenido de ese autor en el feed activo y registra la acción; ofrece "Deshacer" mediante SnackBar ([ver UX-X-007](10-transversales.md)).
-  - No se muestran botones de seguir, agregar ni de contacto salvo los canales aceptados en contexto Marketplace (UX-PRF-033).
+  - No se muestran botones de seguir, agregar ni de contacto salvo los canales aceptados en contexto Marketplace (UX-PRF-033). En contexto Marketplace, si el usuario tiene anuncios activos, la acción "Ver sus anuncios" abre la carta de presentación del vendedor ([ver UX-MKT-016 en `04-marketplace.md`](04-marketplace.md)).
 - **Estados:**
   - *Abierta:* Tarjeta con datos mínimos (avatar, seudónimo, rol/insignias).
   - *Con campos revelados:* Secciones adicionales visibles según consentimiento.
@@ -933,7 +935,7 @@ flowchart TD
   - *Cargando:* Esqueleto del modal mientras se consulta la visibilidad.
   - *Error:* Mensaje "No pudimos cargar este perfil. Inténtalo de nuevo." con acción "Reintentar".
 - **Validaciones y reglas de negocio:**
-  - La tarjeta nunca muestra nombre real, carné, correo ni DPI en el Foro; respeta el seudónimo garantizado de [UX-X-015](10-transversales.md#ux-x-015--privacidad-de-datos-personales-disociacion-de-identidad-y-consentimiento-informado) y la transparencia de [UX-PRF-011](#ux-prf-011--transparencia-de-privacidad-y-uso-de-datos-estudiantiles).
+  - La tarjeta nunca muestra nombre real, carné, correo ni DPI en el Foro; respeta el seudónimo garantizado de [UX-X-015](10-transversales.md#ux-x-015--privacidad-de-datos-personales-disociación-de-identidad-y-consentimiento-informado) y la transparencia de [UX-PRF-011](#ux-prf-011--transparencia-de-privacidad-y-uso-de-datos-estudiantiles).
   - La tarjeta es de solo lectura; no permite seguir, agregar ni iniciar conversación.
   - El silenciamiento del autor se registra en `content_mutes` (nuevo) o en almacenamiento local para visitantes.
 - **Accesibilidad:** El modal atrapa el foco y devuelve el foco al avatar disparador al cerrarse. El avatar del feed declara etiqueta "Ver tarjeta de presentación de [seudónimo], botón". Los campos revelados se anuncian con su etiqueta.
@@ -981,10 +983,11 @@ flowchart TD
 - **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
 - **Prioridad:** Must
 - **Problema actual [Mejora]:** No existe una lista canónica de campos revelables ni distinción de contexto: el nombre verificado y los canales de contacto ya configurados en `profile_screen.dart` (tarjeta de contacto de UX-PRF-007) no tienen control de visibilidad en una tarjeta pública.
-- **Estado objetivo:** Define qué campos pueden revelarse en la tarjeta de presentación y sus límites por contexto. Son opcionales y siempre con consentimiento por campo (UX-PRF-032): facultad/carrera ([UX-PRF-006](#ux-prf-006--seleccion-de-informacion-academica-facultad-carrera-y-sede)), resumen de actividad pública (conteos agregados de publicaciones, comentarios, votos y grupos, sin detalles sensibles) e insignias/rol. Solo en contexto Marketplace, y nunca en el Foro, y con consentimiento explícito, se pueden mostrar además: nombre verificado de vendedor ([UX-PRF-007](#ux-prf-007--canales-de-contacto-para-marketplace-y-tutorias) y [UX-PRF-013](#ux-prf-013--verificacion-de-identidad-estudiantil-con-carne-universitario)), enlace a sus anuncios y canales de contacto.
+- **Estado objetivo:** Define qué campos pueden revelarse en la tarjeta de presentación y sus límites por contexto. Son opcionales y siempre con consentimiento por campo (UX-PRF-032): facultad/carrera ([UX-PRF-006](#ux-prf-006--selección-de-información-académica-facultad-carrera-y-sede)) y resumen de actividad pública (conteos agregados de publicaciones, comentarios, votos y grupos, sin detalles sensibles). El origen de verificación y el estado de patrocinador se muestran como datos de contexto inherentes (sin requerir consentimiento por campo) junto a las insignias/rol. Solo en contexto Marketplace, y nunca en el Foro, y con consentimiento explícito, se pueden mostrar además: nombre verificado de vendedor ([UX-PRF-007](#ux-prf-007--canales-de-contacto-para-marketplace-y-tutorías) y [UX-PRF-013](#ux-prf-013--verificación-de-identidad-estudiantil-con-carné-universitario)), enlace a sus anuncios ([ver UX-MKT-016 en `04-marketplace.md`](04-marketplace.md)) y canales de contacto.
 - **Precondiciones:** Consentimiento por campo activo (UX-PRF-032). En Marketplace, además, la condición de vendedor verificado cuando aplique.
 - **UI / contenido:**
-  - Campos base opcionales: "Facultad y carrera", "Resumen de actividad pública", "Insignias y rol".
+  - Campos base opcionales: "Facultad y carrera", "Resumen de actividad pública".
+  - Campos base obligatorios (si aplican): "Insignias y rol", "Origen de verificación", "Patrocinador".
   - Campos de contexto Marketplace (solo al abrir la tarjeta desde Marketplace): "Vendedor verificado" con nombre validado, "Ver sus anuncios" y los canales de contacto aceptados.
   - Etiqueta de contexto en la tarjeta de Marketplace: "Datos de vendedor verificados para compras seguras".
 - **Interacciones:**
@@ -1034,6 +1037,24 @@ flowchart TD
 
 ---
 
+### UX-PRF-035 — Admisión de vendedor externo (no estudiante) (nuevo)
+- **Actor / rol:** Persona no estudiante aspirante a vendedor; Administrador (aprobador)
+- **Prioridad:** Must
+- **Estado objetivo:** una persona no estudiante que vende en la comunidad USAC solicita admisión identificándose con documentos personales; un administrador revisa y aprueba; al aprobarse queda catalogada como "Vendedor externo verificado" y puede vender en el Marketplace y postularse a patrocinador.
+- **Precondiciones:** El aspirante no posee carné universitario ni correo institucional y cuenta con documentos de identidad vigentes. La solicitud se abre desde el perfil o desde el flujo de publicación del Marketplace.
+- **UI / contenido:** formulario de solicitud con carga de documentos y consentimiento informado de tratamiento de datos; estados de la solicitud (pendiente, en revisión, aprobado, rechazado con motivo); insignia "Vendedor externo verificado". Panel de revisión para el administrador (`ExternalSellerReviewPanel` (nuevo)) con los documentos y los botones "Aprobar" y "Rechazar".
+- **Interacciones:** al enviar la solicitud, esta queda pendiente; el administrador la revisa y decide; al aprobar, el solicitante recibe la insignia y se habilitan sus permisos de venta; ante rechazo puede ver el motivo y volver a solicitar.
+- **Estados:** sin solicitud | pendiente | en revisión | aprobado | rechazado con motivo.
+- **Validaciones y reglas de negocio:** solo un administrador aprueba; los documentos no se publican ni se muestran en la carta de presentación; el rechazo incluye motivo; la insignia "Vendedor externo verificado" es distinta de la del estudiante verificado por carné.
+- **Accesibilidad:** formulario con etiquetas explícitas; carga de documentos accesible por teclado y lector de pantalla; errores anunciados.
+- **Responsive:** en móvil el formulario ocupa el ancho completo; en desktop se presenta como diálogo centrado con el panel de documentos al lado.
+- **Criterios de aceptación (Gherkin):**
+  - **Given** una solicitud aprobada por un administrador, **When** el vendedor externo accede al Marketplace, **Then** obtiene la insignia "Vendedor externo verificado" y se habilita la publicación de productos.
+  - **Given** una solicitud de vendedor externo pendiente, **When** intenta publicar, **Then** el sistema bloquea la acción.
+  - **Given** una solicitud rechazada, **When** el vendedor externo la revisa, **Then** puede ver el motivo y se le permite volver a solicitar.
+
+---
+
 ## 4. Flujo del menú inicial de nuevos usuarios
 
 El siguiente diagrama describe la secuencia de pasos del menú inicial (UX-PRF-016 a UX-PRF-021) y la estrategia para evitar la saturación de información.
@@ -1072,7 +1093,7 @@ flowchart TD
 
 ## 5. Trazabilidad
 
-Todos los requisitos de este documento (`UX-PRF-001` a `UX-PRF-034`) cuentan con
+Todos los requisitos de este documento (`UX-PRF-001` a `UX-PRF-035`) cuentan con
 mapeo directo hacia el código fuente de Flutter, políticas de base de datos RLS
 y pruebas automatizadas pgTAP en
 [`11-metricas-y-trazabilidad.md`](11-metricas-y-trazabilidad.md).
@@ -1081,10 +1102,10 @@ Los requisitos UX-PRF-016 a UX-PRF-030 se encuentran en estado **Pendiente**
 de implementación. Los requisitos **UX-PRF-027 a UX-PRF-030** (modelo opt-in de
 categorías por pantalla, control "+ Categorías", sugerencias contextuales y
 estado sin resultados) son nuevos y también se encuentran en estado
-**Pendiente**. Los requisitos **UX-PRF-031 a UX-PRF-034** (tarjeta de
+**Pendiente**. Los requisitos **UX-PRF-031 a UX-PRF-035** (tarjeta de
 presentación por perfil al tocar el avatar, consentimiento por campo con
-visibilidad anónima por defecto, campos revelables con límites por contexto y
-control/previsualización de mi tarjeta) también son nuevos y se encuentran en
+visibilidad anónima por defecto, campos revelables con límites por contexto,
+control/previsualización de mi tarjeta y admisión de vendedor externo) también son nuevos y se encuentran en
 estado **Pendiente**. Las tablas de base de datos requeridas (`user_interests`,
 `content_mutes`, `notification_preferences` y `profile_card_visibility`) y los
 componentes Flutter (`PreferencesScreen`, `StepProgressIndicator`, el selector

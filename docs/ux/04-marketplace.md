@@ -26,10 +26,7 @@ desordenada en redes sociales y pasillos universitarios.
    *S-12*, *CUM*, plazas o cafeterías) y horarios habituales de entrega.
 2. **Solidaridad académica:** Categoría dedicada para tutorías y asesorías de cursos,
    apoyada en un distintivo especial para aportes y materiales **GRATUITOS**.
-3. **Dualidad de identidad y confianza informada:** Opción para el vendedor de
-   publicar con seudónimo o acreditar su identidad mediante carné universitario,
-   exhibiendo de manera transparente al comprador el nivel de verificación del
-   vendedor para prevenir estafas.
+3. **Dualidad de identidad y confianza informada:** Publicar exige carné universitario verificado para acreditar identidad y prevenir estafas. Los listados heredados publicados previamente por vendedores no verificados mantienen su aviso preventivo.
 4. **Resiliencia de conexión y multimedia:** Carga optimizada de imágenes con
    redundancia de almacenamiento, garantizando disponibilidad incluso en redes móviles
    intermitentes dentro del campus.
@@ -53,10 +50,12 @@ desordenada en redes sociales y pasillos universitarios.
 | [`UX-MKT-009`](#ux-mkt-009--contacto-directo-multicanal-por-whatsapp-y-redes-sociales) | Contacto directo multicanal por WhatsApp y redes sociales | **Must** | Comprador / Vendedor | Objetivo |
 | [`UX-MKT-010`](#ux-mkt-010--votación-comunitaria-de-utilidad-y-reputación-upvote) | Votación comunitaria de utilidad y reputación (Upvote) | **Should** | Estudiante registrado | Objetivo |
 | [`UX-MKT-011`](#ux-mkt-011--reporte-comunitario-de-anuncios-irregulares-o-fraudulentos) | Reporte comunitario de anuncios irregulares o fraudulentos | **Must** | Todos los roles | Objetivo |
-| [`UX-MKT-012`](#ux-mkt-012--formulario-de-publicación-y-creación-de-anuncios-comerciales) | Formulario de publicación y creación de anuncios comerciales | **Must** | Estudiante registrado | Objetivo |
+| [`UX-MKT-012`](#ux-mkt-012--formulario-de-publicación-y-creación-de-anuncios-comerciales) | Formulario de publicación y creación de anuncios comerciales | **Must** | Estudiante verificado / Vendedor externo | Objetivo |
 | [`UX-MKT-013`](#ux-mkt-013--filtro-semántico-preventivo-de-términos-prohibidos-y-fraude-académico) | Filtro semántico preventivo de términos prohibidos y fraude académico | **Must** | Estudiante registrado | Objetivo |
-| [`UX-MKT-014`](#ux-mkt-014--verificación-informada-de-carné-estudiantil-para-vendedores) | Verificación informada de carné estudiantil para vendedores | **Must** | Estudiante verificado | **[Mejora]** |
+| [`UX-MKT-014`](#ux-mkt-014--verificación-para-vender-carné-o-admisión-externa) | Verificación para vender (carné o admisión externa) | **Must** | Estudiante verificado / Vendedor externo | **[Mejora]** |
 | [`UX-MKT-015`](#ux-mkt-015--almacenamiento-resiliente-de-fotografías-con-fallback-de-infraestructura) | Almacenamiento resiliente de fotografías con fallback de infraestructura | **Should** | Estudiante registrado | **[Mejora]** |
+| [`UX-MKT-016`](#ux-mkt-016--carta-de-presentación-página-pública-del-vendedor) | Carta de presentación (página pública) del vendedor | **Must** | Vendedor verificado | **[Mejora]** |
+| [`UX-MKT-017`](#ux-mkt-017--límites-del-vendedor-no-patrocinador-nuevo) | Límites del vendedor no patrocinador | **Must** | Vendedor verificado | Objetivo |
 
 ---
 
@@ -187,9 +186,9 @@ desordenada en redes sociales y pasillos universitarios.
   - Insignia superior izquierda con icono y etiqueta de categoría.
   - Insignia superior derecha con precio formateado o etiqueta "GRATIS".
   - Bloque de texto: título (máximo 2 líneas con puntos suspensivos), descripción (máximo 2 líneas), ubicación física con icono de pin `Icons.place_outlined` (ej. "T-3 · Frente a Cafetería"), enlaces externos reconocidos (Instagram, Facebook, menú en Drive).
-  - Fila de autor: avatar circular, nombre del estudiante o seudónimo, distintivo de verificación de carné si aplica y tiempo relativo ("hace 2 horas").
+  - Fila de autor: avatar circular, nombre del estudiante o seudónimo, distintivo de verificación de carné si aplica y tiempo relativo ("hace 2 horas"). En listados heredados de vendedores no verificados, se muestra el banner preventivo ámbar.
   - Pie de tarjeta: botón de Upvote con recuento, botones directos de contacto (WhatsApp, redes) y menú de opciones adicionales (reportar, ciclo de vida).
-- **Interacciones:** Las zonas interactivas de la tarjeta están claramente delimitadas (tocar foto abre visor, tocar enlaces abre redes, tocar contacto abre chat). Soporta actualización manual tirando hacia abajo (*Pull-to-refresh*) en toda la pantalla. Tocar el avatar del vendedor abre su tarjeta de presentación ([ver UX-PRF-031 en `06-perfil-y-cuenta.md`](06-perfil-y-cuenta.md)); el nombre verificado y los canales de contacto solo aparecen si el dueño los aceptó explícitamente en contexto Marketplace.
+- **Interacciones:** Las zonas interactivas de la tarjeta están claramente delimitadas (tocar foto abre visor, tocar enlaces abre redes, tocar contacto abre chat). Soporta actualización manual tirando hacia abajo (*Pull-to-refresh*) en toda la pantalla. Tocar el avatar o el nombre del vendedor abre la carta de presentación del vendedor ([ver UX-MKT-016](#ux-mkt-016--carta-de-presentación-página-pública-del-vendedor)); el nombre verificado y los canales de contacto solo aparecen si el dueño los aceptó explícitamente en contexto Marketplace.
 - **Estados:**
   - *Carga:* Cuadrícula o lista con 4 tarjetas `SkeletonCard` de 220px de alto.
   - *Vacío:* `EmptyStateWidget` con icono `Icons.storefront_outlined`, título "No hay publicaciones en esta categoría aún", descripción formativa y botón "Crear Primera Publicación".
@@ -371,13 +370,13 @@ desordenada en redes sociales y pasillos universitarios.
 ---
 
 ### UX-MKT-012 — Formulario de publicación y creación de anuncios comerciales
-- **Actor / rol:** Estudiante registrado, Vendedor verificado, Patrocinador
+- **Actor / rol:** Vendedor verificado (Estudiante o Externo), Patrocinador
 - **Prioridad:** Must
-- **Estado objetivo:** La creación de anuncios de productos o tutorías debe realizarse a través de un formulario guiado, estructurado y seguro (`CreateListingDialog`), accesible desde el botón superior o el FAB móvil. El formulario debe recopilar datos claros sobre categoría, título, descripción, precio o gratuidad, ubicación física en el campus, canales de contacto y fotografías. Toda publicación debe exigir sesión autenticada en nivel AAL2 (MFA TOTP) e incorporar el selector de identidad visual para que el usuario decida conscientemente si publica con su seudónimo o con su nombre verificado de carné.
-- **Precondiciones:** Sesión activa con MFA TOTP verificado (nivel AAL2). Si no tiene sesión, `AuthModal` intercepta el flujo antes de abrir el diálogo ([`marketplace_screen.dart:134-147`](../../comunidad_universitaria/lib/features/marketplace/screens/marketplace_screen.dart#L134-L147)).
+- **Estado objetivo:** La creación de anuncios de productos o tutorías debe realizarse a través de un formulario guiado, estructurado y seguro (`CreateListingDialog`), accesible desde el botón superior o el FAB móvil. El formulario debe recopilar datos claros sobre categoría, título, descripción, precio o gratuidad, ubicación física en el campus, canales de contacto y fotografías. Toda publicación exige que el vendedor esté verificado (carné para estudiantes, o admisión externa para no estudiantes).
+- **Precondiciones:** Sesión activa con MFA TOTP verificado (nivel AAL2). Si el usuario no está verificado para vender, se aplica el gate: estudiante sin carné abre `CarneValidationModal` (UX-PRF-013); no estudiante abre el flujo de admisión externa (UX-PRF-035). No se permite continuar al formulario hasta estar verificado.
 - **UI / contenido:** Diálogo modal adaptativo (`CreateListingDialog`):
   - Encabezado con icono de tienda verde esmeralda (`#059669`), título "Publicar Producto o Servicio", subtítulo "Marketplace Universitario · Entorno Seguro".
-  - Componente de identidad `IdentityBadgeChip`: muestra el alias o nombre del estudiante y el estado de su carné, con botón para abrir `CarneValidationModal` si desea validarlo antes de publicar.
+  - Componente de identidad `IdentityBadgeChip`: muestra el alias o nombre del usuario y su distintivo de verificación.
   - Selector desplegable de Categoría (Comida & Postres, Tutorías, Libros, Servicios, Otros).
   - Casilla de verificación "Aporte o tutoría GRATUITA".
   - Campo "Título del producto o servicio" (mínimo 4 caracteres).
@@ -385,7 +384,7 @@ desordenada en redes sociales y pasillos universitarios.
   - Sección "Canales de Contacto": campos para WhatsApp, Instagram, Messenger y Telegram (valida que al menos uno contenga información).
   - Sección "Ubicación en Campus": selectores de Sede, Facultad, Edificio (`campusBuildings`: T-3, S-12, CUM, etc.) y campo para punto específico u horarios (ej. "Frente a cafetería de 11:00 a 13:00 hrs").
   - Campo "Descripción detallada" (mínimo 10 caracteres).
-  - Sección de fotos: botón para subir imagen (hasta 1 para alumnos regulares, hasta 3 para patrocinadores) con miniaturas y botón de eliminar (`Icons.close`).
+  - Sección de fotos: botón para subir imagen (1 para no patrocinadores, hasta 3 para patrocinadores, ver UX-MKT-017) con miniaturas y botón de eliminar (`Icons.close`).
   - Botón de envío "Publicar Anuncio".
 - **Interacciones:** Al presionar "Publicar Anuncio", el sistema valida los campos requeridos, la existencia de al menos un canal de contacto y el filtro semántico de términos prohibidos. Al completarse con éxito, se cierra el diálogo, se inserta inmediatamente el nuevo ítem en la primera posición del feed (`_listings.insert(0, newItem)`) y se muestra un SnackBar de confirmación.
 - **Estados:**
@@ -393,15 +392,17 @@ desordenada en redes sociales y pasillos universitarios.
   - *Subiendo imagen:* Botón con spinner y texto "Subiendo...".
   - *Enviando formulario:* Botón deshabilitado con indicador de carga.
   - *Éxito:* Cierre del modal e inserción instantánea en la parte superior del feed.
-  - *Error:* Alerta roja sin cerrar el diálogo ni borrar los datos redactados por el estudiante.
-- **Validaciones y reglas de negocio:** Título >= 4 caracteres; descripción >= 10 caracteres; al menos un canal de contacto diligenciado; precio numérico >= 0.0; validación de términos prohibidos obligatoria [ver UX-MKT-013]. Sesión obligatoria AAL2 [ver UX-AUTH en `07-autenticacion.md`].
+  - *Error:* Alerta roja sin cerrar el diálogo ni borrar los datos redactados por el usuario.
+- **Validaciones y reglas de negocio:** Título >= 4 caracteres; descripción >= 10 caracteres; al menos un canal de contacto diligenciado; precio numérico >= 0.0; validación de términos prohibidos obligatoria [ver UX-MKT-013]. Sesión obligatoria AAL2 [ver UX-AUTH en `07-autenticacion.md`]. Obligatorio estar verificado para vender (UX-MKT-014). Límites según estado de patrocinio (UX-MKT-017).
 - **Accesibilidad:** Soporte completo de navegación por teclado y foco secuencial. Desplazamiento automático para que ningún campo quede oculto tras el teclado virtual en dispositivos móviles (`viewInsets.bottom`). Errores anunciados explícitamente a lectores de pantalla.
 - **Responsive:**
   - Móvil: `showModalBottomSheet` a pantalla casi completa (90% de altura) con esquinas superiores redondeadas (20px).
   - Desktop: `showDialog` con ancho máximo de 580px y desplazamiento interno.
 - **Criterios de aceptación (Gherkin):**
-  - **Given** un estudiante autenticado con AAL2 que llena el formulario con título, descripción de 15 caracteres, categoría "Comida & Postres", precio Q10.00 y su número de WhatsApp, **When** presiona "Publicar Anuncio", **Then** el diálogo se cierra y el nuevo producto aparece inmediatamente en la primera posición del catálogo.
-  - **Given** un usuario que intenta publicar sin haber llenado ninguno de los cuatro canales de contacto (WhatsApp, Instagram, Messenger ni Telegram), **When** presiona "Publicar Anuncio", **Then** el formulario se detiene y muestra una alerta naranja indicando "Debes proporcionar al menos un canal de contacto.".
+  - **Given** un vendedor verificado con AAL2 que llena el formulario correctamente, **When** presiona "Publicar Anuncio", **Then** el diálogo se cierra y el nuevo producto aparece inmediatamente en la primera posición del catálogo.
+  - **Given** un estudiante no verificado, **When** intenta publicar, **Then** se abre `CarneValidationModal`.
+  - **Given** un no estudiante no admitido, **When** intenta publicar, **Then** se le redirige al flujo de admisión externa.
+  - **Given** un usuario que intenta publicar sin llenar canales de contacto, **When** presiona "Publicar Anuncio", **Then** el formulario muestra una alerta de requerir al menos un canal.
 
 ---
 
@@ -427,35 +428,28 @@ desordenada en redes sociales y pasillos universitarios.
 
 ---
 
-### UX-MKT-014 — Verificación informada de carné estudiantil para vendedores
-- **Actor / rol:** Estudiante registrado, Vendedor verificado, Comprador
+### UX-MKT-014 — Verificación para vender (carné o admisión externa)
+- **Actor / rol:** Vendedor verificado (Estudiante o Externo)
 - **Prioridad:** Must
-- **Estado objetivo:** El Marketplace debe ofrecer una clara diferenciación de confianza entre vendedores con identidad estudiantil acreditada y vendedores no verificados. Los artículos publicados por un estudiante que acreditó su carné deben exhibir su nombre real verificado en lugar de su seudónimo anónimo y portar un distintivo verde institucional "Vendedor Verificado" con icono de escudo (`Icons.verified`). Por el contrario, los artículos de vendedores sin acreditación deben mostrar un banner preventivo amigable en color ámbar: *"Vendedor no validado con carné. Se sugiere realizar la transacción en persona dentro del campus."*. La verificación del carné debe regirse por un consentimiento informado transparente y explícito sobre el alcance de la comprobación.
-- **Problema actual [Mejora]:** En [`carne_validation_modal.dart:73-85`](../../comunidad_universitaria/lib/features/profile/widgets/carne_validation_modal.dart#L73-L85) e inventario 8.3, la validación de carné actual es una simulación en el cliente con un retardo estático de 700 ms (`Future.delayed`) donde cualquier número de más de 6 dígitos se marca como verificado, prometiendo engañosamente al comprador que la identidad fue *"validada con carné institucional USAC"*. La solución objetivo ("deber ser") exige una verificación auténtica (mediante validación de correo oficial `@estudiante.usac.edu.gt` / `@profesor.usac.edu.gt`, comprobante de matrícula verificado por moderadores o integración criptográfica), acompañada de un descargo honesto en la tarjeta que especifique el nivel real de verificación comunitaria para no generar una falsa expectativa de seguridad.
-- **Precondiciones:** Estudiante con cuenta registrada y perfil activo.
+- **Estado objetivo:** Para garantizar un comercio seguro, la verificación de identidad es requisito obligatorio para publicar artículos nuevos. Para estudiantes, implica la validación del carné (UX-PRF-013). Para no estudiantes, implica la admisión por documentos mediante un administrador (UX-PRF-035). La interfaz exhibe de forma transparente el estado de verificación, solicita consentimiento informado previo y, al validarse, muestra el distintivo verde "Vendedor Verificado" o "Vendedor externo verificado". El banner preventivo ámbar de "Vendedor no validado" se conserva únicamente para listados heredados publicados antes de que esta regla entrara en vigencia.
+- **Problema actual [Mejora]:** En [`carne_validation_modal.dart:73-85`](../../comunidad_universitaria/lib/features/profile/widgets/carne_validation_modal.dart#L73-L85) e inventario 8.3, la validación de carné actual es una simulación en el cliente con un retardo estático de 700 ms (`Future.delayed`). La solución exige una verificación auténtica (ya sea por dominio institucional, comprobante de matrícula o documentos externos) con un descargo honesto en la tarjeta que especifique el nivel real de verificación y su origen.
+- **Precondiciones:** Usuario con cuenta registrada.
 - **UI / contenido:**
   - En la tarjeta del vendedor verificado:
-    - Chip verde esmeralda (`#059669`) con icono de verificación blanco `Icons.verified` y texto en negrita "Vendedor Verificado".
-    - Nombre del autor mostrando el nombre registrado del estudiante en lugar del alias genérico (ej. "Carlos Gómez" en vez de "Estudiante USAC #482").
-  - En la tarjeta del vendedor no verificado:
-    - Banner preventivo en caja ámbar suave (`#FEF3C7` / `#451A03`) con borde fino (`#F59E0B`), icono de advertencia `Icons.warning_amber_rounded` y texto: "Vendedor no validado con carné. Se sugiere realizar la transacción en persona dentro del campus.".
-  - Modal de validación de carné (`CarneValidationModal`):
-    - Encabezado con escudo universitario y título "Validación de Carné Universitario".
-    - Casilla de consentimiento obligatorio: "Autorizo comprobar mi condición de estudiante activo en los registros universitarios. Entiendo que esta validación solo acredita mi identidad para el Marketplace y no expone mis calificaciones ni historial académico.".
-    - Campo de número de carné (numérico, formato oficial USAC).
-    - Campo de nombre completo oficial.
-- **Interacciones:** El estudiante accede a la validación desde el formulario de publicación o desde su perfil ([`06-perfil-y-cuenta.md`](06-perfil-y-cuenta.md)). Diligencia su carné, acepta el consentimiento y envía la solicitud. El sistema procesa la comprobación y actualiza `isCarneVerified = true` en su perfil de Supabase.
+    - Chip verde esmeralda (`#059669`) con icono de verificación blanco `Icons.verified` y texto "Vendedor Verificado" o "Vendedor externo verificado".
+    - Nombre del vendedor mostrando el nombre validado en lugar del alias genérico (ej. "Carlos Gómez" en vez de "Estudiante USAC #482").
+  - En la tarjeta del vendedor no verificado (listados heredados):
+    - Banner preventivo en caja ámbar suave (`#FEF3C7` / `#451A03`) con borde fino (`#F59E0B`), icono de advertencia `Icons.warning_amber_rounded` y texto: "Listado heredado: Vendedor no verificado. Se sugiere realizar la transacción en persona dentro del campus.".
+- **Interacciones:** El usuario accede a la validación desde el formulario de publicación (interceptado como puerta) o desde su perfil ([`06-perfil-y-cuenta.md`](06-perfil-y-cuenta.md)). El estudiante diligencia su carné (UX-PRF-013); el no estudiante aplica a admisión (UX-PRF-035).
 - **Estados:**
-  - *No verificado:* Muestra advertencia preventiva en anuncios.
-  - *En validación:* Spinner con texto "Comprobando condición estudiantil...".
-  - *Verificado:* Confirmación con SnackBar verde y activación permanente del distintivo en Marketplace.
-  - *Rechazado:* Mensaje claro explicando el motivo (ej. "Número de carné inválido o formato incorrecto").
-- **Validaciones y reglas de negocio:** El carné debe cumplir con el formato oficial de la USAC. Una vez verificado el carné, los anuncios futuros del estudiante se publican obligatoriamente con su nombre oficial para generar trazabilidad comercial [ver UX-PRF-* en `06-perfil-y-cuenta.md`]. No se exponen datos confidenciales ni calificaciones [ver UX-PRD-003 en `01-producto.md`].
+  - *No verificado (listado heredado):* Muestra advertencia preventiva en anuncios antiguos.
+  - *Verificado:* Confirmación con SnackBar verde y activación permanente del distintivo permitiendo publicar.
+- **Validaciones y reglas de negocio:** Estar verificado es obligatorio para publicar. Una vez verificado, los anuncios futuros se publican con el nombre oficial si se reveló (UX-PRF-033).
 - **Accesibilidad:** El chip de verificación y el banner preventivo poseen etiquetas semánticas completas leídas por lectores de pantalla antes de los botones de contacto, garantizando que el comprador conozca el nivel de confianza del vendedor.
 - **Responsive:** El banner preventivo y el distintivo se adaptan fluidamente a una sola columna en pantallas móviles sin ocultar el tiempo de publicación.
 - **Criterios de aceptación (Gherkin):**
-  - **Given** un estudiante que completó la validación informada de carné con su nombre "Andrea Morales", **When** publica un producto en Marketplace, **Then** la tarjeta exhibe su nombre real "Andrea Morales" acompañado del distintivo verde "Vendedor Verificado" y no muestra ninguna advertencia preventiva.
-  - **Given** un comprador que examina el producto de un vendedor que no ha validado su carné institucional, **When** visualiza la tarjeta, **Then** aparece un recuadro ámbar advirtiendo "Vendedor no validado con carné. Se sugiere realizar la transacción en persona dentro del campus.".
+  - **Given** un usuario que completó la verificación (carné o externa), **When** publica un producto en Marketplace, **Then** la tarjeta exhibe su nombre acompañado del distintivo de verificación que corresponda.
+  - **Given** un comprador que examina un listado heredado de un vendedor no verificado, **When** visualiza la tarjeta, **Then** aparece un recuadro ámbar advirtiendo "Listado heredado: Vendedor no verificado...".
 
 ---
 
@@ -487,6 +481,51 @@ desordenada en redes sociales y pasillos universitarios.
 
 ---
 
+### UX-MKT-016 — Carta de presentación (página pública) del vendedor
+- **Actor / rol:** Vendedor verificado; visible para Visitante, Estudiante, Verificado, Moderador, Admin
+- **Prioridad:** Must
+- **Problema actual [Mejora]:** Hoy el vendedor solo existe como fila de autor dentro de cada `MarketplaceCard`; no hay una página pública que agrupe su identidad y todo su catálogo, de modo que el comprador no puede ver qué más ofrece una persona ni el vendedor puede presentarse comercialmente.
+- **Estado objetivo:** Cada vendedor verificado tiene una página pública ("carta de presentación") que reúne su identidad visible y su catálogo de artículos activos; es el destino de "Ver sus anuncios" de la tarjeta de perfil (UX-PRF-031 / UX-PRF-033 en `06-perfil-y-cuenta.md`) y el equivalente del perfil público de patrocinador (UX-SPN-001) para estudiantes vendedores.
+- **Precondiciones:** El vendedor debe ser un Vendedor verificado con carné universitario (UX-MKT-014).
+- **UI / contenido:**
+  - Encabezado: avatar/logo, nombre visible (seudónimo por defecto; nombre verificado solo si lo aceptó explícitamente), chip con el origen de verificación ("Vendedor Verificado (carné)" o "Vendedor externo verificado"), badge "Patrocinador" (si aplica), sede/ubicación habitual y categorías/servicios.
+  - Texto de presentación comercial: campo breve opcional y opt-in (máximo 280 caracteres) editable por el dueño; aclara que NO es una biografía personal; por defecto está vacío y no se muestra.
+  - Reputación: upvotes acumulados, número de artículos activos y antigüedad (opcionales, opt-in). Si es un vendedor no patrocinador, un aviso del límite de anuncios activos (UX-MKT-017) visible solo para él.
+  - Contacto: solo los canales que el vendedor aceptó revelar (UX-MKT-009, UX-PRF-033).
+  - Catálogo: cuadrícula de sus artículos con estados "disponible" y "reservado"; los "vendidos" se ocultan por defecto (con opción de mostrarlos). Filtro por categoría. Estado vacío: "Este vendedor aún no tiene artículos activos".
+  - Anclas: `SellerProfileScreen` (nuevo), `SellerPresentationCard` (nuevo). Se reutilizan `MarketplaceCard`, `MarketplaceService`, `profiles` y `marketplace_items` (catálogo). Datos opt-in se almacenan en una estructura nueva (p. ej. `seller_presentation` o columnas de visibilidad).
+- **Interacciones:**
+  - Acciones: contactar (UX-MKT-009), reportar (UX-MKT-011) y compartir la página (copiar enlace/URL).
+- **Estados:**
+  - *Carga:* esqueleto del encabezado y de la cuadrícula del catálogo.
+  - *Con datos:* encabezado con la identidad revelada (según consentimiento) y catálogo con los artículos activos.
+  - *Vacío:* "Este vendedor aún no tiene artículos activos".
+  - *Sin conexión:* muestra la última identidad y catálogo persistidos en caché con un aviso de reconexión.
+- **Validaciones y reglas de negocio:**
+  - Privacidad: consentimiento por campo (UX-PRF-032); por defecto solo avatar + seudónimo + chip verificado y patrocinador; nada más se muestra sin aceptación explícita. Sin grafo social (sin seguir/seguidores).
+  - Un vendedor no patrocinador refleja en su interfaz los límites (UX-MKT-017).
+- **Accesibilidad:** Los lectores de pantalla deben enunciar la identidad y reputación. El foco debe ser lógico entre el encabezado y el catálogo de artículos.
+- **Responsive:** En móvil se presenta como vista de pantalla completa con desplazamiento vertical (encabezado, presentación y catálogo en una columna). En desktop (>= 1100px) el encabezado ocupa una columna lateral y el catálogo una cuadrícula de 3 columnas, dentro del contenedor máximo de 1100px.
+- **Criterios de aceptación (Gherkin):**
+  - **Given** un estudiante toca el avatar del vendedor, **When** selecciona "Ver sus anuncios", **Then** ve la carta con su catálogo activo, origen de verificación y status de patrocinador si aplica.
+  - **Given** un vendedor que no activó el texto de presentación, **When** un usuario visita su carta, **Then** el texto no se muestra.
+  - **Given** un vendedor que no otorgó consentimiento sobre ningún campo opcional, **When** un comprador abre su carta de presentación, **Then** la página muestra únicamente avatar, seudónimo, el chip de origen verificado y patrocinio.
+  - **Given** un visitante en la página de un vendedor sin artículos activos, **When** visualiza el catálogo, **Then** ve el estado vacío "Este vendedor aún no tiene artículos activos".
+
+---
+
+### UX-MKT-017 — Límites del vendedor no patrocinador (nuevo)
+- **Actor/rol:** Vendedor verificado sin patrocinio.
+- **Estado objetivo:** el vendedor verificado que no es patrocinador publica con límites: máximo 1 fotografía por anuncio, sin presencia en la primera plana ni destacados, sin anuncios en Foro/Grupos y hasta 5 anuncios activos simultáneos. Los patrocinadores (UX-SPN en 12-patrocinios.md) quedan exentos: hasta 3 fotografías, primera plana y anuncios en Foro/Grupos.
+- **UI/contenido:** aviso claro en CreateListingDialog y en la carta del vendedor ("Estás publicando como vendedor no patrocinador: hasta 1 foto y 5 anuncios activos. Conviértete en patrocinador para destacar."); contador de anuncios activos.
+- **Validaciones y reglas de negocio:** bloquear la carga de una segunda foto y la publicación número 6; ofrecer el enlace a la solicitud de patrocinio.
+- **Criterios de aceptación (Gherkin):**
+  - **Given** un no patrocinador con 5 anuncios, **When** intenta publicar el sexto, **Then** no puede publicar.
+  - **Given** un no patrocinador, **When** intenta subir una segunda foto, **Then** el sistema lo bloquea.
+  - **Given** un patrocinador, **When** intenta subir una segunda foto, **Then** el sistema lo permite (hasta 3).
+
+---
+
 ## 4. Flujos de usuario principales
 
 ### 4.1 Flujo de contacto directo para compra de producto o tutoría
@@ -504,7 +543,7 @@ sequenceDiagram
     Comprador->>Card: Examina precio (Q15.00), edificio (T-3) y verificación
     alt Vendedor Verificado
         Card-->>Comprador: Muestra nombre oficial + chip verde "Vendedor Verificado"
-    else Vendedor No Verificado
+    else Listado heredado de vendedor no verificado
         Card-->>Comprador: Muestra advertencia ámbar "Transacción en persona sugerida"
     end
     Comprador->>Card: Pulsa botón "WhatsApp"
@@ -565,6 +604,30 @@ sequenceDiagram
     UI-->>Estudiante: Cierra diálogo y activa distintivo "Vendedor Verificado"
 ```
 
+### 4.4 Flujo de consulta de la carta de presentación del vendedor
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Comprador as Alumno Comprador
+    participant Card as MarketplaceCard
+    participant UI as SellerProfileScreen
+    participant DB as Supabase DB
+
+    Comprador->>Card: Toca avatar o nombre del vendedor
+    Card->>UI: Abre carta de presentación (SellerProfileScreen/Sheet)
+    UI->>DB: Consulta identidad revelada y catálogo
+    DB-->>UI: Retorna datos según consentimiento (UX-PRF-032) y artículos activos
+    alt Vendedor con texto comercial activo
+        UI-->>Comprador: Muestra encabezado, texto comercial y catálogo
+    else Texto comercial inactivo
+        UI-->>Comprador: Muestra encabezado base y catálogo
+    end
+    alt Sin artículos activos
+        UI-->>Comprador: Muestra estado vacío "Este vendedor aún no tiene artículos activos"
+    end
+    Comprador->>UI: Selecciona contactar o examinar artículo
+```
+
 ---
 
 ## 5. Reglas de negocio y moderación comunitaria
@@ -574,6 +637,8 @@ sequenceDiagram
 3. **Cero tolerancia al fraude académico:** Queda prohibida la oferta de elaboración de tesis, resolución remunerada de exámenes parciales/finales, suplantación de identidad en evaluaciones y comercialización de reactivos académicos.
 4. **Moderación automática por denuncias:** Cualquier publicación que reciba 3 o más reportes comunitarios pasa automáticamente a estado `moderation_status = 1` (En revisión), ocultándose de la vista pública hasta que un moderador la apruebe o elimine.
 5. **No reescritura de autoría:** Las acciones de moderación pueden cambiar el estado de visualización (`moderation_status`), pero nunca alterar el autor, precio o contenido original del estudiante.
+6. **Verificación para vender:** solo los vendedores verificados (carné para estudiantes o admisión externa) pueden publicar.
+7. **Límites del no patrocinador:** 1 foto, sin destacado ni anuncios y hasta 5 anuncios activos; el patrocinador está exento.
 
 ---
 
@@ -596,3 +661,5 @@ sequenceDiagram
 | `UX-MKT-013` | `MarketplaceService.validateContent`, `_prohibitedKeywords` | Validado en cliente + trigger de seguridad en BD | `test/core/services/marketplace_service_test.dart` |
 | `UX-MKT-014` | `CarneValidationModal`, `IdentityBadgeChip` | `profiles.carne`, `is_carne_verified`, `student_name` | `test/features/profile/carne_validation_test.dart` |
 | `UX-MKT-015` | `StorageService.uploadImageFile`, Worker R2 + Supabase Storage | Bucket `listings` en Supabase Storage / Cloudflare R2 | `test/core/services/storage_service_test.dart` |
+| `UX-MKT-016` | `SellerProfileScreen`, `SellerPresentationCard` | `profile_card_visibility`, `seller_presentation` | (nuevo) |
+| `UX-MKT-017` | `CreateListingDialog`, `MarketplaceService.checkLimits` | `marketplace_items.count` | (nuevo) |

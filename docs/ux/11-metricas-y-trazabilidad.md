@@ -78,6 +78,7 @@ Leyenda de estado: Cubierto · Parcial · Pendiente.
 |---|---|---|---|
 | UX-PRD-010 Visitante solo lectura | `core/services/supabase_service.dart`; migración `enforce_anonymous_read_only.sql` | `supabase/tests/anonymous_read_only_test.sql`; `integration_test/guest_navigation_test.dart` | Cubierto |
 | UX-PRD-011 Escritura requiere AAL2 | `shared/widgets/totp_session_guard.dart` | `test/widgets/totp_session_guard_test.dart`; `supabase/tests/totp_aal2_writes_test.sql` | Cubierto |
+| UX-PRD-016 Vendedor externo verificado | campos en `profiles` y panel admin (nuevo) | Pendiente | Pendiente |
 | UX-PRD-026 No lucro, financiamiento y datos | `features/rules/screens/rules_screen.dart`; `features/profile/screens/profile_screen.dart` (`UX-PRF-011`) | Pendiente | Parcial |
 | UX-MAP-001 Deep links | `main.dart` (`_onGenerateRoute`) | `test/sso_test.dart` | Parcial |
 | UX-MAP-002 Retorno en subpantallas | `features/forum/screens/post_detail_screen.dart` | `integration_test/forum_flow_test.dart` | Parcial |
@@ -115,6 +116,8 @@ Leyenda de estado: Cubierto · Parcial · Pendiente.
 | UX-MKT-013 Filtro semántico | `core/services/marketplace_service.dart` | `test/services/marketplace_validation_test.dart` | Cubierto |
 | UX-MKT-014 Validación de carné (vendedor) | `features/profile/widgets/carne_validation_modal.dart` | `test/widgets/shared/carne_validation_modal_test.dart` | Parcial |
 | UX-MKT-015 Fallback de imágenes `[Mejora]` | `core/services/storage_service.dart` | `test/services/storage_service_test.dart` | Pendiente |
+| UX-MKT-016 Carta de presentacion del vendedor | (nuevo) `SellerProfileScreen` | Pendiente | Pendiente |
+| UX-MKT-017 Límites del vendedor no patrocinador | validaciones de creación e interfaz (nuevo) | Pendiente | Pendiente |
 | UX-MKT-002/003 Patrocinios | `features/marketplace/widgets/sponsor_carousel.dart`; `sponsor_request_dialog.dart` | `test/widgets/sponsor_carousel_test.dart`; `sponsor_request_dialog_test.dart` | Cubierto |
 
 ### 4.4 Grupos
@@ -157,6 +160,7 @@ Leyenda de estado: Cubierto · Parcial · Pendiente.
 | UX-PRF-032 Consentimiento por campo y visibilidad (default anonimo) `[Mejora]` | `profiles`; tabla `profile_card_visibility` (nuevo); `SharedPreferences` como fallback de visitante | Pendiente | Pendiente |
 | UX-PRF-033 Campos revelables y limites por contexto `[Mejora]` | `profile_screen.dart` (UX-PRF-006/007); `profile_card_visibility` (nuevo) | Pendiente | Pendiente |
 | UX-PRF-034 Control y previsualizacion de mi tarjeta `[Mejora]` | `PreferencesScreen` (nuevo); `ProfileCardSheet` (nuevo); `profile_card_visibility` (nuevo) | Pendiente | Pendiente |
+| UX-PRF-035 Admisión de vendedor externo | panel admin y formulario de solicitud (nuevo) | Pendiente | Pendiente |
 
 
 ### 4.6 Autenticación y SSO
@@ -173,6 +177,7 @@ Leyenda de estado: Cubierto · Parcial · Pendiente.
 | UX-AUTH-013 Validación de redirect SSO | `features/sso/sso_security_validator.dart` | `test/sso_test.dart` | Cubierto |
 | UX-AUTH-014 Consentimiento y tokens en fragmento | `features/sso/screens/sso_authorize_screen.dart` | `integration_test/sso_flow_test.dart` | Cubierto |
 | UX-AUTH-015 Redirect local `[Mejora]` | `sso_authorize_screen.dart` | `test/sso_test.dart` | Parcial |
+| UX-AUTH-016 Acceso según dominio de correo | lógica de autenticación y panel admin de dominios (nuevo) | Pendiente | Pendiente |
 
 ### 4.7 Sistema de diseño y transversales
 
@@ -268,6 +273,7 @@ prioritarios para el siguiente ciclo de trabajo.
 | UX-FORO-020 | Acceso directo a Grupos | `forum_server_rail.dart` |
 | UX-MKT-014 | Verificación real de carné (no simulada) | `carne_validation_modal.dart` |
 | UX-MKT-015 | Fallback de almacenamiento | `storage_service.dart` |
+| UX-MKT-016 | Carta de presentación (página pública) del vendedor | (nuevo) |
 | UX-GRP-001 | Acceso directo desde navegación principal | `app_shell.dart` |
 | UX-PRF-003 | Persistencia del alias en la nube | `local_storage_service.dart` |
 | UX-AUTH-003 | Cuenta regresiva al reenviar OTP | `auth_modal.dart` |
@@ -301,6 +307,10 @@ prioritarios para el siguiente ciclo de trabajo.
 | UX-PRF-032 | Consentimiento por campo y visibilidad anónima por defecto | `profiles`; tabla `profile_card_visibility` (nuevo); `SharedPreferences` |
 | UX-PRF-033 | Campos revelables y límites por contexto (Foro vs Marketplace) | `profile_screen.dart`; `profile_card_visibility` (nuevo) |
 | UX-PRF-034 | Control y previsualización de mi tarjeta en preferencias | `PreferencesScreen` (nuevo); `ProfileCardSheet` (nuevo) |
+| UX-PRD-016 | Definición e identidad de vendedor externo verificado | `profiles` (nuevo campo) |
+| UX-AUTH-016 | Clasificación de acceso por dominio de correo y gestión de dominios | lógica de autenticación y panel admin (nuevo) |
+| UX-PRF-035 | Flujo de admisión de vendedor externo con documentos | formulario de admisión y panel admin (nuevo) |
+| UX-MKT-017 | Aplicación de límites a vendedores no patrocinadores | validaciones en creación de anuncio y conteo (nuevo) |
 
 ---
 
