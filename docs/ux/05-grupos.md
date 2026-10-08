@@ -205,6 +205,7 @@ abordando directamente:
   - Al pulsar la imagen en miniatura, se abre el visor `ImageViewerDialog` con zoom interactivo (0.8x a 4.0x).
   - Al pulsar el menú de tres puntos, se despliega la opción "Reportar enlace caído/spam".
   - Gesto de arrastrar hacia abajo (_Pull-to-refresh_) para refrescar la lista de tarjetas en móvil.
+  - Al tocar el avatar o el seudónimo del creador se abre su tarjeta de presentación ([ver UX-PRF-031 en `06-perfil-y-cuenta.md`](06-perfil-y-cuenta.md)), que respeta el anonimato.
 - **Estados:**
   - _Carga:_ Cuadrícula de tarjetas esqueleto con animación _shimmer_.
   - _Con datos:_ Lista ordenada prioritariamente por mayor cantidad de upvotes y secundariamente por fecha de creación más reciente.

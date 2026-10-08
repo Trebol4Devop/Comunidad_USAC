@@ -189,7 +189,7 @@ desordenada en redes sociales y pasillos universitarios.
   - Bloque de texto: título (máximo 2 líneas con puntos suspensivos), descripción (máximo 2 líneas), ubicación física con icono de pin `Icons.place_outlined` (ej. "T-3 · Frente a Cafetería"), enlaces externos reconocidos (Instagram, Facebook, menú en Drive).
   - Fila de autor: avatar circular, nombre del estudiante o seudónimo, distintivo de verificación de carné si aplica y tiempo relativo ("hace 2 horas").
   - Pie de tarjeta: botón de Upvote con recuento, botones directos de contacto (WhatsApp, redes) y menú de opciones adicionales (reportar, ciclo de vida).
-- **Interacciones:** Las zonas interactivas de la tarjeta están claramente delimitadas (tocar foto abre visor, tocar enlaces abre redes, tocar contacto abre chat). Soporta actualización manual tirando hacia abajo (*Pull-to-refresh*) en toda la pantalla.
+- **Interacciones:** Las zonas interactivas de la tarjeta están claramente delimitadas (tocar foto abre visor, tocar enlaces abre redes, tocar contacto abre chat). Soporta actualización manual tirando hacia abajo (*Pull-to-refresh*) en toda la pantalla. Tocar el avatar del vendedor abre su tarjeta de presentación ([ver UX-PRF-031 en `06-perfil-y-cuenta.md`](06-perfil-y-cuenta.md)); el nombre verificado y los canales de contacto solo aparecen si el dueño los aceptó explícitamente en contexto Marketplace.
 - **Estados:**
   - *Carga:* Cuadrícula o lista con 4 tarjetas `SkeletonCard` de 220px de alto.
   - *Vacío:* `EmptyStateWidget` con icono `Icons.storefront_outlined`, título "No hay publicaciones en esta categoría aún", descripción formativa y botón "Crear Primera Publicación".

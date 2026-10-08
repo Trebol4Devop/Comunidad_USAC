@@ -70,6 +70,7 @@ flowchart TD
         ProfileSc --> PrivacyCard["Uso de Datos y Privacidad (4 Pilares Informativos)"]
         ProfileSc --> AccountSec["Cuenta y Preferencias"]
         AccountSec --> ThemeSwitch["Conmutador Tema Claro / Oscuro"]
+        AccountSec --> CardPrivacyLink["Privacidad de mi tarjeta (visibilidad de la tarjeta de presentación)"]
         AccountSec --> RulesLink["Acceso a Normas de Convivencia (RulesScreen)"]
         AccountSec --> TotpLink["Autenticación en Dos Pasos (TotpEnrollmentScreen)"]
         AccountSec --> AuthAction["Acción de Sesión (Acceder / Cerrar Sesión)"]
@@ -908,6 +909,131 @@ flowchart TD
 
 ---
 
+### UX-PRF-031 — Tarjeta de presentación de perfil (acceso al tocar el avatar) [Mejora]
+- **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
+- **Prioridad:** Must
+- **Problema actual [Mejora]:** El avatar del autor no es interactivo en `post_card.dart` (avatar línea 132, `authorAlias` línea 148), `comment_item.dart` (avatar línea 62, `authorAlias` línea 79), `marketplace_card.dart` (avatar línea 406, `authorAlias` línea 423) ni en la fila de autoría de `group_card.dart` (línea 243, invocado desde `groups_screen.dart`). Tocar el avatar no despliega información del autor, de modo que no existe una tarjeta de presentación consistente y respetuosa del anonimato.
+- **Estado objetivo:** Tocar el avatar de otro usuario en el Foro, el Marketplace o los Grupos abre la tarjeta de presentación de perfil (`ProfileCardSheet` (nuevo)), un modal que muestra únicamente lo que el dueño haya aceptado revelar. Por defecto la tarjeta muestra solo avatar, seudónimo y rol/insignias; todo lo demás es opt-in por campo (UX-PRF-032/033). En móvil se presenta como hoja inferior (`showModalBottomSheet`) y en desktop como diálogo/popover centrado ([ver UX-X-012 en `10-transversales.md`](10-transversales.md)). La tarjeta no ofrece grafo social: el espectador solo puede "Reportar" y "Silenciar"; no hay seguir, agregar ni mensajería.
+- **Precondiciones:** El usuario observa una tarjeta de publicación, comentario, anuncio o grupo con avatar de autor. El perfil del autor es consultable por su identificador público.
+- **UI / contenido:**
+  - Componente `ProfileCardSheet` (nuevo), reutilizado por Foro, Marketplace y Grupos.
+  - Cabecera con avatar circular, seudónimo (`authorAlias`) y chip de rol/insignias.
+  - Cuerpo con los campos revelados según consentimiento (UX-PRF-032/033); si no hay ningún campo revelado, muestra el texto "Este usuario mantiene su perfil anónimo".
+  - Pie con dos acciones: "Reportar" (abre `ReportDialog`) y "Silenciar" (agrega el autor a `content_mutes` (nuevo) o a la lista local de silenciados, [ver UX-PRF-024](#ux-prf-024--contenido-silenciado-y-opcion-deshacer)).
+  - Botón de cierre (`Icons.close`) en desktop y tirador de arrastre en móvil.
+- **Interacciones:**
+  - Tocar el avatar abre la tarjeta; tocar fuera, el botón de cierre, la tecla `Escape` o deslizar hacia abajo la cierran.
+  - "Reportar" abre `ReportDialog` sin cerrar la tarjeta hasta confirmar.
+  - "Silenciar" oculta de inmediato el contenido de ese autor en el feed activo y registra la acción; ofrece "Deshacer" mediante SnackBar ([ver UX-X-007](10-transversales.md)).
+  - No se muestran botones de seguir, agregar ni de contacto salvo los canales aceptados en contexto Marketplace (UX-PRF-033).
+- **Estados:**
+  - *Abierta:* Tarjeta con datos mínimos (avatar, seudónimo, rol/insignias).
+  - *Con campos revelados:* Secciones adicionales visibles según consentimiento.
+  - *Perfil anónimo:* Solo datos mínimos más el texto "Este usuario mantiene su perfil anónimo".
+  - *Cargando:* Esqueleto del modal mientras se consulta la visibilidad.
+  - *Error:* Mensaje "No pudimos cargar este perfil. Inténtalo de nuevo." con acción "Reintentar".
+- **Validaciones y reglas de negocio:**
+  - La tarjeta nunca muestra nombre real, carné, correo ni DPI en el Foro; respeta el seudónimo garantizado de [UX-X-015](10-transversales.md#ux-x-015--privacidad-de-datos-personales-disociacion-de-identidad-y-consentimiento-informado) y la transparencia de [UX-PRF-011](#ux-prf-011--transparencia-de-privacidad-y-uso-de-datos-estudiantiles).
+  - La tarjeta es de solo lectura; no permite seguir, agregar ni iniciar conversación.
+  - El silenciamiento del autor se registra en `content_mutes` (nuevo) o en almacenamiento local para visitantes.
+- **Accesibilidad:** El modal atrapa el foco y devuelve el foco al avatar disparador al cerrarse. El avatar del feed declara etiqueta "Ver tarjeta de presentación de [seudónimo], botón". Los campos revelados se anuncian con su etiqueta.
+- **Responsive:** Móvil (< 700px) como hoja inferior con tirador de arrastre; tablet y desktop (>= 700px) como diálogo centrado de 360 a 420px con cierre por `Escape`.
+- **Criterios de aceptación (Gherkin):**
+  - **Given** un estudiante que ve una publicación en el Foro, **When** toca el avatar del autor, **Then** se abre la tarjeta de presentación con avatar, seudónimo y rol, sin nombre real, carné ni correo, y con las únicas acciones "Reportar" y "Silenciar".
+  - **Given** un autor que no ha aceptado revelar ningún campo, **When** otro usuario abre su tarjeta de presentación, **Then** la tarjeta muestra únicamente avatar, seudónimo e insignias junto al texto "Este usuario mantiene su perfil anónimo".
+
+---
+
+### UX-PRF-032 — Consentimiento por campo y visibilidad (default anónimo) [Mejora]
+- **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
+- **Prioridad:** Must
+- **Problema actual [Mejora]:** No existe un modelo de consentimiento por campo: `profile_screen.dart` guarda datos académicos y de contacto sin ningún control de qué se comparte con terceros, y no hay una tabla de visibilidad. Toda exposición adicional sería implícita e irreversible.
+- **Estado objetivo:** Cada campo revelable de la tarjeta de presentación (UX-PRF-031) cuenta con su propio interruptor de consentimiento, apagado por defecto. Nada se revela sin una aceptación explícita del dueño. El dueño puede revocar cualquier campo en cualquier momento y el efecto es retroactivo: al revocar, el campo deja de mostrarse de inmediato en todas las tarjetas y no queda copia visible para otros usuarios. Cuando no hay ningún campo aceptado, la tarjeta muestra "Este usuario mantiene su perfil anónimo".
+- **Precondiciones:** El dueño ha iniciado sesión para persistir en la nube; los visitantes solo configuran su copia local de visitante.
+- **UI / contenido:**
+  - Sección "Privacidad de mi tarjeta" (UX-PRF-034) con una fila por campo revelable y su interruptor.
+  - Cada interruptor con estado por defecto apagado; etiqueta del campo y descripción breve.
+  - Aviso permanente: "Nada se muestra hasta que lo actives. Puedes desactivarlo cuando quieras."
+  - En la tarjeta pública, los campos no aceptados no se renderizan (ni siquiera deshabilitados).
+- **Interacciones:**
+  - Activar un interruptor guarda el consentimiento del campo y lo hace visible de inmediato en la tarjeta.
+  - Desactivar un interruptor revoca el consentimiento con efecto retroactivo inmediato; la tarjeta deja de mostrarlo.
+  - La revocación no requiere confirmación adicional ni borra la configuración del perfil, solo su visibilidad en la tarjeta.
+- **Estados:**
+  - *Todo apagado (default):* Perfil anónimo; la tarjeta muestra el texto de anonimato.
+  - *Parcial:* Algunos campos visibles según consentimiento.
+  - *Revocando:* El campo desaparece de la tarjeta al confirmar.
+  - *Sin conexión:* Los cambios se guardan localmente y se sincronizan al reconectar (UX-PRF-026).
+- **Validaciones y reglas de negocio:**
+  - El valor por defecto de todo campo revelable es "no revelado" (opt-in).
+  - La identidad base de la tarjeta (seudónimo, avatar, insignias y datos académicos) se lee de la tabla `profiles`; el consentimiento por campo se almacena en la tabla `profile_card_visibility` (nuevo) con `user_id` (clave foránea a `profiles.id`), `campo`, `visible` y `updated_at`; para visitantes se usa `SharedPreferences`.
+  - La revocación es retroactiva: no se persiste ni se cachea el valor revelado para terceros.
+  - Nunca se revelan nombre real, carné, correo ni DPI en el Foro ([UX-X-015](10-transversales.md) y [UX-PRF-011](#ux-prf-011--transparencia-de-privacidad-y-uso-de-datos-estudiantiles)); los campos de contacto y el nombre verificado solo aplican al contexto Marketplace (UX-PRF-033).
+- **Accesibilidad:** Cada interruptor expone su estado ("activado"/"desactivado") y la etiqueta del campo. El aviso de anonimato se anuncia al abrir la tarjeta cuando no hay campos visibles.
+- **Responsive:** Lista vertical de interruptores a ancho completo en móvil; contenedor centrado de máximo 720px en desktop.
+- **Criterios de aceptación (Gherkin):**
+  - **Given** un estudiante que nunca ha configurado su tarjeta de presentación, **When** otro usuario abre su tarjeta, **Then** solo se ven avatar, seudónimo e insignias y el texto "Este usuario mantiene su perfil anónimo".
+  - **Given** un estudiante que activa la visibilidad de su facultad/carrera, **When** otro usuario abre su tarjeta, **Then** la facultad/carrera aparece visible; y **When** el dueño la desactiva, **Then** deja de mostrarse de inmediato para todos.
+
+---
+
+### UX-PRF-033 — Campos revelables y límites por contexto [Mejora]
+- **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
+- **Prioridad:** Must
+- **Problema actual [Mejora]:** No existe una lista canónica de campos revelables ni distinción de contexto: el nombre verificado y los canales de contacto ya configurados en `profile_screen.dart` (tarjeta de contacto de UX-PRF-007) no tienen control de visibilidad en una tarjeta pública.
+- **Estado objetivo:** Define qué campos pueden revelarse en la tarjeta de presentación y sus límites por contexto. Son opcionales y siempre con consentimiento por campo (UX-PRF-032): facultad/carrera ([UX-PRF-006](#ux-prf-006--seleccion-de-informacion-academica-facultad-carrera-y-sede)), resumen de actividad pública (conteos agregados de publicaciones, comentarios, votos y grupos, sin detalles sensibles) e insignias/rol. Solo en contexto Marketplace, y nunca en el Foro, y con consentimiento explícito, se pueden mostrar además: nombre verificado de vendedor ([UX-PRF-007](#ux-prf-007--canales-de-contacto-para-marketplace-y-tutorias) y [UX-PRF-013](#ux-prf-013--verificacion-de-identidad-estudiantil-con-carne-universitario)), enlace a sus anuncios y canales de contacto.
+- **Precondiciones:** Consentimiento por campo activo (UX-PRF-032). En Marketplace, además, la condición de vendedor verificado cuando aplique.
+- **UI / contenido:**
+  - Campos base opcionales: "Facultad y carrera", "Resumen de actividad pública", "Insignias y rol".
+  - Campos de contexto Marketplace (solo al abrir la tarjeta desde Marketplace): "Vendedor verificado" con nombre validado, "Ver sus anuncios" y los canales de contacto aceptados.
+  - Etiqueta de contexto en la tarjeta de Marketplace: "Datos de vendedor verificados para compras seguras".
+- **Interacciones:**
+  - Al abrir la tarjeta desde el Foro, los campos de Marketplace no se muestran aunque estén aceptados.
+  - Al abrir la tarjeta desde Marketplace, se muestran los campos de Marketplace aceptados y los campos base aceptados.
+  - Tocar "Ver sus anuncios" navega al catálogo filtrado por ese vendedor en Marketplace.
+  - Tocar un canal de contacto abre el enlace externo correspondiente ([ver UX-MKT-009 en `04-marketplace.md`](04-marketplace.md)).
+- **Estados:** Contexto Foro (solo campos base) | Contexto Marketplace (campos base + vendedor) | Contexto Grupos (solo campos base) | Campo no aceptado (no se renderiza).
+- **Validaciones y reglas de negocio:**
+  - Nunca se revelan nombre real, carné, correo ni DPI en el Foro; esto cumple [UX-X-015](10-transversales.md) y [UX-X-016](10-transversales.md) y es coherente con [UX-PRF-011](#ux-prf-011--transparencia-de-privacidad-y-uso-de-datos-estudiantiles).
+  - El nombre verificado y los canales de contacto solo se muestran en contexto Marketplace y con consentimiento explícito; en el Foro el usuario participa bajo su seudónimo.
+  - El "Resumen de actividad pública" muestra solo conteos agregados; jamás contenido privado ni datos académicos sensibles.
+  - Los canales de contacto nunca se muestran como texto plano raspable; se abren tras un botón de contacto ([UX-X-015](10-transversales.md)).
+- **Accesibilidad:** Cada campo revelado tiene etiqueta semántica; la etiqueta de contexto Marketplace se anuncia antes de los campos de contacto. Los botones de contacto cumplen el mínimo táctil de 44 a 48px.
+- **Responsive:** En móvil los campos se apilan verticalmente; en desktop se agrupan en dos columnas dentro del modal.
+- **Criterios de aceptación (Gherkin):**
+  - **Given** un estudiante verificado que aceptó mostrar su nombre verificado y sus canales de contacto, **When** otro usuario abre su tarjeta desde el Foro, **Then** no se muestra su nombre verificado ni sus canales de contacto, solo los campos base aceptados.
+  - **Given** el mismo estudiante verificado, **When** otro usuario abre su tarjeta desde un anuncio del Marketplace, **Then** se muestran el nombre verificado, el enlace a sus anuncios y los canales de contacto aceptados.
+
+---
+
+### UX-PRF-034 — Control y previsualización de mi tarjeta [Mejora]
+- **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
+- **Prioridad:** Should
+- **Problema actual [Mejora]:** El hub de preferencias ([UX-PRF-022](#ux-prf-022--centro-de-preferencias-e-intereses-hub-unificado), `PreferencesScreen` (nuevo)) no incluye controles de privacidad de la tarjeta ni una previsualización de cómo la ven los demás; la sección "Cuenta y Preferencias" de `profile_screen.dart` tampoco.
+- **Estado objetivo:** La sección "Privacidad de mi tarjeta" del hub de preferencias (UX-PRF-022) agrupa todos los interruptores por campo de la tarjeta de presentación y ofrece una previsualización fiel de cómo la ven los demás usuarios. La configuración persiste localmente y en la nube (UX-PRF-026) y los cambios aplican de inmediato.
+- **Precondiciones:** `PreferencesScreen` (nuevo, UX-PRF-022) accesible; consentimiento por campo (UX-PRF-032/033) definido.
+- **UI / contenido:**
+  - Sección "Privacidad de mi tarjeta" con los interruptores por campo de UX-PRF-032/033.
+  - Previsualización embebida de `ProfileCardSheet` (nuevo) con el estado actual de los interruptores.
+  - Texto de ayuda: "Esta es la vista que verán otros usuarios. Puedes cambiar cada campo cuando quieras."
+  - Indicador de sincronización reutilizado de UX-PRF-026 para visitantes y autenticados.
+- **Interacciones:**
+  - Alternar un interruptor actualiza la previsualización de inmediato.
+  - La previsualización permite abrir la tarjeta en tamaño real como la vería un tercero.
+  - Al regresar a `ProfileScreen`, la configuración se mantiene sin recargar toda la pantalla.
+- **Estados:** Con campos activos | Todo apagado (previsualización anónima) | Sincronizando | Visitante (solo local, con invitación a iniciar sesión).
+- **Validaciones y reglas de negocio:**
+  - La previsualización refleja exactamente lo que verá un tercero según el consentimiento vigente; no muestra campos no aceptados.
+  - La configuración se persiste en `profile_card_visibility` (nuevo) para autenticados y en `SharedPreferences` para visitantes, sincronizada por UX-PRF-026.
+  - Los cambios aplican de inmediato sin requerir guardar ni reiniciar la app.
+- **Accesibilidad:** Cada interruptor con etiqueta y estado accesible; la previsualización declara etiqueta "Vista previa de tu tarjeta de presentación". Foco inicial en el título de la sección.
+- **Responsive:** Interruptores y previsualización apilados en móvil; en desktop, controles a la izquierda y previsualización a la derecha en dos columnas.
+- **Criterios de aceptación (Gherkin):**
+  - **Given** un estudiante en el hub de preferencias, **When** activa el campo "Facultad y carrera", **Then** la previsualización muestra la facultad/carrera sin necesidad de guardar y el cambio queda persistido.
+  - **Given** un estudiante que desactiva todos los campos, **When** observa la previsualización, **Then** ve únicamente avatar, seudónimo e insignias con el texto "Este usuario mantiene su perfil anónimo".
+
+---
+
 ## 4. Flujo del menú inicial de nuevos usuarios
 
 El siguiente diagrama describe la secuencia de pasos del menú inicial (UX-PRF-016 a UX-PRF-021) y la estrategia para evitar la saturación de información.
@@ -946,7 +1072,7 @@ flowchart TD
 
 ## 5. Trazabilidad
 
-Todos los requisitos de este documento (`UX-PRF-001` a `UX-PRF-030`) cuentan con
+Todos los requisitos de este documento (`UX-PRF-001` a `UX-PRF-034`) cuentan con
 mapeo directo hacia el código fuente de Flutter, políticas de base de datos RLS
 y pruebas automatizadas pgTAP en
 [`11-metricas-y-trazabilidad.md`](11-metricas-y-trazabilidad.md).
@@ -955,10 +1081,15 @@ Los requisitos UX-PRF-016 a UX-PRF-030 se encuentran en estado **Pendiente**
 de implementación. Los requisitos **UX-PRF-027 a UX-PRF-030** (modelo opt-in de
 categorías por pantalla, control "+ Categorías", sugerencias contextuales y
 estado sin resultados) son nuevos y también se encuentran en estado
-**Pendiente**. Las tablas de base de datos requeridas (`user_interests`,
-`content_mutes`, `notification_preferences`) y los componentes Flutter
-(`PreferencesScreen`, `StepProgressIndicator`, el selector de categorías y las
-categorías por defecto "Destacados" y "Mi facultad") son componentes nuevos
-marcados como `(nuevo)` en los requisitos correspondientes. No se han creado
+**Pendiente**. Los requisitos **UX-PRF-031 a UX-PRF-034** (tarjeta de
+presentación por perfil al tocar el avatar, consentimiento por campo con
+visibilidad anónima por defecto, campos revelables con límites por contexto y
+control/previsualización de mi tarjeta) también son nuevos y se encuentran en
+estado **Pendiente**. Las tablas de base de datos requeridas (`user_interests`,
+`content_mutes`, `notification_preferences` y `profile_card_visibility`) y los
+componentes Flutter (`PreferencesScreen`, `StepProgressIndicator`, el selector
+de categorías, `ProfileCardSheet` y las categorías por defecto "Destacados" y
+"Mi facultad") son componentes nuevos marcados como `(nuevo)` en los requisitos
+correspondientes. No se han creado
 migraciones ni archivos de código para estos componentes; su inclusión en este
 documento es exclusivamente de especificación de requisitos.

@@ -153,6 +153,10 @@ Leyenda de estado: Cubierto · Parcial · Pendiente.
 | UX-PRF-028 Control "+ Categorias" y selector por pantalla `[Mejora]` | `forum_screen.dart`; `marketplace_screen.dart`; `groups_screen.dart`; selector de categorias (nuevo) | Pendiente | Pendiente |
 | UX-PRF-029 Sugerencias contextuales de categorias `[Mejora]` | `core/models/facultad.dart`; `PreferencesScreen` (nuevo) | Pendiente | Pendiente |
 | UX-PRF-030 Estado sin resultados en pantalla filtrada `[Mejora]` | `shared/widgets/empty_state_widget.dart`; `forum_screen.dart`; `marketplace_screen.dart`; `groups_screen.dart` | Pendiente | Pendiente |
+| UX-PRF-031 Tarjeta de presentacion por perfil `[Mejora]` | `post_card.dart`; `comment_item.dart`; `marketplace_card.dart`; `group_card.dart`; `ProfileCardSheet` (nuevo); tabla `profile_card_visibility` (nuevo) | Pendiente | Pendiente |
+| UX-PRF-032 Consentimiento por campo y visibilidad (default anonimo) `[Mejora]` | `profiles`; tabla `profile_card_visibility` (nuevo); `SharedPreferences` como fallback de visitante | Pendiente | Pendiente |
+| UX-PRF-033 Campos revelables y limites por contexto `[Mejora]` | `profile_screen.dart` (UX-PRF-006/007); `profile_card_visibility` (nuevo) | Pendiente | Pendiente |
+| UX-PRF-034 Control y previsualizacion de mi tarjeta `[Mejora]` | `PreferencesScreen` (nuevo); `ProfileCardSheet` (nuevo); `profile_card_visibility` (nuevo) | Pendiente | Pendiente |
 
 
 ### 4.6 Autenticación y SSO
@@ -293,6 +297,10 @@ prioritarios para el siguiente ciclo de trabajo.
 | UX-PRF-028 | Control "+ Categorías" y selector con búsqueda en cada pantalla | `forum_screen.dart`; `marketplace_screen.dart`; `groups_screen.dart`; selector (nuevo) |
 | UX-PRF-029 | Sugerencias contextuales de categorías sin preselección | `core/models/facultad.dart`; `PreferencesScreen` (nuevo) |
 | UX-PRF-030 | Estado sin resultados con "Añadir categorías" y "Ver todo" | `empty_state_widget.dart`; `forum_screen.dart`; `marketplace_screen.dart`; `groups_screen.dart` |
+| UX-PRF-031 | Tarjeta de presentación por perfil al tocar el avatar | `post_card.dart`; `comment_item.dart`; `marketplace_card.dart`; `group_card.dart`; `ProfileCardSheet` (nuevo) |
+| UX-PRF-032 | Consentimiento por campo y visibilidad anónima por defecto | `profiles`; tabla `profile_card_visibility` (nuevo); `SharedPreferences` |
+| UX-PRF-033 | Campos revelables y límites por contexto (Foro vs Marketplace) | `profile_screen.dart`; `profile_card_visibility` (nuevo) |
+| UX-PRF-034 | Control y previsualización de mi tarjeta en preferencias | `PreferencesScreen` (nuevo); `ProfileCardSheet` (nuevo) |
 
 ---
 
