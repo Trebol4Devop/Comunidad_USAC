@@ -45,7 +45,7 @@ identificados en el levantamiento de código:
    - **8.5 Ausencia de fallback en servicio de imágenes:** Resiliencia y respaldo
      automático ante caídas de Cloudflare R2 ([ver `UX-X-003`]).
    - **8.7 Falta de temporizador visual en OTP:** Indicadores de espera y control de
-     límites de tasa (*Rate Limit*) en pantalla ([ver `UX-X-002`]).
+     límites de tasa (_Rate Limit_) en pantalla ([ver `UX-X-002`]).
    - **Expiración prematura de caché offline:** Corrección de la purga tras 45 segundos
      en `CacheService`, habilitando lectura desconectada continua ([ver `UX-X-006`]).
 
@@ -53,24 +53,25 @@ identificados en el levantamiento de código:
 
 ## 3. Matriz de aplicación transversal por módulo
 
-| Dimensión transversal | Foro | Marketplace | Grupos | Perfil / Cuenta | Auth / MFA | SSO |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Manejo de errores** (`UX-X-001`, `002`, `003`) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Estados vacíos** (`UX-X-004`) | ✅ | ✅ | ✅ | ✅ | N/A | N/A |
-| **Carga con skeletons** (`UX-X-005`) | ✅ | ✅ | ✅ | ✅ | N/A | N/A |
-| **Modo offline y caché** (`UX-X-006`) | ✅ | ✅ | ✅ | Parcial | N/A | N/A |
-| **Notificaciones / Snackbars** (`UX-X-007`) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Accesibilidad WCAG 2.2 AA** (`UX-X-008`, `009`, `010`) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Responsividad y modales** (`UX-X-011`, `012`) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Internacionalización es-GT** (`UX-X-013`) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Rendimiento percibido** (`UX-X-014`) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Privacidad de datos** (`UX-X-015`) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Dimensión transversal                                    | Foro  | Marketplace | Grupos | Perfil / Cuenta | Auth / MFA |  SSO  |
+| -------------------------------------------------------- | :---: | :---------: | :----: | :-------------: | :--------: | :---: |
+| **Manejo de errores** (`UX-X-001`, `002`, `003`)         | Hecho |    Hecho    | Hecho  |      Hecho      |   Hecho    | Hecho |
+| **Estados vacíos** (`UX-X-004`)                          | Hecho |    Hecho    | Hecho  |      Hecho      |    N/A     |  N/A  |
+| **Carga con skeletons** (`UX-X-005`)                     | Hecho |    Hecho    | Hecho  |      Hecho      |    N/A     |  N/A  |
+| **Modo offline y caché** (`UX-X-006`)                    | Hecho |    Hecho    | Hecho  |     Parcial     |    N/A     |  N/A  |
+| **Notificaciones / Snackbars** (`UX-X-007`)              | Hecho |    Hecho    | Hecho  |      Hecho      |   Hecho    | Hecho |
+| **Accesibilidad WCAG 2.2 AA** (`UX-X-008`, `009`, `010`) | Hecho |    Hecho    | Hecho  |      Hecho      |   Hecho    | Hecho |
+| **Responsividad y modales** (`UX-X-011`, `012`)          | Hecho |    Hecho    | Hecho  |      Hecho      |   Hecho    | Hecho |
+| **Internacionalización es-GT** (`UX-X-013`)              | Hecho |    Hecho    | Hecho  |      Hecho      |   Hecho    | Hecho |
+| **Rendimiento percibido** (`UX-X-014`)                   | Hecho |    Hecho    | Hecho  |      Hecho      |   Hecho    | Hecho |
+| **Privacidad de datos** (`UX-X-015`)                     | Hecho |    Hecho    | Hecho  |      Hecho      |   Hecho    | Hecho |
 
 ---
 
 ## 4. Requisitos transversales de UX (prefijo UX-X)
 
 ### UX-X-001 — Taxonomía y presentación de errores amigables al usuario
+
 - **Actor / rol:** Todos (Visitante, Estudiante Registrado, Estudiante Verificado, Moderador, Administrador)
 - **Prioridad:** Must
 - **Estado objetivo:** La aplicación intercepta cualquier fallo técnico (red, base de datos, validación, autenticación o permisos) y lo presenta al usuario traducido a una taxonomía comprensible en español (`es-GT`). Queda estrictamente prohibido desplegar trazas crudas, excepciones (`AuthException`, `PostgrestException`, `SocketException`), códigos HTTP aislados (ej. "Error 500") o textos en inglés. Cada mensaje de error debe explicar qué ocurrió y brindar una acción de recuperación concreta ("Reintentar", "Revisar datos", "Comprobar conexión").
@@ -86,9 +87,9 @@ identificados en el levantamiento de código:
   - Si el error es transitorio de red: pulsar "Reintentar" dispara nuevamente la llamada fallida sin recargar la pantalla completa.
   - Si el error es de formulario: se resalta visualmente el campo afectado y el foco se desplaza automáticamente al primer control inválido.
 - **Estados:**
-  - *Inicial:* Sin avisos de error.
-  - *Error en línea:* Banner bajo el control afectado o snackbar flotante según la gravedad.
-  - *Error bloqueante:* Diálogo modal con acción única de reintento o retorno seguro.
+  - _Inicial:_ Sin avisos de error.
+  - _Error en línea:_ Banner bajo el control afectado o snackbar flotante según la gravedad.
+  - _Error bloqueante:_ Diálogo modal con acción única de reintento o retorno seguro.
 - **Validaciones y reglas de negocio:**
   - Mapeo unificado obligatorio:
     - Falla de conexión DNS / Socket -> "No tienes conexión a internet. Revisa tu red y vuelve a intentarlo."
@@ -106,9 +107,10 @@ identificados en el levantamiento de código:
 ---
 
 ### UX-X-002 — Manejo de límites de tasa (rate limiting) y temporizadores visuales de reintento
+
 - **Actor / rol:** Todos (Visitante, Estudiante Registrado)
 - **Prioridad:** Must
-- **Estado objetivo:** Todo mecanismo sensible a límites de tasa (*rate limits*) de seguridad (reenvío de códigos OTP de correo, reenvío de códigos de restablecimiento de contraseña, emisión de factores TOTP y publicaciones de contenido de alta frecuencia) debe incluir un temporizador visual descendente (*countdown*) que desactive el botón de acción durante el periodo de enfriamiento (cooldown de 60 segundos por defecto), evitando pulsaciones repetitivas accidentales y bloqueos de cuenta.
+- **Estado objetivo:** Todo mecanismo sensible a límites de tasa (_rate limits_) de seguridad (reenvío de códigos OTP de correo, reenvío de códigos de restablecimiento de contraseña, emisión de factores TOTP y publicaciones de contenido de alta frecuencia) debe incluir un temporizador visual descendente (_countdown_) que desactive el botón de acción durante el periodo de enfriamiento (cooldown de 60 segundos por defecto), evitando pulsaciones repetitivas accidentales y bloqueos de cuenta.
 - **Problema actual [Mejora]:** En [`auth_modal.dart:575-587`](../../comunidad_universitaria/lib/features/shared/widgets/auth_modal.dart#L575-L587) e Inventario 8.7, el botón "Reenviar código" no muestra una cuenta regresiva visible de 60 segundos tras presionarlo; al pulsarlo repetidamente, Supabase bloquea al usuario por límite de peticiones con un mensaje genérico.
 - **Precondiciones:** El usuario solicita el despacho de un código OTP o dispara una acción sujeta a límite de frecuencia.
 - **UI / contenido:**
@@ -122,9 +124,9 @@ identificados en el levantamiento de código:
   - Al alcanzar `0s`, el botón recupera su interactividad plena, cambiando la etiqueta a `"Reenviar código"` y emitiendo una animación sutil de activación.
   - Si el backend devuelve de todos modos una respuesta HTTP 429 con cabecera `Retry-After`, el contador se ajusta inmediatamente al tiempo estipulado por el servidor.
 - **Estados:**
-  - *Activo:* Botón habilitado para solicitar código.
-  - *Enfriamiento:* Contador decreciente visible, control bloqueado.
-  - *Restablecido:* Vuelve al estado inicial listo para interacción.
+  - _Activo:_ Botón habilitado para solicitar código.
+  - _Enfriamiento:_ Contador decreciente visible, control bloqueado.
+  - _Restablecido:_ Vuelve al estado inicial listo para interacción.
 - **Validaciones y reglas de negocio:**
   - Duración estándar de enfriamiento en cliente: 60 segundos tras cada reenvío.
   - Si el usuario cierra el modal y lo vuelve a abrir dentro de los 60 segundos, el tiempo restante debe conservarse en memoria para no reiniciar el enfriamiento a cero.
@@ -137,6 +139,7 @@ identificados en el levantamiento de código:
 ---
 
 ### UX-X-003 — Resiliencia y fallback en carga y visualización de multimedia
+
 - **Actor / rol:** Estudiante Registrado, Estudiante Verificado, Moderador, Administrador
 - **Prioridad:** Must
 - **Estado objetivo:** La subida y visualización de fotografías (Marketplace, Foro, Avatares) cuenta con un mecanismo de resiliencia automática: si el servicio primario de almacenamiento (Cloudflare R2 Worker) experimenta fallas, saturación de cuota o bloqueos de red en el campus, el cliente conmuta de forma transparente a un almacenamiento secundario (Supabase Storage). Si la imagen remota no puede cargarse en los feeds, la UI despliega un placeholder accesible con la misma relación de aspecto, impidiendo cuadros rotos o huecos blancos.
@@ -151,10 +154,10 @@ identificados en el levantamiento de código:
   - Si el worker primario no responde en 5 segundos, la app ejecuta automáticamente la subida mediante Supabase Storage.
   - Si ambos fallan, el diálogo no borra el texto redactado por el alumno; muestra un diálogo o banner con botón `"Reintentar subida"` o `"Publicar sin imagen"`.
 - **Estados:**
-  - *Seleccionada:* Vista previa miniatura con botón de eliminar (`Icons.close`).
-  - *Subiendo:* Indicador de progreso.
-  - *Fallback activo:* Reintento transparente secundario.
-  - *Error final:* Notificación explicativa sin pérdida de datos del formulario.
+  - _Seleccionada:_ Vista previa miniatura con botón de eliminar (`Icons.close`).
+  - _Subiendo:_ Indicador de progreso.
+  - _Fallback activo:_ Reintento transparente secundario.
+  - _Error final:_ Notificación explicativa sin pérdida de datos del formulario.
 - **Validaciones y reglas de negocio:**
   - Validación en cliente: tamaño máximo de imagen 5 MB; compresión visual recomendada previa al envío a 1280px de ancho máximo para ahorrar datos móviles.
   - Persistencia de URL válida garantizada antes de completar el insert en base de datos.
@@ -167,9 +170,10 @@ identificados en el levantamiento de código:
 ---
 
 ### UX-X-004 — Patrón unificado de estados vacíos contextuales y accionables
+
 - **Actor / rol:** Todos
 - **Prioridad:** Must
-- **Estado objetivo:** Toda pantalla, pestaña, feed o lista de resultados que carezca de datos para mostrar despliega el componente canónico de **Estado Vacío** (`EmptyStateWidget`), personalizado contextualmente con: (1) Icono o ilustración temática alusiva, (2) Título empático, (3) Explicación clara del motivo de la ausencia de contenido, y (4) Al menos una llamada a la acción (*Call to Action* / CTA) afirmativa y directa que guíe al estudiante sobre qué hacer a continuación.
+- **Estado objetivo:** Toda pantalla, pestaña, feed o lista de resultados que carezca de datos para mostrar despliega el componente canónico de **Estado Vacío** (`EmptyStateWidget`), personalizado contextualmente con: (1) Icono o ilustración temática alusiva, (2) Título empático, (3) Explicación clara del motivo de la ausencia de contenido, y (4) Al menos una llamada a la acción (_Call to Action_ / CTA) afirmativa y directa que guíe al estudiante sobre qué hacer a continuación.
 - **Problema actual [Mejora]:** En [`empty_state_widget.dart:3-72`](../../comunidad_universitaria/lib/features/shared/widgets/empty_state_widget.dart#L3-L72) y [`forum_screen.dart:882-895`](../../comunidad_universitaria/lib/features/forum/screens/forum_screen.dart#L882-L895), los estados vacíos actuales son planos, utilizan iconos genéricos y no diferencian si la lista está vacía por falta de publicaciones, por un filtro de búsqueda sin coincidencias, o por no haber iniciado sesión en `# mis-guardados`.
 - **Precondiciones:** Una consulta a la base de datos o filtro en cliente devuelve 0 elementos.
 - **UI / contenido:**
@@ -179,17 +183,17 @@ identificados en el levantamiento de código:
   - Descripción en `bodyMedium` (máximo 380px de ancho para óptima legibilidad).
   - Botón de acción primario con icono (`ElevatedButton.icon`).
 - **Casos contextuales canónicos:**
-  1. *Canal de foro sin temas:* Icono `Icons.forum_outlined` + `"Aún no hay publicaciones en este canal"` + `"Sé la primera persona en compartir una duda o aporte académico."` + Botón `"Crear primera publicación"`.
-  2. *Filtro o búsqueda sin resultados:* Icono `Icons.search_off` + `"No encontramos resultados para tu búsqueda"` + `"Intenta cambiar las palabras clave o restablecer los filtros."` + Botón `"Limpiar filtros"`.
-  3. *Marketplace sin productos:* Icono `Icons.storefront_outlined` + `"No hay artículos disponibles en esta categoría"` + `"¿Tienes libros, apuntes o comida para ofrecer a tus compañeros?"` + Botón `"Publicar un producto"`.
-  4. *Directorio de grupos vacío:* Icono `Icons.groups_outlined` + `"No hay grupos registrados para este curso"` + `"Comparte el enlace de WhatsApp o Discord de tu sección."` + Botón `"Compartir grupo"`.
-  5. *Publicaciones guardadas sin sesión:* Icono `Icons.bookmark_border` + `"Inicia sesión para guardar publicaciones"` + `"Tus temas guardados se sincronizarán aquí para consulta rápida."` + Botón `"Iniciar sesión"`.
+  1. _Canal de foro sin temas:_ Icono `Icons.forum_outlined` + `"Aún no hay publicaciones en este canal"` + `"Sé la primera persona en compartir una duda o aporte académico."` + Botón `"Crear primera publicación"`.
+  2. _Filtro o búsqueda sin resultados:_ Icono `Icons.search_off` + `"No encontramos resultados para tu búsqueda"` + `"Intenta cambiar las palabras clave o restablecer los filtros."` + Botón `"Limpiar filtros"`.
+  3. _Marketplace sin productos:_ Icono `Icons.storefront_outlined` + `"No hay artículos disponibles en esta categoría"` + `"¿Tienes libros, apuntes o comida para ofrecer a tus compañeros?"` + Botón `"Publicar un producto"`.
+  4. _Directorio de grupos vacío:_ Icono `Icons.groups_outlined` + `"No hay grupos registrados para este curso"` + `"Comparte el enlace de WhatsApp o Discord de tu sección."` + Botón `"Compartir grupo"`.
+  5. _Publicaciones guardadas sin sesión:_ Icono `Icons.bookmark_border` + `"Inicia sesión para guardar publicaciones"` + `"Tus temas guardados se sincronizarán aquí para consulta rápida."` + Botón `"Iniciar sesión"`.
 - **Interacciones:**
   - Al pulsar el botón CTA, la app ejecuta directamente la acción de recuperación: abre el diálogo de creación respectivo, limpia el campo de búsqueda o lanza `AuthModal`.
 - **Estados:**
-  - *Vacío puro:* Canal o sección virgen.
-  - *Vacío por filtrado:* Resultado nulo tras búsqueda de usuario (ofrece limpiar filtro).
-  - *Vacío por permisos/sesión:* Requiere inicio de sesión.
+  - _Vacío puro:_ Canal o sección virgen.
+  - _Vacío por filtrado:_ Resultado nulo tras búsqueda de usuario (ofrece limpiar filtro).
+  - _Vacío por permisos/sesión:_ Requiere inicio de sesión.
 - **Validaciones y reglas de negocio:**
   - El botón CTA debe respetar la matriz de roles: si un visitante pulsa "Crear primera publicación", se le intercepta con `AuthModal` y tras autenticarse se abre el creador.
 - **Accesibilidad:** El contenido del estado vacío debe tener foco programático accesible y ser leído como un bloque coherente por lectores de pantalla.
@@ -201,24 +205,25 @@ identificados en el levantamiento de código:
 ---
 
 ### UX-X-005 — Carga progresiva con skeletons adaptativos y prevención de salto de contenido (CLS)
+
 - **Actor / rol:** Todos
 - **Prioridad:** Must
-- **Estado objetivo:** La experiencia de carga inicial y transición de pantalla utiliza maquetas esqueléticas animadas (*Skeletons*) que replican de manera fidedigna la geometría, espaciado y proporciones de las tarjetas y listas reales, evitando el parpadeo de interfaces en blanco y eliminando el salto acumulativo de diseño (*Cumulative Layout Shift* - CLS).
-- **Problema actual [Mejora]:** En [`network_state_widgets.dart:3-92`](../../comunidad_universitaria/lib/features/shared/widgets/network_state_widgets.dart#L3-L92), el componente `SkeletonCard` consiste en un contenedor estático con colores duros sin animación de brillo (*shimmer*), y posee una única estructura que no refleja la cuadrícula de tarjetas de marketplace (`marketplace_card.dart`), ni las filas de grupos (`group_card.dart`), ni los comentarios anidados (`comment_item.dart`).
+- **Estado objetivo:** La experiencia de carga inicial y transición de pantalla utiliza maquetas esqueléticas animadas (_Skeletons_) que replican de manera fidedigna la geometría, espaciado y proporciones de las tarjetas y listas reales, evitando el parpadeo de interfaces en blanco y eliminando el salto acumulativo de diseño (_Cumulative Layout Shift_ - CLS).
+- **Problema actual [Mejora]:** En [`network_state_widgets.dart:3-92`](../../comunidad_universitaria/lib/features/shared/widgets/network_state_widgets.dart#L3-L92), el componente `SkeletonCard` consiste en un contenedor estático con colores duros sin animación de brillo (_shimmer_), y posee una única estructura que no refleja la cuadrícula de tarjetas de marketplace (`marketplace_card.dart`), ni las filas de grupos (`group_card.dart`), ni los comentarios anidados (`comment_item.dart`).
 - **Precondiciones:** Una pantalla o feed solicita datos asíncronos y aún no cuenta con una versión en caché para mostrar.
 - **UI / contenido:**
-  - Animación suave de barrido degradado (*shimmer*) con ciclo de 1500 ms de izquierda a derecha.
+  - Animación suave de barrido degradado (_shimmer_) con ciclo de 1500 ms de izquierda a derecha.
   - Tokens de color: base `#E2E8F0` y brillo `#F1F5F9` en tema claro; base `#1E293B` y brillo `#334155` en tema oscuro.
   - Tres variantes especializadas de esqueletos:
-    1. *Skeleton de Post de Foro:* Avatar circular (32px), dos líneas de metadatos (autor y tiempo), barra de título (alto 16px) y dos barras de cuerpo de texto.
-    2. *Skeleton de Tarjeta de Marketplace:* Caja de imagen con relación de aspecto 16:9, etiqueta de precio en esquina superior, título y botones de contacto inferiores.
-    3. *Skeleton de Grupo de Estudio:* Tarjeta con cabecera de curso, sección y pastilla de plataforma (WhatsApp/Telegram).
+    1. _Skeleton de Post de Foro:_ Avatar circular (32px), dos líneas de metadatos (autor y tiempo), barra de título (alto 16px) y dos barras de cuerpo de texto.
+    2. _Skeleton de Tarjeta de Marketplace:_ Caja de imagen con relación de aspecto 16:9, etiqueta de precio en esquina superior, título y botones de contacto inferiores.
+    3. _Skeleton de Grupo de Estudio:_ Tarjeta con cabecera de curso, sección y pastilla de plataforma (WhatsApp/Telegram).
 - **Interacciones:**
   - El skeleton se muestra inmediatamente (< 50 ms) tras solicitar los datos.
-  - Al completar la carga de red, se efectúa un desvanecimiento cruzado (*cross-fade*) de 200 ms hacia el contenido real, manteniendo fija la posición de scroll.
+  - Al completar la carga de red, se efectúa un desvanecimiento cruzado (_cross-fade_) de 200 ms hacia el contenido real, manteniendo fija la posición de scroll.
 - **Estados:**
-  - *Cargando:* Se despliegan entre 3 y 6 tarjetas esqueléticas para llenar el viewport del dispositivo.
-  - *Completado:* Reemplazo suave por la lista real de datos.
+  - _Cargando:_ Se despliegan entre 3 y 6 tarjetas esqueléticas para llenar el viewport del dispositivo.
+  - _Completado:_ Reemplazo suave por la lista real de datos.
 - **Validaciones y reglas de negocio:**
   - Si la conexión tarda más de 8 segundos, el skeleton permanece pero se despliega un aviso inferior discreto: "La conexión está lenta. Seguimos cargando...".
 - **Accesibilidad:** Si el sistema operativo tiene activada la preferencia de accesibilidad de **"Reducir movimiento"** (`MediaQuery.disableAnimations` o `reducedMotion`), la animación de shimmer se desactiva por completo, mostrando un color plano estático accesible.
@@ -230,6 +235,7 @@ identificados en el levantamiento de código:
 ---
 
 ### UX-X-006 — Modo sin conexión y persistencia resiliente con Stale-While-Revalidate
+
 - **Actor / rol:** Todos (Visitante, Estudiante Registrado, Estudiante Verificado)
 - **Prioridad:** Must
 - **Estado objetivo:** La plataforma implementa la estrategia de caché **Stale-While-Revalidate** para permitir la lectura continua de contenidos académicos sin conexión a internet (en pasillos, sótanos o áreas de baja cobertura del campus universitario). Los datos guardados localmente nunca se destruyen por vencimiento de un temporizador corto; se presentan al usuario como datos en caché acompañados del banner no intrusivo `OfflineBanner`. Las acciones que requieren conectividad para escritura informan amigablemente la restricción y protegen los borradores.
@@ -247,9 +253,9 @@ identificados en el levantamiento de código:
   - Al pulsar `"Reintentar"`, la app verifica conectividad y refresca los datos si la red volvió.
   - Al intentar una acción de escritura (crear post, enviar comentario, votar o publicar en marketplace), se despliega un diálogo o snackbar: `"Esta acción requiere conexión a internet. Conéctate a una red e inténtalo de nuevo."` El formulario activo y el texto escrito se preservan intactos en el diálogo o borrador local sin cerrarse.
 - **Estados:**
-  - *En línea:* Comportamiento ordinario; actualización silenciosa de caché.
-  - *Sin conexión con caché:* Visualización de datos locales con `OfflineBanner`.
-  - *Sin conexión sin caché previa:* Estado vacío amigable indicando falta de conexión con botón "Reintentar".
+  - _En línea:_ Comportamiento ordinario; actualización silenciosa de caché.
+  - _Sin conexión con caché:_ Visualización de datos locales con `OfflineBanner`.
+  - _Sin conexión sin caché previa:_ Estado vacío amigable indicando falta de conexión con botón "Reintentar".
 - **Validaciones y reglas de negocio:**
   - La caché persistida almacena hasta 50 elementos por canal temático y catálogo.
   - Los datos locales se consideran "stale" para lectura offline indefinida hasta que una nueva sincronización en línea los actualice.
@@ -262,9 +268,10 @@ identificados en el levantamiento de código:
 ---
 
 ### UX-X-007 — Sistema estandarizado de notificaciones flotantes y snackbars
+
 - **Actor / rol:** Todos
 - **Prioridad:** Must
-- **Estado objetivo:** Toda notificación efímera del sistema se gestiona a través de un servicio unificado de retroalimentación (`AppFeedback`) que emite snackbars con diseño flotante (`SnackBarBehavior.floating`), respetando las zonas de navegación (por encima de la `NavigationBar` y del botón flotante FAB), con duraciones estandarizadas, iconos semánticos según 4 niveles de severidad (Éxito, Información, Advertencia, Error) y opción de acción de deshacer (*Undo*) en operaciones destructivas.
+- **Estado objetivo:** Toda notificación efímera del sistema se gestiona a través de un servicio unificado de retroalimentación (`AppFeedback`) que emite snackbars con diseño flotante (`SnackBarBehavior.floating`), respetando las zonas de navegación (por encima de la `NavigationBar` y del botón flotante FAB), con duraciones estandarizadas, iconos semánticos según 4 niveles de severidad (Éxito, Información, Advertencia, Error) y opción de acción de deshacer (_Undo_) en operaciones destructivas.
 - **Problema actual [Mejora]:** En [`url_utils.dart:26-53`](../../comunidad_universitaria/lib/core/utils/url_utils.dart#L26-L53), [`marketplace_screen.dart:526-565`](../../comunidad_universitaria/lib/features/marketplace/screens/marketplace_screen.dart#L526-L565) y [`profile_screen.dart:193-289`](../../comunidad_universitaria/lib/features/profile/screens/profile_screen.dart#L193-L289), los `SnackBar` se instancian de manera dispersa, con colores quemados (`Colors.red.shade700`), algunos fijos al borde inferior tapando la navegación y sin consistencia en esquinas redondeadas o acciones.
 - **Precondiciones:** Una acción del usuario o evento del sistema requiere confirmar un resultado o alertar sobre un estado no crítico.
 - **UI / contenido:**
@@ -272,17 +279,17 @@ identificados en el levantamiento de código:
   - Geometría: Bordes redondeados de 10px.
   - Icono semántico a la izquierda (18px) + Texto descriptivo en `bodyMedium` + Botón opcional de acción a la derecha.
   - 4 niveles de severidad estandarizados:
-    1. *Éxito:* Fondo `#065F46` (oscuro) / `#ECFDF5` (claro), icono `Icons.check_circle_outline`, duración 3.5 segundos.
-    2. *Información:* Fondo `#1E3A8A` (oscuro) / `#EFF6FF` (claro), icono `Icons.info_outline`, duración 4 segundos.
-    3. *Advertencia:* Fondo `#78350F` (oscuro) / `#FFFBEB` (claro), icono `Icons.warning_amber_outlined`, duración 5 segundos.
-    4. *Error:* Fondo `#7F1D1D` (oscuro) / `#FEF2F2` (claro), icono `Icons.error_outline`, duración 5 segundos con botón "Reintentar" o "Entendido".
+    1. _Éxito:_ Fondo `#065F46` (oscuro) / `#ECFDF5` (claro), icono `Icons.check_circle_outline`, duración 3.5 segundos.
+    2. _Información:_ Fondo `#1E3A8A` (oscuro) / `#EFF6FF` (claro), icono `Icons.info_outline`, duración 4 segundos.
+    3. _Advertencia:_ Fondo `#78350F` (oscuro) / `#FFFBEB` (claro), icono `Icons.warning_amber_outlined`, duración 5 segundos.
+    4. _Error:_ Fondo `#7F1D1D` (oscuro) / `#FEF2F2` (claro), icono `Icons.error_outline`, duración 5 segundos con botón "Reintentar" o "Entendido".
 - **Interacciones:**
   - Si la acción fue destructiva (eliminar una publicación o retirar un anuncio), se incluye el botón de texto `"Deshacer"`. Si el usuario pulsa `"Deshacer"` dentro del tiempo límite, la eliminación se aborta inmediatamente.
-  - Se puede descartar deslizando horizontalmente (*swipe to dismiss*).
+  - Se puede descartar deslizando horizontalmente (_swipe to dismiss_).
 - **Estados:**
-  - *Aparición:* Animación suave de elevación.
-  - *Visible:* Tiempo de lectura proporcional al contenido.
-  - *Descarte:* Desvanecimiento o salida lateral.
+  - _Aparición:_ Animación suave de elevación.
+  - _Visible:_ Tiempo de lectura proporcional al contenido.
+  - _Descarte:_ Desvanecimiento o salida lateral.
 - **Validaciones y reglas de negocio:**
   - Cola de mensajes secuencial: no deben amontonarse múltiples snackbars simultáneamente; se encolan con descarte del previo si es de menor prioridad.
 - **Accesibilidad:** Todo snackbar debe anunciarse inmediatamente mediante lectores de pantalla (`assertive` para errores, `polite` para éxitos). Contraste de texto ≥ 4.5:1 garantizado en ambas paletas.
@@ -294,6 +301,7 @@ identificados en el levantamiento de código:
 ---
 
 ### UX-X-008 — Accesibilidad visual y contraste cromático WCAG 2.2 AA
+
 - **Actor / rol:** Todos
 - **Prioridad:** Must
 - **Estado objetivo:** Todas las pantallas, tarjetas, componentes, iconos y tipografías de la plataforma cumplen estrictamente con los criterios de éxito de **WCAG 2.2 Nivel AA** tanto en el **Modo Claro** como en el **Modo Oscuro**:
@@ -303,8 +311,8 @@ identificados en el levantamiento de código:
 - **Problema actual [Mejora]:** En [`app_theme.dart:15-120`](../../comunidad_universitaria/lib/core/config/app_theme.dart#L15-L120) y [`09-sistema-diseno.md:14-31`](09-sistema-diseno.md#11-tokens-de-color), algunos textos secundarios en modo oscuro sobre fondos de tarjeta `#1C2541` y badges sobre fondos de acento se encuentran al límite del ratio 4.5:1, requiriendo verificación matemática estricta y ajuste de tokens.
 - **Precondiciones:** Cualquier pantalla renderizada bajo cualquiera de los dos temas visuales disponibles.
 - **UI / contenido:**
-  - *Tema Claro:* Fondo `#F8FAFC`, superficie `#FFFFFF`, texto primario `#0F172A` (ratio > 13:1), texto secundario `#475569` (ajustado para garantizar ratio > 4.8:1 contra blanco).
-  - *Tema Oscuro:* Fondo `#0B132B`, superficie `#1C2541`, texto primario `#F8FAFC` (ratio > 12:1), texto secundario `#94A3B8` (ratio > 5.1:1 contra `#1C2541`).
+  - _Tema Claro:_ Fondo `#F8FAFC`, superficie `#FFFFFF`, texto primario `#0F172A` (ratio > 13:1), texto secundario `#475569` (ajustado para garantizar ratio > 4.8:1 contra blanco).
+  - _Tema Oscuro:_ Fondo `#0B132B`, superficie `#1C2541`, texto primario `#F8FAFC` (ratio > 12:1), texto secundario `#94A3B8` (ratio > 5.1:1 contra `#1C2541`).
   - Distintivo institucional "VENDIDO": Etiqueta con borde contrastado, fondo rojo traslúcido, icono de candado o bloqueo y texto en negrita, garantizando legibilidad total.
   - Insignia de verificación: Icono verde `Icons.verified` acompañado del texto `"Verificado con carné"`.
 - **Interacciones:**
@@ -323,18 +331,19 @@ identificados en el levantamiento de código:
 ---
 
 ### UX-X-009 — Foco visible, navegación completa por teclado y soporte de lectores de pantalla
+
 - **Actor / rol:** Todos
 - **Prioridad:** Must
 - **Estado objetivo:** La aplicación es 100% operable mediante teclado físico y tecnologías asistenciales de lectura de pantalla (TalkBack en Android, VoiceOver en iOS/macOS, NVDA y JAWS en Windows/Web):
-  - Todos los controles interactivos exhiben un indicador de foco visible (*Focus Ring*) de al menos 2px de grosor con alto contraste al ser enfocados por teclado.
+  - Todos los controles interactivos exhiben un indicador de foco visible (_Focus Ring_) de al menos 2px de grosor con alto contraste al ser enfocados por teclado.
   - Orden de tabulación lógico y continuo (de izquierda a derecha y de arriba hacia abajo).
-  - Trampa de foco (*Focus Trap*) rigurosa en modales y hojas inferiores: el foco se confina a los controles del modal y retorna al botón disparador al cerrarse.
+  - Trampa de foco (_Focus Trap_) rigurosa en modales y hojas inferiores: el foco se confina a los controles del modal y retorna al botón disparador al cerrarse.
   - Tecla `Escape` cierra sistemáticamente cualquier modal, diálogo, menú contextual o visor de imágenes a pantalla completa.
   - Todos los botones de icono declaran etiquetas semánticas descriptivas (`tooltip` y `Semantics(label: ..., button: true)`).
-- **Problema actual [Mejora]:** En [`auth_modal.dart:23-57`](../../comunidad_universitaria/lib/features/shared/widgets/auth_modal.dart#L23-L57) e [`image_viewer_dialog.dart:20-55`](../../comunidad_universitaria/lib/features/shared/widgets/image_viewer_dialog.dart#L20-L55), los diálogos no atrapan el foco del teclado en web/desktop, permitiendo que la tecla `Tab` navegue a controles ocultos detrás del telón de fondo semitransparente (*backdrop*), desorientando a personas usuarias de lectores de pantalla.
+- **Problema actual [Mejora]:** En [`auth_modal.dart:23-57`](../../comunidad_universitaria/lib/features/shared/widgets/auth_modal.dart#L23-L57) e [`image_viewer_dialog.dart:20-55`](../../comunidad_universitaria/lib/features/shared/widgets/image_viewer_dialog.dart#L20-L55), los diálogos no atrapan el foco del teclado en web/desktop, permitiendo que la tecla `Tab` navegue a controles ocultos detrás del telón de fondo semitransparente (_backdrop_), desorientando a personas usuarias de lectores de pantalla.
 - **Precondiciones:** El usuario navega utilizando la tecla `Tab`, flechas de dirección y `Enter` / `Espacio`, o utiliza un lector de pantalla asistencial activo.
 - **UI / contenido:**
-  - Anillo de enfoque (*Focus outline*): borde de 2px de color `accent` (`#2563EB`) con halo de separación (*offset*) de 2px.
+  - Anillo de enfoque (_Focus outline_): borde de 2px de color `accent` (`#2563EB`) con halo de separación (_offset_) de 2px.
   - Etiquetas de accesibilidad transparentes en lectores:
     - Botón de Like: `"Me gusta, 24 votos, botón"`.
     - Botón de Guardar: `"Guardar publicación en mis marcadores, botón"`.
@@ -346,9 +355,9 @@ identificados en el levantamiento de código:
   - Presionar `Enter` o `Espacio` activa el botón o enlace enfocado.
   - Presionar `Escape` en cualquier diálogo abierto lo descarta inmediatamente y devuelve el foco visual al elemento disparador.
 - **Estados:**
-  - *Enfocado:* Anillo visible de alta visibilidad.
-  - *Activo/Pulsado:* Feedback táctil o de ripple.
-  - *Desenfocado:* Aspecto habitual.
+  - _Enfocado:_ Anillo visible de alta visibilidad.
+  - _Activo/Pulsado:_ Feedback táctil o de ripple.
+  - _Desenfocado:_ Aspecto habitual.
 - **Validaciones y reglas de negocio:**
   - Al abrir un modal, el foco se coloca automáticamente en el primer campo de texto o en el botón de cierre si no hay campos editables.
 - **Accesibilidad:** Cumple WCAG 2.2 Criterios 2.1.1 (Teclado), 2.1.2 (Sin trampa de teclado), 2.4.3 (Orden de foco) y 2.4.7 (Foco visible).
@@ -360,6 +369,7 @@ identificados en el levantamiento de código:
 ---
 
 ### UX-X-010 — Tamaño de objetivo táctil y ergonomía móvil
+
 - **Actor / rol:** Todos
 - **Prioridad:** Must
 - **Estado objetivo:** Todo componente interactivo en pantallas móviles y táctiles (botones, iconos de acción, casillas de verificación, chips de filtrado, elementos de listas y enlaces) garantiza un área de toque efectiva mínima de **48 × 48 dp**, superando el criterio de éxito WCAG 2.2 Target Size (Mínimo 24×24 px, recomendado 44–48 dp) y alineándose con las especificaciones de ergonomía de Material 3.
@@ -372,8 +382,8 @@ identificados en el levantamiento de código:
 - **Interacciones:**
   - Al tocar en la proximidad del icono (dentro del recuadro de 48×48 dp), el evento de pulsación se registra con precisión y emite feedback visual (onda de tinta / ripple).
 - **Estados:**
-  - *Reposo:* Icono limpio y proporcionado.
-  - *Tocado:* Resaltado visual circular de 48dp centrado sobre el icono.
+  - _Reposo:_ Icono limpio y proporcionado.
+  - _Tocado:_ Resaltado visual circular de 48dp centrado sobre el icono.
 - **Validaciones y reglas de negocio:**
   - Ningún elemento interactivo en móvil puede tener una dimensión física inferior a 48×48 dp.
 - **Accesibilidad:** Beneficia a personas con dificultades motrices, temblores o que operan el dispositivo con una sola mano en movimiento dentro del campus.
@@ -385,6 +395,7 @@ identificados en el levantamiento de código:
 ---
 
 ### UX-X-011 — Adaptabilidad responsiva en breakpoints de 700px y 1100px
+
 - **Actor / rol:** Todos
 - **Prioridad:** Must
 - **Estado objetivo:** La plataforma unifica su adaptabilidad responsiva en torno a **dos breakpoints canónicos**:
@@ -394,9 +405,9 @@ identificados en el levantamiento de código:
 - **Problema actual [Mejora]:** En [`responsive.dart:15-35`](../../comunidad_universitaria/lib/core/utils/responsive.dart#L15-L35), [`app_shell.dart:180-215`](../../comunidad_universitaria/lib/features/navigation/app_shell.dart#L180-L215) y [`popular_servers_sidebar.dart:15-25`](../../comunidad_universitaria/lib/features/forum/widgets/discord/popular_servers_sidebar.dart#L15-L25), existen puntos de corte discordantes (sidebar en 1050px mientras `Responsive.isDesktop` usa 1100px; y ciertas vistas de foro evalúan 768px mientras el core define 700px), lo que provoca saltos visuales incongruentes al redimensionar ventanas en navegador.
 - **Precondiciones:** La ventana de la aplicación se ejecuta en dispositivos de diversas dimensiones o se redimensiona dinámicamente en el navegador.
 - **UI / contenido:**
-  - *Móvil (< 700px):* Título de AppBar abreviado ("Comunidad USAC"), navegación inferior fija, ocultamiento de columnas auxiliares.
-  - *Tablet (700px – 1100px):* Título completo ("Comunidad Universitaria"), pestañas superiores, catálogo en 2 columnas simétricas.
-  - *Desktop (≥ 1100px):* Experiencia inmersiva completa de 4 columnas en foro; catálogo comercial en 3–4 columnas con ancho máximo de lectura contenido a 1200px.
+  - _Móvil (< 700px):_ Título de AppBar abreviado ("Comunidad USAC"), navegación inferior fija, ocultamiento de columnas auxiliares.
+  - _Tablet (700px – 1100px):_ Título completo ("Comunidad Universitaria"), pestañas superiores, catálogo en 2 columnas simétricas.
+  - _Desktop (≥ 1100px):_ Experiencia inmersiva completa de 4 columnas en foro; catálogo comercial en 3–4 columnas con ancho máximo de lectura contenido a 1200px.
 - **Interacciones:**
   - El redimensionamiento de ventana en caliente conmuta los layouts de forma instantánea y fluida sin perder el estado de los formularios activos ni la posición del scroll de la lista.
 - **Estados:**
@@ -414,24 +425,25 @@ identificados en el levantamiento de código:
 ---
 
 ### UX-X-012 — Adaptación polimórfica de modales y diálogos interactivos
+
 - **Actor / rol:** Todos
 - **Prioridad:** Must
 - **Estado objetivo:** Todos los formularios y diálogos interactivos (`AuthModal`, `CreatePostDialog`, `CreateListingDialog`, `CreateGroupDialog`, `CarneValidationModal`, `ReportDialog`) utilizan un patrón polimórfico adaptativo según el tamaño de la pantalla:
-  - **En móvil (< 700px):** Se despliegan como hoja modal inferior (`showModalBottomSheet`) con bordes redondeados superiores (16dp), tirador de arrastre táctil (*Drag Handle*), soporte de pantalla completa controlada (`isScrollControlled: true`), respeto del área segura (`useSafeArea: true`), y desplazamiento dinámico que eleva los campos por encima del teclado virtual (`MediaQuery.of(context).viewInsets.bottom`), garantizando que los botones de envío nunca queden tapados.
+  - **En móvil (< 700px):** Se despliegan como hoja modal inferior (`showModalBottomSheet`) con bordes redondeados superiores (16dp), tirador de arrastre táctil (_Drag Handle_), soporte de pantalla completa controlada (`isScrollControlled: true`), respeto del área segura (`useSafeArea: true`), y desplazamiento dinámico que eleva los campos por encima del teclado virtual (`MediaQuery.of(context).viewInsets.bottom`), garantizando que los botones de envío nunca queden tapados.
   - **En tablet y desktop (≥ 700px):** Se despliegan como diálogo modal centrado (`showDialog`) con ancho restringido (460dp a 620dp según complejidad), altura máxima acotada al 85% del viewport, barra de desplazamiento visible, botón de cierre superior derecho (`Icons.close`) y cierre alternativo mediante clic exterior en el telón o tecla `Escape`.
 - **Problema actual [Mejora]:** En [`auth_modal.dart:29-56`](../../comunidad_universitaria/lib/features/shared/widgets/auth_modal.dart#L29-L56), [`create_listing_dialog.dart:35-50`](../../comunidad_universitaria/lib/features/marketplace/widgets/create_listing_dialog.dart#L35-L50) y [`sponsor_request_dialog.dart:10-25`](../../comunidad_universitaria/lib/features/marketplace/widgets/sponsor_request_dialog.dart#L10-L25), la lógica de apertura de modales está duplicada manualmente y en algunos formularios móviles no se compensa adecuadamente el `viewInsets.bottom`, ocasionando que el teclado tape los botones de acción primarios.
 - **Precondiciones:** El usuario detona una acción que requiere interacción modal.
 - **UI / contenido:**
-  - *Móvil:* Hoja inferior con barra horizontal superior de arrastre (32×4 dp en gris medio), título en cabecera fija, cuerpo con scroll interno y barra inferior con botones fijos de acción.
-  - *Desktop:* Tarjeta flotante centrada con sombra de elevación (8dp), esquinas redondeadas de 16dp, botón de cruz de cierre en esquina superior derecha y botones de acción en pie de diálogo.
+  - _Móvil:_ Hoja inferior con barra horizontal superior de arrastre (32×4 dp en gris medio), título en cabecera fija, cuerpo con scroll interno y barra inferior con botones fijos de acción.
+  - _Desktop:_ Tarjeta flotante centrada con sombra de elevación (8dp), esquinas redondeadas de 16dp, botón de cruz de cierre en esquina superior derecha y botones de acción en pie de diálogo.
 - **Interacciones:**
   - Al abrirse en móvil, el usuario puede deslizar hacia abajo para descartar (si no hay datos sin guardar).
   - Si el usuario comenzó a escribir datos en un formulario largo e intenta descartar por deslizamiento o tecla Escape, se muestra una confirmación breve: `"¿Deseas descartar los cambios?"`.
   - Al abrirse en desktop, el foco se coloca automáticamente en el primer campo interactivo.
 - **Estados:**
-  - *Abierto móvil:* Hoja inferior visible con scroll.
-  - *Teclado desplegado en móvil:* El contenido se comprime y sube automáticamente; los botones de acción quedan anclados sobre el teclado.
-  - *Abierto desktop:* Cuadro centrado estético.
+  - _Abierto móvil:_ Hoja inferior visible con scroll.
+  - _Teclado desplegado en móvil:_ El contenido se comprime y sube automáticamente; los botones de acción quedan anclados sobre el teclado.
+  - _Abierto desktop:_ Cuadro centrado estético.
 - **Validaciones y reglas de negocio:**
   - Altura máxima del contenido en desktop: 85% del alto de la pantalla; el desbordamiento debe generar scrollbar interno sin desbordar la ventana principal.
 - **Accesibilidad:** Cierre por tecla Escape garantizado en desktop; trampa de foco accesible; lectura secuencial coherente.
@@ -443,16 +455,17 @@ identificados en el levantamiento de código:
 ---
 
 ### UX-X-013 — Localización e internacionalización en español de Guatemala (es-GT)
+
 - **Actor / rol:** Todos
 - **Prioridad:** Must
 - **Estado objetivo:** La plataforma aplica de forma uniforme y estricta la localización lingüística y de formato en **Español de Guatemala (`es-GT`)**:
   - **Moneda:** Quetzales guatemaltecos expresados obligatoriamente con el símbolo `"Q"` seguido del monto con dos decimales y separador de miles por coma (ej. `"Q50.00"`, `"Q1,250.00"`), o la insignia destacada `"GRATIS"`.
   - **Formato de fechas y horas:** Horario en formato de 12 horas con indicador am/pm en minúscula (ej. `"10:30 am"`, `"4:15 pm"`), y fechas en orden día/mes/año (`DD/MM/AAAA`).
-  - **Tiempo relativo humanizado (*timeAgo*):** Adaptado al lenguaje cotidiano del estudiante sancarlista: `"Hace un momento"`, `"Hace 10 min"`, `"Hace 2 h"`, `"Ayer a las 3:15 pm"`, `"El 15 de marzo"`.
+  - **Tiempo relativo humanizado (_timeAgo_):** Adaptado al lenguaje cotidiano del estudiante sancarlista: `"Hace un momento"`, `"Hace 10 min"`, `"Hace 2 h"`, `"Ayer a las 3:15 pm"`, `"El 15 de marzo"`.
   - **Glosario y ortografía sancarlista:**
     - Ortografía estricta de `"carné"` (con tilde en la e; queda terminantemente prohibido usar "carnet", "cédula" o "DPI").
     - Terminología académica propia: `"semestre"`, `"pensum"`, `"catedrático"`, `"auxiliar de cátedra"`, `"parciales"`, `"exámenes finales"`, `"retrasadas"`, `"escuela de vacaciones"`.
-    - Nomenclatura del campus: Sede Central (Campus Central zona 12), CUM (Centro Universitario Metropolitano zona 11), edificios sancarlistas (*T-3*, *S-12*, *M-5*, *Plaza de los Mártires*, *Iglú*, *Los Arcos*).
+    - Nomenclatura del campus: Sede Central (Campus Central zona 12), CUM (Centro Universitario Metropolitano zona 11), edificios sancarlistas (_T-3_, _S-12_, _M-5_, _Plaza de los Mártires_, _Iglú_, _Los Arcos_).
 - **Problema actual [Mejora]:** En [`marketplace_item.dart:110-145`](../../comunidad_universitaria/lib/core/models/marketplace_item.dart#L110-L145) y [`marketplace_card.dart:80-120`](../../comunidad_universitaria/lib/features/marketplace/widgets/marketplace_card.dart#L80-L120), algunos formatos de fecha utilizan métodos genéricos en inglés o formatos desalineados con las costumbres guatemaltecas, y en algunas partes del código la palabra "carné" carece de la tilde académica formal.
 - **Precondiciones:** La app formatea fechas, valores monetarios o cadenas de texto en pantalla.
 - **UI / contenido:**
@@ -475,10 +488,11 @@ identificados en el levantamiento de código:
 ---
 
 ### UX-X-014 — Rendimiento percibido, actualizaciones optimistas y control de latencia visual
+
 - **Actor / rol:** Todos (Visitante, Estudiante Registrado, Estudiante Verificado)
 - **Prioridad:** Should
 - **Estado objetivo:** La experiencia de usuario maximiza el rendimiento percibido asegurando retroalimentación visual inmediata en menos de **100 milisegundos** ante cualquier toque o clic:
-  - **Actualizaciones optimistas de UI con reversión graciosa (*Rollback*):** Al pulsar me gusta (*Like*), guardar en marcadores (*Bookmark*), votar en encuestas o emitir un voto de apoyo (*Upvote*), la interfaz actualiza el contador y conmuta el estado visual del icono de inmediato. Si la petición remota falla tras el intento en segundo plano, la app revierte suavemente el estado y despliega un aviso no intrusivo: `"No se pudo registrar tu interacción. Inténtalo de nuevo."`
+  - **Actualizaciones optimistas de UI con reversión graciosa (_Rollback_):** Al pulsar me gusta (_Like_), guardar en marcadores (_Bookmark_), votar en encuestas o emitir un voto de apoyo (_Upvote_), la interfaz actualiza el contador y conmuta el estado visual del icono de inmediato. Si la petición remota falla tras el intento en segundo plano, la app revierte suavemente el estado y despliega un aviso no intrusivo: `"No se pudo registrar tu interacción. Inténtalo de nuevo."`
   - **Diferenciación estricta entre esqueletos y spinners:** Los skeletons se reservan exclusivamente para la carga de pantallas completas o feeds; los spinners circulares pequeños (`CircularProgressIndicator` de 18dp) se limitan al interior de botones de acción activos para certificar procesamiento sin congelar la pantalla.
   - **Prevención de salto de layout en imágenes:** Todos los contenedores multimedia declaran relaciones de aspecto fijas (`AspectRatio(aspectRatio: 16 / 9)`) con fondos neutros de sustitución mientras se completa la descarga remota.
 - **Problema actual [Mejora]:** En [`post_detail_screen.dart:89-105`](../../comunidad_universitaria/lib/features/forum/screens/post_detail_screen.dart#L89-L105) y [`post_card.dart:130-150`](../../comunidad_universitaria/lib/features/forum/widgets/post_card.dart#L130-L150), aunque existe lógica optimista inicial, ante fallos de conexión la reversión puede provocar saltos bruscos en el árbol de comentarios o inconsistencias en los contadores visibles de likes si el usuario navega rápidamente entre pantallas.
@@ -490,11 +504,11 @@ identificados en el levantamiento de código:
   - El usuario percibe una app hiper-reactiva sin retardos perceptibles.
   - Si la llamada a Supabase es rechazada (por fallo de red o guard de sesión), el botón revierte a su color original, el contador decrementa en -1 y se notifica la causa mediante snackbar.
 - **Estados:**
-  - *Interacción instantánea:* Cambio visual optimista inmediato.
-  - *Confirmación de fondo:* La respuesta del servidor valida el estado silenciosamente.
-  - *Rollback:* Reversión transparente ante fallo con mensaje de error amigable.
+  - _Interacción instantánea:_ Cambio visual optimista inmediato.
+  - _Confirmación de fondo:_ La respuesta del servidor valida el estado silenciosamente.
+  - _Rollback:_ Reversión transparente ante fallo con mensaje de error amigable.
 - **Validaciones y reglas de negocio:**
-  - Prevención de rebotes (*Debounce*): se ignoran pulsaciones repetidas ultrarrápidas (< 300 ms) sobre el mismo botón de like para evitar saturación de peticiones.
+  - Prevención de rebotes (_Debounce_): se ignoran pulsaciones repetidas ultrarrápidas (< 300 ms) sobre el mismo botón de like para evitar saturación de peticiones.
 - **Accesibilidad:** Los lectores de pantalla deben ser notificados de la conmutación de estado sin saturar la lectura continua.
 - **Responsive:** Desempeño fluido a 60 fps en dispositivos móviles de gama baja y media.
 - **Criterios de aceptación (Gherkin):**
@@ -504,6 +518,7 @@ identificados en el levantamiento de código:
 ---
 
 ### UX-X-015 — Privacidad de datos personales, disociación de identidad y consentimiento informado
+
 - **Actor / rol:** Todos (Visitante, Estudiante Registrado, Estudiante Verificado, Moderador, Administrador)
 - **Prioridad:** Must
 - **Estado objetivo:** La plataforma salvaguarda la privacidad de la comunidad sancarlista bajo una **estricta disociación de identidades**:
@@ -518,15 +533,15 @@ identificados en el levantamiento de código:
   - En Diálogo de Validación de Carné:
     - Tarjeta destacada de privacidad con icono `Icons.security`.
     - 3 puntos informativos sobre la protección de datos: "Solo verificación de estado activo", "Cero acceso a notas académicas", "Carné encriptado y privado".
-    - Casilla de verificación (*Checkbox*) de consentimiento obligatorio: `"He leído y autorizo la verificación de mi condición de estudiante activo."`
+    - Casilla de verificación (_Checkbox_) de consentimiento obligatorio: `"He leído y autorizo la verificación de mi condición de estudiante activo."`
     - Botón de validación deshabilitado hasta marcar la casilla de consentimiento.
   - En Perfil: Sección destacada "Transparencia de Privacidad" detallando cómo se protegen los datos frente a docentes y compañeros.
 - **Interacciones:**
   - El estudiante puede regenerar o aleatorizar su seudónimo con el botón de barajar (`Icons.shuffle`) en cualquier momento; el nuevo seudónimo se sincroniza con su perfil en la nube para persistir entre dispositivos sin alterar su historial de posts.
   - Al eliminar un post en el perfil, la app confirma mediante diálogo modal y elimina el registro de la base de datos o anonimiza los comentarios subordinados para no romper los hilos colectivos.
 - **Estados:**
-  - *Perfil Seudónimo (Foro):* Privacidad total garantizada.
-  - *Vendedor Verificado (Marketplace):* Confianza comercial certificada con nombre validado por consentimiento voluntario.
+  - _Perfil Seudónimo (Foro):_ Privacidad total garantizada.
+  - _Vendedor Verificado (Marketplace):_ Confianza comercial certificada con nombre validado por consentimiento voluntario.
 - **Validaciones y reglas de negocio:**
   - Las políticas de seguridad a nivel de fila (RLS) en PostgreSQL deben bloquear cualquier consulta de usuarios anónimos o estudiantes regulares sobre las columnas `carne` o `email` en la tabla `profiles`.
   - Solo los roles de `moderator` y `admin` con sesión AAL2 pueden auditar identidades ante reportes graves de fraude o acoso.
@@ -537,6 +552,7 @@ identificados en el levantamiento de código:
   - **Given** un estudiante que abre el modal de validación de carné, **When** visualiza la pantalla, **Then** el botón de validación se mantiene inactivo y bloqueado hasta que marque explícitamente la casilla de consentimiento informado de verificación de matrícula.
 
 ### UX-X-016 — Transparencia y accesibilidad del contenido patrocinado
+
 - **Actor / rol:** Todos; Patrocinador; Moderador
 - **Prioridad:** Must
 - **Estado objetivo:** todo contenido patrocinado (Foro, Grupos, Marketplace) cumple
@@ -544,7 +560,7 @@ identificados en el levantamiento de código:
   patrocinado; (2) explica **"¿Por qué veo esto?"** sin exponer datos sensibles;
   (3) puede **ocultarse** y **reportarse**; (4) es accesible con lectores de
   pantalla (la etiqueta se anuncia antes del cuerpo); (5) respeta la preferencia de
-  *reducir movimiento* y no reproduce audio automáticamente.
+  _reducir movimiento_ y no reproduce audio automáticamente.
 - **Problema actual [Mejora]:** no existía un requisito transversal de transparencia
   publicitaria; se formaliza aquí para [`UX-SPN-005`](12-patrocinios.md) y
   [`UX-SPN-008`](12-patrocinios.md).

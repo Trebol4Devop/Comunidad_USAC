@@ -28,16 +28,16 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
 
 ## 3. Matriz de capacidades del área
 
-| Capacidad | Visitante | Estudiante Registrado | Estudiante Verificado | Moderador | Administrador |
-|---|:---:|:---:|:---:|:---:|:---:|
-| Alternar entre Foro, Marketplace y Grupos | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Preservar estado y scroll entre pestañas | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Abrir modal de aviso comunitario | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Conmutar tema claro/oscuro en AppBar | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Consultar Normas Comunitarias y Descargo | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Abrir enlaces externos a portales de facultades | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Usar FAB contextual para publicar en Marketplace | ❌ *(interceptado)* | ✅ *(AAL2)* | ✅ *(AAL2)* | ✅ *(AAL2)* | ✅ *(AAL2)* |
-| Usar FAB contextual para compartir Grupo | ❌ *(interceptado)* | ✅ *(AAL2)* | ✅ *(AAL2)* | ✅ *(AAL2)* | ✅ *(AAL2)* |
+| Capacidad                                        |       Visitante        | Estudiante Registrado | Estudiante Verificado |   Moderador    | Administrador  |
+| ------------------------------------------------ | :--------------------: | :-------------------: | :-------------------: | :------------: | :------------: |
+| Alternar entre Foro, Marketplace y Grupos        |         Hecho          |         Hecho         |         Hecho         |     Hecho      |     Hecho      |
+| Preservar estado y scroll entre pestañas         |         Hecho          |         Hecho         |         Hecho         |     Hecho      |     Hecho      |
+| Abrir modal de aviso comunitario                 |         Hecho          |         Hecho         |         Hecho         |     Hecho      |     Hecho      |
+| Conmutar tema claro/oscuro en AppBar             |         Hecho          |         Hecho         |         Hecho         |     Hecho      |     Hecho      |
+| Consultar Normas Comunitarias y Descargo         |         Hecho          |         Hecho         |         Hecho         |     Hecho      |     Hecho      |
+| Abrir enlaces externos a portales de facultades  |         Hecho          |         Hecho         |         Hecho         |     Hecho      |     Hecho      |
+| Usar FAB contextual para publicar en Marketplace | Falta _(interceptado)_ |    Hecho _(AAL2)_     |    Hecho _(AAL2)_     | Hecho _(AAL2)_ | Hecho _(AAL2)_ |
+| Usar FAB contextual para compartir Grupo         | Falta _(interceptado)_ |    Hecho _(AAL2)_     |    Hecho _(AAL2)_     | Hecho _(AAL2)_ | Hecho _(AAL2)_ |
 
 > **Nota de seguridad y autenticación:** La navegación por el cascarón y la lectura de normas y descargos es pública e irrestricta. Si un visitante pulsa un botón de acción flotante (`FAB`) contextual, el sistema despliega el diálogo de autenticación (`AuthModal`) y, tras autenticarse con nivel **AAL2**, procede con el formulario de publicación [ver [`07-autenticacion.md`](07-autenticacion.md)].
 
@@ -46,6 +46,7 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
 ## 4. Requisitos del cascarón de navegación (UX-NAV)
 
 ### UX-NAV-001 — Acceso directo a tres destinos canónicos en la navegación principal [Mejora]
+
 - **Actor / rol:** Visitante, Estudiante Registrado, Estudiante Verificado, Moderador, Administrador
 - **Prioridad:** Must
 - **Estado objetivo:** La navegación principal del cascarón expone de forma directa, visible e inmediata tres destinos principales de primer nivel: **Foro Estudiantil**, **Marketplace & Tutorías** y **Directorio de Grupos de Estudio**, permitiendo a cualquier estudiante acceder a cualquiera de ellos en un solo toque o clic desde la vista raíz tanto en móvil como en escritorio.
@@ -58,9 +59,9 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
   - Tocar o hacer clic en cualquiera de las pestañas conmuta el índice activo `_currentIndex` de forma instantánea.
   - El destino seleccionado se destaca visualmente mediante el color primario de acento (`#004B87` o `#2563EB`) y cambio de peso tipográfico a negrita.
 - **Estados:**
-  - *Inicial:* Pestaña 0 (`Foro Estudiantil`) activa por defecto al abrir la app.
-  - *Activo:* Destino seleccionado resaltado con indicador visual claro.
-  - *Transición:* Conmutación inmediata en memoria sin pantallas intermedias ni parpadeos.
+  - _Inicial:_ Pestaña 0 (`Foro Estudiantil`) activa por defecto al abrir la app.
+  - _Activo:_ Destino seleccionado resaltado con indicador visual claro.
+  - _Transición:_ Conmutación inmediata en memoria sin pantallas intermedias ni parpadeos.
 - **Validaciones y reglas de negocio:**
   - La exploración entre los tres módulos es completamente libre y no requiere sesión iniciada.
   - Si el usuario accede a través de un enlace contextual interno (ej. botón de grupos en el rail del foro), el cascarón conmuta automáticamente el índice a la pestaña de Grupos sincronizando la unidad académica activa.
@@ -78,6 +79,7 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
 ---
 
 ### UX-NAV-002 — Preservación integral de estado entre módulos mediante IndexedStack
+
 - **Actor / rol:** Visitante, Estudiante Registrado, Estudiante Verificado, Moderador, Administrador
 - **Prioridad:** Must
 - **Estado objetivo:** El cascarón de navegación preserva el árbol de widgets y el estado interno en memoria de cada uno de los tres módulos principales utilizando un contenedor `IndexedStack`, garantizando que al cambiar de pestaña no se destruyan las vistas activas, no se pierda la posición de scroll, no se descarten formularios a medio completar y no se repitan peticiones de red redundantes.
@@ -93,9 +95,9 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
   - Al cambiar de pestaña, el widget anterior se oculta de la vista visual pero permanece montado en memoria.
   - Al regresar a una pestaña previa, el usuario encuentra exactamente el mismo canal seleccionado, la posición del scroll y el texto introducido en filtros o barras de búsqueda.
 - **Estados:**
-  - *Montado inicial:* Carga inicial diferida o en segundo plano según la política de ciclo de vida.
-  - *Oculto en stack:* Mantenimiento de estado en reposo con consumo controlado de memoria.
-  - *Visible en stack:* Reactivación visual instantánea (0 ms de latencia percibida).
+  - _Montado inicial:_ Carga inicial diferida o en segundo plano según la política de ciclo de vida.
+  - _Oculto en stack:_ Mantenimiento de estado en reposo con consumo controlado de memoria.
+  - _Visible en stack:_ Reactivación visual instantánea (0 ms de latencia percibida).
 - **Validaciones y reglas de negocio:**
   - No se deben disparar peticiones de red automáticas a Supabase por el mero hecho de alternar pestañas.
   - La actualización de datos solo ocurre mediante acciones explícitas del usuario (ej. pull-to-refresh) o eventos en tiempo real suscritos.
@@ -110,6 +112,7 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
 ---
 
 ### UX-NAV-003 — Cabecera global (AppBar): Logotipo, título adaptativo y distintivo "No Oficial"
+
 - **Actor / rol:** Visitante, Estudiante Registrado, Estudiante Verificado, Moderador, Administrador
 - **Prioridad:** Must
 - **Estado objetivo:** La barra superior (`AppBar`) de la aplicación exhibe una identidad visual universitaria digna y reconocible pero jurídicamente diferenciada, integrando el logotipo de graduación USAC en azul institucional (`#004B87`), un título responsivo adaptado al espacio de pantalla y un distintivo permanente `"No Oficial"` interactivo que evita cualquier confusión sobre el carácter no gubernamental de la plataforma.
@@ -127,8 +130,8 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
   - Al pulsar o hacer clic en el título o en el badge `"No Oficial"`, el sistema despliega el diálogo modal de aviso comunitario [ver `UX-NAV-008`].
   - Efecto visual sutil de resaltado al posar el cursor del ratón en desktop o presionar en móvil.
 - **Estados:**
-  - *Reposo:* Visualización nítida y estable.
-  - *Hover / Tap:* Retroalimentación visual interactiva en el área del título.
+  - _Reposo:_ Visualización nítida y estable.
+  - _Hover / Tap:_ Retroalimentación visual interactiva en el área del título.
 - **Validaciones y reglas de negocio:**
   - El distintivo `"No Oficial"` es permanente y no puede ser ocultado ni alterado por ninguna configuración de usuario o rol administrativo ([`app_shell.dart:109-124`](../../comunidad_universitaria/lib/features/navigation/app_shell.dart#L109-L124)).
 - **Accesibilidad:**
@@ -143,6 +146,7 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
 ---
 
 ### UX-NAV-004 — Acciones rápidas de cabecera: Acceso a Normas y alternador de tema visual
+
 - **Actor / rol:** Visitante, Estudiante Registrado, Estudiante Verificado, Moderador, Administrador
 - **Prioridad:** Must
 - **Estado objetivo:** El extremo derecho del AppBar aloja dos botones de acción universales y siempre visibles: un botón de escudo (`Icons.shield_outlined`) para acceder directamente a la pantalla de Normas Comunitarias y Descargo Legal (`RulesScreen`), y un botón interactivo de tema (`Icons.dark_mode_outlined` / `Icons.light_mode_outlined`) que alterna de forma instantánea entre modo claro y modo oscuro.
@@ -157,9 +161,9 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
   - Al pulsar el botón de normas, se ejecuta una navegación tipo push hacia `RulesScreen` [ver `UX-REG-001`].
   - Al pulsar el botón de tema, se invoca `onToggleTheme`, re-renderizando la paleta visual de la app en caliente y persistiendo el valor en el almacenamiento local.
 - **Estados:**
-  - *Modo claro:* Fondo blanco/grisáceo, icono de luna para cambiar a oscuro.
-  - *Modo oscuro:* Fondo azul oscuro/antracita, icono de sol para cambiar a claro.
-  - *Transición:* Conmutación de colores fluida sin recargar las pantallas activas.
+  - _Modo claro:_ Fondo blanco/grisáceo, icono de luna para cambiar a oscuro.
+  - _Modo oscuro:_ Fondo azul oscuro/antracita, icono de sol para cambiar a claro.
+  - _Transición:_ Conmutación de colores fluida sin recargar las pantallas activas.
 - **Validaciones y reglas de negocio:**
   - La preferencia de tema se persiste localmente en `SharedPreferences` bajo la clave `usac_theme_mode` para conservarse entre sesiones futuras [ver [`09-sistema-diseno.md`](09-sistema-diseno.md)].
   - Navegar a normas no destruye el estado de las pestañas alojadas en `IndexedStack`.
@@ -175,6 +179,7 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
 ---
 
 ### UX-NAV-005 — Barra de pestañas horizontales superiores en escritorio
+
 - **Actor / rol:** Visitante, Estudiante Registrado, Estudiante Verificado, Moderador, Administrador
 - **Prioridad:** Must
 - **Estado objetivo:** En pantallas de escritorio y tablets en modo horizontal (ancho >= 800px), el cascarón despliega una barra de navegación por pestañas en la base del AppBar (`bottom`), acotada por un contenedor `MaxWidthContainer(maxWidth: 1200)` para preservar la ergonomía visual, con tres pestañas accesibles: `"Foro Estudiantil"`, `"Marketplace & Tutorías"` y `"Grupos de Estudio"`.
@@ -193,9 +198,9 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
 - **Interacciones:**
   - Clic en cualquier pestaña actualiza el índice `_currentIndex`, trasladando el indicador inferior y trayendo al frente la pantalla correspondiente del `IndexedStack`.
 - **Estados:**
-  - *Inactiva:* Texto e icono atenuados.
-  - *Activa:* Texto e icono en color primario o blanco, línea inferior destacada.
-  - *Hover:* Cambio de cursor a `SystemMouseCursors.click` con realce sutil.
+  - _Inactiva:_ Texto e icono atenuados.
+  - _Activa:_ Texto e icono en color primario o blanco, línea inferior destacada.
+  - _Hover:_ Cambio de cursor a `SystemMouseCursors.click` con realce sutil.
 - **Validaciones y reglas de negocio:**
   - El ancho máximo de 1200px alinea la barra de navegación con las columnas principales de contenido de Foro y Marketplace [ver [`09-sistema-diseno.md`](09-sistema-diseno.md)].
 - **Accesibilidad:**
@@ -210,6 +215,7 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
 ---
 
 ### UX-NAV-006 — Barra de navegación inferior móvil (NavigationBar Material 3)
+
 - **Actor / rol:** Visitante, Estudiante Registrado, Estudiante Verificado, Moderador, Administrador
 - **Prioridad:** Must
 - **Estado objetivo:** En dispositivos móviles (ancho < 800px), el cascarón fija una barra de navegación inferior (`NavigationBar` Material 3) accesible con una sola mano, que proporciona acceso cómodo al alcance del pulgar a los tres destinos canónicos de la plataforma: `"Foro"`, `"Marketplace"` y `"Grupos"`.
@@ -225,8 +231,8 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
 - **Interacciones:**
   - Toque en cualquier icono activa el callback `onDestinationSelected`, actualizando `_currentIndex` con respuesta táctil y animación de píldora nativa.
 - **Estados:**
-  - *Destino inactivo:* Icono outline con etiqueta en gris neutro.
-  - *Destino activo:* Píldora de color de acento, icono filled y etiqueta destacada.
+  - _Destino inactivo:_ Icono outline con etiqueta en gris neutro.
+  - _Destino activo:_ Píldora de color de acento, icono filled y etiqueta destacada.
 - **Validaciones y reglas de negocio:**
   - La barra se ubica dentro de un área segura (`SafeArea`) para respetar la barra de gestos de navegación y botones nativos en iOS y Android.
 - **Accesibilidad:**
@@ -241,6 +247,7 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
 ---
 
 ### UX-NAV-007 — Botón de acción flotante (FAB) contextual en navegación móvil [Mejora]
+
 - **Actor / rol:** Estudiante Registrado, Estudiante Verificado, Moderador, Administrador (Visitante con intercepción de autenticación)
 - **Prioridad:** Should
 - **Estado objetivo:** En navegación móvil (< 800px), el cascarón expone un botón de acción flotante contextual (`FloatingActionButton.extended`) adaptado al módulo activo: en Marketplace permite `"Publicar Artículo"` (dorado `#EAB308`), en Grupos de Estudio permite `"Compartir Grupo"` (verde `#16A34A`), y en Foro permanece oculto para no obstruir el feed ni la redacción interna.
@@ -261,9 +268,9 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
   - Al pulsar el FAB en Grupos, se abre `CreateGroupDialog.show(...)` [ver [`05-grupos.md`](05-grupos.md)].
   - Si el usuario es un Visitante sin sesión activa, la pulsación despliega `AuthModal` interceptando la acción de forma no destructiva [ver [`07-autenticacion.md`](07-autenticacion.md)].
 - **Estados:**
-  - *Oculto:* En Foro (`index == 0`) y en modo escritorio (ancho >= 800px).
-  - *Visible Marketplace:* FAB dorado en esquina inferior derecha.
-  - *Visible Grupos:* FAB verde en esquina inferior derecha con transición animada.
+  - _Oculto:_ En Foro (`index == 0`) y en modo escritorio (ancho >= 800px).
+  - _Visible Marketplace:_ FAB dorado en esquina inferior derecha.
+  - _Visible Grupos:_ FAB verde en esquina inferior derecha con transición animada.
 - **Validaciones y reglas de negocio:**
   - Los FABs utilizan `heroTag` independientes para prevenir excepciones de tags duplicados en Flutter.
   - Si la vista conmuta a escritorio, el FAB se oculta automáticamente porque las pantallas integran sus propios botones de acción en cabecera.
@@ -279,6 +286,7 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
 ---
 
 ### UX-NAV-008 — Diálogo modal de aviso comunitario y descargo institucional rápido
+
 - **Actor / rol:** Visitante, Estudiante Registrado, Estudiante Verificado, Moderador, Administrador
 - **Prioridad:** Must
 - **Estado objetivo:** Al pulsar sobre el título del AppBar o sobre el badge `"No Oficial"`, el cascarón despliega un diálogo informativo modal (`AlertDialog`) que expone con total transparencia la naturaleza estudiantil independiente, autónoma y sin fines de lucro de la plataforma, ofreciendo enlaces directos para revisar las normas completas o descartar el aviso.
@@ -287,7 +295,7 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
   - Diálogo centrado con esquinas redondeadas (16px).
   - Encabezado con icono `Icons.info_outline` en azul `#004B87` y título `"Aviso Comunitario"` en negrita (16px).
   - Cuerpo textual en 13px con interlineado 1.4:
-    > *"Comunidad Universitaria es una plataforma estudiantil colaborativa, autónoma y sin fines de lucro. No representa formalmente a la administración ni a las autoridades de la Universidad de San Carlos de Guatemala. Los datos académicos, pensums y directorios son informativos y compartidos entre compañeros."* ([`app_shell.dart:51-54`](../../comunidad_universitaria/lib/features/navigation/app_shell.dart#L51-L54)).
+    > _"Comunidad Universitaria es una plataforma estudiantil colaborativa, autónoma y sin fines de lucro. No representa formalmente a la administración ni a las autoridades de la Universidad de San Carlos de Guatemala. Los datos académicos, pensums y directorios son informativos y compartidos entre compañeros."_ ([`app_shell.dart:51-54`](../../comunidad_universitaria/lib/features/navigation/app_shell.dart#L51-L54)).
   - Botones de acción:
     1. `"Ver Normas Completas"` (`TextButton`): Cierra el diálogo y navega a `RulesScreen`.
     2. `"Entendido"` (`TextButton`): Cierra el diálogo y retorna a la vista actual.
@@ -295,8 +303,8 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
   - Pulsar "Ver Normas Completas" ejecuta `Navigator.of(ctx).pop()` seguido de `_navigateToRules()`.
   - Pulsar "Entendido" o fuera del cuadro modal cierra el diálogo sin navegación adicional.
 - **Estados:**
-  - *Cerrado:* Estado por defecto.
-  - *Abierto:* Superpuesto sobre la pantalla con barrera modal atenuada.
+  - _Cerrado:_ Estado por defecto.
+  - _Abierto:_ Superpuesto sobre la pantalla con barrera modal atenuada.
 - **Validaciones y reglas de negocio:**
   - El modal es de carácter puramente informativo; no bloquea la navegación de la app ni exige confirmaciones forzadas.
 - **Accesibilidad:**
@@ -313,6 +321,7 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
 ## 5. Requisitos de normas comunitarias y descargos (UX-REG)
 
 ### UX-REG-001 — Pantalla principal de normas comunitarias y convivencia estudiantil (RulesScreen)
+
 - **Actor / rol:** Visitante, Estudiante Registrado, Estudiante Verificado, Moderador, Administrador
 - **Prioridad:** Must
 - **Estado objetivo:** La plataforma cuenta con una pantalla dedicada e integral (`RulesScreen`) que consolida los lineamientos éticos de fraternidad estudiantil, las reglas del marketplace, el descargo legal de responsabilidad y el directorio de portales institucionales de la USAC, accesible desde cualquier punto de la app.
@@ -324,13 +333,13 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
     - Fondo `#F1F5F9` (claro) o `#1E293B` (oscuro), con borde redondeado de 16px.
     - Icono de escudo `Icons.shield_outlined` (28px) en contenedor tonal con color primario.
     - Título `"Normas Comunitarias & Descargo Legal"` (estilo `titleLarge` en negrita).
-    - Subtítulo descriptivo: *"Comunidad Universitaria es una iniciativa estudiantil independiente, libre y sin fines de lucro entre compañeros universitarios."*
+    - Subtítulo descriptivo: _"Comunidad Universitaria es una iniciativa estudiantil independiente, libre y sin fines de lucro entre compañeros universitarios."_
 - **Interacciones:**
   - Desplazamiento vertical continuo y suave (`SingleChildScrollView`).
   - Toque en la flecha de regreso retorna a la pantalla de origen preservando el estado previo del usuario.
 - **Estados:**
-  - *Renderizado estático:* Carga inmediata y local sin latencia de red.
-  - *Modo claro / Modo oscuro:* Adaptación cromática según la paleta activa.
+  - _Renderizado estático:_ Carga inmediata y local sin latencia de red.
+  - _Modo claro / Modo oscuro:_ Adaptación cromática según la paleta activa.
 - **Validaciones y reglas de negocio:**
   - La pantalla no depende de peticiones a base de datos para mostrar las reglas y descargos; los textos residen compilados localmente para garantizar disponibilidad offline permanente.
 - **Accesibilidad:**
@@ -345,6 +354,7 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
 ---
 
 ### UX-REG-002 — Las 7 reglas fundamentales de convivencia, foro, marketplace y seguridad física
+
 - **Actor / rol:** Visitante, Estudiante Registrado, Estudiante Verificado, Moderador, Administrador
 - **Prioridad:** Must
 - **Estado objetivo:** `RulesScreen` presenta las 7 reglas inviolables de convivencia y participación en la comunidad universitaria, estructuradas en tarjetas numeradas con iconos representativos, divididas en dos bloques temáticos: Convivencia Estudiantil (Reglas 1 a 4) y Marketplace & Servicios (Reglas 5 a 7).
@@ -375,17 +385,18 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
 ---
 
 ### UX-REG-003 — Tarjeta destacada de descargo de responsabilidad legal e independencia institucional
+
 - **Actor / rol:** Visitante, Estudiante Registrado, Estudiante Verificado, Moderador, Administrador
 - **Prioridad:** Must
-- **Estado objetivo:** `RulesScreen` incorpora una tarjeta de aviso legal destacada en tonos ámbar y dorados que formaliza el descargo de responsabilidad (*Legal Disclaimer*) y la absoluta independencia institucional frente a la Universidad de San Carlos de Guatemala.
+- **Estado objetivo:** `RulesScreen` incorpora una tarjeta de aviso legal destacada en tonos ámbar y dorados que formaliza el descargo de responsabilidad (_Legal Disclaimer_) y la absoluta independencia institucional frente a la Universidad de San Carlos de Guatemala.
 - **Precondiciones:** `RulesScreen` en pantalla.
 - **UI / contenido:**
   - Contenedor con esquinas redondeadas (14px), fondo ámbar suave (`#FFFBEB`) y borde delimitador ámbar (`#FDE68A`) ([`rules_screen.dart:173-214`](../../comunidad_universitaria/lib/features/rules/screens/rules_screen.dart#L173-L214)).
   - Encabezado con icono `Icons.info_outline` en ámbar oscuro (`#B45309`, 20px) y título `"Descargo de Responsabilidad Legal e Independencia"` en negrita (`#92400E`, 14px).
   - Texto legal en 12px con interlineado 1.45:
-    > *"Comunidad Universitaria es una plataforma y directorio estudiantil independiente y sin fines de lucro. No representa, no forma parte ni actúa en nombre de las autoridades de la Universidad de San Carlos de Guatemala. Los datos de pensums, materias y facultades se basan en publicaciones de libre acceso con carácter exclusivamente informativo.*
+    > _"Comunidad Universitaria es una plataforma y directorio estudiantil independiente y sin fines de lucro. No representa, no forma parte ni actúa en nombre de las autoridades de la Universidad de San Carlos de Guatemala. Los datos de pensums, materias y facultades se basan en publicaciones de libre acceso con carácter exclusivamente informativo._
     >
-    > *Los administradores de la plataforma no se hacen responsables de los acuerdos particulares, compras, ventas o contenidos intercambiados en enlaces de terceros."*
+    > _Los administradores de la plataforma no se hacen responsables de los acuerdos particulares, compras, ventas o contenidos intercambiados en enlaces de terceros."_
 - **Interacciones:** Lectura del descargo legal; no requiere acciones de aceptación forzada en esta pantalla.
 - **Estados:** Fijo e inalterable en la sección inferior de la pantalla.
 - **Validaciones y reglas de negocio:**
@@ -402,23 +413,24 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
 ---
 
 ### UX-REG-004 — Directorio interactivo de enlaces a portales oficiales de unidades académicas
+
 - **Actor / rol:** Visitante, Estudiante Registrado, Estudiante Verificado, Moderador, Administrador
 - **Prioridad:** Should
 - **Estado objetivo:** Para orientar a los estudiantes sin suplantar los canales oficiales de la universidad, `RulesScreen` ofrece un directorio interactivo de enlaces directos mediante `ActionChip` a los portales web oficiales de las 10 facultades y escuelas de la USAC, abriéndolos en el navegador externo del dispositivo.
 - **Precondiciones:** Directorio de unidades académicas cargado desde `USACConstants.facultades` en [`categories.dart:27-140`](../../comunidad_universitaria/lib/core/constants/categories.dart#L27-L140).
 - **UI / contenido:**
   - Título de sección: `"Portales Oficiales de Unidades Académicas"` (16px, negrita).
-  - Subtítulo descriptivo: *"Los siguientes enlaces conducen a los sitios web institucionales externos de cada facultad:"*.
+  - Subtítulo descriptivo: _"Los siguientes enlaces conducen a los sitios web institucionales externos de cada facultad:"_.
   - Disposición en cuadrícula fluida `Wrap` con separación horizontal y vertical de 10px ([`rules_screen.dart:233-250`](../../comunidad_universitaria/lib/features/rules/screens/rules_screen.dart#L233-L250)).
   - Componentes `ActionChip` para cada facultad (excluyendo el filtro comodín `'todas'`):
     - Icono de enlace externo: `Icon(Icons.open_in_new, size: 14)`.
-    - Etiqueta con el nombre oficial de la facultad (ej. *"Facultad de Ingeniería"*, *"Facultad de Ciencias Médicas"*, *"Facultad de Ciencias Químicas y Farmacia"*, etc.).
+    - Etiqueta con el nombre oficial de la facultad (ej. _"Facultad de Ingeniería"_, _"Facultad de Ciencias Médicas"_, _"Facultad de Ciencias Químicas y Farmacia"_, etc.).
 - **Interacciones:**
   - Al pulsar o hacer clic en cualquier chip, se ejecuta `UrlUtils.openUrl(context, f['sitio'].toString())`, lanzando el navegador web del sistema con el portal oficial.
 - **Estados:**
-  - *Reposo:* Chip con borde y fondo suave.
-  - *Presionado / Abriendo:* Efecto de clic y apertura de navegador externo.
-  - *Fallo:* Notificación discreta con `SnackBar` si el sistema no puede resolver la URL externa.
+  - _Reposo:_ Chip con borde y fondo suave.
+  - _Presionado / Abriendo:_ Efecto de clic y apertura de navegador externo.
+  - _Fallo:_ Notificación discreta con `SnackBar` si el sistema no puede resolver la URL externa.
 - **Validaciones y reglas de negocio:**
   - Todos los enlaces apuntan a URLs institucionales oficiales seguras y verificadas con protocolo HTTPS.
 - **Accesibilidad:**
@@ -432,6 +444,7 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
 ---
 
 ### UX-REG-005 — Puntos universales de acceso y retorno coherente hacia las normas comunitarias
+
 - **Actor / rol:** Visitante, Estudiante Registrado, Estudiante Verificado, Moderador, Administrador
 - **Prioridad:** Must
 - **Estado objetivo:** El acceso a `RulesScreen` está garantizado desde múltiples puntos estables, visibles y lógicos de la plataforma (AppBar de `AppShell`, diálogo de aviso comunitario, sección de cuenta en `ProfileScreen`, y enlaces en modales de reporte y publicación), asegurando que el botón de retroceso devuelva al usuario al punto exacto de origen sin alterar su contexto previo.
@@ -446,8 +459,8 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
 - **Interacciones:**
   - Al pulsar la flecha de regreso o ejecutar el gesto nativo de retorno del sistema operativo, se ejecuta `Navigator.pop(context)` volviendo a la pantalla anterior.
 - **Estados:**
-  - *Navegación push:* Apertura de la vista sobre la pila de rutas.
-  - *Navegación pop:* Retorno limpio a la vista previa.
+  - _Navegación push:_ Apertura de la vista sobre la pila de rutas.
+  - _Navegación pop:_ Retorno limpio a la vista previa.
 - **Validaciones y reglas de negocio:**
   - La navegación a normas nunca borra la memoria del `IndexedStack` del cascarón ni resetea campos de formularios abiertos.
 - **Accesibilidad:**
@@ -480,10 +493,10 @@ flowchart TD
 
     subgraph Responsive_Navigation ["Navegación Adaptativa"]
         Shell --> ResponsiveCheck{"¿Ancho de pantalla >= 800px?"}
-        
+
         ResponsiveCheck -->|"Sí (Desktop / Tablet)"| DesktopTabs["Pestañas Horizontales en AppBar Bottom (UX-NAV-005)"]
         ResponsiveCheck -->|"No (Móvil)"| MobileNav["NavigationBar Material 3 Inferior (UX-NAV-006)"]
-        
+
         MobileNav --> MobileFAB{"FAB Contextual según Pestaña (UX-NAV-007)"}
         MobileFAB -->|"Marketplace (index 1)"| FABMarket["FAB: 'Publicar Artículo'"]
         MobileFAB -->|"Grupos (index 2)"| FABGroups["FAB: 'Compartir Grupo'"]

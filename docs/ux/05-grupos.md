@@ -16,12 +16,13 @@ académica externa (grupos de WhatsApp por sección, comunidades de Telegram, se
 de Discord y carpetas colaborativas de Google Drive).
 
 ### 1.1 Objetivos de experiencia
+
 1. **Descubrimiento inmediato:** Permitir que cualquier alumno encuentre el grupo
    exacto de su curso y sección en menos de 10 segundos, filtrando por unidad
    académica o buscando por nombre de materia.
 2. **Reputación comunitaria transparente:** Erradicar enlaces fraudulentos, grupos
    cerrados o enlaces expirados mediante un sistema descentralizado de votos de
-   apoyo (*Upvotes*) y denuncias directas (*Reportes*).
+   apoyo (_Upvotes_) y denuncias directas (_Reportes_).
 3. **Higiene periódica:** Avisar con claridad a la comunidad sobre la depuración
    semestral de enlaces inactivos para mantener el catálogo limpio y actualizado
    ciclo a ciclo.
@@ -35,6 +36,7 @@ de Discord y carpetas colaborativas de Google Drive).
 
 Este documento formaliza y eleva la experiencia documentada en el **Inventario UX**,
 abordando directamente:
+
 - **Inventario 4.4 (`GroupsScreen`):** Componentes clave de la pantalla, incluyendo el
   banner de bienvenida contextual, el aviso de limpieza de inicio de semestre, la
   cuadrícula de tarjetas `GroupCard` y el modal `CreateGroupDialog`.
@@ -46,17 +48,17 @@ abordando directamente:
 
 ## 3. Matriz de capacidades del área
 
-| Capacidad | Visitante | Estudiante Registrado | Estudiante Verificado | Moderador | Administrador |
-|---|:---:|:---:|:---:|:---:|:---:|
-| Explorar catálogo de grupos y filtrar por facultad | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Buscar cursos por texto libre | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Abrir enlace externo del grupo ("Unirse") | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Copiar enlace de invitación al portapapeles | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Descartar banner de depuración semestral | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Votar reputación comunitaria (*Upvote*) | ❌ *(interceptado)* | ✅ *(AAL2)* | ✅ *(AAL2)* | ✅ *(AAL2)* | ✅ *(AAL2)* |
-| Compartir / registrar nuevo grupo | ❌ *(interceptado)* | ✅ *(AAL2)* | ✅ *(AAL2)* | ✅ *(AAL2)* | ✅ *(AAL2)* |
-| Reportar enlace caído o indebido | ❌ *(interceptado)* | ✅ *(AAL2)* | ✅ *(AAL2)* | ✅ *(AAL2)* | ✅ *(AAL2)* |
-| Ocultar o dar de baja enlace reportado | ❌ | ❌ | ❌ | ✅ | ✅ |
+| Capacidad                                          |       Visitante        | Estudiante Registrado | Estudiante Verificado |   Moderador    | Administrador  |
+| -------------------------------------------------- | :--------------------: | :-------------------: | :-------------------: | :------------: | :------------: |
+| Explorar catálogo de grupos y filtrar por facultad |         Hecho          |         Hecho         |         Hecho         |     Hecho      |     Hecho      |
+| Buscar cursos por texto libre                      |         Hecho          |         Hecho         |         Hecho         |     Hecho      |     Hecho      |
+| Abrir enlace externo del grupo ("Unirse")          |         Hecho          |         Hecho         |         Hecho         |     Hecho      |     Hecho      |
+| Copiar enlace de invitación al portapapeles        |         Hecho          |         Hecho         |         Hecho         |     Hecho      |     Hecho      |
+| Descartar banner de depuración semestral           |         Hecho          |         Hecho         |         Hecho         |     Hecho      |     Hecho      |
+| Votar reputación comunitaria (_Upvote_)            | Falta _(interceptado)_ |    Hecho _(AAL2)_     |    Hecho _(AAL2)_     | Hecho _(AAL2)_ | Hecho _(AAL2)_ |
+| Compartir / registrar nuevo grupo                  | Falta _(interceptado)_ |    Hecho _(AAL2)_     |    Hecho _(AAL2)_     | Hecho _(AAL2)_ | Hecho _(AAL2)_ |
+| Reportar enlace caído o indebido                   | Falta _(interceptado)_ |    Hecho _(AAL2)_     |    Hecho _(AAL2)_     | Hecho _(AAL2)_ | Hecho _(AAL2)_ |
+| Ocultar o dar de baja enlace reportado             |         Falta          |         Falta         |         Falta         |     Hecho      |     Hecho      |
 
 > **Nota de seguridad:** Toda acción de escritura (votar, registrar, reportar)
 > exige sesión activa con elevación multifactor **AAL2** (TOTP). Si un visitante
@@ -68,6 +70,7 @@ abordando directamente:
 ## 4. Requisitos de experiencia de usuario (UX-GRP)
 
 ### UX-GRP-001 — Acceso directo y visible desde la navegación principal
+
 - **Actor / rol:** Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador
 - **Prioridad:** Must
 - **Estado objetivo:** El estudiante puede acceder al Directorio de Grupos de Estudio con un solo toque o clic desde el cascarón principal de la aplicación (`AppShell`), contando con una pestaña dedicada "Grupos" tanto en la barra inferior móvil (`NavigationBar`) como en la barra superior desktop, además de conservar el punto de entrada contextual existente dentro del Server Rail del foro estudiantil.
@@ -83,9 +86,9 @@ abordando directamente:
   - En móvil, el botón flotante contextual (FAB) cambia automáticamente a "Compartir Grupo" (color verde `#198754`, icono `Icons.group_add`).
   - Al regresar desde otra sección, se conservan los filtros y la posición exacta donde se encontraba el usuario.
 - **Estados:**
-  - *Inicial:* Pestaña "Foro" activa por omisión al abrir la app.
-  - *Activo:* Pestaña "Grupos" seleccionada con realce visual y color institucional.
-  - *Transición:* Conmutación inmediata en memoria sin pantallas intermedias ni parpadeos.
+  - _Inicial:_ Pestaña "Foro" activa por omisión al abrir la app.
+  - _Activo:_ Pestaña "Grupos" seleccionada con realce visual y color institucional.
+  - _Transición:_ Conmutación inmediata en memoria sin pantallas intermedias ni parpadeos.
 - **Validaciones y reglas de negocio:**
   - El acceso a la lectura del directorio de grupos es público y libre; no requiere inicio de sesión previo.
   - Si el usuario accede a grupos desde el botón contextual del rail del foro, la vista hereda la facultad que estaba activa en ese momento (`activeFacultadId`).
@@ -103,6 +106,7 @@ abordando directamente:
 ---
 
 ### UX-GRP-002 — Filtrado por facultad, carrera y búsqueda de cursos
+
 - **Actor / rol:** Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador
 - **Prioridad:** Must
 - **Estado objetivo:** El estudiante puede filtrar el directorio de grupos por Facultad / Escuela, refinar opcionalmente por Carrera universitaria o buscar mediante texto libre por nombre de curso, código o sección. Si el alumno tiene perfil registrado con facultad asignada, el sistema preconfigura los filtros con su contexto académico personal.
@@ -116,15 +120,15 @@ abordando directamente:
   - Chips de acceso rápido para unidades académicas con mayor volumen (Ingeniería, Medicina, Ciencias Económicas, Humanidades).
 - **Interacciones:**
   - Al seleccionar una facultad, el selector de carrera actualiza inmediatamente sus opciones disponibles.
-  - Al ingresar texto en el campo de búsqueda (con *debounce* de 300 ms), el listado filtra los resultados de manera reactiva.
+  - Al ingresar texto en el campo de búsqueda (con _debounce_ de 300 ms), el listado filtra los resultados de manera reactiva.
   - Al pulsar el botón "X" del campo de búsqueda, se restablecen los resultados correspondientes a los selectores de facultad y carrera activos.
   - Al cambiar de facultad, el selector de carrera se reinicia automáticamente al valor "Todas".
 - **Estados:**
-  - *Inicial:* Presenta los grupos de la facultad del perfil del usuario (si está autenticado) o "Todas".
-  - *Carga:* Cuadrícula con esqueletos animados (`SkeletonCard`) mientras se resuelve la consulta.
-  - *Vacío:* Componente `EmptyStateWidget` indicando "No se encontraron grupos para este filtro", con botón de acción "Compartir Enlace" y sugerencia de restablecer filtros.
-  - *Error:* Mensaje explicativo con botón "Reintentar".
-  - *Sin conexión:* Recupera la última consulta persistida desde caché local (`student_groups`) con banner de aviso offline.
+  - _Inicial:_ Presenta los grupos de la facultad del perfil del usuario (si está autenticado) o "Todas".
+  - _Carga:_ Cuadrícula con esqueletos animados (`SkeletonCard`) mientras se resuelve la consulta.
+  - _Vacío:_ Componente `EmptyStateWidget` indicando "No se encontraron grupos para este filtro", con botón de acción "Compartir Enlace" y sugerencia de restablecer filtros.
+  - _Error:_ Mensaje explicativo con botón "Reintentar".
+  - _Sin conexión:_ Recupera la última consulta persistida desde caché local (`student_groups`) con banner de aviso offline.
 - **Validaciones y reglas de negocio:**
   - La resolución de facultades emplea la lista canónica de alias y palabras clave definida en `GroupsService._facultyAliases` ([`groups_service.dart:10-23`, `94-123`](../../comunidad_universitaria/lib/core/services/groups_service.dart#L10-L23)).
   - Los cursos de "Área Común" se asocian de forma bidireccional con las facultades que comparten tronco académico.
@@ -142,6 +146,7 @@ abordando directamente:
 ---
 
 ### UX-GRP-003 — Banner informativo de depuración semestral de enlaces
+
 - **Actor / rol:** Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador
 - **Prioridad:** Should
 - **Estado objetivo:** La plataforma informa con claridad y anticipación sobre la política de limpieza semestral de enlaces inactivos, exhibiendo un banner informativo destacado en la cabecera del directorio que el estudiante puede descartar de forma persistente para el ciclo en curso.
@@ -157,8 +162,8 @@ abordando directamente:
   - Al pulsar el botón "X", el banner se oculta con una animación suave de colapso vertical.
   - La acción se almacena en el dispositivo del usuario vinculada al semestre lectivo actual, garantizando que no vuelva a aparecer en visitas posteriores durante el mismo ciclo.
 - **Estados:**
-  - *Visible:* Si el usuario no ha descartado el aviso correspondiente al periodo académico activo.
-  - *Oculto:* Si el usuario ya lo descartó en el ciclo en curso.
+  - _Visible:_ Si el usuario no ha descartado el aviso correspondiente al periodo académico activo.
+  - _Oculto:_ Si el usuario ya lo descartó en el ciclo en curso.
 - **Validaciones y reglas de negocio:**
   - La depuración semestral respalda el principio de calidad comunitaria (Inventario UX 1.2 y 4.4).
   - Los grupos con actividad reciente o con alta cantidad de upvotes pueden ser renovados por sus creadores sin perder su historial.
@@ -174,10 +179,11 @@ abordando directamente:
 ---
 
 ### UX-GRP-004 — Cuadrícula y listado responsivo de tarjetas de grupos
+
 - **Actor / rol:** Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador
 - **Prioridad:** Must
 - **Estado objetivo:** Los grupos se despliegan en una estructura responsiva ordenada: lista vertical optimizada para lectura en móviles y cuadrícula de 2 columnas en tablets y escritorios, presentando de forma condensada toda la información requerida para que el alumno evalúe si unirse.
-- **Problema actual [Mejora]:** En la versión de escritorio actual ([`groups_screen.dart:340-346`](../../comunidad_universitaria/lib/features/groups/screens/groups_screen.dart#L340-L346)), la tarjeta tiene una relación de aspecto fija (`childAspectRatio: 1.6`) que produce desbordamientos visuales (*overflow de píxeles*) o recorte de textos si el grupo contiene una imagen miniatura (`imageUrl`) o una descripción superior a dos líneas.
+- **Problema actual [Mejora]:** En la versión de escritorio actual ([`groups_screen.dart:340-346`](../../comunidad_universitaria/lib/features/groups/screens/groups_screen.dart#L340-L346)), la tarjeta tiene una relación de aspecto fija (`childAspectRatio: 1.6`) que produce desbordamientos visuales (_overflow de píxeles_) o recorte de textos si el grupo contiene una imagen miniatura (`imageUrl`) o una descripción superior a dos líneas.
 - **Precondiciones:** Existen grupos publicados que cumplen con los filtros aplicados.
 - **UI / contenido:**
   - Tarjeta Material 3 con bordes redondeados (12 px), elevación suave y padding de 16 px (`GroupCard`).
@@ -198,11 +204,11 @@ abordando directamente:
 - **Interacciones:**
   - Al pulsar la imagen en miniatura, se abre el visor `ImageViewerDialog` con zoom interactivo (0.8x a 4.0x).
   - Al pulsar el menú de tres puntos, se despliega la opción "Reportar enlace caído/spam".
-  - Gesto de arrastrar hacia abajo (*Pull-to-refresh*) para refrescar la lista de tarjetas en móvil.
+  - Gesto de arrastrar hacia abajo (_Pull-to-refresh_) para refrescar la lista de tarjetas en móvil.
 - **Estados:**
-  - *Carga:* Cuadrícula de tarjetas esqueleto con animación *shimmer*.
-  - *Con datos:* Lista ordenada prioritariamente por mayor cantidad de upvotes y secundariamente por fecha de creación más reciente.
-  - *Sin conexión:* Tarjetas provenientes de la caché local con distintivo de datos guardados.
+  - _Carga:_ Cuadrícula de tarjetas esqueleto con animación _shimmer_.
+  - _Con datos:_ Lista ordenada prioritariamente por mayor cantidad de upvotes y secundariamente por fecha de creación más reciente.
+  - _Sin conexión:_ Tarjetas provenientes de la caché local con distintivo de datos guardados.
 - **Validaciones y reglas de negocio:**
   - Solo se muestran grupos cuyo estado de moderación esté activo (`moderation_status < 2`).
   - Si el curso no tiene sección especificada, la interfaz muestra por defecto "Sección Única".
@@ -219,6 +225,7 @@ abordando directamente:
 ---
 
 ### UX-GRP-005 — Detección automática de plataforma y metadatos por dominio
+
 - **Actor / rol:** Estudiante registrado, Estudiante verificado, Moderador, Administrador (al registrar); todos los roles (al explorar)
 - **Prioridad:** Must
 - **Estado objetivo:** La plataforma detecta automáticamente el servicio de mensajería o almacenamiento a partir de la URL suministrada por el estudiante, asignando de manera inmediata la identidad visual, icono y colores característicos sin exigir que el usuario seleccione la plataforma de forma manual.
@@ -235,9 +242,9 @@ abordando directamente:
 - **Interacciones:**
   - Al escribir o pegar un enlace en el formulario, el chip de plataforma actualiza inmediatamente su icono, color y etiqueta informativa.
 - **Estados:**
-  - *Detección exitosa:* Badge correspondiente visible con colores oficiales de la marca.
-  - *Dominio genérico:* Badge "Enlace Web" para sitios académicos o repositorios no clasificados.
-  - *URL no válida:* Borde de advertencia rojo y mensaje de validación bloqueante.
+  - _Detección exitosa:_ Badge correspondiente visible con colores oficiales de la marca.
+  - _Dominio genérico:_ Badge "Enlace Web" para sitios académicos o repositorios no clasificados.
+  - _URL no válida:_ Borde de advertencia rojo y mensaje de validación bloqueante.
 - **Validaciones y reglas de negocio:**
   - La URL debe comenzar estrictamente con el protocolo `https://`. Se prohíbe el protocolo plano `http://` y esquemas no seguros (`javascript:`, `data:`).
   - Bloqueo preventivo de acortadores anónimos comunes (`bit.ly`, `tinyurl.com`, `is.gd`) exigiendo enlaces directos a los servicios soportados.
@@ -252,9 +259,10 @@ abordando directamente:
 ---
 
 ### UX-GRP-006 — Votación comunitaria de reputación (Upvote)
+
 - **Actor / rol:** Estudiante registrado, Estudiante verificado, Moderador, Administrador (emiten votos); Visitante (invitado a autenticarse)
 - **Prioridad:** Must
-- **Estado objetivo:** La comunidad valida la legitimidad y utilidad de los enlaces mediante votos de reputación (*Upvotes*). Los estudiantes autenticados pueden otorgar o retirar su voto con un solo toque; la interfaz responde de inmediato mediante actualización optimista y persiste el registro en PostgreSQL bajo control de unicidad.
+- **Estado objetivo:** La comunidad valida la legitimidad y utilidad de los enlaces mediante votos de reputación (_Upvotes_). Los estudiantes autenticados pueden otorgar o retirar su voto con un solo toque; la interfaz responde de inmediato mediante actualización optimista y persiste el registro en PostgreSQL bajo control de unicidad.
 - **Problema actual [Mejora]:** En la implementación actual ([`groups_screen.dart:126-160`](../../comunidad_universitaria/lib/features/groups/screens/groups_screen.dart#L126-L160)), si un visitante intenta votar se le abre `AuthModal`, pero tras iniciar sesión con éxito no se emite retroalimentación háptica o un SnackBar confirmando que el voto pendiente fue finalmente procesado.
 - **Precondiciones:** El estudiante visualiza una tarjeta de grupo en el directorio.
 - **UI / contenido:**
@@ -267,16 +275,16 @@ abordando directamente:
   - Si el usuario está Autenticado: Al presionar, el contador conmuta de forma optimista (+1 si vota, -1 si retira) y el aspecto visual del botón cambia de inmediato. En segundo plano se ejecuta `GroupsService.toggleUpvote()`.
   - Si falla la conexión: La interfaz revierte suavemente el contador y el aspecto del botón a su estado previo, notificando el fallo mediante un SnackBar.
 - **Estados:**
-  - *No votado:* Contador en N, aspecto en reposo.
-  - *Votado:* Contador en N+1, aspecto resaltado.
-  - *Reversión:* Restitución inmediata del estado ante fallo del servidor.
+  - _No votado:_ Contador en N, aspecto en reposo.
+  - _Votado:_ Contador en N+1, aspecto resaltado.
+  - _Reversión:_ Restitución inmediata del estado ante fallo del servidor.
 - **Validaciones y reglas de negocio:**
   - Control de unicidad estricto: La tabla `student_group_upvotes` tiene como clave primaria compuesta `(group_id, user_id)`, impidiendo votos duplicados.
   - Sincronización por trigger: El recuento de votos en `student_groups.upvotes` se actualiza atómicamente en PostgreSQL ante inserciones y eliminaciones de votos.
   - Auto-upvote inicial: Al crear un nuevo grupo, el creador recibe automáticamente el primer voto asignado a su cuenta ([`groups_service.dart:237`, `251-254`](../../comunidad_universitaria/lib/core/services/groups_service.dart#L237)).
 - **Accesibilidad:**
   - Lectura accesible para lectores de pantalla: "Votado por X estudiantes. Toca dos veces para apoyar o retirar tu voto".
-  - Área táctil de al menos 44x36 dp con efecto visual de pulsación (*InkWell splash*).
+  - Área táctil de al menos 44x36 dp con efecto visual de pulsación (_InkWell splash_).
 - **Responsive:**
   - Ubicado de forma constante en la parte inferior izquierda de cada tarjeta en todos los tamaños de pantalla.
 - **Criterios de aceptación (Gherkin):**
@@ -286,6 +294,7 @@ abordando directamente:
 ---
 
 ### UX-GRP-007 — Reporte comunitario de enlaces caídos, llenos o indebidos
+
 - **Actor / rol:** Estudiante registrado, Estudiante verificado, Moderador, Administrador (reportan); Moderador y Admin (gestionan denuncias)
 - **Prioridad:** Must
 - **Estado objetivo:** La comunidad dispone de un canal ágil y estructurado para denunciar enlaces que han expirado, grupos saturados, publicidad no autorizada o fraudes, activando el flujo de moderación comunitaria sin exponer al usuario que reporta.
@@ -311,9 +320,9 @@ abordando directamente:
   - El usuario elige un motivo de la lista y presiona "Enviar Reporte".
   - El diálogo se cierra de inmediato y se inserta el reporte en la tabla `entity_reports` con `entity_type = 'group'`.
 - **Estados:**
-  - *Selección de motivo:* Opciones seleccionables con respuesta táctil inmediata.
-  - *Envío en curso:* Botón de confirmación con indicador de carga (*spinner*).
-  - *Confirmación:* SnackBar de éxito visible durante 3 segundos.
+  - _Selección de motivo:_ Opciones seleccionables con respuesta táctil inmediata.
+  - _Envío en curso:_ Botón de confirmación con indicador de carga (_spinner_).
+  - _Confirmación:_ SnackBar de éxito visible durante 3 segundos.
 - **Validaciones y reglas de negocio:**
   - Almacenamiento en la tabla consolidada `entity_reports` vinculada a `student_groups.id` ([`20260914120000_consolidate_report_tables.sql`](../../supabase/migrations_historical/20260914120000_consolidate_report_tables.sql)).
   - Auto-moderación preventiva: Cuando un grupo acumula múltiples reportes no resueltos (`reported_count >= 5`), el sistema incrementa automáticamente su estado de moderación a pendiente de revisión (`moderation_status = 1`), ocultándolo del feed público para salvaguardar a los estudiantes.
@@ -330,6 +339,7 @@ abordando directamente:
 ---
 
 ### UX-GRP-008 — Compartir y registrar nuevo grupo de estudio
+
 - **Actor / rol:** Estudiante registrado, Estudiante verificado, Moderador, Administrador (publican); Visitante (interceptado por AuthModal)
 - **Prioridad:** Must
 - **Estado objetivo:** Cualquier estudiante autenticado puede compartir un enlace de grupo para su sección, curso o comunidad de facultad, completando un diálogo estructurado y accesible que valida la coherencia académica y la seguridad del enlace, publicando el registro de inmediato en el directorio.
@@ -353,10 +363,10 @@ abordando directamente:
   - Al seleccionar una imagen, se carga en segundo plano hacia el almacenamiento en la nube mostrando un indicador de progreso circular.
   - Al guardar exitosamente, el modal se cierra, el grupo se inserta optimistamente al inicio del feed (índice 0) y se despliega un SnackBar verde de éxito.
 - **Estados:**
-  - *Inicial:* Formulario limpio con la facultad y carrera preseleccionadas según el contexto activo.
-  - *Subiendo imagen:* Botón de imagen inhabilitado con spinner.
-  - *Enviando:* Botón primario bloqueado con spinner y texto "Guardando...".
-  - *Error:* Alerta visual roja con mensaje de error comprensible.
+  - _Inicial:_ Formulario limpio con la facultad y carrera preseleccionadas según el contexto activo.
+  - _Subiendo imagen:_ Botón de imagen inhabilitado con spinner.
+  - _Enviando:_ Botón primario bloqueado con spinner y texto "Guardando...".
+  - _Error:_ Alerta visual roja con mensaje de error comprensible.
 - **Validaciones y reglas de negocio:**
   - Requiere sesión con nivel de garantía **AAL2** (MFA TOTP verificado) para operaciones de inserción [ver [`07-autenticacion.md`](07-autenticacion.md)].
   - El enlace debe ser HTTPS y responder a una sintaxis de URL válida.
@@ -376,6 +386,7 @@ abordando directamente:
 ---
 
 ### UX-GRP-009 — Acceso externo directo y copia de enlace de invitación
+
 - **Actor / rol:** Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador
 - **Prioridad:** Must
 - **Estado objetivo:** El estudiante puede unirse al grupo externo con un solo toque abriendo la aplicación nativa correspondiente (WhatsApp, Telegram, Discord, Drive o navegador) mediante `url_launcher`, o copiar limpiamente la URL al portapapeles para remitirla a otros compañeros o abrirla en un navegador secundario.
@@ -389,9 +400,9 @@ abordando directamente:
   - Al pulsar "Unirse al Grupo", el sistema ejecuta el intent nativo con modo `LaunchMode.externalApplication`, transfiriendo el foco a la app correspondiente o al navegador web por defecto.
   - Al pulsar el botón de copia, la URL se copia al portapapeles del dispositivo y se dispara la confirmación en el SnackBar.
 - **Estados:**
-  - *En reposo:* Botones habilitados y listos para interactuar.
-  - *Copiado:* SnackBar visible informando la copia exitosa.
-  - *Fallo de apertura:* Diálogo o SnackBar informativo ofreciendo copiar el enlace si no se pudo abrir la aplicación externa.
+  - _En reposo:_ Botones habilitados y listos para interactuar.
+  - _Copiado:_ SnackBar visible informando la copia exitosa.
+  - _Fallo de apertura:_ Diálogo o SnackBar informativo ofreciendo copiar el enlace si no se pudo abrir la aplicación externa.
 - **Validaciones y reglas de negocio:**
   - La apertura siempre se realiza en un proceso externo para no interrumpir el estado de la sesión de Comunidad USAC.
   - La acción de unirse y copiar es pública y no requiere inicio de sesión (capacidad abierta según matriz de roles).
@@ -407,6 +418,7 @@ abordando directamente:
 ---
 
 ### UX-GRP-010 — Aparición patrocinada ocasional en el directorio
+
 - **Actor / rol:** Todos (visible); Patrocinador (origen)
 - **Prioridad:** Could
 - **Estado objetivo:** el directorio de grupos puede intercalar **tarjetas patrocinadas** con el mismo lenguaje visual que las `GroupCard`, etiquetadas obligatoriamente como **"Patrocinado"** con el acento dorado del sistema ([`UX-SPN-003`](12-patrocinios.md)). Cada aparición enlaza al **perfil público del patrocinador** ([`UX-SPN-001`](12-patrocinios.md)) o a su producto.
@@ -423,6 +435,7 @@ abordando directamente:
   - **Given** un directorio sin promociones relevantes, **When** se carga, **Then** no aparece ninguna tarjeta patrocinada ni espacio vacío.
 
 ### UX-GRP-011 — Enlace ocasional al perfil del patrocinador vinculado al curso
+
 - **Actor / rol:** Todos
 - **Prioridad:** Could
 - **Estado objetivo:** cuando un patrocinador ofrece un servicio **afín al curso o a la facultad** que el usuario está explorando (p. ej. tutorías, material, impresiones), puede aparecer una **aparición ocasional que enlaza a su perfil**, presentada como recomendación contextual y no como un grupo real. Nunca se mezcla con enlaces de grupos legítimos sin distinción.
@@ -439,6 +452,7 @@ abordando directamente:
   - **Given** que el usuario pulsa "No mostrar de Tutorías", **When** vuelve al directorio, **Then** no se muestran apariciones de esa categoría.
 
 ### UX-GRP-012 — Frecuencia, transparencia y control en Grupos
+
 - **Actor / rol:** Todos
 - **Prioridad:** Must
 - **Estado objetivo:** las apariciones patrocinadas en Grupos respetan la política transversal de frecuencia y no intrusión ([`UX-SPN-004`](12-patrocinios.md)), ofrecen **"¿Por qué veo esto?"**, **"Ocultar"** y **"Reportar"**, y no alteran el orden de los grupos orgánicos.
@@ -458,17 +472,17 @@ abordando directamente:
 
 ## 5. Trazabilidad con código y base de datos
 
-| Requisito | Archivo(s) Flutter involucrado(s) | Tabla / RPC / Trigger Supabase | Test automatizado sugerido |
-|---|---|---|---|
-| **UX-GRP-001** | `lib/features/navigation/app_shell.dart`, `forum_server_rail.dart` | N/A (cascarón de navegación de interfaz) | `test/features/navigation/app_shell_groups_tab_test.dart` |
-| **UX-GRP-002** | `lib/features/groups/screens/groups_screen.dart`, `groups_service.dart` | `student_groups` (índices `idx_student_groups_*_trgm`) | `test/features/groups/groups_filter_and_search_test.dart` |
-| **UX-GRP-003** | `lib/features/groups/screens/groups_screen.dart`, `local_storage_service.dart` | `SharedPreferences` (`usac_cleanup_notice_dismissed`) | `test/features/groups/cleanup_banner_persistence_test.dart` |
-| **UX-GRP-004** | `lib/features/groups/widgets/group_card.dart`, `groups_screen.dart` | `student_groups` (`moderation_status < 2`) | `test/features/groups/group_card_responsive_grid_test.dart` |
-| **UX-GRP-005** | `lib/core/models/whatsapp_group.dart`, `group_card.dart` | `student_groups.platform` | `test/core/models/whatsapp_group_platform_detection_test.dart` |
-| **UX-GRP-006** | `lib/features/groups/screens/groups_screen.dart`, `groups_service.dart` | `student_group_upvotes`, trigger de recuento en `student_groups.upvotes` | `test/features/groups/groups_upvote_toggle_test.dart` |
-| **UX-GRP-007** | `lib/features/groups/widgets/group_card.dart`, `report_dialog.dart` | `entity_reports` (`entity_type = 'group'`), `student_groups.reported_count` | `test/features/groups/report_group_dialog_test.dart` |
-| **UX-GRP-008** | `lib/features/groups/widgets/create_group_dialog.dart`, `groups_service.dart` | `student_groups`, `carreras` (FK de catálogo), Supabase Storage bucket | `test/features/groups/create_group_dialog_validation_test.dart` |
-| **UX-GRP-009** | `lib/features/groups/widgets/group_card.dart`, `url_utils.dart` | N/A (`url_launcher` y portapapeles del sistema) | `test/features/groups/open_and_copy_group_link_test.dart` |
-| **UX-GRP-010** | nuevo `SponsoredGroupCard`, `groups_screen.dart` | tabla de promociones (`sponsored_promotions`, `moderation_status = 1`) | `test/features/groups/sponsored_card_frequency_test.dart` |
-| **UX-GRP-011** | nuevo `SponsoredProfileBand`, `groups_screen.dart` | `sponsors` (categoría, facultades afines), `sponsored_promotions` | `test/features/groups/sponsor_affinity_link_test.dart` |
-| **UX-GRP-012** | `groups_screen.dart`, `report_dialog.dart`, `local_storage_service.dart` | `sponsored_hides` (preferencia por usuario), `entity_reports` (`entity_type = 'sponsored'`) | `test/features/groups/sponsored_controls_test.dart` |
+| Requisito      | Archivo(s) Flutter involucrado(s)                                              | Tabla / RPC / Trigger Supabase                                                              | Test automatizado sugerido                                      |
+| -------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| **UX-GRP-001** | `lib/features/navigation/app_shell.dart`, `forum_server_rail.dart`             | N/A (cascarón de navegación de interfaz)                                                    | `test/features/navigation/app_shell_groups_tab_test.dart`       |
+| **UX-GRP-002** | `lib/features/groups/screens/groups_screen.dart`, `groups_service.dart`        | `student_groups` (índices `idx_student_groups_*_trgm`)                                      | `test/features/groups/groups_filter_and_search_test.dart`       |
+| **UX-GRP-003** | `lib/features/groups/screens/groups_screen.dart`, `local_storage_service.dart` | `SharedPreferences` (`usac_cleanup_notice_dismissed`)                                       | `test/features/groups/cleanup_banner_persistence_test.dart`     |
+| **UX-GRP-004** | `lib/features/groups/widgets/group_card.dart`, `groups_screen.dart`            | `student_groups` (`moderation_status < 2`)                                                  | `test/features/groups/group_card_responsive_grid_test.dart`     |
+| **UX-GRP-005** | `lib/core/models/whatsapp_group.dart`, `group_card.dart`                       | `student_groups.platform`                                                                   | `test/core/models/whatsapp_group_platform_detection_test.dart`  |
+| **UX-GRP-006** | `lib/features/groups/screens/groups_screen.dart`, `groups_service.dart`        | `student_group_upvotes`, trigger de recuento en `student_groups.upvotes`                    | `test/features/groups/groups_upvote_toggle_test.dart`           |
+| **UX-GRP-007** | `lib/features/groups/widgets/group_card.dart`, `report_dialog.dart`            | `entity_reports` (`entity_type = 'group'`), `student_groups.reported_count`                 | `test/features/groups/report_group_dialog_test.dart`            |
+| **UX-GRP-008** | `lib/features/groups/widgets/create_group_dialog.dart`, `groups_service.dart`  | `student_groups`, `carreras` (FK de catálogo), Supabase Storage bucket                      | `test/features/groups/create_group_dialog_validation_test.dart` |
+| **UX-GRP-009** | `lib/features/groups/widgets/group_card.dart`, `url_utils.dart`                | N/A (`url_launcher` y portapapeles del sistema)                                             | `test/features/groups/open_and_copy_group_link_test.dart`       |
+| **UX-GRP-010** | nuevo `SponsoredGroupCard`, `groups_screen.dart`                               | tabla de promociones (`sponsored_promotions`, `moderation_status = 1`)                      | `test/features/groups/sponsored_card_frequency_test.dart`       |
+| **UX-GRP-011** | nuevo `SponsoredProfileBand`, `groups_screen.dart`                             | `sponsors` (categoría, facultades afines), `sponsored_promotions`                           | `test/features/groups/sponsor_affinity_link_test.dart`          |
+| **UX-GRP-012** | `groups_screen.dart`, `report_dialog.dart`, `local_storage_service.dart`       | `sponsored_hides` (preferencia por usuario), `entity_reports` (`entity_type = 'sponsored'`) | `test/features/groups/sponsored_controls_test.dart`             |

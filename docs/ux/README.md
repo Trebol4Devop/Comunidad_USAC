@@ -33,7 +33,7 @@ uniforme (sección 3). Los requisitos son atómicos, verificables y trazables.
 | [`09-sistema-diseno.md`](09-sistema-diseno.md) | Design tokens, componentes, temas claro/oscuro, breakpoints |
 | [`10-transversales.md`](10-transversales.md) | Errores, estados vacíos, red/offline, accesibilidad, i18n, rendimiento |
 | [`11-metricas-y-trazabilidad.md`](11-metricas-y-trazabilidad.md) | Analítica, KPIs y matriz de trazabilidad requisito → código → test |
-| [`12-patrocinios.md`](12-patrocinios.md) | Contenido patrocinado: identidad, panel, etiquetado, frecuencia, moderación y métricas |
+| [`12-patrocinios.md`](12-patrocinios.md) | Contenido patrocinado: identidad, panel, etiquetado, frecuencia, moderación, métricas, ciclo de vida y administración del patrocinador |
 
 ---
 
@@ -94,12 +94,12 @@ Detalle completo en [`01-producto.md`](01-producto.md).
 
 | Capacidad | Visitante | Estudiante | Verificado | Moderador | Admin |
 |---|:--:|:--:|:--:|:--:|:--:|
-| Leer foro / marketplace / grupos | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Publicar / comentar / votar | ❌ | ✅ | ✅ | ✅ | ✅ |
-| Publicar en marketplace con nombre verificado | ❌ | ❌ | ✅ | ✅ | ✅ |
-| Moderar contenido y reportes | ❌ | ❌ | ❌ | ✅ | ✅ |
-| Solicitar patrocinio | ❌ | ✅ | ✅ | ✅ | ✅ |
-| Gestión global | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Leer foro / marketplace / grupos | Sí | Sí | Sí | Sí | Sí |
+| Publicar / comentar / votar | No | Sí | Sí | Sí | Sí |
+| Publicar en marketplace con nombre verificado | No | No | Sí | Sí | Sí |
+| Moderar contenido y reportes | No | No | No | Sí | Sí |
+| Solicitar patrocinio | No | Sí | Sí | Sí | Sí |
+| Gestión global | No | No | No | No | Sí |
 
 **Guards transversales:** toda escritura exige sesión **AAL2** (MFA TOTP).
 Ver [`07-autenticacion.md`](07-autenticacion.md).
@@ -139,9 +139,9 @@ Ver [`07-autenticacion.md`](07-autenticacion.md).
 | 09-sistema-diseno | 8 (`UX-DSN`) | v1.1 | 2026-10-07 |
 | 10-transversales | 16 (`UX-X`) | v1.1 | 2026-10-07 |
 | 11-metricas-y-trazabilidad | 3 (`UX-MET`) | v1.0 | 2026-10-07 |
-| 12-patrocinios | 10 (`UX-SPN`) | v1.0 | 2026-10-07 |
+| 12-patrocinios | 16 (`UX-SPN`) | v1.1 | 2026-10-08 |
 
-**Total: 150 requisitos identificados.** Cada área usa un prefijo propio para
+**Total: 156 requisitos identificados.** Cada área usa un prefijo propio para
 evitar colisiones de identificadores (p. ej. navegación-estructura es `UX-MAP`,
 mientras que el cascarón es `UX-NAV`).
 
