@@ -434,7 +434,7 @@ flowchart TD
 ### UX-PRF-014 — Administración de autenticación multifactor (MFA TOTP)
 - **Actor / rol:** Estudiante registrado, Estudiante verificado, Moderador, Administrador
 - **Prioridad:** Must
-- **Estado objetivo:** Todo estudiante autenticado cuenta con un acceso directo y permanente dentro de sus preferencias de perfil para configurar, administrar o dar de baja su autenticación de dos factores (MFA TOTP), visualizando el estado de su factor de seguridad y pudiendo gestionar sus códigos de recuperación sin perderse en menús recónditos.
+- **Estado objetivo:** Todo estudiante autenticado cuenta con un acceso directo y permanente dentro de sus preferencias de perfil para configurar, administrar o dar de baja su autenticación de dos factores (MFA TOTP), visualizando el estado de su factor de seguridad. Los códigos de recuperación MFA están aplazados porque no están disponibles en el Auth alojado del proyecto.
 - **Precondiciones:** Sesión de usuario autenticada (`SupabaseService.isAuthenticated == true`). Si el usuario es visitante, esta opción no se muestra.
 - **UI / contenido:**
   - Elemento `ListTile` en la sección de cuenta:
@@ -443,18 +443,18 @@ flowchart TD
     - Subtítulo descriptivo: `"Configura un autenticador TOTP para proteger tu cuenta"`.
     - Icono indicador `Icons.chevron_right`.
 - **Interacciones:**
-  - Al presionar la opción, se realiza navegación a `TotpEnrollmentScreen(isRequired: false)` ([ver detalle en `07-autenticacion.md`](07-autenticacion.md#ux-auth-005--recuperación-y-restablecimiento-de-contraseña-mediante-otp-con-cuenta-regresiva-mejora)).
+  - Al presionar la opción, se realiza navegación a `TotpEnrollmentScreen(isRequired: false)` ([ver detalle en `07-autenticacion.md`](07-autenticacion.md#ux-auth-009--enrolamiento-de-mfa-totp-mediante-código-qr-y-clave-secreta-manual)).
   - Si el usuario no tiene TOTP activo, la pantalla le permite generar un nuevo secreto alfanumérico y código QR.
-  - Si ya cuenta con TOTP, la pantalla le permite consultar la cantidad de códigos de respaldo restantes, regenerarlos o desactivar el factor.
+  - Si ya cuenta con TOTP, la pantalla le permite desactivar el factor tras verificar el código actual.
   - Al regresar a `ProfileScreen`, el perfil recarga el estado de sesión sin anomalías.
 - **Estados:** Visible para autenticados | Oculto para visitantes | Navegación activa hacia enrolamiento.
 - **Validaciones y reglas de negocio:**
-  - Las acciones críticas sobre el factor (desactivar, regenerar códigos de respaldo) exigen una sesión elevada a nivel AAL2.
+  - Desactivar el factor exige verificar el código TOTP actual.
   - Si el usuario desactiva su factor TOTP, Supabase cierra la sesión para obligar a una reautenticación limpia.
 - **Accesibilidad:** Etiqueta semántica completa para lectores de pantalla. Altura de toque conforme a estándares de accesibilidad (mínimo 48px).
 - **Responsive:** Fila uniforme y consistente en dispositivos móviles y de escritorio.
 - **Criterios de aceptación (Gherkin):**
-  - **Given** un estudiante con sesión iniciada en la pantalla de perfil, **When** presiona "Autenticación en dos pasos", **Then** navega a la pantalla TotpEnrollmentScreen para gestionar su autenticador o códigos de recuperación.
+  - **Given** un estudiante con sesión iniciada en la pantalla de perfil, **When** presiona "Autenticación en dos pasos", **Then** navega a la pantalla TotpEnrollmentScreen para configurar o desactivar su autenticador.
   - **Given** un visitante sin sesión iniciada en la app, **When** revisa la sección Cuenta y Preferencias de su perfil, **Then** la opción de autenticación en dos pasos no se muestra, presentando en su lugar la invitación a iniciar sesión.
 
 ---

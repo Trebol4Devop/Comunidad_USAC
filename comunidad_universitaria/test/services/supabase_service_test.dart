@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
-import 'package:http/testing.dart' as http_testing;
 import 'package:comunidad_universitaria/core/config/supabase_config.dart';
 import 'package:comunidad_universitaria/core/services/supabase_service.dart';
 import '../helpers/fake_postgrest.dart';
@@ -20,56 +19,6 @@ void main() {
 
   tearDown(() async {
     await resetTestState();
-  });
-
-  group('SupabaseService signup email verification', () {
-    test('verifies a signup OTP using the email and token', () async {
-      fakeServer.onPost('/auth/v1/verify', (request) {
-        final payload = jsonDecode(request.body) as Map<String, dynamic>;
-        expect(payload['type'], 'signup');
-        expect(payload['email'], 'student@usac.edu.gt');
-        expect(payload['token'], '123456');
-
-        return {
-          'access_token': 'verified-access-token',
-          'token_type': 'bearer',
-          'expires_in': 3600,
-          'refresh_token': 'verified-refresh-token',
-          'user': {
-            'id': 'verified-user',
-            'aud': 'authenticated',
-            'role': 'authenticated',
-            'email': 'student@usac.edu.gt',
-            'email_confirmed_at': '2026-10-03T00:00:00.000Z',
-            'created_at': '2026-10-03T00:00:00.000Z',
-            'app_metadata': {
-              'provider': 'email',
-              'providers': ['email'],
-            },
-            'user_metadata': {},
-          },
-        };
-      });
-
-      final response = await SupabaseService.verifySignupOtp(
-        email: ' student@usac.edu.gt ',
-        token: ' 123456 ',
-      );
-
-      expect(response?.user?.email, 'student@usac.edu.gt');
-      expect(response?.session, isNotNull);
-    });
-
-    test('resends a signup OTP to the normalized email', () async {
-      fakeServer.onPost('/auth/v1/resend', (request) {
-        final payload = jsonDecode(request.body) as Map<String, dynamic>;
-        expect(payload['type'], 'signup');
-        expect(payload['email'], 'student@usac.edu.gt');
-        return {'message_id': 'confirmation-message'};
-      });
-
-      await SupabaseService.resendSignupOtp(' student@usac.edu.gt ');
-    });
   });
 
   group('SupabaseService email/password session', () {
@@ -118,82 +67,6 @@ void main() {
         isTrue,
       );
     });
-  });
-
-  group('SupabaseService password recovery', () {
-    test(
-      'requests recovery, verifies its OTP, and updates the password',
-      () async {
-        fakeServer.onPost('/auth/v1/recover', (request) {
-          final payload = jsonDecode(request.body) as Map<String, dynamic>;
-          expect(payload['email'], 'student@usac.edu.gt');
-          return {'message_id': 'recovery-message'};
-        });
-        fakeServer.onPost('/auth/v1/verify', (request) {
-          final payload = jsonDecode(request.body) as Map<String, dynamic>;
-          expect(payload['type'], 'recovery');
-          expect(payload['email'], 'student@usac.edu.gt');
-          expect(payload['token'], '654321');
-          return {
-            'access_token': 'recovery-access-token',
-            'token_type': 'bearer',
-            'expires_in': 3600,
-            'refresh_token': 'recovery-refresh-token',
-            'user': {
-              'id': 'recovery-user',
-              'aud': 'authenticated',
-              'role': 'authenticated',
-              'email': 'student@usac.edu.gt',
-              'email_confirmed_at': '2026-10-03T00:00:00.000Z',
-              'created_at': '2026-10-03T00:00:00.000Z',
-              'app_metadata': {
-                'provider': 'email',
-                'providers': ['email'],
-              },
-              'user_metadata': {},
-            },
-          };
-        });
-        fakeServer.on('PUT', '/auth/v1/user', (request) {
-          final payload = jsonDecode(request.body) as Map<String, dynamic>;
-          expect(payload['password'], 'new-password-123');
-          return {
-            'id': 'recovery-user',
-            'aud': 'authenticated',
-            'role': 'authenticated',
-            'email': 'student@usac.edu.gt',
-            'email_confirmed_at': '2026-10-03T00:00:00.000Z',
-            'created_at': '2026-10-03T00:00:00.000Z',
-            'app_metadata': {
-              'provider': 'email',
-              'providers': ['email'],
-            },
-            'user_metadata': {},
-          };
-        });
-
-        await SupabaseService.requestPasswordReset(' student@usac.edu.gt ');
-        final response = await SupabaseService.verifyPasswordResetOtp(
-          email: ' student@usac.edu.gt ',
-          token: ' 654321 ',
-        );
-        expect(response?.session, isNotNull);
-
-        await SupabaseService.updatePassword('new-password-123');
-      },
-    );
-
-    test(
-      'returns false when recovery cannot run without Supabase config',
-      () async {
-        SupabaseConfig.debugOverrideConfigured = false;
-
-        expect(
-          await SupabaseService.requestPasswordReset('student@usac.edu.gt'),
-          isFalse,
-        );
-      },
-    );
   });
 
   group('SupabaseService TOTP enrollment', () {
@@ -278,16 +151,16 @@ void main() {
     );
   });
 
-  group('SupabaseService recovery codes', () {
-    Future<void> signIn({String aal = 'aal2'}) async {
+  group('SupabaseService TOTP management', () {
+    Future<void> signIn() async {
       fakeServer.onPost('/auth/v1/token', (_) {
         return {
-          'access_token': _testJwt(aal: aal),
+          'access_token': _testJwt(aal: 'aal2'),
           'token_type': 'bearer',
           'expires_in': 3600,
           'refresh_token': 'test-refresh-token',
           'user': {
-            'id': 'recovery-user',
+            'id': 'totp-user',
             'aud': 'authenticated',
             'role': 'authenticated',
             'email': 'student@usac.edu.gt',
@@ -304,174 +177,7 @@ void main() {
         email: 'student@usac.edu.gt',
         password: 'password123',
       );
-      SupabaseService.debugRecoveryCodesHttpClient = http_testing.MockClient(
-        fakeServer.handle,
-      );
     }
-
-    test(
-      'loads remaining count using the current bearer and anon key',
-      () async {
-        await signIn();
-        fakeServer.onGet('/auth/v1/factors/recovery-codes', (request) {
-          expect(
-            request.headers['authorization'],
-            'Bearer ${SupabaseService.client.auth.currentSession!.accessToken}',
-          );
-          expect(request.headers['apikey'], SupabaseConfig.supabaseAnonKey);
-          return {'total': 10, 'remaining': 7};
-        });
-
-        final status = await SupabaseService.getRecoveryCodeStatus();
-
-        expect(status.total, 10);
-        expect(status.remaining, 7);
-      },
-    );
-
-    test('generates recovery codes only for an AAL2 session', () async {
-      await signIn();
-      fakeServer.onPost('/auth/v1/factors/recovery-codes', (request) {
-        expect(request.method, 'POST');
-        return {
-          'codes': ['first-one-time-code', 'second-one-time-code'],
-        };
-      });
-      fakeServer.onGet('/auth/v1/factors/recovery-codes', (_) {
-        return {'total': 10, 'remaining': 2};
-      });
-
-      final codes = await SupabaseService.generateRecoveryCodes();
-
-      expect(codes, ['first-one-time-code', 'second-one-time-code']);
-    });
-
-    test('regenerates the set through Supabase Auth', () async {
-      await signIn();
-      fakeServer.onPost('/auth/v1/factors/recovery-codes/regenerate', (
-        request,
-      ) {
-        expect(request.method, 'POST');
-        return {
-          'codes': ['replacement-code'],
-        };
-      });
-
-      final codes = await SupabaseService.generateRecoveryCodes(
-        regenerate: true,
-      );
-
-      expect(codes, ['replacement-code']);
-    });
-
-    test('rejects generating recovery codes below AAL2', () async {
-      await signIn(aal: 'aal1');
-
-      await expectLater(
-        SupabaseService.generateRecoveryCodes(),
-        throwsA(
-          isA<RecoveryCodeAssuranceException>().having(
-            (error) => error.currentLevel,
-            'currentLevel',
-            'aal1',
-          ),
-        ),
-      );
-      expect(
-        fakeServer.recordedRequests.where(
-          (request) => request.url.path.endsWith('/factors/recovery-codes'),
-        ),
-        isEmpty,
-      );
-    });
-
-    test('redeems a recovery code and installs the AAL2 session', () async {
-      await signIn();
-      final aal2Token = _testJwt(aal: 'aal2');
-      fakeServer.onPost('/auth/v1/factors/recovery-codes/verify', (request) {
-        final payload = jsonDecode(request.body) as Map<String, dynamic>;
-        expect(payload, {'code': 'one-time-recovery-code'});
-        return {
-          'access_token': aal2Token,
-          'refresh_token': 'recovered-refresh-token',
-        };
-      });
-      fakeServer.onGet('/auth/v1/user', (_) {
-        return {
-          'id': 'recovery-user',
-          'aud': 'authenticated',
-          'role': 'authenticated',
-          'email': 'student@usac.edu.gt',
-          'created_at': '2026-10-03T00:00:00.000Z',
-          'app_metadata': {
-            'provider': 'email',
-            'providers': ['email'],
-          },
-          'user_metadata': {},
-        };
-      });
-
-      await SupabaseService.verifyRecoveryCode(' one-time-recovery-code ');
-
-      expect(
-        SupabaseService.client.auth.currentSession?.accessToken,
-        aal2Token,
-      );
-      expect(
-        SupabaseService.client.auth.currentSession?.refreshToken,
-        'recovered-refresh-token',
-      );
-    });
-
-    test('preserves recovery-code rate-limit status for the UI', () async {
-      await signIn();
-      fakeServer.onPost(
-        '/auth/v1/factors/recovery-codes/verify',
-        (_) => {'error_code': 'mfa_recovery_codes_locked'},
-        statusCode: 429,
-      );
-
-      await expectLater(
-        SupabaseService.verifyRecoveryCode('incorrect-code'),
-        throwsA(
-          isA<RecoveryCodeRequestException>()
-              .having((error) => error.statusCode, 'statusCode', 429)
-              .having(
-                (error) => error.errorCode,
-                'errorCode',
-                'mfa_recovery_codes_locked',
-              ),
-        ),
-      );
-    });
-
-    test(
-      'preserves only the bounded HTTP error code for recovery generation',
-      () async {
-        await signIn();
-        fakeServer.onPost(
-          '/auth/v1/factors/recovery-codes',
-          (_) => {
-            'error_code': 'mfa_recovery_codes_not_enabled',
-            'codes': ['must-not-be-retained'],
-          },
-          statusCode: 404,
-        );
-
-        await expectLater(
-          SupabaseService.generateRecoveryCodes(),
-          throwsA(
-            isA<RecoveryCodeRequestException>()
-                .having((error) => error.statusCode, 'statusCode', 404)
-                .having(
-                  (error) => error.errorCode,
-                  'errorCode',
-                  'mfa_recovery_codes_not_enabled',
-                ),
-          ),
-        );
-      },
-    );
 
     test('rejects TOTP removal without a six-digit current code', () async {
       await signIn();
@@ -479,7 +185,7 @@ void main() {
       await expectLater(
         SupabaseService.disableTotpWithCurrentCode(
           factorId: 'verified-factor',
-          code: 'recovery-code',
+          code: 'invalid-code',
         ),
         throwsA(isA<ArgumentError>()),
       );

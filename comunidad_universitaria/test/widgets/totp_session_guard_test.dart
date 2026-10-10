@@ -87,6 +87,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Verificación de seguridad'), findsOneWidget);
+      expect(
+        find.text('No tengo mi app: usar código de recuperación'),
+        findsNothing,
+      );
       await tester.enterText(find.byType(TextField), '123456');
       await tester.tap(find.text('Verificar código TOTP'));
       await tester.pumpAndSettle();

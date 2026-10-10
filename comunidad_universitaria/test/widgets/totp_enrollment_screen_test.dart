@@ -81,7 +81,15 @@ void main() {
       };
     });
 
-    await tester.pumpWidget(const MaterialApp(home: TotpEnrollmentScreen()));
+    var enrollmentCompleted = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: TotpEnrollmentScreen(
+          isRequired: true,
+          onEnrollmentComplete: () => enrollmentCompleted = true,
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Comenzar configuración'));
@@ -101,5 +109,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Autenticador configurado'), findsOneWidget);
+    expect(enrollmentCompleted, isTrue);
   });
 }

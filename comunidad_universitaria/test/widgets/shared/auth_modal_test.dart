@@ -106,21 +106,26 @@ void main() {
       );
     });
 
-    testWidgets(
-      'muestra la entrada de código cuando el signup necesita confirmación',
-      (tester) async {
-        tester.view.physicalSize = const Size(1200, 800);
-        tester.view.devicePixelRatio = 1.0;
-        addTearDown(() => tester.view.resetPhysicalSize());
+    testWidgets('creates an email account without an email OTP', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
 
-        final fakeServer = FakePostgrestServer();
-        SupabaseConfig.debugOverrideConfigured = true;
-        SupabaseService.debugClient = fakeServer.buildClient();
-        fakeServer.onPost('/auth/v1/signup', (request) {
-          final payload = jsonDecode(request.body) as Map<String, dynamic>;
-          expect(payload['email'], 'estudiante@usac.edu.gt');
-          expect(payload['password'], 'password123');
-          return {
+      final fakeServer = FakePostgrestServer();
+      SupabaseConfig.debugOverrideConfigured = true;
+      SupabaseService.debugClient = fakeServer.buildClient();
+      fakeServer.onPost('/auth/v1/signup', (request) {
+        final payload = jsonDecode(request.body) as Map<String, dynamic>;
+        expect(payload['email'], 'estudiante@usac.edu.gt');
+        expect(payload['password'], 'password123');
+        return {
+          'access_token': 'signup-access-token',
+          'token_type': 'bearer',
+          'expires_in': 3600,
+          'refresh_token': 'signup-refresh-token',
+          'user': {
             'id': 'signup-user',
             'aud': 'authenticated',
             'role': 'authenticated',
@@ -133,145 +138,98 @@ void main() {
             },
             'user_metadata': {},
             'identities': [],
-          };
-        });
-
-        await tester.pumpWidget(buildTestModal());
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('¿No tienes cuenta? Regístrate aquí'));
-        await tester.pumpAndSettle();
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Correo electrónico'),
-          'estudiante@usac.edu.gt',
-        );
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Contraseña'),
-          'password123',
-        );
-        await tester.tap(
-          find.widgetWithText(ElevatedButton, 'Crear Cuenta y Publicar'),
-        );
-        await tester.pumpAndSettle();
-
-        expect(find.text('Código de 6 dígitos'), findsOneWidget);
-        expect(find.text('Reenviar código'), findsOneWidget);
-        expect(find.textContaining('estudiante@usac.edu.gt'), findsOneWidget);
-      },
-    );
-
-    testWidgets(
-      'un correo sin confirmar permite ingresar el código y reenviarlo',
-      (tester) async {
-        tester.view.physicalSize = const Size(1200, 800);
-        tester.view.devicePixelRatio = 1.0;
-        addTearDown(() => tester.view.resetPhysicalSize());
-
-        final fakeServer = FakePostgrestServer();
-        SupabaseConfig.debugOverrideConfigured = true;
-        SupabaseService.debugClient = fakeServer.buildClient();
-        fakeServer.onPost(
-          '/auth/v1/token',
-          (_) => {
-            'code': 'email_not_confirmed',
-            'message': 'Email not confirmed',
-            'status': 400,
           },
-          statusCode: 400,
-        );
-        fakeServer.onPost('/auth/v1/resend', (request) {
-          final payload = jsonDecode(request.body) as Map<String, dynamic>;
-          expect(payload['type'], 'signup');
-          expect(payload['email'], 'estudiante@usac.edu.gt');
-          return {'message_id': 'confirmation-message'};
-        });
+        };
+      });
 
-        await tester.pumpWidget(buildTestModal());
-        await tester.pumpAndSettle();
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Correo electrónico'),
-          'estudiante@usac.edu.gt',
-        );
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Contraseña'),
-          'password123',
-        );
-        await tester.tap(find.widgetWithText(ElevatedButton, 'Iniciar Sesión'));
-        await tester.pumpAndSettle();
+      var authenticated = false;
+      await tester.pumpWidget(
+        buildTestModal(onAuthenticated: () => authenticated = true),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('¿No tienes cuenta? Regístrate aquí'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Correo electrónico'),
+        'estudiante@usac.edu.gt',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Contraseña'),
+        'password123',
+      );
+      await tester.tap(
+        find.widgetWithText(ElevatedButton, 'Crear Cuenta y Publicar'),
+      );
+      await tester.pumpAndSettle();
 
-        expect(find.text('Código de 6 dígitos'), findsOneWidget);
-        expect(find.text('Reenviar código'), findsOneWidget);
-        expect(find.textContaining('Tu correo aún no ha sido confirmado'), findsOneWidget);
+      expect(authenticated, isTrue);
+      expect(find.text('Código de 6 dígitos'), findsNothing);
+      expect(find.text('Reenviar código'), findsNothing);
+    });
 
-        await tester.tap(find.text('Reenviar código'));
-        await tester.pumpAndSettle();
-        expect(find.text('Te enviamos un nuevo código de verificación.'), findsOneWidget);
-      },
-    );
+    testWidgets('shows setup guidance if Supabase still requires email OTP', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
 
-    testWidgets(
-      'permite solicitar recuperación y verificar el código para cambiar contraseña',
-      (tester) async {
-        tester.view.physicalSize = const Size(1200, 800);
-        tester.view.devicePixelRatio = 1.0;
-        addTearDown(() => tester.view.resetPhysicalSize());
+      final fakeServer = FakePostgrestServer();
+      SupabaseConfig.debugOverrideConfigured = true;
+      SupabaseService.debugClient = fakeServer.buildClient();
+      fakeServer.onPost('/auth/v1/signup', (_) {
+        return {
+          'id': 'signup-user',
+          'aud': 'authenticated',
+          'role': 'authenticated',
+          'email': 'estudiante@usac.edu.gt',
+          'email_confirmed_at': null,
+          'created_at': '2026-10-03T00:00:00.000Z',
+          'app_metadata': {
+            'provider': 'email',
+            'providers': ['email'],
+          },
+          'user_metadata': {},
+          'identities': [],
+        };
+      });
 
-        final fakeServer = FakePostgrestServer();
-        SupabaseConfig.debugOverrideConfigured = true;
-        SupabaseService.debugClient = fakeServer.buildClient();
-        fakeServer.onPost(
-          '/auth/v1/recover',
-          (_) => {'message_id': 'recovery-message'},
-        );
-        fakeServer.onPost('/auth/v1/verify', (request) {
-          final payload = jsonDecode(request.body) as Map<String, dynamic>;
-          expect(payload['type'], 'recovery');
-          expect(payload['email'], 'estudiante@usac.edu.gt');
-          expect(payload['token'], '654321');
-          return {
-            'access_token': 'recovery-access-token',
-            'token_type': 'bearer',
-            'expires_in': 3600,
-            'refresh_token': 'recovery-refresh-token',
-            'user': {
-              'id': 'recovery-user',
-              'aud': 'authenticated',
-              'role': 'authenticated',
-              'email': 'estudiante@usac.edu.gt',
-              'email_confirmed_at': '2026-10-03T00:00:00.000Z',
-              'created_at': '2026-10-03T00:00:00.000Z',
-              'app_metadata': {
-                'provider': 'email',
-                'providers': ['email'],
-              },
-              'user_metadata': {},
-            },
-          };
-        });
+      await tester.pumpWidget(buildTestModal());
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('¿No tienes cuenta? Regístrate aquí'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Correo electrónico'),
+        'estudiante@usac.edu.gt',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Contraseña'),
+        'password123',
+      );
+      await tester.tap(
+        find.widgetWithText(ElevatedButton, 'Crear Cuenta y Publicar'),
+      );
+      await tester.pumpAndSettle();
 
-        await tester.pumpWidget(buildTestModal());
-        await tester.pumpAndSettle();
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Correo electrónico'),
-          'estudiante@usac.edu.gt',
-        );
-        await tester.tap(find.text('¿Olvidaste tu contraseña?'));
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('Enviar código de recuperación'));
-        await tester.pumpAndSettle();
+      expect(
+        find.textContaining('Authentication > Sign In / Providers > Email'),
+        findsOneWidget,
+      );
+      expect(find.text('Código de 6 dígitos'), findsNothing);
+    });
 
-        expect(find.text('Código de recuperación'), findsOneWidget);
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Código de recuperación'),
-          '654321',
-        );
-        await tester.tap(find.text('Verificar código'));
-        await tester.pumpAndSettle();
+    testWidgets('does not offer password recovery by email', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
 
-        expect(find.text('Nueva contraseña'), findsOneWidget);
-        expect(find.text('Confirma la contraseña'), findsOneWidget);
-        expect(find.text('Actualizar contraseña'), findsOneWidget);
-      },
-    );
+      await tester.pumpWidget(buildTestModal());
+      await tester.pumpAndSettle();
+
+      expect(find.text('¿Olvidaste tu contraseña?'), findsNothing);
+      expect(find.text('Enviar código de recuperación'), findsNothing);
+      expect(find.text('Continuar con Google'), findsOneWidget);
+    });
 
     testWidgets('Valida formato de correo y longitud de contraseña', (
       tester,

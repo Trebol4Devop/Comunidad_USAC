@@ -17,4 +17,4 @@
 --   generate_author_hash(uuid, salt)  -> salt explícito
 -- =============================================================================
 
-drop function public.generate_author_hash(uuid);
+drop function if exists public.generate_author_hash(uuid);

@@ -1,6 +1,6 @@
 # 07 — Autenticación y Seguridad
 
-> Especificación de requisitos de experiencia de usuario (UX) para el sistema de autenticación, verificación de identidad y seguridad de la plataforma **Comunidad Universitaria USAC**: modo visitante (solo lectura), registro estudiantil, verificación OTP de correo con cuenta regresiva, inicio de sesión correo/contraseña, recuperación de credenciales, Google OAuth con PKCE, cierre de sesión, autenticación multifactor obligatoria (MFA TOTP) con enrolamiento por código QR, códigos de respaldo, desafío de sesión y desactivación voluntaria, período de gracia con inducción pedagógica previa, y servidor de autorización federada SSO para PEMTREE con validación estricta anti-open redirect, consentimiento informado, transporte de tokens en fragmento hash y respeto de entornos locales. Convenciones, matriz de roles y plantilla en [`README.md`](README.md).
+> Especificación de requisitos de experiencia de usuario (UX) para el sistema de autenticación y seguridad de **Comunidad Universitaria USAC**: modo visitante, registro e inicio de sesión con correo/contraseña sin OTP de correo, Google OAuth con PKCE, autenticación multifactor TOTP, período de gracia y servidor SSO para PEMTREE. La app no envía códigos de confirmación de registro ni de recuperación de contraseña por correo. Convenciones, matriz de roles y plantilla en [`README.md`](README.md).
 
 ---
 
@@ -19,13 +19,13 @@ La seguridad en la plataforma **Comunidad Universitaria USAC** se fundamenta en 
 
 Este documento formaliza y eleva la experiencia analizada en el **Inventario UX**, abordando de manera directa:
 
-- **Inventario 4.7 (`TotpEnrollmentScreen`):** Enrolamiento por QR, copia de secreto manual, almacenamiento y regeneración de códigos de respaldo alfanuméricos, y desvinculación con reautenticación limpia ([`totp_enrollment_screen.dart:1-654`](../../comunidad_universitaria/lib/features/profile/screens/totp_enrollment_screen.dart)).
+- **Inventario 4.7 (`TotpEnrollmentScreen`):** Enrolamiento por QR, copia de secreto manual y desvinculación con reautenticación limpia. Los códigos de recuperación MFA están aplazados ([`totp_enrollment_screen.dart`](../../comunidad_universitaria/lib/features/profile/screens/totp_enrollment_screen.dart)).
 - **Inventario 4.8 (`SsoAuthorizeScreen`):** Servidor de autorización OAuth 2.0, formulario de inicio de sesión embebido para visitantes, pantalla de consentimiento y transporte de credenciales ([`sso_authorize_screen.dart:1-901`](../../comunidad_universitaria/lib/features/sso/screens/sso_authorize_screen.dart)).
-- **Inventario 4.10 (`AuthModal`):** Modal adaptativo (BottomSheet en móvil, Dialog en desktop) para login, registro, confirmación OTP y recuperación de contraseñas ([`auth_modal.dart:1-955`](../../comunidad_universitaria/lib/features/shared/widgets/auth_modal.dart)).
-- **Inventario 5.1, 5.2, 5.3 y 5.8:** Flujos guiados de registro con confirmación de correo, activación obligatoria de MFA TOTP, recuperación de contraseña y flujo SSO para herramientas satélite.
+- **Inventario 4.10 (`AuthModal`):** Modal adaptativo (BottomSheet en móvil, Dialog en desktop) para login, registro sin OTP por correo y acceso Google ([`auth_modal.dart`](../../comunidad_universitaria/lib/features/shared/widgets/auth_modal.dart)).
+- **Inventario 5.1, 5.2, 5.3 y 5.8:** Registro sin confirmación OTP por correo, activación obligatoria de MFA TOTP y flujo SSO. La recuperación de contraseña por correo está aplazada.
 - **Inventario 8.1 / Vacío 1 `[Mejora]`:** Sustitución del bloqueo repentino y obligatorio de MFA en el primer registro por una inducción explicativa con período de gracia de 7 días ([`totp_session_guard.dart:90-96`](../../comunidad_universitaria/lib/features/shared/widgets/totp_session_guard.dart#L90-L96)).
 - **Inventario 8.6 / Vacío 6 `[Mejora]`:** Eliminación de la sobreescritura arbitraria de la URI de redirección hacia `localhost:5173` cuando se ejecutan pruebas en hosts locales, respetando la URL legítima solicitada por PEMTREE ([`sso_authorize_screen.dart:188-194`](../../comunidad_universitaria/lib/features/sso/screens/sso_authorize_screen.dart#L188-L194)).
-- **Inventario 8.7 / Vacío 7 `[Mejora]`:** Incorporación de un temporizador visual de 60 segundos con cuenta regresiva en el reenvío de códigos OTP de registro y recuperación de contraseña para erradicar errores por límite de peticiones (Rate Limiting) ([`auth_modal.dart:575-587`](../../comunidad_universitaria/lib/features/shared/widgets/auth_modal.dart#L575-L587), [`auth_modal.dart:693-705`](../../comunidad_universitaria/lib/features/shared/widgets/auth_modal.dart#L693-L705)).
+
 
 ---
 
@@ -42,7 +42,7 @@ Este documento formaliza y eleva la experiencia analizada en el **Inventario UX*
 | Publicar artículos en el marketplace      |  Falta _(interceptado)_  |    Falta _(requiere AAL2)_    | Falta _(requiere verificación)_ |     Hecho _(carné)_      |               Hecho                |      Hecho       |        Hecho         |
 | Registrar nuevos grupos de WhatsApp       |  Falta _(interceptado)_  |    Falta _(requiere AAL2)_    |          Hecho           |            Hecho             |            Falta / N-A             |      Hecho       |        Hecho         |
 | Votar reputación de grupos (_upvote_)     |  Falta _(interceptado)_  | Hecho _(hasta vencer gracia)_ |          Hecho           |            Hecho             |            Falta / N-A             |      Hecho       |        Hecho         |
-| Gestionar códigos de respaldo TOTP        |          Falta           |             Falta             |          Hecho           |            Hecho             |               Hecho                |      Hecho       |        Hecho         |
+| Códigos de recuperación MFA (aplazados)   |       No disponible      |        No disponible         |     No disponible       |       No disponible          |          No disponible            | No disponible    | No disponible        |
 | Desactivar segundo factor TOTP            |          Falta           |             Falta             |          Hecho           |            Hecho             |               Hecho                |      Hecho       |        Hecho         |
 | Autorizar accesos SSO (PEMTREE)           | Falta _(login embebido)_ |   Hecho _(AAL1 suficiente)_   |          Hecho           |            Hecho             |            Falta / N-A             |      Hecho       |        Hecho         |
 | Acceder a funciones de moderación         |          Falta           |             Falta             |          Falta           |            Falta             |               Falta                |      Hecho       |        Hecho         |
@@ -62,9 +62,7 @@ flowchart TD
     subgraph Auth_Modal_Flow ["AuthModal: Autenticación Primaria (AAL1)"]
         Modal --> Choice{"Método de acceso"}
         Choice -->|"Registro"| SignUp["Formulario: Correo + Contraseña"]
-        SignUp --> OtpSignup["Pantalla OTP: 6 dígitos (auth.signUp)"]
-        OtpSignup --> Countdown["Temporizador de reenvío: 60s regresivos"]
-        Countdown --> VerifyOtp["SupabaseService.verifySignupOtp"]
+        SignUp --> SignUpSession["SupabaseService.signUp (sin confirmación por correo)"]
 
         Choice -->|"Login Correo"| SignIn["Formulario: Correo + Contraseña"]
         SignIn --> DoSignIn["SupabaseService.signInWithPassword"]
@@ -72,12 +70,10 @@ flowchart TD
         Choice -->|"Google OAuth"| GooglePKCE["OAuth 2.0 PKCE (Navegador/DeepLink)"]
         GooglePKCE --> GoogleReturn["AuthChangeEvent.signedIn"]
 
-        Choice -->|"¿Olvidaste clave?"| ResetReq["Paso 1: Solicitar OTP a correo"]
-        ResetReq --> ResetOtp["Paso 2: Validar OTP con cuenta regresiva"]
-        ResetOtp --> ResetPass["Paso 3: Definir nueva contraseña (min 6)"]
+
     end
 
-    VerifyOtp --> Guard{"TotpSessionGuard"}
+    SignUpSession --> Guard{"TotpSessionGuard"}
     DoSignIn --> Guard
     GoogleReturn --> Guard
 
@@ -94,19 +90,14 @@ flowchart TD
         CheckAAL -->|"AAL2"| SessionAAL2["Acceso Total Desbloqueado (AAL2)"]
         CheckAAL -->|"AAL1"| ChallengeSc["_TotpChallengeScreen"]
 
-        ChallengeSc --> ChallengeChoice{"Método de verificación"}
-        ChallengeChoice -->|"Código 6 dígitos"| VerifyChallenge["SupabaseService.verifyTotpChallenge"]
-        ChallengeChoice -->|"Código de respaldo"| VerifyBackup["SupabaseService.verifyRecoveryCode"]
+        ChallengeSc --> VerifyChallenge["SupabaseService.verifyTotpChallenge"]
         VerifyChallenge --> SessionAAL2
-        VerifyBackup --> SessionAAL2
     end
 
     subgraph MFA_Management ["TotpEnrollmentScreen & Perfil"]
         EnrollSc --> QR["Escanear QR o Clave Secreta Manual"]
         QR --> VerifyFirst["Ingresar primer código de 6 dígitos"]
-        VerifyFirst --> GenBackup["Generación obligatoria: 10 códigos de respaldo"]
-        GenBackup --> BackupConfirm["Checkbox obligatorio: 'He guardado los códigos'"]
-        BackupConfirm --> SessionAAL2
+        VerifyFirst --> SessionAAL2
 
         SessionAAL2 --> ManageMFA["Perfil: Administrar MFA"]
         ManageMFA --> RegenBackup["Regenerar 10 códigos (Invalida previos)"]
@@ -187,13 +178,13 @@ flowchart TD
 - **Interacciones:**
   - Al escribir en los campos, la validación sintáctica (`_formKey.currentState!.validate()`) proporciona retroalimentación sin bloquear la escritura.
   - Al presionar "Registrarme", el botón deshabilita clics subsecuentes y muestra un indicador de progreso circular blanco (`CircularProgressIndicator`, 18px).
-  - Se invoca `SupabaseService.signUp(email, password)`. Si el backend responde solicitando confirmación de correo, la interfaz transiciona de forma fluida a la pantalla de verificación OTP (`UX-AUTH-003`).
+  - Se invoca `SupabaseService.signUp(email, password)`. La cuenta y sesión se crean sin enviar OTP por correo; el guard TOTP gestiona el segundo factor.
 - **Estados:**
   - _Inicial:_ Formulario vacío con foco disponible en el campo de correo.
   - _Carga:_ Botón en estado de carga con spinner activo.
   - _Error de validación inline:_ Mensajes de error en rojo bajo cada campo ("Ingresa un correo válido", "La contraseña debe tener al menos 6 caracteres").
-  - _Error del servidor:_ Tarjeta destacada roja superior con mensaje humanizado (p. ej. "Este correo ya se encuentra registrado. Inicia sesión o recupera tu contraseña").
-  - _Éxito:_ Transición inmediata al paso de confirmación de correo.
+  - _Error del servidor:_ Tarjeta destacada roja superior con mensaje humanizado (p. ej. "Este correo ya se encuentra registrado. Inicia sesión o usa Google si corresponde").
+  - _Éxito:_ Se crea la cuenta y continúa al guard de sesión TOTP.
 - **Validaciones y reglas de negocio:**
   - Respaldo técnico: [`auth_modal.dart:175-210`](../../comunidad_universitaria/lib/features/shared/widgets/auth_modal.dart#L175-L210) y [`supabase_service.dart:185-215`](../../comunidad_universitaria/lib/core/services/supabase_service.dart#L185-L215).
   - El correo es normalizado (recorte de espacios y minúsculas) antes del envío.
@@ -205,56 +196,19 @@ flowchart TD
 - **Responsive:**
   - En móvil, se adapta a la aparición del teclado virtual mediante `viewInsets.bottom` para evitar que el botón quede oculto.
 - **Criterios de aceptación (Gherkin):**
-  - **Given** un visitante en `AuthModal` con el formulario de registro visible, **When** ingresa un correo con formato válido y una contraseña de 8 caracteres y pulsa "Registrarme", **Then** el sistema procesa la solicitud y muestra la vista de confirmación de código OTP mostrando su dirección de correo.
+  - **Given** un visitante en `AuthModal` con el formulario de registro visible, **When** ingresa un correo con formato válido y una contraseña de 8 caracteres y pulsa "Registrarme", **Then** el sistema crea la cuenta e inicia sesión sin enviar OTP por correo, y continúa al flujo de seguridad TOTP.
   - **Given** un visitante que intenta registrarse con una contraseña de 4 caracteres, **When** pulsa "Registrarme", **Then** el formulario no se envía, se muestra el mensaje de error inline "La contraseña debe tener al menos 6 caracteres" y el foco se sitúa en dicho campo.
 
 ---
 
-### UX-AUTH-003 — Verificación de correo por código OTP con cuenta regresiva de reenvío `[Mejora]`
+### UX-AUTH-003 — Confirmación OTP por correo [Retirada]
 
-- **Actor / rol:** Estudiante en proceso de registro o confirmación de cuenta
-- **Prioridad:** Must
-- **Estado objetivo:** El estudiante confirma su dirección de correo ingresando el código numérico de un solo uso (OTP) de 6 dígitos enviado por Supabase Auth. Para prevenir la frustración del usuario, evitar clics repetitivos descontrolados y erradicar los bloqueos por límite de tasa de solicitudes (_Rate Limiting_ / HTTP 429), el botón "Reenviar código" incorpora obligatoriamente una **cuenta regresiva visual de 60 segundos** durante la cual permanece deshabilitado mostrando los segundos restantes. Al llegar a cero, el botón se habilita de nuevo. Además, se proporciona una opción clara para corregir la dirección de correo en caso de que el alumno haya cometido un error tipográfico al registrarse.
-- **Problema actual [Mejora]:** En la implementación actual ([`auth_modal.dart:575-587`](../../comunidad_universitaria/lib/features/shared/widgets/auth_modal.dart#L575-L587)), el botón `TextButton.icon` con etiqueta "Reenviar código" (`_handleResendSignupOtp`) carece de cualquier temporizador de espera (_cooldown_). Cuando un estudiante experimenta demoras en la entrega de correo por parte del servidor SMTP, pulsa repetidamente el botón, lo que satura la cuota de peticiones de Supabase Auth, bloqueando la cuenta con un error genérico y hostil (`_friendlyAuthError`) sin indicarle al usuario cuándo podrá reintentar (detectado en Inventario UX 8.7 / Vacío 7).
-- **Precondiciones:** El estudiante completó el formulario de registro y el sistema pasó a estado `_awaitingEmailConfirmation = true`.
-- **UI / contenido:**
-  - Encabezado: Título "Confirma tu correo" con icono `Icons.mark_email_read_outlined`.
-  - Banner explicativo con contenedor suave (`#F1F5F9` en claro / `#1E293B` en oscuro): "Te enviamos un código de 6 dígitos a **[correo_ingresado]**".
-  - Campo de entrada para el código:
-    - Diseñado con 6 casillas visuales centradas o campo numérico monoespaciado grande (`titleLarge`, 24px).
-    - Teclado restringido exclusivamente a números (`TextInputType.number`, `FilteringTextInputFormatter.digitsOnly`).
-    - Límite estricto de 6 caracteres (`maxLength: 6`, ocultando el contador estándar).
-  - Botón principal: "Verificar correo" (`ElevatedButton`), habilitado únicamente cuando se han ingresado los 6 dígitos.
-  - Componente de reenvío con temporizador inteligente:
-    - Durante los primeros 60 segundos: Botón en gris deshabilitado con icono de reloj de arena (`Icons.hourglass_top`), exhibiendo la etiqueta reactiva: `"Reenviar código en (59s)"` (decrementando segundo a segundo: 58s, 57s, ...).
-    - Al expirar los 60 segundos: El botón se activa dinámicamente con color primario, icono de refresco (`Icons.refresh`) y etiqueta interactiva `"Reenviar código"`.
-  - Opción de corrección: Botón de texto "Usar otro correo" (`Icons.edit_outlined`) que permite volver atrás conservando la contraseña precargada para corregir un posible error de dedo en la dirección.
-- **Interacciones:**
-  - Soporte de pegado rápido (_Paste_): Si el usuario copia el código de 6 dígitos desde su app de correo y lo pega en el campo, el sistema llena automáticamente las posiciones e inicia la verificación sin requerir pulsar el botón.
-  - Al llegar el 6to dígito, se ejecuta automáticamente `_handleVerifySignupOtp()`.
-  - Al presionar "Reenviar código" (cuando el contador llegó a cero):
-    - Se lanza `SupabaseService.resendSignupOtp(email)`.
-    - El temporizador se reinicia inmediatamente en 60 segundos.
-    - Se despliega un SnackBar flotante: "Te enviamos un nuevo código de verificación".
-- **Estados:**
-  - _Inicial / Conteo activo:_ Código vacío, botón de reenvío deshabilitado con temporizador corriendo.
-  - _Verificando:_ Spinner circular dentro del botón "Verificar correo" con controles deshabilitados.
-  - _Reenviando:_ Micro-spinner en el botón de reenvío durante la llamada a red.
-  - _Error de código:_ Tarjeta roja en el modal con texto: "El código no es válido o ya venció. Revisa tu correo e inténtalo de nuevo".
-  - _Error de límite de tasa (429):_ Tarjeta amarilla informativa: "Se alcanzó el límite de intentos. Por favor espera unos minutos antes de solicitar otro código".
-  - _Éxito:_ Cierre automático del modal y transición inmediata al onboarding pedagógico de seguridad MFA TOTP (`UX-AUTH-008`).
-- **Validaciones y reglas de negocio:**
-  - Respaldo técnico: [`auth_modal.dart:250-283`](../../comunidad_universitaria/lib/features/shared/widgets/auth_modal.dart#L250-L283) invocando `SupabaseService.verifySignupOtp(email, token)`.
-  - El trigger de base de datos PostgreSQL `handle_new_user_profile` crea de forma atómica la fila del usuario en la tabla `public.profiles` con su alias predeterminado.
-- **Accesibilidad:**
-  - El temporizador actualiza periódicamente la semántica para lectores de pantalla sin saturar con anuncios continuos cada segundo (anuncia al llegar a 30s y al habilitarse a 0s: "Reenvío de código habilitado").
-  - El campo de código declara `autofillHints: [AutofillHints.oneTimeCode]`.
-- **Responsive:**
-  - En móviles, el campo permanece visible por encima del teclado numérico mediante scroll reactivo.
-- **Criterios de aceptación (Gherkin):**
-  - **Given** un estudiante que acaba de registrarse y visualiza la pantalla de verificación OTP, **When** observa el botón de reenvío, **Then** este se encuentra deshabilitado mostrando una cuenta regresiva que inicia en "Reenviar código en (60s)" y disminuye cada segundo.
-  - **Given** que transcurrieron los 60 segundos y el botón cambió a "Reenviar código", **When** el estudiante pulsa "Reenviar código", **Then** el sistema solicita un nuevo OTP al backend, muestra un mensaje de confirmación y el botón vuelve a deshabilitarse con una nueva cuenta regresiva de 60 segundos.
-  - **Given** un estudiante que recibe su código de 6 dígitos, **When** lo introduce correctamente, **Then** la sesión queda confirmada y la aplicación lo conduce al onboarding de seguridad multifactor.
+La app ya no solicita ni verifica códigos OTP enviados por correo durante el
+registro. La configuración local establece `auth.email.enable_confirmations =
+false`; el proyecto remoto debe tener también **Confirm email** desactivado en
+Authentication > Sign In / Providers > Email. El registro sin confirmación no
+verifica que la persona controle la dirección de correo; TOTP es un segundo
+factor y no sustituye esa comprobación.
 
 ---
 
@@ -262,14 +216,14 @@ flowchart TD
 
 - **Actor / rol:** Estudiante registrado, Estudiante verificado, Moderador, Administrador
 - **Prioridad:** Must
-- **Estado objetivo:** El estudiante con cuenta existente puede autenticarse de manera rápida ingresando su correo y contraseña. La pantalla maneja con empatía los posibles errores de autenticación, traduciendo excepciones técnicas a explicaciones comprensibles en español guatemalteco, ofreciendo un enlace visible para recuperar contraseñas olvidadas y redirigiendo de manera automática al flujo de verificación OTP si detecta que la cuenta aún no había confirmado su correo.
+- **Estado objetivo:** El estudiante con cuenta existente puede autenticarse ingresando su correo y contraseña. La pantalla maneja con empatía los errores de autenticación. La confirmación de correo está desactivada para este proyecto; si la instancia remota aún la exige, la interfaz indica que se desactive `Confirm email` en la configuración de Auth.
 - **Precondiciones:** Acceso a `AuthModal` en modo de acceso tradicional (`_isSignUp = false`).
 - **UI / contenido:**
   - Título principal: "Iniciar Sesión en Comunidad USAC".
   - Subtítulo: "Ingresa tus credenciales para acceder a tus publicaciones y preferencias".
   - Campo Correo electrónico con validación de sintaxis básica.
   - Campo Contraseña con botón interactivo para mostrar u ocultar caracteres.
-  - Enlace de asistencia alineado a la derecha: "¿Olvidaste tu contraseña?".
+
   - Botón primario de envío: "Iniciar Sesión" (`ElevatedButton` azul USAC `#004B87`).
   - Separador horizontal visual con el texto "O continúa con".
   - Botón oficial de acceso con Google OAuth (`UX-AUTH-006`).
@@ -279,18 +233,18 @@ flowchart TD
   - Si el inicio de sesión es exitoso, el modal se descarta de inmediato. El guardián de seguridad `TotpSessionGuard` evalúa el nivel de aseguramiento de la sesión:
     - Si el usuario ya tiene TOTP activado pero la sesión está en AAL1, se despliega el desafío de seguridad `_TotpChallengeScreen` (`UX-AUTH-011`).
     - Si el usuario no tiene TOTP configurado, se evalúa el período de gracia o se presenta la inducción MFA (`UX-AUTH-008`).
-  - Si el backend devuelve un error indicando que el correo no ha sido confirmado (`email_not_confirmed`), la interfaz conmuta automáticamente al estado `_awaitingEmailConfirmation = true` precargando el correo ingresado y solicitando el código OTP (`UX-AUTH-003`).
+  - Si el backend devuelve `email_not_confirmed`, se informa que debe desactivarse `Confirm email` en Supabase; no se ofrece envío ni verificación de OTP.
 - **Estados:**
   - _Inicial:_ Formulario listo para ingreso de credenciales.
   - _Cargando:_ Botón con spinner de progreso; campos de texto inhabilitados para evitar envíos duplicados.
   - _Error de credenciales:_ Tarjeta roja inline con el texto: "Credenciales inválidas. Verifica tu correo y contraseña".
-  - _Error de cuenta no confirmada:_ Notificación formativa: "Tu correo aún no ha sido confirmado. Ingresa el código que te enviamos".
+  - _Error de configuración remota:_ Instrucción para desactivar `Confirm email` en Supabase; no se solicita código.
   - _Éxito:_ Cierre del modal y actualización del estado de sesión global.
 - **Validaciones y reglas de negocio:**
   - Respaldo técnico: [`auth_modal.dart:150-173`](../../comunidad_universitaria/lib/features/shared/widgets/auth_modal.dart#L150-L173) y [`supabase_service.dart:155-180`](../../comunidad_universitaria/lib/core/services/supabase_service.dart#L155-L180).
   - La función `_friendlyAuthError` mapea sistemáticamente los códigos de error internos de Supabase a mensajes comprensibles para el usuario.
 - **Accesibilidad:**
-  - Navegación lógica mediante tecla Tab entre campos, enlace de recuperación y botón de envío.
+  - Navegación lógica mediante tecla Tab entre campos y botón de envío.
   - Mensajes de error anunciados automáticamente a lectores de pantalla con rol de alerta.
 - **Responsive:**
   - Modal adaptativo a pantalla completa con scroll seguro en pantallas móviles de baja resolución.
@@ -300,40 +254,14 @@ flowchart TD
 
 ---
 
-### UX-AUTH-005 — Recuperación y restablecimiento de contraseña mediante OTP con cuenta regresiva `[Mejora]`
+### UX-AUTH-005 — Recuperación de contraseña por correo [Aplazada]
 
-- **Actor / rol:** Estudiante registrado que olvidó su clave de acceso
-- **Prioridad:** Must
-- **Estado objetivo:** Flujo guiado y seguro de restablecimiento de contraseña en 3 etapas consecutivas dentro del mismo modal: (1) Solicitud del código mediante ingreso del correo; (2) Verificación del código OTP de 6 dígitos con **cuenta regresiva de 60 segundos** en el botón de reenvío; (3) Ingreso y confirmación de la nueva contraseña con validación de coincidencia y longitud mínima.
-- **Problema actual [Mejora]:** En la implementación actual ([`auth_modal.dart:693-705`](../../comunidad_universitaria/lib/features/shared/widgets/auth_modal.dart#L693-L705)), el paso 2 de verificación del código de recuperación carece de temporizador visual de cooldown en el botón "Reenviar código" (`_handleResendPasswordResetOtp`). Múltiples pulsaciones seguidas provocan que Supabase rechace la solicitud por exceder la tasa máxima de peticiones por minuto, bloqueando el proceso de recuperación del alumno.
-- **Precondiciones:** Acceso a la vista de recuperación desde el enlace "¿Olvidaste tu contraseña?" en `AuthModal`.
-- **UI / contenido:**
-  - _Etapa 1 (Solicitud):_ Título "Recuperar Contraseña", explicación "Ingresa tu correo y te enviaremos instrucciones para restablecer tu cuenta", campo de correo y botón "Enviar código de recuperación".
-  - _Etapa 2 (Validación OTP):_ Título "Verifica tu código", mensaje "Si existe una cuenta asociada a [correo], recibirás un código para continuar", campo numérico para 6 dígitos, botón "Verificar código", y botón "Reenviar código en (59s)" con temporizador regresivo de 60 segundos deshabilitado hasta llegar a cero.
-  - _Etapa 3 (Nueva clave):_ Título "Establecer Nueva Contraseña", campo "Nueva contraseña", campo "Confirmar nueva contraseña", botones para visibilidad de texto y botón primario "Actualizar contraseña".
-  - Botón de escape en todas las etapas: "Volver al inicio de sesión" con icono `Icons.arrow_back`.
-- **Interacciones:**
-  - El usuario transiciona de etapa de forma secuencial sin recargar la aplicación ni abrir navegadores externos.
-  - Al validar el OTP en la Etapa 2 con `SupabaseService.verifyPasswordResetOtp(email, token)`, el estado cambia a `_passwordResetCodeVerified = true`.
-  - Al completar la Etapa 3 con contraseñas coincidentes de más de 6 caracteres, se invoca `SupabaseService.updatePassword(newPassword)`.
-  - La aplicación muestra un SnackBar de confirmación en verde: "Contraseña actualizada exitosamente. Ya puedes iniciar sesión con tu nueva clave".
-- **Estados:**
-  - _Etapa 1:_ Entrada de correo.
-  - _Etapa 2:_ Espera de código OTP con temporizador de 60s activo.
-  - _Etapa 3:_ Formulario de cambio de credencial.
-  - _Error en código:_ Notificación roja "El código no es válido o ya venció. Revisa el correo e inténtalo de nuevo".
-  - _Error de discordancia:_ "Las contraseñas no coinciden".
-- **Validaciones y reglas de negocio:**
-  - Respaldo técnico: [`auth_modal.dart:311-395`](../../comunidad_universitaria/lib/features/shared/widgets/auth_modal.dart#L311-L395).
-  - La nueva contraseña no puede ser idéntica a una cadena vacía y debe cumplir con la longitud mínima de 6 caracteres.
-- **Accesibilidad:**
-  - Anuncio del avance entre etapas ("Paso 2 de 3: Ingresa el código recibido").
-  - Foco inmediato en el primer campo interactivo de cada etapa.
-- **Responsive:**
-  - Adaptabilidad total a móviles y pantallas de escritorio dentro del contenedor estándar de modal.
-- **Criterios de aceptación (Gherkin):**
-  - **Given** un estudiante que solicita recuperar su contraseña en la Etapa 1, **When** el sistema envía el código y pasa a la Etapa 2, **Then** el botón de reenvío muestra una cuenta regresiva de 60 segundos deshabilitado y se habilita únicamente al transcurrir el minuto completo.
-  - **Given** un estudiante en la Etapa 3 que introduce una nueva contraseña de 8 caracteres y la confirma idéntica, **When** pulsa "Actualizar contraseña", **Then** el sistema actualiza la clave en Supabase Auth, descarta el modal de recuperación y muestra la confirmación de éxito.
+- **Estado:** No disponible en la app. Se retiraron la solicitud, el envío y el
+  flujo de restablecimiento por correo.
+- **Motivo:** No se configuró un proveedor de correo con límites adecuados.
+- **Alcance:** El registro tampoco envía OTP ni solicita confirmación por
+  correo. TOTP es un segundo factor; no valida la dirección ni recupera una
+  contraseña.
 
 ---
 
@@ -467,13 +395,13 @@ flowchart TD
 - **Interacciones:**
   - Pulsar el botón de copiar copia el secreto al portapapeles y despliega un SnackBar breve: "Clave secreta copiada al portapapeles".
   - Al ingresar los 6 dígitos y pulsar "Verificar y activar", se invoca `SupabaseService.verifyTotpEnrollment(factorId, code)`.
-  - Si el código es correcto, el factor se marca como verificado en Supabase, la sesión se eleva a nivel AAL2 y la pantalla conduce de manera obligatoria a la generación de códigos de respaldo (`UX-AUTH-010`).
+  - Si el código es correcto, el factor se marca como verificado en Supabase y la sesión se eleva a nivel AAL2. La generación de códigos de recuperación MFA está aplazada (`UX-AUTH-010`).
 - **Estados:**
   - _Generando secreto:_ Indicador circular mientras se ejecuta `beginTotpEnrollment()`.
   - _Listo para enrolar:_ QR visible, clave disponible y campo de confirmación habilitado.
   - _Verificando:_ Botón con spinner de progreso activo.
   - _Error de código:_ Notificación roja "El código no es válido o ya venció. Revisa tu app autenticadora".
-  - _Éxito:_ Factor verificado; pase a códigos de respaldo.
+  - _Éxito:_ Factor verificado; se completa el enrolamiento TOTP.
 - **Validaciones y reglas de negocio:**
   - Respaldo técnico: [`totp_enrollment_screen.dart:85-155`](../../comunidad_universitaria/lib/features/profile/screens/totp_enrollment_screen.dart#L85-L155) y [`supabase_service.dart:310-345`](../../comunidad_universitaria/lib/core/services/supabase_service.dart#L310-L345).
   - Antes de generar un nuevo secreto, la función limpia factores previos en estado no verificado para evitar factores huérfanos que impidan enrolamientos futuros.
@@ -484,55 +412,20 @@ flowchart TD
   - En pantallas de escritorio, el QR y las instrucciones se presentan en una tarjeta espaciosa de 520px; en móvil, se adapta verticalmente con scroll fluido.
 - **Criterios de aceptación (Gherkin):**
   - **Given** un estudiante que inicia el enrolamiento de TOTP, **When** la pantalla carga el secreto, **Then** se renderiza el código QR y simultáneamente la clave alfanumérica con un botón que permite copiarla al portapapeles.
-  - **Given** un estudiante que introduce el código de 6 dígitos generado por su app autenticadora, **When** pulsa "Verificar y activar", **Then** el sistema confirma la vinculación del factor, eleva la sesión y despliega la pantalla de códigos de respaldo.
+  - **Given** un estudiante que introduce el código de 6 dígitos generado por su app autenticadora, **When** pulsa "Verificar y activar", **Then** el sistema confirma la vinculación del factor, eleva la sesión y completa el enrolamiento.
 
 ---
 
-### UX-AUTH-010 — Generación, confirmación obligatoria y regeneración de códigos de respaldo
+### UX-AUTH-010 — Códigos de recuperación MFA [Aplazado]
 
-- **Actor / rol:** Estudiante enrolado en MFA TOTP
-- **Prioridad:** Must
-- **Estado objetivo:** Inmediatamente después de verificar el factor TOTP, el sistema genera de forma obligatoria 10 códigos de recuperación alfanuméricos de un solo uso (16 caracteres cada uno). El usuario debe visualizar la lista completa en pantalla, disponer de un botón para copiar todos los códigos en bloque al portapapeles, y **marcar obligatoriamente una casilla de verificación explícita** ("He guardado estos códigos en un lugar seguro") antes de poder concluir el enrolamiento y desbloquear la aplicación. Posteriormente, desde la configuración de su perfil, el alumno puede auditar cuántos códigos le quedan disponibles y solicitar la regeneración completa de un nuevo juego de 10 códigos previa confirmación de que los anteriores quedarán invalidados.
-- **Precondiciones:** Verificación exitosa del factor TOTP en `TotpEnrollmentScreen`.
-- **UI / contenido:**
-  - Icono principal de llave de seguridad (`Icons.vpn_key_outlined`, color primario).
-  - Título: "Guarda tus códigos de recuperación".
-  - Banner de advertencia en tono ámbar: "Si alguna vez pierdes o cambias tu teléfono y no tienes acceso a tu app autenticadora, estos códigos serán tu **única forma de ingresar** a tu cuenta. Guárdalos en un lugar seguro (bloc de notas cifrado, gestor de contraseñas o impresos)".
-  - Cuadrícula de 10 códigos dispuestos en dos columnas de 5 filas, formateados con guiones para facilitar lectura (`XXXX-XXXX-XXXX-XXXX`, fuente monoespaciada).
-  - Botón de acción rápida: "Copiar todos los códigos" (`ElevatedButton.icon` con `Icons.copy_all`).
-  - Casilla de confirmación obligatoria (`CheckboxListTile`):
-    - Texto: `"Confirmo que he copiado y guardado estos 10 códigos en un lugar seguro."`
-  - Botón de finalización: "Entendido y continuar" (`FilledButton`), deshabilitado hasta que la casilla esté marcada.
-  - En la vista de administración en `ProfileScreen`:
-    - Indicador de estado: "Códigos de recuperación: [N] de 10 disponibles".
-    - Botón "Regenerar códigos de recuperación" (`Icons.refresh`).
-    - Diálogo de advertencia al regenerar: "Los 10 códigos anteriores dejarán de funcionar de inmediato. ¿Deseas generar 10 códigos nuevos?".
-- **Interacciones:**
-  - Al pulsar "Copiar todos los códigos", se copia una plantilla con formato legible:
-    ```
-    Comunidad Universitaria USAC - Códigos de recuperación
-    Fecha de emisión: [DD/MM/AAAA]
-    1. XXXX-XXXX-XXXX-XXXX
-    ...
-    10. XXXX-XXXX-XXXX-XXXX
-    ```
-    acompañado de un SnackBar: "10 códigos copiados al portapapeles".
-  - Marcar el checkbox activa el botón "Entendido y continuar". Al pulsarlo, se disuelve el asistente y el usuario accede con sesión AAL2 plena.
-- **Estados:**
-  - _Generando:_ Spinner mientras se llama al servicio de generación.
-  - _Exhibición:_ Códigos visibles y botón de copiado activo.
-  - _Confirmado:_ Checkbox marcado; botón habilitado.
-  - _Error HTTP diagnósticos:_ Manejo explícito de códigos HTTP 401 (sesión expirada), 404 (endpoint no disponible en la instancia) o 429 (límite de peticiones) con mensaje claro de que el factor TOTP principal continúa activo.
-- **Validaciones y reglas de negocio:**
-  - Respaldo técnico: [`totp_enrollment_screen.dart:157-260`](../../comunidad_universitaria/lib/features/profile/screens/totp_enrollment_screen.dart#L157-L260).
-  - Cada código de respaldo es consumible una única vez.
-- **Accesibilidad:**
-  - Los códigos cuentan con etiquetas semánticas numeradas para lectores de pantalla ("Código de recuperación 1 de 10: ...").
-- **Responsive:**
-  - En pantallas móviles estrechas (< 360px), la cuadrícula conmuta de dos columnas a una sola columna para evitar recortes de texto.
-- **Criterios de aceptación (Gherkin):**
-  - **Given** un estudiante que acaba de verificar su app autenticadora, **When** se presentan los códigos de respaldo, **Then** el botón "Entendido y continuar" permanece deshabilitado hasta que el usuario marque la casilla confirmando que los guardó.
-  - **Given** un estudiante que consulta su perfil con MFA activo y nota que le quedan 2 códigos, **When** solicita regenerar códigos y confirma el diálogo de reemplazo, **Then** el sistema emite 10 nuevos códigos, invalida los anteriores y actualiza el contador a 10 de 10 disponibles.
+- **Estado:** No implementado en la app. El servicio Auth alojado del proyecto
+  no ofrece el soporte de códigos de recuperación que requeriría este flujo.
+- **Alcance aplazado:** Generación, visualización, copia, regeneración,
+  verificación y almacenamiento de códigos propios. No se debe asumir que la
+  configuración de Auth local habilita esta capacidad en el proyecto alojado.
+- **Comportamiento actual:** El enrolamiento y los desafíos usan TOTP. Si la
+  persona pierde acceso a su autenticador, no existe un mecanismo de
+  recuperación MFA dentro de la app y se requiere asistencia administrativa.
 
 ---
 
@@ -540,47 +433,35 @@ flowchart TD
 
 - **Actor / rol:** Estudiante, Moderador o Administrador con TOTP activo en sesión AAL1
 - **Prioridad:** Must
-- **Estado objetivo:** Cuando un usuario que tiene configurada la autenticación en dos pasos inicia sesión desde un nuevo navegador, dispositivo o tras haber expirado su token AAL2, `TotpSessionGuard` presenta la pantalla de desafío `_TotpChallengeScreen`. La interfaz solicita el código numérico de 6 dígitos de su app autenticadora, pero provee un método de escape directo: un conmutador para ingresar en su lugar uno de sus códigos de recuperación de 16 caracteres si no tiene su teléfono a mano. Asimismo, implementa protección contra ataques de fuerza bruta informando con claridad si se produce un bloqueo temporal por límite de intentos (HTTP 429 con espera de 15 minutos).
+- **Estado objetivo:** Cuando un usuario que tiene configurada la autenticación en dos pasos inicia sesión desde un nuevo navegador, dispositivo o tras haber expirado su token AAL2, `TotpSessionGuard` presenta la pantalla de desafío `_TotpChallengeScreen` y solicita el código numérico de 6 dígitos de su app autenticadora. Los códigos de recuperación MFA no están disponibles en el Auth alojado del proyecto y quedan aplazados.
 - **Precondiciones:** Cuenta autenticada con al menos un factor TOTP verificado, pero con la sesión actual en nivel AAL1 (`assurance.currentLevel == AuthenticatorAssuranceLevels.aal1`).
 - **UI / contenido:**
   - Encabezado: Barra superior limpia sin flecha de regreso (para no eludir el guardián), pero con un botón explícito "Cerrar sesión" en la esquina derecha para permitir cancelar el intento.
   - Icono central de escudo protegido (`Icons.security_outlined`, 48px).
   - Título: "Confirma que eres tú".
-  - Subtítulo dinámico:
-    - Modo normal: "Ingresa el código actual de 6 dígitos generado por tu app autenticadora".
-    - Modo código de respaldo: "Ingresa uno de tus códigos de recuperación alfanuméricos de un solo uso".
-  - Campo de texto interactivo con foco automático:
-    - En modo normal: teclado numérico, centrado, límite de 6 dígitos.
-    - En modo respaldo: teclado alfanumérico, formato libre de 16 caracteres.
-  - Botón primario: "Verificar identidad" (`FilledButton`).
-  - Botón conmutador de modo (`TextButton`):
-    - De TOTP a Respaldo: "¿No tienes acceso a tu app? Usar código de recuperación".
-    - De Respaldo a TOTP: "Ingresar código de 6 dígitos de mi autenticador".
+  - Subtítulo: "Ingresa el código actual de 6 dígitos generado por tu app autenticadora".
+  - Campo numérico de texto centrado con límite de 6 dígitos.
+  - Botón primario: "Verificar código TOTP".
   - Tarjeta de error inline para retroalimentación inmediata.
 - **Interacciones:**
-  - Al introducir el código y pulsar "Verificar identidad":
-    - Si está en modo normal: Llama a `SupabaseService.verifyTotpChallenge(factorId, code)`.
-    - Si está en modo respaldo: Llama a `SupabaseService.verifyRecoveryCode(code)`.
+  - Al introducir el código y pulsar "Verificar código TOTP", llama a `SupabaseService.verifyTotpChallenge(factorId, code)`.
   - Si la verificación tiene éxito, el guardián ejecuta `_clearGate()`, la pantalla de bloqueo desaparece sin recargar la app y se restaura el acceso completo en nivel AAL2.
-  - Si el usuario comete errores reiterados y el servidor devuelve HTTP 429, el mensaje indica con precisión: "Se alcanzó el límite de intentos permitidos. Por motivos de seguridad, espera 15 minutos antes de volver a probar".
+  - Si la verificación falla, se muestra un mensaje para comprobar el código y la app autenticadora.
 - **Estados:**
-  - _Modo TOTP:_ Entrada de 6 dígitos.
-  - _Modo Respaldo:_ Entrada de código de 16 caracteres.
+
   - _Verificando:_ Spinner en botón con campos deshabilitados.
-  - _Error de código inválido:_ "El código no es válido o ya venció. Revisa tu app autenticadora".
-  - _Bloqueo temporal (429):_ Mensaje de espera de 15 minutos.
+  - _Error de código inválido:_ "El código no es válido o venció. Revisa tu app autenticadora".
   - _Éxito:_ Elevación inmediata a AAL2 y desbloqueo total.
 - **Validaciones y reglas de negocio:**
-  - Respaldo técnico: [`totp_session_guard.dart:136-150`](../../comunidad_universitaria/lib/features/shared/widgets/totp_session_guard.dart#L136-L150) y [`totp_session_guard.dart:200-261`](../../comunidad_universitaria/lib/features/shared/widgets/totp_session_guard.dart#L200-L261).
-  - Al emplear un código de recuperación, el servidor lo quema atómicamente impidiendo su reutilización.
+  - Respaldo técnico: [`totp_session_guard.dart`](../../comunidad_universitaria/lib/features/shared/widgets/totp_session_guard.dart) y `SupabaseService.verifyTotpChallenge`.
 - **Accesibilidad:**
   - El campo de texto toma el foco inmediatamente al montar la pantalla.
-  - El cambio entre modos anuncia a lectores de pantalla: "Modo de verificación cambiado a código de recuperación".
+
 - **Responsive:**
   - Diseño centrado con ancho restringido a 440px en desktop y padding de 24px en móviles.
 - **Criterios de aceptación (Gherkin):**
   - **Given** un estudiante con TOTP activo que inicia sesión en un equipo nuevo, **When** ingresa el código de 6 dígitos de su autenticador y pulsa verificar, **Then** la app eleva la sesión a AAL2 y desbloquea la interfaz sin fricciones.
-  - **Given** un estudiante que olvidó su teléfono pero tiene su lista de códigos de respaldo, **When** pulsa "Usar código de recuperación" e introduce un código válido de 16 caracteres, **Then** el sistema lo valida con éxito, quema el código utilizado y le concede acceso completo a la aplicación.
+
 
 ---
 
@@ -763,15 +644,15 @@ flowchart TD
 | --------------- | ---------------------------------------------------------- | ------------------------------------------------------------ | :-------: | ---------------------------------------------- |
 | **UX-AUTH-001** | `lib/features/shared/widgets/auth_modal.dart`              | RLS Deny en Postgres para rol `anon`                         |   AAL0    | Widget test de intercepción contextual         |
 | **UX-AUTH-002** | `lib/features/shared/widgets/auth_modal.dart`              | `SupabaseService.signUp` + Trigger `handle_new_user_profile` |   AAL1    | Integration test de registro                   |
-| **UX-AUTH-003** | `lib/features/shared/widgets/auth_modal.dart`              | `SupabaseService.verifySignupOtp` + `resendSignupOtp`        |   AAL1    | Widget test de temporizador 60s regresivo      |
+| **UX-AUTH-003** | Retirado                                                  | Sin verificación ni envío de OTP por correo                   |   N/A     | No aplica                                      |
 | **UX-AUTH-004** | `lib/features/shared/widgets/auth_modal.dart`              | `SupabaseService.signInWithPassword`                         |   AAL1    | Unit test de mapeo de errores amigables        |
-| **UX-AUTH-005** | `lib/features/shared/widgets/auth_modal.dart`              | `requestPasswordReset` + `verifyPasswordResetOtp`            |   AAL1    | Widget test de flujo guiado en 3 etapas        |
+| **UX-AUTH-005** | Aplazado                                                  | Sin recuperación de contraseña por correo                     |   N/A     | No implementado                                |
 | **UX-AUTH-006** | `lib/features/shared/widgets/auth_modal.dart`              | `SupabaseService.signInWithGoogle` (PKCE)                    |   AAL1    | Integration test de callback y deep links      |
 | **UX-AUTH-007** | `lib/features/profile/screens/profile_screen.dart`         | `SupabaseService.signOut`                                    |   AAL0    | Widget test de diálogo y revocación            |
 | **UX-AUTH-008** | `lib/features/shared/widgets/totp_session_guard.dart`      | Lógica de gracia de 7 días (`created_at + 7d`)               |   AAL1    | Widget test de pantalla formativa e inducción  |
 | **UX-AUTH-009** | `lib/features/profile/screens/totp_enrollment_screen.dart` | `beginTotpEnrollment` + `verifyTotpEnrollment`               |   AAL2    | Widget test de renderizado QR y copia manual   |
-| **UX-AUTH-010** | `lib/features/profile/screens/totp_enrollment_screen.dart` | Generación y almacenamiento de 10 recovery codes             |   AAL2    | Widget test de confirmación obligatoria        |
-| **UX-AUTH-011** | `lib/features/shared/widgets/totp_session_guard.dart`      | `verifyTotpChallenge` + `verifyRecoveryCode`                 |   AAL2    | Integration test de elevación y desafío        |
+| **UX-AUTH-010** | Aplazado                                                  | Códigos de recuperación no disponibles en Auth alojado       |   N/A     | No implementado                                |
+| **UX-AUTH-011** | `lib/features/shared/widgets/totp_session_guard.dart`      | `verifyTotpChallenge`                                        |   AAL2    | Integration test de elevación y desafío        |
 | **UX-AUTH-012** | `lib/features/profile/screens/totp_enrollment_screen.dart` | `unenrollTotpFactor` + `signOut` atómico                     |   AAL0    | Widget test de diálogo con código y baja       |
 | **UX-AUTH-013** | `lib/features/sso/sso_security_validator.dart`             | `SsoSecurityValidator.isValidRedirectUri`                    |    N/A    | Unit test exhaustivo de vectores Open Redirect |
 | **UX-AUTH-014** | `lib/features/sso/screens/sso_authorize_screen.dart`       | `buildSuccessRedirectUrl` (Tokens en fragmento `#`)          | AAL1/AAL2 | Widget test de pantalla de consentimiento      |
@@ -786,11 +667,10 @@ Para garantizar que el estudiante no enfrente tecnicismos crípticos o mensajes 
 
 | Mensaje / Excepción interna de Supabase           | Mensaje visual presentado al estudiante                                                     | Solución sugerida en interfaz                                                     |
 | ------------------------------------------------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `Invalid login credentials`                       | "Credenciales inválidas. Verifica tu correo y contraseña."                                  | Permite reintentar o navegar a recuperación de contraseña.                        |
-| `Email not confirmed`                             | "Tu correo aún no ha sido confirmado. Ingresa el código que te enviamos."                   | Conmuta automáticamente al formulario OTP cargando el correo.                     |
-| `Token has expired or is invalid` / `otp_expired` | "El código no es válido o ya venció. Revisa tu correo e inténtalo de nuevo."                | Borra el campo y sugiere pulsar "Reenviar código" tras cumplirse el temporizador. |
-| `Over email rate limit` / `429 Too Many Requests` | "Se alcanzó el límite de intentos. Por favor espera un momento antes de volver a probar."   | Muestra temporizador de espera y deshabilita botones de reenvío.                  |
-| `Recovery code rate limit` (HTTP 429)             | "Se alcanzó el límite de intentos de códigos de respaldo. Por seguridad espera 15 minutos." | Inhabilita el botón de verificación e informa el tiempo de desbloqueo.            |
-| `User already registered`                         | "Este correo ya está registrado en la comunidad. Inicia sesión o recupera tu contraseña."   | Ofrece botón directo para conmutar a la pestaña de inicio de sesión.              |
+| `Invalid login credentials`                       | "Credenciales inválidas. Verifica tu correo y contraseña."                                  | Permite reintentar o usar Google si la cuenta está vinculada.                     |
+| `Email not confirmed`                             | "La confirmación de correo sigue activa en Supabase."                                       | Desactiva `Confirm email` en Authentication > Sign In / Providers > Email.          |
+| `429 Too Many Requests`                        | "Se alcanzó el límite de intentos. Por favor espera un momento antes de volver a probar."   | Muestra el tiempo de espera indicado por el servicio y bloquea temporalmente la acción. |
+
+| `User already registered`                         | "Este correo ya está registrado en la comunidad. Inicia sesión o usa Google si corresponde." | Ofrece botón directo para conmutar a la pestaña de inicio de sesión.              |
 | `Password should be at least 6 characters`        | "La contraseña debe tener al menos 6 caracteres."                                           | Validación preventiva inline antes de realizar la petición de red.                |
 | `Invalid redirect uri` (SSO)                      | "Solicitud de acceso no segura: El enlace de retorno no está autorizado."                   | Despliega pantalla de advertencia roja impidiendo la redirección.                 |

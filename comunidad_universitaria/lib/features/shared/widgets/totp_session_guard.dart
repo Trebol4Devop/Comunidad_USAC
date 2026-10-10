@@ -207,7 +207,6 @@ class _TotpChallengeScreen extends StatefulWidget {
 class _TotpChallengeScreenState extends State<_TotpChallengeScreen> {
   final _codeController = TextEditingController();
   bool _isVerifying = false;
-  bool _usingRecoveryCode = false;
   String? _errorMessage;
 
   @override
@@ -218,13 +217,9 @@ class _TotpChallengeScreenState extends State<_TotpChallengeScreen> {
 
   Future<void> _verify() async {
     final code = _codeController.text.trim();
-    if (_usingRecoveryCode
-        ? code.isEmpty
-        : !RegExp(r'^\d{6}$').hasMatch(code)) {
+    if (!RegExp(r'^\d{6}$').hasMatch(code)) {
       setState(() {
-        _errorMessage = _usingRecoveryCode
-            ? 'Ingresa uno de tus códigos de recuperación.'
-            : 'Ingresa el código actual de 6 dígitos.';
+        _errorMessage = 'Ingresa el código actual de 6 dígitos.';
       });
       return;
     }
@@ -235,26 +230,17 @@ class _TotpChallengeScreenState extends State<_TotpChallengeScreen> {
     });
 
     try {
-      if (_usingRecoveryCode) {
-        await SupabaseService.verifyRecoveryCode(code);
-      } else {
-        await SupabaseService.verifyTotpChallenge(
-          factorId: widget.factorId,
-          code: code,
-        );
-      }
+      await SupabaseService.verifyTotpChallenge(
+        factorId: widget.factorId,
+        code: code,
+      );
       if (mounted) widget.onVerified();
     } catch (error) {
       if (mounted) {
-        final recoveryCodeLocked =
-            error is RecoveryCodeRequestException && error.statusCode == 429;
         setState(() {
           _isVerifying = false;
-          _errorMessage = recoveryCodeLocked
-              ? 'Se alcanzó el límite de intentos. Espera 15 minutos antes de volver a probar.'
-              : _usingRecoveryCode
-              ? 'El código no es válido o ya fue utilizado. Revisa tus códigos guardados.'
-              : 'El código no es válido o venció. Revisa tu app autenticadora.';
+          _errorMessage =
+              'El código no es válido o venció. Revisa tu app autenticadora.';
         });
       }
     }
@@ -291,10 +277,8 @@ class _TotpChallengeScreenState extends State<_TotpChallengeScreen> {
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  _usingRecoveryCode
-                      ? 'Ingresa uno de tus códigos de recuperación de un solo uso.'
-                      : 'Ingresa el código actual de 6 dígitos de tu app autenticadora.',
+                const Text(
+                  'Ingresa el código actual de 6 dígitos de tu app autenticadora.',
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
@@ -304,20 +288,14 @@ class _TotpChallengeScreenState extends State<_TotpChallengeScreen> {
                 ],
                 TextField(
                   controller: _codeController,
-                  keyboardType: _usingRecoveryCode
-                      ? TextInputType.text
-                      : TextInputType.number,
+                  keyboardType: TextInputType.number,
                   textAlign: TextAlign.center,
-                  maxLength: _usingRecoveryCode ? 40 : 6,
-                  inputFormatters: _usingRecoveryCode
-                      ? const []
-                      : [FilteringTextInputFormatter.digitsOnly],
-                  decoration: InputDecoration(
-                    labelText: _usingRecoveryCode
-                        ? 'Código de recuperación'
-                        : 'Código TOTP',
-                    hintText: _usingRecoveryCode ? 'XXXX-XXXX-XXXX' : '123456',
-                    prefixIcon: const Icon(Icons.password_outlined),
+                  maxLength: 6,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  decoration: const InputDecoration(
+                    labelText: 'Código TOTP',
+                    hintText: '123456',
+                    prefixIcon: Icon(Icons.password_outlined),
                     counterText: '',
                   ),
                 ),
@@ -333,27 +311,7 @@ class _TotpChallengeScreenState extends State<_TotpChallengeScreen> {
                             color: Colors.white,
                           ),
                         )
-                      : Text(
-                          _usingRecoveryCode
-                              ? 'Usar código de recuperación'
-                              : 'Verificar código TOTP',
-                        ),
-                ),
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: _isVerifying
-                      ? null
-                      : () => setState(() {
-                          _usingRecoveryCode = !_usingRecoveryCode;
-                          _codeController.clear();
-                          _errorMessage = null;
-                        }),
-                  child: Text(
-                    _usingRecoveryCode
-                        ? 'Usar mi app autenticadora'
-                        : 'No tengo mi app: usar código de recuperación',
-                    textAlign: TextAlign.center,
-                  ),
+                      : const Text('Verificar código TOTP'),
                 ),
               ],
             ),
