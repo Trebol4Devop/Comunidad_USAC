@@ -77,7 +77,7 @@ Leyenda de estado: Cubierto · Parcial · Pendiente.
 | Requisito | Implementación | Prueba | Estado |
 |---|---|---|---|
 | UX-PRD-010 Visitante solo lectura | `core/services/supabase_service.dart`; migración `enforce_anonymous_read_only.sql` | `supabase/tests/anonymous_read_only_test.sql`; `integration_test/guest_navigation_test.dart` | Cubierto |
-| UX-PRD-011 Escritura requiere AAL2 | `shared/widgets/totp_session_guard.dart` | `test/widgets/totp_session_guard_test.dart`; `supabase/tests/totp_aal2_writes_test.sql` | Cubierto |
+| UX-PRD-011 Segundo factor en la interfaz | `shared/widgets/totp_session_guard.dart`; la base de datos no impone AAL2 globalmente | `test/widgets/totp_session_guard_test.dart`; `supabase/tests/authenticated_writes_without_otp_test.sql` | Parcial |
 | UX-PRD-016 Vendedor externo verificado | campos en `profiles` y panel admin (nuevo) | Pendiente | Pendiente |
 | UX-PRD-026 No lucro, financiamiento y datos | `features/rules/screens/rules_screen.dart`; `features/profile/screens/profile_screen.dart` (`UX-PRF-011`) | Pendiente | Parcial |
 | UX-MAP-001 Deep links | `main.dart` (`_onGenerateRoute`) | `test/sso_test.dart` | Parcial |
@@ -169,11 +169,11 @@ Leyenda de estado: Cubierto · Parcial · Pendiente.
 |---|---|---|---|
 | UX-AUTH-001 Visitante + barrera contextual | `features/shared/widgets/auth_modal.dart` | `test/widgets/shared/auth_modal_test.dart`; `integration_test/guest_navigation_test.dart` | Cubierto |
 | UX-AUTH-002 Registro | `core/services/supabase_service.dart` | `test/services/supabase_service_test.dart` | Parcial |
-| UX-AUTH-003 OTP con cuenta regresiva `[Mejora]` | `auth_modal.dart` | `test/widgets/shared/auth_modal_test.dart` | Pendiente |
-| UX-AUTH-005 Recuperación de contraseña `[Mejora]` | `supabase_service.dart` | `test/services/supabase_service_test.dart` | Parcial |
+| UX-AUTH-003 Confirmación OTP por correo `[Retirada]` | No aplica: la app no solicita ni envía OTP por correo | — | No aplica |
+| UX-AUTH-005 Recuperación de contraseña por correo | Aplazado por límites de entrega de correo | — | No implementado |
 | UX-AUTH-006 Google OAuth PKCE | `supabase_service.dart`; `main.dart` | `test/sso_test.dart` | Parcial |
 | UX-AUTH-008 MFA con gracia `[Mejora]` | `shared/widgets/totp_session_guard.dart` | `test/widgets/totp_session_guard_test.dart` | Pendiente |
-| UX-AUTH-009/010/011 TOTP, respaldo y desafío | `features/profile/screens/totp_enrollment_screen.dart`; `totp_session_guard.dart` | `test/widgets/totp_enrollment_screen_test.dart`; `supabase/tests/totp_aal2_writes_test.sql` | Cubierto |
+| UX-AUTH-009/011 TOTP y desafío (UX-AUTH-010 recuperación aplazada) | `features/profile/screens/totp_enrollment_screen.dart`; `totp_session_guard.dart` | `test/widgets/totp_enrollment_screen_test.dart`; `test/widgets/totp_session_guard_test.dart` | Cubierto |
 | UX-AUTH-013 Validación de redirect SSO | `features/sso/sso_security_validator.dart` | `test/sso_test.dart` | Cubierto |
 | UX-AUTH-014 Consentimiento y tokens en fragmento | `features/sso/screens/sso_authorize_screen.dart` | `integration_test/sso_flow_test.dart` | Cubierto |
 | UX-AUTH-015 Redirect local `[Mejora]` | `sso_authorize_screen.dart` | `test/sso_test.dart` | Parcial |
@@ -277,7 +277,7 @@ prioritarios para el siguiente ciclo de trabajo.
 | UX-GRP-001 | Acceso directo desde navegación principal | `app_shell.dart` |
 | UX-PRF-003 | Persistencia del alias en la nube | `local_storage_service.dart` |
 | UX-AUTH-003 | Cuenta regresiva al reenviar OTP | `auth_modal.dart` |
-| UX-AUTH-005 | Cuenta regresiva en recuperación | `auth_modal.dart` |
+| UX-AUTH-005 | Recuperación de contraseña por correo (aplazada) | `auth_modal.dart` |
 | UX-AUTH-008 | Período de gracia / explicación previa del MFA | `totp_session_guard.dart` |
 | UX-AUTH-015 | Respeto transparente del redirect local | `sso_authorize_screen.dart` |
 | UX-NAV-001 | Tercer destino Grupos en la navegación | `app_shell.dart` |

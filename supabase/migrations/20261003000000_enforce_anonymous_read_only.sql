@@ -88,7 +88,7 @@ begin
             v_policy := 'deny_anonymous_auth_' || v_command;
             execute format('drop policy if exists %I on %I.%I', v_policy, v_table.nspname, v_table.relname);
 
-            v_using := '(select auth.jwt() ->> ''is_anonymous'') is distinct from ''true''';
+            v_using := '(select nullif(current_setting(''request.jwt.claims'', true), '''')::jsonb ->> ''is_anonymous'') is distinct from ''true''';
             v_check := v_using;
             if v_command = 'insert' then
                 execute format(
@@ -122,7 +122,7 @@ create or replace function public.report_forum_comment(
     set search_path to 'public'
 as $$
 begin
-    if auth.uid() is null or (auth.jwt() ->> 'is_anonymous') = 'true' then
+    if auth.uid() is null or (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'is_anonymous') = 'true' then
         raise exception 'Debes iniciar sesión con una cuenta para reportar.'
             using errcode = '42501';
     end if;
@@ -144,7 +144,7 @@ create or replace function public.report_forum_post(
     set search_path to 'public'
 as $$
 begin
-    if auth.uid() is null or (auth.jwt() ->> 'is_anonymous') = 'true' then
+    if auth.uid() is null or (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'is_anonymous') = 'true' then
         raise exception 'Debes iniciar sesión con una cuenta para reportar.'
             using errcode = '42501';
     end if;
@@ -169,7 +169,7 @@ as $$
 declare
     v_count int;
 begin
-    if auth.uid() is null or (auth.jwt() ->> 'is_anonymous') = 'true' then
+    if auth.uid() is null or (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'is_anonymous') = 'true' then
         return false;
     end if;
 

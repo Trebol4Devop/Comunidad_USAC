@@ -6,3 +6,4 @@ scripts/.venv/
 scripts/*.json
 *.log
 definition/
+.migration_fetch_staging

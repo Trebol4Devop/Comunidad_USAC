@@ -27,12 +27,8 @@ class _TotpEnrollmentScreenState extends State<TotpEnrollmentScreen> {
   bool _isLoading = true;
   bool _isStarting = false;
   bool _isVerifying = false;
-  bool _isGeneratingRecoveryCodes = false;
   bool _isRemovingTotp = false;
   bool _isEnrolled = false;
-  int? _recoveryCodesTotal;
-  int? _recoveryCodesRemaining;
-  List<String>? _newRecoveryCodes;
   AuthMFAEnrollResponse? _enrollment;
   String? _errorMessage;
 
@@ -55,19 +51,9 @@ class _TotpEnrollmentScreenState extends State<TotpEnrollmentScreen> {
       final isEnrolled = factors.any(
         (factor) => factor.status == FactorStatus.verified,
       );
-      RecoveryCodeStatus? recoveryCodeStatus;
-      if (isEnrolled) {
-        try {
-          recoveryCodeStatus = await SupabaseService.getRecoveryCodeStatus();
-        } catch (_) {
-          // The TOTP factor remains usable if recovery-code status is unavailable.
-        }
-      }
       if (mounted) {
         setState(() {
           _isEnrolled = isEnrolled;
-          _recoveryCodesTotal = recoveryCodeStatus?.total;
-          _recoveryCodesRemaining = recoveryCodeStatus?.remaining;
           _isLoading = false;
         });
       }
@@ -137,13 +123,10 @@ class _TotpEnrollmentScreenState extends State<TotpEnrollmentScreen> {
         _enrollment = null;
         _codeController.clear();
       });
-      await _generateRecoveryCodes();
-      if (!mounted) return;
-      if (_newRecoveryCodes == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Autenticador TOTP configurado.')),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Autenticador TOTP configurado.')),
+      );
+      if (widget.isRequired) widget.onEnrollmentComplete?.call();
     } catch (error) {
       if (mounted) {
         setState(() {
@@ -152,156 +135,6 @@ class _TotpEnrollmentScreenState extends State<TotpEnrollmentScreen> {
         });
       }
     }
-  }
-
-  Future<void> _generateRecoveryCodes({bool regenerate = false}) async {
-    setState(() {
-      _isGeneratingRecoveryCodes = true;
-      _errorMessage = null;
-    });
-    try {
-      final codes = await SupabaseService.generateRecoveryCodes(
-        regenerate: regenerate,
-      );
-      if (!mounted) return;
-      setState(() {
-        _newRecoveryCodes = codes;
-        _recoveryCodesTotal = codes.length;
-        _recoveryCodesRemaining = codes.length;
-        _isGeneratingRecoveryCodes = false;
-      });
-    } catch (error) {
-      if (mounted) {
-        setState(() {
-          _isGeneratingRecoveryCodes = false;
-          _errorMessage = _recoveryCodeError(error);
-        });
-      }
-    }
-  }
-
-  String _recoveryCodeError(Object error) {
-    if (error is RecoveryCodeAssuranceException) {
-      final nextLevel =
-          error.nextLevel == null || error.nextLevel == error.currentLevel
-          ? ''
-          : ' Nivel siguiente: ${error.nextLevel}.';
-      return 'La sesión actual está en ${error.currentLevel}; se requiere aal2. '
-          'Completa la verificación TOTP y vuelve a intentarlo.$nextLevel';
-    }
-    if (error is RecoveryCodeRequestException) {
-      final diagnostic = error.errorCode == null
-          ? ''
-          : ' Código: ${error.errorCode}.';
-      final explanation = switch (error.statusCode) {
-        401 => 'La sesión no fue aceptada; vuelve a iniciar sesión.',
-        403 =>
-          'Auth rechazó la operación; verifica que la sesión esté en aal2.',
-        404 || 405 =>
-          'Esta versión/configuración de Supabase Auth podría no ofrecer el endpoint de códigos de recuperación.',
-        429 =>
-          'Se alcanzó el límite de solicitudes; espera antes de reintentar.',
-        _ => 'Supabase Auth rechazó la solicitud.',
-      };
-      return '$explanation (HTTP ${error.statusCode}.$diagnostic) '
-          'Tu autenticador TOTP sigue activo.';
-    }
-    return 'No se pudieron generar los códigos (${error.runtimeType}). '
-        'Tu autenticador TOTP sigue activo; comprueba la sesión y vuelve a intentarlo.';
-  }
-
-  Future<void> _confirmRecoveryCodesSaved() async {
-    setState(() => _newRecoveryCodes = null);
-    if (widget.isRequired) widget.onEnrollmentComplete?.call();
-  }
-
-  Future<void> _manageRecoveryCodes() async {
-    final shouldRegenerate = (_recoveryCodesTotal ?? 0) > 0;
-    if (shouldRegenerate) {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('Regenerar códigos'),
-          content: const Text(
-            'Los códigos anteriores dejarán de funcionar. Guarda los nuevos '
-            'antes de cerrar esta pantalla. ¿Deseas continuar?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancelar'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Regenerar'),
-            ),
-          ],
-        ),
-      );
-      if (confirmed != true || !mounted) return;
-    }
-    await _generateRecoveryCodes(regenerate: shouldRegenerate);
-  }
-
-  Widget _buildRecoveryCodesCard(ThemeData theme, List<String> codes) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Icon(
-              Icons.vpn_key_outlined,
-              size: 40,
-              color: theme.colorScheme.primary,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Guarda tus códigos de recuperación',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Cada código se usa una sola vez. Solo se muestran ahora; guárdalos '
-              'en un lugar seguro. Regenerarlos invalida los anteriores.',
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            SelectableText(
-              codes.join('\n'),
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontFamily: 'monospace',
-                height: 1.8,
-              ),
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: () async {
-                await Clipboard.setData(ClipboardData(text: codes.join('\n')));
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Códigos copiados al portapapeles.'),
-                    ),
-                  );
-                }
-              },
-              icon: const Icon(Icons.copy_outlined),
-              label: const Text('Copiar códigos'),
-            ),
-            const SizedBox(height: 8),
-            FilledButton(
-              onPressed: _confirmRecoveryCodesSaved,
-              child: const Text('Ya los guardé'),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   Future<void> _removeTotp() async {
@@ -444,8 +277,6 @@ class _TotpEnrollmentScreenState extends State<TotpEnrollmentScreen> {
                   ],
                   if (_isLoading)
                     const Center(child: CircularProgressIndicator())
-                  else if (_newRecoveryCodes != null)
-                    _buildRecoveryCodesCard(theme, _newRecoveryCodes!)
                   else if (_isEnrolled)
                     Card(
                       child: Padding(
@@ -470,49 +301,8 @@ class _TotpEnrollmentScreenState extends State<TotpEnrollmentScreen> {
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 16),
-                            Text(
-                              _recoveryCodesRemaining == null
-                                  ? 'No se pudo consultar el estado de los códigos de recuperación.'
-                                  : 'Códigos de recuperación disponibles: $_recoveryCodesRemaining de ${_recoveryCodesTotal ?? 0}',
-                              textAlign: TextAlign.center,
-                            ),
-                            if (_recoveryCodesTotal == null) ...[
-                              TextButton(
-                                onPressed: _loadEnrollmentStatus,
-                                child: const Text('Reintentar consulta'),
-                              ),
-                            ],
-                            const SizedBox(height: 12),
-                            OutlinedButton.icon(
-                              onPressed:
-                                  _isGeneratingRecoveryCodes ||
-                                      _isRemovingTotp ||
-                                      _recoveryCodesTotal == null
-                                  ? null
-                                  : _manageRecoveryCodes,
-                              icon: _isGeneratingRecoveryCodes
-                                  ? const SizedBox(
-                                      width: 18,
-                                      height: 18,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Icon(Icons.vpn_key_outlined),
-                              label: Text(
-                                _isGeneratingRecoveryCodes
-                                    ? 'Generando...'
-                                    : (_recoveryCodesTotal ?? 0) > 0
-                                    ? 'Regenerar códigos'
-                                    : 'Generar códigos de recuperación',
-                              ),
-                            ),
-                            const SizedBox(height: 4),
                             TextButton.icon(
-                              onPressed:
-                                  _isRemovingTotp || _isGeneratingRecoveryCodes
-                                  ? null
-                                  : _removeTotp,
+                              onPressed: _isRemovingTotp ? null : _removeTotp,
                               icon: _isRemovingTotp
                                   ? const SizedBox(
                                       width: 18,

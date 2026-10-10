@@ -110,31 +110,22 @@ identificados en el levantamiento de código:
 
 - **Actor / rol:** Todos (Visitante, Estudiante Registrado)
 - **Prioridad:** Must
-- **Estado objetivo:** Todo mecanismo sensible a límites de tasa (_rate limits_) de seguridad (reenvío de códigos OTP de correo, reenvío de códigos de restablecimiento de contraseña, emisión de factores TOTP y publicaciones de contenido de alta frecuencia) debe incluir un temporizador visual descendente (_countdown_) que desactive el botón de acción durante el periodo de enfriamiento (cooldown de 60 segundos por defecto), evitando pulsaciones repetitivas accidentales y bloqueos de cuenta.
-- **Problema actual [Mejora]:** En [`auth_modal.dart:575-587`](../../comunidad_universitaria/lib/features/shared/widgets/auth_modal.dart#L575-L587) e Inventario 8.7, el botón "Reenviar código" no muestra una cuenta regresiva visible de 60 segundos tras presionarlo; al pulsarlo repetidamente, Supabase bloquea al usuario por límite de peticiones con un mensaje genérico.
-- **Precondiciones:** El usuario solicita el despacho de un código OTP o dispara una acción sujeta a límite de frecuencia.
+- **Estado objetivo:** Toda acción habilitada que esté sujeta a límites de tasa (_rate limits_) de seguridad, como la emisión de factores TOTP y publicaciones de contenido de alta frecuencia, debe prevenir solicitudes repetitivas y comunicar claramente los bloqueos impuestos por el servidor.
+
+- **Precondiciones:** El usuario dispara una acción sujeta a límite de frecuencia.
 - **UI / contenido:**
-  - Botón secundario o de texto (`TextButton` / `OutlinedButton`).
-  - Durante el enfriamiento: etiqueta dinámica con tiempo restante en segundos, por ejemplo: `"Reenviar código (54s)"`.
-  - Icono sutil de reloj de arena o temporizador circular a escala reducida (14px).
-  - Estado visual deshabilitado (opacidad 0.5, sin efecto de clic).
+  - Mensaje de espera y acción de reintento cuando el servidor limita una operación.
+  - Estado visual deshabilitado mientras la operación está pendiente.
 - **Interacciones:**
-  - Al pulsar la acción inicial de envío, el botón entra inmediatamente en enfriamiento.
-  - El temporizador decrementa cada segundo exacto.
-  - Al alcanzar `0s`, el botón recupera su interactividad plena, cambiando la etiqueta a `"Reenviar código"` y emitiendo una animación sutil de activación.
-  - Si el backend devuelve de todos modos una respuesta HTTP 429 con cabecera `Retry-After`, el contador se ajusta inmediatamente al tiempo estipulado por el servidor.
+  - Si el backend devuelve HTTP 429, se informa que se alcanzó el límite y se permite reintentar después del periodo indicado por el servicio.
 - **Estados:**
-  - _Activo:_ Botón habilitado para solicitar código.
-  - _Enfriamiento:_ Contador decreciente visible, control bloqueado.
-  - _Restablecido:_ Vuelve al estado inicial listo para interacción.
-- **Validaciones y reglas de negocio:**
-  - Duración estándar de enfriamiento en cliente: 60 segundos tras cada reenvío.
-  - Si el usuario cierra el modal y lo vuelve a abrir dentro de los 60 segundos, el tiempo restante debe conservarse en memoria para no reiniciar el enfriamiento a cero.
-- **Accesibilidad:** Los lectores de pantalla deben anunciar el cambio de estado al completarse la cuenta regresiva ("Ya puedes volver a solicitar el código"). Durante el conteo, no debe saturar al lector cada segundo; solo se anuncia el inicio y la habilitación final.
-- **Responsive:** Etiqueta concisa para evitar que el texto desborde en pantallas angostas (< 360px).
+  - _Activo:_ Acción disponible.
+  - _Limitado:_ Mensaje de espera con acción temporalmente bloqueada.
+- **Validaciones y reglas de negocio:** Los reintentos respetan el límite de frecuencia comunicado por el backend; no se envían códigos por correo.
+- **Accesibilidad:** Los lectores de pantalla deben anunciar los errores de límite de tasa y cualquier acción disponible.
+- **Responsive:** Los mensajes de error deben poder leerse en pantallas estrechas.
 - **Criterios de aceptación (Gherkin):**
-  - **Given** que el usuario presiona "Reenviar código" en la pantalla de verificación OTP, **When** el código es despachado con éxito, **Then** el botón queda deshabilitado mostrando "Reenviar código (60s)" y disminuye segundo a segundo hasta rehabilitarse al llegar a cero.
-  - **Given** que el usuario intenta forzar una petición y el backend retorna un código HTTP 429 de límite de tasa, **When** la respuesta es procesada, **Then** la app presenta un mensaje formativo indicando cuántos segundos debe esperar sin desloguear ni reiniciar el formulario.
+  - **Given** que el usuario intenta una acción limitada por frecuencia y el backend retorna HTTP 429, **When** la respuesta es procesada, **Then** la app presenta un mensaje formativo indicando cuánto debe esperar, sin cerrar la sesión ni reiniciar el formulario.
 
 ---
 
