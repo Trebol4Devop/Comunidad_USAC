@@ -12,9 +12,9 @@ class UserProfile {
   final String? contactTelegram;
   final String? contactInstagram;
   final String? email;
-  final String? carne; // Carné universitario validado (ej. 202012345)
-  final String? studentName; // Nombre real oficial validado (ej. Juan Pérez)
-  final bool isCarneVerified; // Si fue validado con Registro y Estadística
+  final String? carne; // Carné aportado por el usuario, puede ser un borrador
+  final String? studentName; // Nombre aportado, no necesariamente verificado
+  final bool isCarneVerified; // Solo true tras una comprobación institucional auténtica
 
   const UserProfile({
     required this.userId,

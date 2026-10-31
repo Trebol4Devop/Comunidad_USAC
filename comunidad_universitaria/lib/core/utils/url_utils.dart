@@ -16,17 +16,36 @@ class UrlUtils {
       }
 
       final uri = Uri.parse(formattedUrl);
-      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!launched) {
-        await launchUrl(uri, mode: LaunchMode.platformDefault);
+      final allowedScheme = {'http', 'https', 'mailto', 'tel'};
+      if (!allowedScheme.contains(uri.scheme.toLowerCase()) ||
+          ((uri.scheme == 'http' || uri.scheme == 'https') &&
+              (uri.host.isEmpty || uri.userInfo.isNotEmpty))) {
+        throw const FormatException('Unsupported external URL');
       }
-      return true;
-    } catch (e) {
+
+      var launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched) {
+        launched = await launchUrl(uri, mode: LaunchMode.platformDefault);
+      }
+      if (launched) return true;
+
+      if (context.mounted) {
+        copyToClipboard(
+          context,
+          formattedUrl,
+          message:
+              'No se pudo abrir el enlace. Se copió para que puedas pegarlo.',
+        );
+      }
+      return false;
+    } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('No se pudo abrir el enlace: $urlString'),
-            backgroundColor: Colors.red.shade700,
+          const SnackBar(
+            content: Text(
+              'No se pudo abrir el enlace. Comprueba que sea válido e inténtalo de nuevo.',
+            ),
+            backgroundColor: Colors.red,
           ),
         );
       }
@@ -34,13 +53,21 @@ class UrlUtils {
     }
   }
 
-  static void copyToClipboard(BuildContext context, String text, {String message = 'Enlace copiado al portapapeles'}) {
+  static void copyToClipboard(
+    BuildContext context,
+    String text, {
+    String message = 'Enlace copiado al portapapeles',
+  }) {
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.check_circle_outline, color: Colors.white, size: 18),
+            const Icon(
+              Icons.check_circle_outline,
+              color: Colors.white,
+              size: 18,
+            ),
             const SizedBox(width: 8),
             Expanded(child: Text(message)),
           ],

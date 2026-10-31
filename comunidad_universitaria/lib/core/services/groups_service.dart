@@ -8,15 +8,40 @@ class GroupsService {
   static const String _cacheNamespace = 'student_groups';
 
   static const Map<String, List<String>> _facultyAliases = {
-    '08': ['sistemas', 'civil', 'industrial', 'mecanica', 'quimica', 'electronica', 'ingenieria', 'fi', 'area_comun', 'basicas'],
+    '08': [
+      'sistemas',
+      'civil',
+      'industrial',
+      'mecanica',
+      'quimica',
+      'electronica',
+      'ingenieria',
+      'fi',
+      'area_comun',
+      'basicas',
+    ],
     '05': ['medicina', 'salud', 'medicas', 'cirujano', 'cum'],
     '04': ['derecho', 'juridicas', 'leyes', 'sociales'],
     '03': ['economicas', 'auditoria', 'administracion', 'economia'],
     '02': ['arquitectura', 'diseno', 'farq'],
     '01': ['agronomia', 'ambiental', 'agricola', 'fausac'],
     '06': ['farmacia', 'bioquimica', 'quimica', 'quimicas', 'farmaceutica'],
-    '77': ['humanidades', 'pedagogia', 'profesorado', 'filosofia', 'letras', 'fahusac'],
-    '07': ['humanidades', 'pedagogia', 'profesorado', 'filosofia', 'letras', 'fahusac'],
+    '77': [
+      'humanidades',
+      'pedagogia',
+      'profesorado',
+      'filosofia',
+      'letras',
+      'fahusac',
+    ],
+    '07': [
+      'humanidades',
+      'pedagogia',
+      'profesorado',
+      'filosofia',
+      'letras',
+      'fahusac',
+    ],
     '09': ['odontologia', 'dental', 'fousac'],
     '10': ['veterinaria', 'zootecnia', 'fmvz'],
     'area_comun': ['area_comun', 'basicas'],
@@ -27,7 +52,8 @@ class GroupsService {
     String carrera = 'todas',
     String searchQuery = '',
   }) async {
-    final isDefaultQuery = facultad == 'todas' && carrera == 'todas' && searchQuery.trim().isEmpty;
+    final isDefaultQuery =
+        facultad == 'todas' && carrera == 'todas' && searchQuery.trim().isEmpty;
     final cacheKey = CacheService.buildKey({
       'user': SupabaseService.currentUserId ?? 'anon',
       if (facultad != 'todas') 'facultad': facultad,
@@ -35,7 +61,10 @@ class GroupsService {
       'search': searchQuery.trim().toLowerCase(),
     });
 
-    final cached = CacheService.get<List<WhatsAppGroup>>(_cacheNamespace, cacheKey);
+    final cached = CacheService.get<List<WhatsAppGroup>>(
+      _cacheNamespace,
+      cacheKey,
+    );
     if (cached != null) return List<WhatsAppGroup>.from(cached);
 
     if (!SupabaseConfig.isConfigured) {
@@ -59,10 +88,14 @@ class GroupsService {
 
       if (searchQuery.trim().isNotEmpty) {
         final q = searchQuery.trim();
-        query = query.or('title.ilike.%$q%,curso.ilike.%$q%,description.ilike.%$q%');
+        query = query.or(
+          'title.ilike.%$q%,curso.ilike.%$q%,description.ilike.%$q%',
+        );
       }
 
-      final response = await query.order('upvotes', ascending: false).order('created_at', ascending: false);
+      final response = await query
+          .order('upvotes', ascending: false)
+          .order('created_at', ascending: false);
       final List<dynamic> data = response as List<dynamic>;
 
       // Get upvotes for current user
@@ -101,12 +134,15 @@ class GroupsService {
           final carreraLower = g.carrera.toLowerCase().trim();
           if (carreraLower.isNotEmpty &&
               carreraLower != 'todas' &&
-              facultyKeywords.any((kw) => carreraLower == kw || carreraLower.contains(kw))) {
+              facultyKeywords.any(
+                (kw) => carreraLower == kw || carreraLower.contains(kw),
+              )) {
             return true;
           }
 
           // 3. Caso especial de Área Común (Ingeniería o general)
-          if (carreraLower == 'area_comun' && (facultad == '08' || facultad == 'area_comun')) {
+          if (carreraLower == 'area_comun' &&
+              (facultad == '08' || facultad == 'area_comun')) {
             return true;
           }
 
@@ -114,7 +150,8 @@ class GroupsService {
           // o descripción menciona explícitamente palabras clave de esta facultad específica (evitando
           // que grupos de otras facultades o grupos globales USAC se cuelen en este servidor).
           if (carreraLower == 'todas' || carreraLower.isEmpty) {
-            final searchable = '${g.title} ${g.curso} ${g.description}'.toLowerCase();
+            final searchable = '${g.title} ${g.curso} ${g.description}'
+                .toLowerCase();
             return facultyKeywords.any((kw) => searchable.contains(kw));
           }
 
@@ -122,7 +159,11 @@ class GroupsService {
         }).toList();
       }
 
-      CacheService.set(_cacheNamespace, cacheKey, List<WhatsAppGroup>.from(groups));
+      CacheService.set(
+        _cacheNamespace,
+        cacheKey,
+        List<WhatsAppGroup>.from(groups),
+      );
       if (isDefaultQuery) {
         await CacheService.setPersisted(
           _cacheNamespace,
@@ -134,7 +175,10 @@ class GroupsService {
     } catch (e) {
       debugPrint('Error al obtener grupos estudiantiles: $e');
       if (isDefaultQuery) {
-        final persisted = await _readPersistedGroups(cacheKey);
+        final persisted = await _readPersistedGroups(
+          cacheKey,
+          allowStale: true,
+        );
         if (persisted != null) return persisted;
       }
       rethrow;
@@ -142,17 +186,23 @@ class GroupsService {
   }
 
   /// Lee la primera página persistida (solo consultas por defecto).
-  static Future<List<WhatsAppGroup>?> _readPersistedGroups(String cacheKey) {
+  static Future<List<WhatsAppGroup>?> _readPersistedGroups(
+    String cacheKey, {
+    bool allowStale = false,
+  }) {
     return CacheService.getPersisted<List<WhatsAppGroup>>(
       _cacheNamespace,
       cacheKey,
       (data) {
-        if (data is! List) throw const FormatException('Caché de grupos inválida');
+        if (data is! List) {
+          throw const FormatException('Caché de grupos inválida');
+        }
         return data
             .whereType<Map>()
             .map((item) => _groupFromCacheMap(Map<String, dynamic>.from(item)))
             .toList();
       },
+      allowStale: allowStale,
     );
   }
 
@@ -165,7 +215,10 @@ class GroupsService {
   }
 
   static WhatsAppGroup _groupFromCacheMap(Map<String, dynamic> map) {
-    return WhatsAppGroup.fromMap(map, isUpvotedByMe: map['cache_upvoted'] == true);
+    return WhatsAppGroup.fromMap(
+      map,
+      isUpvotedByMe: map['cache_upvoted'] == true,
+    );
   }
 
   static Future<bool> toggleUpvote(WhatsAppGroup group) async {
@@ -218,7 +271,9 @@ class GroupsService {
 
     final userId = SupabaseService.currentUserId;
     if (userId == null) {
-      throw Exception('Debes iniciar sesión para compartir un grupo estudiantil.');
+      throw Exception(
+        'Debes iniciar sesión para compartir un grupo estudiantil.',
+      );
     }
 
     try {
@@ -245,7 +300,10 @@ class GroupsService {
           .select()
           .single();
 
-      final created = WhatsAppGroup.fromMap(Map<String, dynamic>.from(res), isUpvotedByMe: true);
+      final created = WhatsAppGroup.fromMap(
+        Map<String, dynamic>.from(res),
+        isUpvotedByMe: true,
+      );
 
       // Auto-upvote for creator
       await SupabaseService.client.from('student_group_upvotes').insert({
