@@ -19,6 +19,13 @@ begin
     perform tests.create_supabase_user(v_user_a, 'user_a@test.com');
     perform tests.create_supabase_user(v_user_b, 'user_b@test.com');
     perform tests.create_supabase_user(v_user_mod, 'mod@test.com');
+    insert into public.profiles (id, full_name)
+    values (v_user_a, 'Vendedor de prueba')
+    on conflict (id) do nothing;
+    update public.profiles
+       set seller_verification_status = 'verified',
+           seller_verified_at = now()
+     where id = v_user_a;
 
     -- Grupos estudiantiles
     insert into public.student_groups (
