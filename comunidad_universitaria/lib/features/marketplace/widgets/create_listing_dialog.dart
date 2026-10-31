@@ -109,7 +109,8 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
         if (prof.contactWhatsapp != null && _whatsappController.text.isEmpty) {
           _whatsappController.text = prof.contactWhatsapp!;
         }
-        if (prof.contactInstagram != null && _instagramController.text.isEmpty) {
+        if (prof.contactInstagram != null &&
+            _instagramController.text.isEmpty) {
           _instagramController.text = prof.contactInstagram!;
         }
         if (prof.contactTelegram != null && _telegramController.text.isEmpty) {
@@ -140,9 +141,11 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
     if (_imageUrls.length >= _maxImages) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(widget.isSponsored
-              ? 'Límite de 3 imágenes alcanzado para patrocinadores.'
-              : 'Límite de 1 imagen alcanzado para publicaciones regulares.'),
+          content: Text(
+            widget.isSponsored
+                ? 'Límite de 3 imágenes alcanzado para patrocinadores.'
+                : 'Límite de 1 imagen alcanzado para publicaciones regulares.',
+          ),
         ),
       );
       return;
@@ -162,9 +165,9 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al subir imagen: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error al subir imagen: $e')));
       }
     } finally {
       if (mounted) setState(() => _isUploadingImage = false);
@@ -207,7 +210,9 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
 
     setState(() => _isSubmitting = true);
 
-    final priceVal = _isFree ? 0.0 : (double.tryParse(_priceController.text.trim()) ?? 0.0);
+    final priceVal = _isFree
+        ? 0.0
+        : (double.tryParse(_priceController.text.trim()) ?? 0.0);
 
     try {
       final created = await MarketplaceService.createListing(
@@ -221,13 +226,22 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
         buildingCode: _selectedBuilding,
         locationDetail: _locationDetailController.text.trim(),
         contactWhatsapp: hasWhatsapp ? _whatsappController.text.trim() : null,
-        contactInstagram: hasInstagram ? _instagramController.text.trim() : null,
-        contactMessenger: hasMessenger ? _messengerController.text.trim() : null,
+        contactInstagram: hasInstagram
+            ? _instagramController.text.trim()
+            : null,
+        contactMessenger: hasMessenger
+            ? _messengerController.text.trim()
+            : null,
         contactTelegram: hasTelegram ? _telegramController.text.trim() : null,
         socialLinks: _socialLinks,
         imageUrls: _imageUrls,
-        videoUrl: _videoUrlController.text.trim().isNotEmpty ? _videoUrlController.text.trim() : null,
-        authorAlias: (_userProfile?.isCarneVerified == true && _userProfile?.studentName != null && _userProfile!.studentName!.isNotEmpty)
+        videoUrl: _videoUrlController.text.trim().isNotEmpty
+            ? _videoUrlController.text.trim()
+            : null,
+        authorAlias:
+            (_userProfile?.isCarneVerified == true &&
+                _userProfile?.studentName != null &&
+                _userProfile!.studentName!.isNotEmpty)
             ? _userProfile!.studentName!
             : widget.activeAlias,
       );
@@ -239,7 +253,9 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
           Navigator.of(context).pop();
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('¡Publicación creada exitosamente en el Marketplace!'),
+              content: Text(
+                '¡Publicación creada exitosamente en el Marketplace!',
+              ),
               backgroundColor: Color(0xFF004B87),
             ),
           );
@@ -255,7 +271,9 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSubmitting = false);
-        final msg = e.toString().replaceAll('Exception: ', '');
+        final msg = e is StateError
+            ? e.toString().replaceFirst('Bad state: ', '')
+            : 'No se pudo publicar el anuncio. Revisa tu conexión e inténtalo de nuevo.';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(msg),
@@ -271,7 +289,8 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isMobile = Responsive.isMobile(context);
-    final maxHeight = MediaQuery.of(context).size.height * (isMobile ? 0.90 : 0.85);
+    final maxHeight =
+        MediaQuery.of(context).size.height * (isMobile ? 0.90 : 0.85);
 
     Widget content = Form(
       key: _formKey,
@@ -292,7 +311,11 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                       color: const Color(0xFF059669).withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.storefront, color: Color(0xFF059669), size: 22),
+                    child: const Icon(
+                      Icons.storefront,
+                      color: Color(0xFF059669),
+                      size: 22,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -301,11 +324,16 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                       children: [
                         Text(
                           'Publicar Producto o Servicio',
-                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         Text(
                           'Marketplace Universitario · Entorno Seguro',
-                          style: theme.textTheme.bodySmall?.copyWith(color: const Color(0xFF059669), fontWeight: FontWeight.w600),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: const Color(0xFF059669),
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ],
                     ),
@@ -317,8 +345,12 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
               // Selector visual drásticamente diferenciado (Identidad en Marketplace)
               IdentityBadgeChip(
                 mode: IdentityMode.marketplaceVerified,
-                displayName: _userProfile?.studentName ?? widget.activeAlias,
-                carne: _userProfile?.carne,
+                displayName: _userProfile?.isCarneVerified == true
+                    ? _userProfile?.studentName ?? widget.activeAlias
+                    : widget.activeAlias,
+                carne: _userProfile?.isCarneVerified == true
+                    ? _userProfile?.carne
+                    : null,
                 isVerified: _userProfile?.isCarneVerified ?? false,
                 onSwitchIdentity: () {
                   if (_userProfile != null) {
@@ -350,16 +382,27 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                       isExpanded: true,
                       decoration: const InputDecoration(
                         labelText: 'Categoría',
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                       ),
                       items: USACConstants.marketplaceCategories
                           .where((c) => c.id != 'todos')
-                          .map((c) => DropdownMenuItem(
-                                value: c.id,
-                                child: Text(c.label, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13)),
-                              ))
+                          .map(
+                            (c) => DropdownMenuItem(
+                              value: c.id,
+                              child: Text(
+                                c.label,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 13),
+                              ),
+                            ),
+                          )
                           .toList(),
-                      onChanged: (val) => setState(() => _selectedCategory = val ?? 'comida_postres'),
+                      onChanged: (val) => setState(
+                        () => _selectedCategory = val ?? 'comida_postres',
+                      ),
                     ),
                   ),
 
@@ -376,7 +419,13 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                           });
                         },
                       ),
-                      const Text('Aporte o tutoría GRATUITA', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                      const Text(
+                        'Aporte o tutoría GRATUITA',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -390,7 +439,10 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                 decoration: const InputDecoration(
                   labelText: 'Título del producto o servicio',
                   hintText: 'Ej. Pastel de Zanahoria / Tutoría de Física 1',
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                 ),
                 validator: (val) {
                   if (val == null || val.trim().length < 4) {
@@ -406,12 +458,17 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
               if (!_isFree) ...[
                 TextFormField(
                   controller: _priceController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: const InputDecoration(
                     labelText: 'Precio en Quetzales',
                     hintText: '15.00',
                     prefixText: 'Q ',
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
                   ),
                   validator: (val) {
                     if (!_isFree) {
@@ -427,7 +484,10 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
               // Contact Channels Section Header
               Text(
                 'Canales de Contacto',
-                style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: 13),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
               ),
               const SizedBox(height: 8),
 
@@ -438,8 +498,15 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                 decoration: const InputDecoration(
                   labelText: 'WhatsApp',
                   hintText: 'Ej. 55551234',
-                  prefixIcon: Icon(Icons.chat, size: 18, color: Color(0xFF25D366)),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  prefixIcon: Icon(
+                    Icons.chat,
+                    size: 18,
+                    color: Color(0xFF25D366),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
@@ -450,8 +517,15 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                 decoration: const InputDecoration(
                   labelText: 'Instagram',
                   hintText: 'Ej. @mi_emprendimiento o enlace a tu perfil',
-                  prefixIcon: Icon(Icons.camera_alt_outlined, size: 18, color: Color(0xFFE1306C)),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  prefixIcon: Icon(
+                    Icons.camera_alt_outlined,
+                    size: 18,
+                    color: Color(0xFFE1306C),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
@@ -462,8 +536,15 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                 decoration: const InputDecoration(
                   labelText: 'Facebook Messenger',
                   hintText: 'Ej. @usuario o enlace m.me/tu_perfil',
-                  prefixIcon: Icon(Icons.message_outlined, size: 18, color: Color(0xFF0084FF)),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  prefixIcon: Icon(
+                    Icons.message_outlined,
+                    size: 18,
+                    color: Color(0xFF0084FF),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
@@ -474,8 +555,15 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                 decoration: const InputDecoration(
                   labelText: 'Telegram',
                   hintText: 'Ej. @usuario_telegram',
-                  prefixIcon: Icon(Icons.send_outlined, size: 18, color: Color(0xFF229ED9)),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  prefixIcon: Icon(
+                    Icons.send_outlined,
+                    size: 18,
+                    color: Color(0xFF229ED9),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                 ),
               ),
 
@@ -484,7 +572,10 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
               // Sede & Building / Location
               Text(
                 'Ubicación de Entrega en el Campus',
-                style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: 13),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
               ),
               const SizedBox(height: 8),
 
@@ -499,15 +590,25 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                       isExpanded: true,
                       decoration: const InputDecoration(
                         labelText: 'Sede / Campus',
-                        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
                       ),
                       items: USACConstants.sedes
-                          .map((s) => DropdownMenuItem<String>(
-                                value: s['id']!,
-                                child: Text(s['nombre']!, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12)),
-                              ))
+                          .map(
+                            (s) => DropdownMenuItem<String>(
+                              value: s['id']!,
+                              child: Text(
+                                s['nombre']!,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ),
+                          )
                           .toList(),
-                      onChanged: (val) => setState(() => _selectedSede = val ?? 'central'),
+                      onChanged: (val) =>
+                          setState(() => _selectedSede = val ?? 'central'),
                     ),
                   ),
                   SizedBox(
@@ -517,15 +618,25 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                       isExpanded: true,
                       decoration: const InputDecoration(
                         labelText: 'Facultad / Unidad',
-                        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
                       ),
                       items: USACConstants.facultades
-                          .map((f) => DropdownMenuItem<String>(
-                                value: f['id'].toString(),
-                                child: Text(f['nombre'].toString(), overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12)),
-                              ))
+                          .map(
+                            (f) => DropdownMenuItem<String>(
+                              value: f['id'].toString(),
+                              child: Text(
+                                f['nombre'].toString(),
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ),
+                          )
                           .toList(),
-                      onChanged: (val) => setState(() => _selectedFacultad = val ?? 'todas'),
+                      onChanged: (val) =>
+                          setState(() => _selectedFacultad = val ?? 'todas'),
                     ),
                   ),
                   SizedBox(
@@ -535,19 +646,25 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                       isExpanded: true,
                       decoration: const InputDecoration(
                         labelText: 'Edificio o Punto',
-                        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
                       ),
                       items: USACConstants.campusBuildings
-                          .map((b) => DropdownMenuItem<String>(
-                                value: b['building_code'].toString(),
-                                child: Text(
-                                  '${b['building_code']} — ${b['nombre']}',
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                              ))
+                          .map(
+                            (b) => DropdownMenuItem<String>(
+                              value: b['building_code'].toString(),
+                              child: Text(
+                                '${b['building_code']} — ${b['nombre']}',
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ),
+                          )
                           .toList(),
-                      onChanged: (val) => setState(() => _selectedBuilding = val ?? 'T-3'),
+                      onChanged: (val) =>
+                          setState(() => _selectedBuilding = val ?? 'T-3'),
                     ),
                   ),
                 ],
@@ -561,7 +678,10 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                   labelText: 'Punto específico / Horario de entrega',
                   hintText: 'Ej. Frente a cafetería entre 11:00 y 13:00 hrs.',
                   prefixIcon: Icon(Icons.place_outlined, size: 18),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
                 ),
               ),
 
@@ -573,7 +693,8 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                 maxLines: 3,
                 decoration: const InputDecoration(
                   labelText: 'Descripción detallada',
-                  hintText: 'Indica sabores, temas de la tutoría, estado del libro o especificaciones...',
+                  hintText:
+                      'Indica sabores, temas de la tutoría, estado del libro o especificaciones...',
                 ),
                 validator: (val) {
                   if (val == null || val.trim().length < 10) {
@@ -590,7 +711,10 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                 widget.isSponsored
                     ? 'Fotos de Patrocinador · Hasta 3 imágenes'
                     : 'Foto del Producto o Servicio',
-                style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: 13),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
               ),
               const SizedBox(height: 6),
 
@@ -599,44 +723,53 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                 runSpacing: 8,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  ..._imageUrls.map((url) => Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
-                              url,
+                  ..._imageUrls.map(
+                    (url) => Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            url,
+                            width: 70,
+                            height: 70,
+                            fit: BoxFit.cover,
+                            errorBuilder: (ctx, err, stack) => Container(
                               width: 70,
                               height: 70,
-                              fit: BoxFit.cover,
-                              errorBuilder: (ctx, err, stack) => Container(
-                                width: 70,
-                                height: 70,
-                                color: Colors.grey.shade300,
-                                child: const Icon(Icons.broken_image, size: 24),
+                              color: Colors.grey.shade300,
+                              child: const Icon(Icons.broken_image, size: 24),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 2,
+                          right: 2,
+                          child: InkWell(
+                            onTap: () => setState(() => _imageUrls.remove(url)),
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: const BoxDecoration(
+                                color: Colors.black54,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.close,
+                                size: 14,
+                                color: Colors.white,
                               ),
                             ),
                           ),
-                          Positioned(
-                            top: 2,
-                            right: 2,
-                            child: InkWell(
-                              onTap: () => setState(() => _imageUrls.remove(url)),
-                              child: Container(
-                                padding: const EdgeInsets.all(2),
-                                decoration: const BoxDecoration(
-                                  color: Colors.black54,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(Icons.close, size: 14, color: Colors.white),
-                              ),
-                            ),
-                          ),
-                        ],
-                      )),
+                        ),
+                      ],
+                    ),
+                  ),
                   if (_imageUrls.length < _maxImages)
                     OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
                       ),
                       onPressed: _isUploadingImage ? null : _pickAndUploadImage,
                       icon: _isUploadingImage
@@ -645,8 +778,13 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                               height: 14,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Icon(Icons.add_photo_alternate_outlined, size: 18),
-                      label: Text(_isUploadingImage ? 'Subiendo...' : 'Subir Foto'),
+                          : const Icon(
+                              Icons.add_photo_alternate_outlined,
+                              size: 18,
+                            ),
+                      label: Text(
+                        _isUploadingImage ? 'Subiendo...' : 'Subir Foto',
+                      ),
                     ),
                 ],
               ),
@@ -656,7 +794,10 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
               // Reference Social Links
               Text(
                 'Publicaciones de Referencia en Redes Sociales',
-                style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: 13),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
               ),
               const SizedBox(height: 6),
 
@@ -669,7 +810,10 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                         labelText: 'Enlace de publicación',
                         hintText: 'https://instagram.com/p/...',
                         prefixIcon: Icon(Icons.link, size: 18),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
                       ),
                       onSubmitted: (_) => _addSocialLink(),
                     ),
@@ -689,14 +833,19 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                   spacing: 6,
                   runSpacing: 4,
                   children: _socialLinks
-                      .map((link) => Chip(
-                            label: Text(
-                              link.length > 30 ? '${link.substring(0, 27)}...' : link,
-                              style: const TextStyle(fontSize: 11),
-                            ),
-                            deleteIcon: const Icon(Icons.close, size: 14),
-                            onDeleted: () => setState(() => _socialLinks.remove(link)),
-                          ))
+                      .map(
+                        (link) => Chip(
+                          label: Text(
+                            link.length > 30
+                                ? '${link.substring(0, 27)}...'
+                                : link,
+                            style: const TextStyle(fontSize: 11),
+                          ),
+                          deleteIcon: const Icon(Icons.close, size: 14),
+                          onDeleted: () =>
+                              setState(() => _socialLinks.remove(link)),
+                        ),
+                      )
                       .toList(),
                 ),
               ],
@@ -710,7 +859,10 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                     labelText: 'Enlace de Video Promocional',
                     hintText: 'https://youtube.com/watch?v=...',
                     prefixIcon: Icon(Icons.play_circle_outline, size: 18),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
                   ),
                 ),
               ],
@@ -743,24 +895,34 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                   runSpacing: 8,
                   children: [
                     TextButton(
-                      onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
+                      onPressed: _isSubmitting
+                          ? null
+                          : () => Navigator.of(context).pop(),
                       child: const Text('Cancelar'),
                     ),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF004B87),
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
                       ),
                       onPressed: _isSubmitting ? null : _submit,
                       icon: _isSubmitting
                           ? const SizedBox(
                               width: 16,
                               height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
                             )
                           : const Icon(Icons.check, size: 16),
-                      label: Text(_isSubmitting ? 'Publicando...' : 'Publicar Anuncio'),
+                      label: Text(
+                        _isSubmitting ? 'Publicando...' : 'Publicar Anuncio',
+                      ),
                     ),
                   ],
                 ),
@@ -773,7 +935,9 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
 
     if (isMobile) {
       return Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
         child: content,
       );
     } else {

@@ -3,6 +3,7 @@ import '../../../core/config/supabase_config.dart';
 import '../../../core/constants/categories.dart';
 import '../../../core/models/marketplace_item.dart';
 import '../../../core/services/marketplace_service.dart';
+import '../../../core/services/sponsored_preferences_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
 import '../widgets/create_listing_dialog.dart';
@@ -66,11 +67,20 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
         ),
         MarketplaceService.fetchSponsoredListings(),
       ]);
+      final hiddenSponsoredIds =
+          await SponsoredPreferencesService.hiddenItemIds();
 
       if (mounted) {
         setState(() {
-          _listings = results[0];
-          _sponsoredListings = results[1];
+          _listings = results[0]
+              .where(
+                (item) =>
+                    !item.isSponsored || !hiddenSponsoredIds.contains(item.id),
+              )
+              .toList();
+          _sponsoredListings = results[1]
+              .where((item) => !hiddenSponsoredIds.contains(item.id))
+              .toList();
           _isLoading = false;
           _isOffline = false;
         });
@@ -85,7 +95,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     }
   }
 
-  Future<void> _handleUpdateItemStatus(MarketplaceItem item, String newStatus) async {
+  Future<void> _handleUpdateItemStatus(
+    MarketplaceItem item,
+    String newStatus,
+  ) async {
+    final previousStatus = item.status;
     setState(() {
       final idx = _listings.indexWhere((l) => l.id == item.id);
       if (idx != -1) {
@@ -93,19 +107,47 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
       }
     });
 
-    final ok = await MarketplaceService.updateItemStatus(itemId: item.id, newStatus: newStatus);
-    if (mounted && ok) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Estado actualizado a: ${newStatus.toUpperCase()}'),
-          backgroundColor: const Color(0xFF059669),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+    final ok = await MarketplaceService.updateItemStatus(
+      itemId: item.id,
+      newStatus: newStatus,
+    );
+    if (!mounted) return;
+
+    if (!ok) {
+      setState(() {
+        final idx = _listings.indexWhere((listing) => listing.id == item.id);
+        if (idx != -1) {
+          _listings[idx] = _listings[idx].copyWith(status: previousStatus);
+        }
+      });
     }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          ok
+              ? 'Estado actualizado a: ${newStatus.toUpperCase()}'
+              : 'No se pudo actualizar el anuncio. Inténtalo de nuevo.',
+        ),
+        backgroundColor: ok
+            ? const Color(0xFF059669)
+            : Theme.of(context).colorScheme.error,
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   Future<void> _handleToggleUpvote(MarketplaceItem item) async {
+    if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
+      AuthModal.show(
+        context,
+        title: 'Inicia sesión para votar',
+        subtitle: 'Para apoyar una publicación necesitas iniciar sesión.',
+        onAuthenticated: () => _handleToggleUpvote(item),
+      );
+      return;
+    }
+
     final prevUpvoted = item.isUpvotedByMe;
     final prevUpvotes = item.upvotes;
 
@@ -115,7 +157,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
       if (idx != -1) {
         _listings[idx] = item.copyWith(
           isUpvotedByMe: !prevUpvoted,
-          upvotes: prevUpvoted ? (prevUpvotes - 1).clamp(0, 999999) : prevUpvotes + 1,
+          upvotes: prevUpvoted
+              ? (prevUpvotes - 1).clamp(0, 999999)
+              : prevUpvotes + 1,
         );
       }
     });
@@ -125,10 +169,84 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
       setState(() {
         final idx = _listings.indexWhere((l) => l.id == item.id);
         if (idx != -1) {
-          _listings[idx] = item.copyWith(isUpvotedByMe: prevUpvoted, upvotes: prevUpvotes);
+          _listings[idx] = item.copyWith(
+            isUpvotedByMe: prevUpvoted,
+            upvotes: prevUpvotes,
+          );
         }
       });
     }
+  }
+
+  Future<void> _hideSponsoredItem(MarketplaceItem item) async {
+    await SponsoredPreferencesService.hideItem(item.id);
+    if (!mounted) return;
+
+    setState(() {
+      _listings.removeWhere(
+        (listing) => listing.isSponsored && listing.id == item.id,
+      );
+      _sponsoredListings.removeWhere((listing) => listing.id == item.id);
+    });
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Anuncio ocultado para ti.')));
+  }
+
+  Future<void> _handleReportItem(MarketplaceItem item, String reason) async {
+    if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
+      AuthModal.show(
+        context,
+        title: 'Inicia sesión para reportar',
+        subtitle: 'Para enviar un reporte necesitas iniciar sesión.',
+        onAuthenticated: () => _handleReportItem(item, reason),
+      );
+      return;
+    }
+
+    final submitted = await MarketplaceService.reportListing(
+      itemId: item.id,
+      reason: reason,
+      sellerUserId: item.userId,
+      sellerAlias: item.authorAlias,
+    );
+    if (!mounted) return;
+    if (!submitted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo enviar el reporte. Inténtalo de nuevo.'),
+        ),
+      );
+      return;
+    }
+
+    if (item.isSponsored) {
+      await _hideSponsoredItem(item);
+      return;
+    }
+
+    setState(() {
+      _listings.removeWhere((listing) => listing.id == item.id);
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Reporte enviado. La publicación se ocultó para ti.'),
+        backgroundColor: Color(0xFF004B87),
+      ),
+    );
+  }
+
+  void _openSponsorRequestDialog() {
+    if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
+      AuthModal.show(
+        context,
+        title: 'Inicia sesión para solicitar patrocinio',
+        subtitle: 'La solicitud debe enviarse desde una cuenta autenticada.',
+        onAuthenticated: _openSponsorRequestDialog,
+      );
+      return;
+    }
+    SponsorRequestDialog.show(context);
   }
 
   void _handleCreateListingClick() {
@@ -136,7 +254,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
       AuthModal.show(
         context,
         title: 'Inicia Sesión para Publicar',
-        subtitle: 'Para mantener la seguridad del Marketplace y prevenir anuncios fraudulentos, inicia sesión antes de publicar.',
+        subtitle:
+            'Para mantener la seguridad del Marketplace y prevenir anuncios fraudulentos, inicia sesión antes de publicar.',
         onAuthenticated: () {
           _openCreateDialog();
         },
@@ -146,7 +265,30 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     }
   }
 
-  void _openCreateDialog() {
+  Future<void> _openCreateDialog() async {
+    final canCreate = await MarketplaceService.canCreateListing();
+    if (!mounted) return;
+    if (!canCreate) {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Verificación necesaria'),
+          content: const Text(
+            'Para publicar anuncios se requiere una verificación institucional real. '
+            'Esa conexión todavía no está disponible; no se guardará ningún anuncio '
+            'ni se marcará tu cuenta como verificada.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Entendido'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     CreateListingDialog.show(
       context,
       activeAlias: widget.activeAlias,
@@ -157,10 +299,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
         });
       },
     );
-  }
-
-  void _openSponsorRequestDialog() {
-    SponsorRequestDialog.show(context);
   }
 
   @override
@@ -238,6 +376,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                 SponsorCarousel(
                   sponsoredItems: _sponsoredListings,
                   onRequestSponsor: _openSponsorRequestDialog,
+                  onHideSponsored: _hideSponsoredItem,
+                  onReportSponsored: _handleReportItem,
                 ),
 
                 // Search & Filter Dropdowns
@@ -245,7 +385,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                   TextField(
                     controller: _searchController,
                     decoration: InputDecoration(
-                      hintText: 'Buscar postres, almuerzos, tutorías o libros...',
+                      hintText:
+                          'Buscar postres, almuerzos, tutorías o libros...',
                       prefixIcon: const Icon(Icons.search, size: 20),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
@@ -257,7 +398,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                               },
                             )
                           : null,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
                     ),
                     onSubmitted: (val) {
                       setState(() => _searchQuery = val);
@@ -274,17 +418,22 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                           isExpanded: true,
                           decoration: const InputDecoration(
                             labelText: 'Sede / Campus',
-                            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 8,
+                            ),
                           ),
                           items: USACConstants.sedes
-                              .map((s) => DropdownMenuItem<String>(
-                                    value: s['id']!,
-                                    child: Text(
-                                      s['nombre']!,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontSize: 11),
-                                    ),
-                                  ))
+                              .map(
+                                (s) => DropdownMenuItem<String>(
+                                  value: s['id']!,
+                                  child: Text(
+                                    s['nombre']!,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 11),
+                                  ),
+                                ),
+                              )
                               .toList(),
                           onChanged: (val) {
                             setState(() {
@@ -302,17 +451,22 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                           isExpanded: true,
                           decoration: const InputDecoration(
                             labelText: 'Facultad / Unidad',
-                            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 8,
+                            ),
                           ),
                           items: USACConstants.facultades
-                              .map((f) => DropdownMenuItem<String>(
-                                    value: f['id'].toString(),
-                                    child: Text(
-                                      f['nombre'].toString(),
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontSize: 11),
-                                    ),
-                                  ))
+                              .map(
+                                (f) => DropdownMenuItem<String>(
+                                  value: f['id'].toString(),
+                                  child: Text(
+                                    f['nombre'].toString(),
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 11),
+                                  ),
+                                ),
+                              )
                               .toList(),
                           onChanged: (val) {
                             setState(() {
@@ -331,7 +485,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                         child: TextField(
                           controller: _searchController,
                           decoration: InputDecoration(
-                            hintText: 'Buscar postres, almuerzos, tutorías o libros...',
+                            hintText:
+                                'Buscar postres, almuerzos, tutorías o libros...',
                             prefixIcon: const Icon(Icons.search, size: 20),
                             suffixIcon: _searchQuery.isNotEmpty
                                 ? IconButton(
@@ -343,7 +498,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                                     },
                                   )
                                 : null,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
                           ),
                           onSubmitted: (val) {
                             setState(() => _searchQuery = val);
@@ -360,17 +518,22 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                           initialValue: _selectedSede,
                           isExpanded: true,
                           decoration: const InputDecoration(
-                            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 10,
+                            ),
                           ),
                           items: USACConstants.sedes
-                              .map((s) => DropdownMenuItem<String>(
-                                    value: s['id']!,
-                                    child: Text(
-                                      s['nombre']!,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontSize: 12),
-                                    ),
-                                  ))
+                              .map(
+                                (s) => DropdownMenuItem<String>(
+                                  value: s['id']!,
+                                  child: Text(
+                                    s['nombre']!,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                ),
+                              )
                               .toList(),
                           onChanged: (val) {
                             setState(() {
@@ -390,17 +553,22 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                           initialValue: _selectedFacultad,
                           isExpanded: true,
                           decoration: const InputDecoration(
-                            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 10,
+                            ),
                           ),
                           items: USACConstants.facultades
-                              .map((f) => DropdownMenuItem<String>(
-                                    value: f['id'].toString(),
-                                    child: Text(
-                                      f['nombre'].toString(),
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontSize: 12),
-                                    ),
-                                  ))
+                              .map(
+                                (f) => DropdownMenuItem<String>(
+                                  value: f['id'].toString(),
+                                  child: Text(
+                                    f['nombre'].toString(),
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                ),
+                              )
                               .toList(),
                           onChanged: (val) {
                             setState(() {
@@ -424,9 +592,13 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                       // Solo Gratis toggle chip
                       FilterChip(
                         avatar: Icon(
-                          _onlyFree ? Icons.check_circle : Icons.volunteer_activism_outlined,
+                          _onlyFree
+                              ? Icons.check_circle
+                              : Icons.volunteer_activism_outlined,
                           size: 16,
-                          color: _onlyFree ? Colors.white : const Color(0xFF16A34A),
+                          color: _onlyFree
+                              ? Colors.white
+                              : const Color(0xFF16A34A),
                         ),
                         label: const Text('Solo Gratuitos'),
                         selected: _onlyFree,
@@ -434,7 +606,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                         labelStyle: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: _onlyFree ? Colors.white : const Color(0xFF16A34A),
+                          color: _onlyFree
+                              ? Colors.white
+                              : const Color(0xFF16A34A),
                         ),
                         onSelected: (selected) {
                           setState(() => _onlyFree = selected);
@@ -457,11 +631,17 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                               });
                               _loadData();
                             },
-                            selectedColor: theme.colorScheme.primary.withValues(alpha: 0.15),
+                            selectedColor: theme.colorScheme.primary.withValues(
+                              alpha: 0.15,
+                            ),
                             labelStyle: TextStyle(
                               fontSize: 12,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                              color: isSelected ? theme.colorScheme.primary : null,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              color: isSelected
+                                  ? theme.colorScheme.primary
+                                  : null,
                             ),
                           ),
                         );
@@ -493,7 +673,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                   EmptyStateWidget(
                     icon: Icons.storefront_outlined,
                     title: 'No hay publicaciones en esta categoría aún',
-                    description: '¿Ofreces tutorías, almuerzos, postres o libros universitarios? ¡Sé el primero en publicar!',
+                    description:
+                        '¿Ofreces tutorías, almuerzos, postres o libros universitarios? ¡Sé el primero en publicar!',
                     buttonText: 'Crear Primera Publicación',
                     onButtonPressed: _handleCreateListingClick,
                   )
@@ -509,27 +690,15 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                           padding: const EdgeInsets.only(bottom: 12),
                           child: MarketplaceCard(
                             item: item,
-                            isOwner: true,
+                            isOwner:
+                                item.userId != null &&
+                                item.userId == SupabaseService.currentUserId,
                             onUpvote: () => _handleToggleUpvote(item),
-                            onStatusChanged: (newStatus) => _handleUpdateItemStatus(item, newStatus),
-                            onReport: (reason) {
-                              MarketplaceService.reportListing(
-                                itemId: item.id,
-                                reason: reason,
-                                sellerUserId: item.userId,
-                                sellerAlias: item.authorAlias,
-                              );
-                              // Feedback inmediato al denunciante: colapsar/ocultar localmente
-                              setState(() {
-                                _listings.removeWhere((l) => l.id == item.id);
-                              });
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Publicación ocultada para ti. Gracias por cuidar la comunidad.'),
-                                  backgroundColor: Color(0xFF004B87),
-                                ),
-                              );
-                            },
+                            onStatusChanged: (newStatus) =>
+                                _handleUpdateItemStatus(item, newStatus),
+                            onSponsoredHide: () => _hideSponsoredItem(item),
+                            onReport: (reason) =>
+                                _handleReportItem(item, reason),
                           ),
                         );
                       },
@@ -537,38 +706,26 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                     desktop: GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        childAspectRatio: 0.78,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                      ),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            childAspectRatio: 0.78,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                          ),
                       itemCount: _listings.length,
                       itemBuilder: (ctx, i) {
                         final item = _listings[i];
                         return MarketplaceCard(
                           item: item,
-                          isOwner: true,
+                          isOwner:
+                              item.userId != null &&
+                              item.userId == SupabaseService.currentUserId,
                           onUpvote: () => _handleToggleUpvote(item),
-                          onStatusChanged: (newStatus) => _handleUpdateItemStatus(item, newStatus),
-                          onReport: (reason) {
-                            MarketplaceService.reportListing(
-                              itemId: item.id,
-                              reason: reason,
-                              sellerUserId: item.userId,
-                              sellerAlias: item.authorAlias,
-                            );
-                            // Feedback inmediato al denunciante: colapsar/ocultar localmente
-                            setState(() {
-                              _listings.removeWhere((l) => l.id == item.id);
-                            });
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Publicación ocultada para ti. Gracias por cuidar la comunidad.'),
-                                backgroundColor: Color(0xFF004B87),
-                              ),
-                            );
-                          },
+                          onStatusChanged: (newStatus) =>
+                              _handleUpdateItemStatus(item, newStatus),
+                          onSponsoredHide: () => _hideSponsoredItem(item),
+                          onReport: (reason) => _handleReportItem(item, reason),
                         );
                       },
                     ),

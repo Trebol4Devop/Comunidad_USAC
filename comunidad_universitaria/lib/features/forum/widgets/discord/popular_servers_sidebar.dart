@@ -121,7 +121,7 @@ class PopularServersSidebar extends StatelessWidget {
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                   itemCount: popularServers.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 6),
+                  separatorBuilder: (_, _) => const SizedBox(height: 6),
                   itemBuilder: (context, index) {
                     final item = popularServers[index];
                     final rank = index + 1;

@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import '../../../core/models/marketplace_item.dart';
 import '../../../core/utils/url_utils.dart';
+import 'sponsored_content_controls.dart';
 
 class SponsorCarousel extends StatelessWidget {
   final List<MarketplaceItem> sponsoredItems;
   final VoidCallback onRequestSponsor;
+  final ValueChanged<MarketplaceItem> onHideSponsored;
+  final Function(MarketplaceItem item, String reason) onReportSponsored;
 
   const SponsorCarousel({
     super.key,
     required this.sponsoredItems,
     required this.onRequestSponsor,
+    required this.onHideSponsored,
+    required this.onReportSponsored,
   });
 
   @override
@@ -93,46 +98,29 @@ class SponsorCarousel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top bar: Sponsor Header & Request Button
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: Row(
+            padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD97706),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.star, color: Colors.white, size: 12),
-                      const SizedBox(width: 4),
-                      Text(
-                        item.sponsorBadgeText ?? 'PATROCINADOR DESTACADO',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
+                SponsoredContentControls(
+                  item: item,
+                  onHide: () => onHideSponsored(item),
+                  onReport: (reason) => onReportSponsored(item, reason),
                 ),
-                const Spacer(),
-                TextButton.icon(
-                  onPressed: onRequestSponsor,
-                  icon: const Icon(Icons.add_circle_outline, size: 14, color: Color(0xFFD97706)),
-                  label: const Text(
-                    'Anunciarme aquí',
-                    style: TextStyle(fontSize: 11, color: Color(0xFFD97706), fontWeight: FontWeight.bold),
-                  ),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: onRequestSponsor,
+                    icon: const Icon(Icons.add_circle_outline, size: 16, color: Color(0xFFD97706)),
+                    label: const Text(
+                      'Anunciarme aquí',
+                      style: TextStyle(fontSize: 12, color: Color(0xFFD97706), fontWeight: FontWeight.bold),
+                    ),
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(48, 48),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
                   ),
                 ),
               ],

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../core/models/whatsapp_group.dart';
@@ -18,6 +20,8 @@ class GroupsScreen extends StatefulWidget {
   final String? activeChannelName;
   final String? activeChannelDescription;
   final IconData? activeChannelIcon;
+  final bool showFloatingActionButton;
+  final Object floatingActionButtonHeroTag;
 
   const GroupsScreen({
     super.key,
@@ -28,18 +32,26 @@ class GroupsScreen extends StatefulWidget {
     this.activeChannelName,
     this.activeChannelDescription,
     this.activeChannelIcon,
+    this.showFloatingActionButton = true,
+    this.floatingActionButtonHeroTag = 'groups_fab',
   });
 
   @override
-  State<GroupsScreen> createState() => _GroupsScreenState();
+  GroupsScreenState createState() => GroupsScreenState();
 }
 
-class _GroupsScreenState extends State<GroupsScreen> {
+class GroupsScreenState extends State<GroupsScreen> {
   List<WhatsAppGroup> _groups = [];
   bool _isLoading = true;
+  String? _loadError;
   String _selectedFacultad = 'todas';
   String _selectedCarrera = 'todas';
   bool _showCleanupBanner = true;
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _searchDebounce;
+  int _loadRequestId = 0;
+  final Set<String> _votingGroupIds = {};
 
   @override
   void initState() {
@@ -61,11 +73,13 @@ class _GroupsScreenState extends State<GroupsScreen> {
   void didUpdateWidget(covariant GroupsScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     bool shouldReload = false;
-    if (widget.activeFacultadId != null && widget.activeFacultadId != _selectedFacultad) {
+    if (widget.activeFacultadId != null &&
+        widget.activeFacultadId != _selectedFacultad) {
       _selectedFacultad = widget.activeFacultadId!;
       shouldReload = true;
     }
-    if (widget.activeCarreraId != null && widget.activeCarreraId != _selectedCarrera) {
+    if (widget.activeCarreraId != null &&
+        widget.activeCarreraId != _selectedCarrera) {
       _selectedCarrera = widget.activeCarreraId!;
       shouldReload = true;
     }
@@ -90,45 +104,113 @@ class _GroupsScreenState extends State<GroupsScreen> {
 
   Future<void> _loadUserAcademicContext() async {
     final profile = await LocalStorageService.getUserProfile();
-    if (mounted && profile.facultadId.isNotEmpty && widget.activeFacultadId == null) {
+    if (mounted &&
+        profile.facultadId.isNotEmpty &&
+        widget.activeFacultadId == null) {
       setState(() {
         _selectedFacultad = profile.facultadId;
-        _selectedCarrera = profile.carreraId.isNotEmpty ? profile.carreraId : 'todas';
+        _selectedCarrera = profile.carreraId.isNotEmpty
+            ? profile.carreraId
+            : 'todas';
       });
       _loadGroups();
     }
   }
 
   Future<void> _loadGroups() async {
-    setState(() => _isLoading = true);
+    final requestId = ++_loadRequestId;
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
     try {
       final list = await GroupsService.fetchGroups(
         facultad: _selectedFacultad,
         carrera: _selectedCarrera,
-        searchQuery: '',
+        searchQuery: _searchQuery,
       );
-      if (mounted) {
+      if (mounted && requestId == _loadRequestId) {
         setState(() {
           _groups = list;
           _isLoading = false;
+          _loadError = null;
         });
       }
-    } catch (e) {
-      if (mounted) {
+    } catch (_) {
+      if (mounted && requestId == _loadRequestId) {
         setState(() {
-          _groups = [];
           _isLoading = false;
+          _loadError =
+              'No pudimos cargar los grupos. Comprueba tu conexión e inténtalo de nuevo.';
         });
       }
     }
   }
 
+  void _onSearchChanged(String value) {
+    setState(() => _searchQuery = value);
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 350), _loadGroups);
+  }
+
+  void _submitSearch(String _) {
+    _searchDebounce?.cancel();
+    _loadGroups();
+  }
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Widget _buildLoadError() {
+    return Semantics(
+      liveRegion: true,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.errorContainer,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.cloud_off_outlined,
+              size: 32,
+              color: Theme.of(context).colorScheme.onErrorContainer,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'No se pudieron cargar los grupos',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 4),
+            Text(_loadError!, textAlign: TextAlign.center),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: _loadGroups,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Reintentar'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _handleToggleUpvote(WhatsAppGroup group) async {
+    if (_votingGroupIds.contains(group.id)) return;
     if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
       AuthModal.show(
         context,
         title: 'Inicia Sesión para Votar',
-        subtitle: 'Para apoyar y verificar enlaces de grupos, debes iniciar sesión.',
+        subtitle:
+            'Para apoyar y verificar enlaces de grupos, debes iniciar sesión.',
         onAuthenticated: () => _handleToggleUpvote(group),
       );
       return;
@@ -136,6 +218,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
 
     final prevUpvoted = group.isUpvotedByMe;
     final prevUpvotes = group.upvotes;
+    _votingGroupIds.add(group.id);
 
     // Optimistic UI update
     setState(() {
@@ -143,28 +226,119 @@ class _GroupsScreenState extends State<GroupsScreen> {
       if (idx != -1) {
         _groups[idx] = group.copyWith(
           isUpvotedByMe: !prevUpvoted,
-          upvotes: prevUpvoted ? (prevUpvotes - 1).clamp(0, 999999) : prevUpvotes + 1,
+          upvotes: prevUpvoted
+              ? (prevUpvotes - 1).clamp(0, 999999)
+              : prevUpvotes + 1,
         );
       }
     });
 
-    final success = await GroupsService.toggleUpvote(group);
-    if (mounted && success != !prevUpvoted) {
-      setState(() {
-        final idx = _groups.indexWhere((g) => g.id == group.id);
-        if (idx != -1) {
-          _groups[idx] = group.copyWith(isUpvotedByMe: prevUpvoted, upvotes: prevUpvotes);
-        }
-      });
+    bool? persistedUpvoteState;
+    try {
+      persistedUpvoteState = await GroupsService.toggleUpvote(group);
+    } catch (_) {
+      persistedUpvoteState = null;
+    }
+
+    final succeeded = persistedUpvoteState == !prevUpvoted;
+    if (mounted) {
+      if (!succeeded) {
+        setState(() {
+          final idx = _groups.indexWhere((g) => g.id == group.id);
+          if (idx != -1) {
+            _groups[idx] = group.copyWith(
+              isUpvotedByMe: prevUpvoted,
+              upvotes: prevUpvotes,
+            );
+          }
+        });
+      }
+      _votingGroupIds.remove(group.id);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            succeeded
+                ? (prevUpvoted
+                      ? 'Se retiró tu voto del grupo.'
+                      : 'Tu voto se registró correctamente.')
+                : 'No se pudo registrar tu voto. Inténtalo de nuevo.',
+          ),
+          backgroundColor: succeeded
+              ? Theme.of(context).colorScheme.inverseSurface
+              : Theme.of(context).colorScheme.error,
+        ),
+      );
+    } else {
+      _votingGroupIds.remove(group.id);
     }
   }
+
+  Future<void> _handleReportGroup(WhatsAppGroup group, String reason) async {
+    if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
+      AuthModal.show(
+        context,
+        title: 'Inicia sesión para reportar',
+        subtitle:
+            'Para enviar un reporte sobre un grupo necesitas iniciar sesión.',
+        onAuthenticated: () => _handleReportGroup(group, reason),
+      );
+      return;
+    }
+
+    final submitted = await GroupsService.reportGroup(
+      groupId: group.id,
+      reason: reason,
+    );
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          submitted
+              ? 'Gracias. Hemos recibido tu reporte sobre el enlace.'
+              : 'No se pudo enviar el reporte. Inténtalo de nuevo.',
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGroupCard(WhatsAppGroup group) => GroupCard(
+    group: group,
+    onUpvote: () => _handleToggleUpvote(group),
+    onReport: (reason) => _handleReportGroup(group, reason),
+  );
+
+  Widget _buildGroupList() => ListView.builder(
+    shrinkWrap: true,
+    physics: const NeverScrollableScrollPhysics(),
+    itemCount: _groups.length,
+    itemBuilder: (context, index) => _buildGroupCard(_groups[index]),
+  );
+
+  Widget _buildGroupGrid() => GridView.builder(
+    shrinkWrap: true,
+    physics: const NeverScrollableScrollPhysics(),
+    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+      crossAxisCount: 2,
+      mainAxisExtent: _groups.any((group) => group.imageUrl?.isNotEmpty == true)
+          ? 440
+          : 300,
+      crossAxisSpacing: 16,
+      mainAxisSpacing: 16,
+    ),
+    itemCount: _groups.length,
+    itemBuilder: (context, index) => _buildGroupCard(_groups[index]),
+  );
+
+  void openCreateGroupDialog() => _openCreateGroupDialog();
 
   void _openCreateGroupDialog() {
     if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
       AuthModal.show(
         context,
         title: 'Inicia Sesión para Compartir',
-        subtitle: 'Para compartir enlaces de grupos estudiantiles, debes iniciar sesión.',
+        subtitle:
+            'Para compartir enlaces de grupos estudiantiles, debes iniciar sesión.',
         onAuthenticated: () {
           _showCreateGroupDialog();
         },
@@ -191,7 +365,8 @@ class _GroupsScreenState extends State<GroupsScreen> {
 
   Widget _buildDiscordWelcomeHero(ThemeData theme, bool isDark) {
     final channelName = widget.activeChannelName ?? 'todos-los-grupos';
-    final channelDesc = widget.activeChannelDescription ??
+    final channelDesc =
+        widget.activeChannelDescription ??
         'Directorio oficial de grupos de WhatsApp y estudio USAC organizados por facultad y curso.';
     final channelIcon = widget.activeChannelIcon ?? Icons.tag;
 
@@ -223,14 +398,19 @@ class _GroupsScreenState extends State<GroupsScreen> {
               children: [
                 Text(
                   '¡Te damos la bienvenida a #$channelName!',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   channelDesc,
                   style: TextStyle(
                     fontSize: 12,
-                    color: isDark ? const Color(0xFF949BA4) : const Color(0xFF64748B),
+                    color: isDark
+                        ? const Color(0xFF949BA4)
+                        : const Color(0xFF64748B),
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -238,6 +418,14 @@ class _GroupsScreenState extends State<GroupsScreen> {
               ],
             ),
           ),
+          if (!Responsive.isMobile(context)) ...[
+            const SizedBox(width: 8),
+            IconButton.filled(
+              tooltip: 'Compartir Grupo',
+              onPressed: _openCreateGroupDialog,
+              icon: const Icon(Icons.group_add),
+            ),
+          ],
         ],
       ),
     );
@@ -266,7 +454,10 @@ class _GroupsScreenState extends State<GroupsScreen> {
                 if (_showCleanupBanner) ...[
                   const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFFF3CD),
                       borderRadius: BorderRadius.circular(12),
@@ -274,16 +465,27 @@ class _GroupsScreenState extends State<GroupsScreen> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.info_outline, color: Color(0xFF856404), size: 20),
+                        const Icon(
+                          Icons.info_outline,
+                          color: Color(0xFF856404),
+                          size: 20,
+                        ),
                         const SizedBox(width: 10),
                         const Expanded(
                           child: Text(
                             'Para evitar enlaces caídos, los grupos se depuran automáticamente al iniciar cada nuevo semestre académico.',
-                            style: TextStyle(color: Color(0xFF856404), fontSize: 12),
+                            style: TextStyle(
+                              color: Color(0xFF856404),
+                              fontSize: 12,
+                            ),
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close, size: 16, color: Color(0xFF856404)),
+                          icon: const Icon(
+                            Icons.close,
+                            size: 16,
+                            color: Color(0xFF856404),
+                          ),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
                           onPressed: _dismissCleanupBanner,
@@ -295,86 +497,80 @@ class _GroupsScreenState extends State<GroupsScreen> {
 
                 const SizedBox(height: 16),
 
+                TextField(
+                  controller: _searchController,
+                  onChanged: _onSearchChanged,
+                  onSubmitted: _submitSearch,
+                  textInputAction: TextInputAction.search,
+                  decoration: InputDecoration(
+                    labelText: 'Buscar grupos',
+                    hintText: 'Curso, nombre o descripción',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: _searchQuery.isEmpty
+                        ? null
+                        : IconButton(
+                            tooltip: 'Limpiar búsqueda',
+                            onPressed: () {
+                              _searchController.clear();
+                              _onSearchChanged('');
+                            },
+                            icon: const Icon(Icons.close),
+                          ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                if (_loadError != null && _groups.isNotEmpty) ...[
+                  _buildLoadError(),
+                  const SizedBox(height: 16),
+                ],
+
                 // Groups Feed
-                if (_isLoading)
+                if (_isLoading && _groups.isEmpty)
                   const Center(
                     child: Padding(
                       padding: EdgeInsets.all(40),
                       child: CircularProgressIndicator(),
                     ),
                   )
+                else if (_loadError != null && _groups.isEmpty)
+                  _buildLoadError()
                 else if (_groups.isEmpty)
                   EmptyStateWidget(
                     icon: Icons.groups_outlined,
                     title: 'No se encontraron grupos para este filtro',
-                    description: '¿Conoces o administras un grupo de WhatsApp o Discord para este curso? ¡Compártelo con tus compañeros!',
+                    description:
+                        '¿Conoces o administras un grupo de WhatsApp o Discord para este curso? ¡Compártelo con tus compañeros!',
                     buttonText: 'Compartir Enlace',
                     onButtonPressed: _openCreateGroupDialog,
                   )
                 else
                   Responsive(
-                    mobile: ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _groups.length,
-                      itemBuilder: (ctx, i) {
-                        final group = _groups[i];
-                        return GroupCard(
-                          group: group,
-                          onUpvote: () => _handleToggleUpvote(group),
-                          onReport: (reason) {
-                            GroupsService.reportGroup(
-                              groupId: group.id,
-                              reason: reason,
-                            );
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Gracias. Hemos recibido tu reporte sobre el enlace.')),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                    desktop: GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 1.6,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                      ),
-                      itemCount: _groups.length,
-                      itemBuilder: (ctx, i) {
-                        final group = _groups[i];
-                        return GroupCard(
-                          group: group,
-                          onUpvote: () => _handleToggleUpvote(group),
-                          onReport: (reason) {
-                            GroupsService.reportGroup(
-                              groupId: group.id,
-                              reason: reason,
-                            );
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Gracias. Hemos recibido tu reporte sobre el enlace.')),
-                            );
-                          },
-                        );
-                      },
-                    ),
+                    mobile: _buildGroupList(),
+                    tablet: widget.activeChannelName == null
+                        ? _buildGroupGrid()
+                        : _buildGroupList(),
+                    desktop: _buildGroupGrid(),
                   ),
               ],
             ),
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'groups_fab',
-        onPressed: _openCreateGroupDialog,
-        backgroundColor: const Color(0xFF198754),
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.group_add),
-        label: const Text('Compartir Grupo'),
-      ),
+      floatingActionButton: widget.showFloatingActionButton
+          ? FloatingActionButton.extended(
+              heroTag: widget.floatingActionButtonHeroTag,
+              onPressed: _openCreateGroupDialog,
+              backgroundColor: const Color(0xFF16A34A),
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.group_add),
+              label: const Text('Compartir Grupo'),
+            )
+          : null,
     );
   }
 }

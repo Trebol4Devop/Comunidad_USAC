@@ -31,6 +31,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   late Post _post;
   List<PostComment> _comments = [];
   bool _isLoadingComments = true;
+  bool _commentsLoadError = false;
   final TextEditingController _commentController = TextEditingController();
   final FocusNode _commentFocusNode = FocusNode();
 
@@ -53,20 +54,24 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   }
 
   Future<void> _loadComments() async {
-    setState(() => _isLoadingComments = true);
+    setState(() {
+      _isLoadingComments = true;
+      _commentsLoadError = false;
+    });
     try {
       final list = await ForumService.fetchCommentsTree(_post.id);
       if (mounted) {
         setState(() {
           _comments = list;
           _isLoadingComments = false;
+          _commentsLoadError = false;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _comments = [];
           _isLoadingComments = false;
+          _commentsLoadError = true;
         });
       }
     }
@@ -77,7 +82,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       AuthModal.show(
         context,
         title: 'Inicia Sesión para Votar',
-        subtitle: 'Para valorar publicaciones útiles en el foro, debes iniciar sesión.',
+        subtitle:
+            'Para valorar publicaciones útiles en el foro, debes iniciar sesión.',
         onAuthenticated: () => _handleLike(),
       );
       return;
@@ -93,11 +99,34 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       );
     });
 
-    final success = await ForumService.toggleLike(_post);
-    if (mounted && success != !prevLiked) {
+    try {
+      final success = await ForumService.toggleLike(
+        _post.copyWith(isLikedByMe: prevLiked),
+      );
+      if (mounted && success != !prevLiked) {
+        setState(() {
+          _post = _post.copyWith(isLikedByMe: prevLiked, likes: prevLikes);
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'No se pudo registrar el me gusta. Inténtalo de nuevo.',
+            ),
+          ),
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
       setState(() {
         _post = _post.copyWith(isLikedByMe: prevLiked, likes: prevLikes);
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No se pudo registrar el me gusta. Inténtalo de nuevo.',
+          ),
+        ),
+      );
     }
   }
 
@@ -106,7 +135,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       AuthModal.show(
         context,
         title: 'Inicia Sesión para Guardar',
-        subtitle: 'Para guardar publicaciones en tus marcadores, debes iniciar sesión.',
+        subtitle:
+            'Para guardar publicaciones en tus marcadores, debes iniciar sesión.',
         onAuthenticated: () => _handleBookmark(),
       );
       return;
@@ -126,7 +156,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(!prevBookmarked ? 'Publicación guardada en marcadores.' : 'Publicación eliminada de marcadores.'),
+            content: Text(
+              !prevBookmarked
+                  ? 'Publicación guardada en marcadores.'
+                  : 'Publicación eliminada de marcadores.',
+            ),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -139,7 +173,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       AuthModal.show(
         context,
         title: 'Inicia Sesión para Votar en la Encuesta',
-        subtitle: 'Para participar en las encuestas estudiantiles, debes iniciar sesión.',
+        subtitle:
+            'Para participar en las encuestas estudiantiles, debes iniciar sesión.',
         onAuthenticated: () => _handleVotePoll(pollId, optionId),
       );
       return;
@@ -166,10 +201,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
     setState(() {
       _post = _post.copyWith(
-        poll: oldPoll.copyWith(
-          options: newOptions,
-          myVotedOptionId: optionId,
-        ),
+        poll: oldPoll.copyWith(options: newOptions, myVotedOptionId: optionId),
       );
     });
 
@@ -184,7 +216,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       AuthModal.show(
         context,
         title: 'Inicia Sesión para Citar',
-        subtitle: 'Para citar esta publicación en el foro, debes iniciar sesión.',
+        subtitle:
+            'Para citar esta publicación en el foro, debes iniciar sesión.',
         onAuthenticated: () => _handleQuotePost(),
       );
       return;
@@ -224,7 +257,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       AuthModal.show(
         context,
         title: 'Inicia Sesión para Responder',
-        subtitle: 'Para participar y responder en este tema, debes iniciar sesión.',
+        subtitle:
+            'Para participar y responder en este tema, debes iniciar sesión.',
         onAuthenticated: () => _sendComment(),
       );
       return;
@@ -281,7 +315,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         title: const Text('Discusión en el Foro'),
         actions: [
           IconButton(
-            icon: Icon(_post.isBookmarkedByMe ? Icons.bookmark : Icons.bookmark_border),
+            icon: Icon(
+              _post.isBookmarkedByMe ? Icons.bookmark : Icons.bookmark_border,
+            ),
             tooltip: 'Guardar publicación',
             color: _post.isBookmarkedByMe ? const Color(0xFFD97706) : null,
             onPressed: _handleBookmark,
@@ -300,12 +336,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 title: 'Reportar Publicación',
                 subtitle: 'Publicación de ${_post.authorAlias}',
                 onSubmitted: (reason) {
-                  ForumService.reportPost(
-                    postId: _post.id,
-                    reason: reason,
-                  );
+                  ForumService.reportPost(postId: _post.id, reason: reason);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Gracias por tu reporte. Se ha enviado al equipo de moderación.')),
+                    const SnackBar(
+                      content: Text(
+                        'Gracias por tu reporte. Se ha enviado al equipo de moderación.',
+                      ),
+                    ),
                   );
                 },
               );
@@ -319,7 +356,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             child: SingleChildScrollView(
               child: MaxWidthContainer(
                 maxWidth: 900,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -327,10 +367,14 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     Container(
                       padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
-                        color: theme.cardTheme.color ?? (isDark ? const Color(0xFF1C2541) : Colors.white),
+                        color:
+                            theme.cardTheme.color ??
+                            (isDark ? const Color(0xFF1C2541) : Colors.white),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                          color: isDark
+                              ? const Color(0xFF334155)
+                              : const Color(0xFFE2E8F0),
                         ),
                       ),
                       child: Column(
@@ -364,8 +408,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             children: [
                               CircleAvatar(
                                 radius: 16,
-                                backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.12),
-                                child: Icon(Icons.person, size: 18, color: theme.colorScheme.primary),
+                                backgroundColor: theme.colorScheme.primary
+                                    .withValues(alpha: 0.12),
+                                child: Icon(
+                                  Icons.person,
+                                  size: 18,
+                                  color: theme.colorScheme.primary,
+                                ),
                               ),
                               const SizedBox(width: 10),
                               Expanded(
@@ -374,22 +423,29 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                   children: [
                                     Text(
                                       _post.authorAlias,
-                                      style: theme.textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                      ),
+                                      style: theme.textTheme.titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
                                     ),
                                     Text(
                                       TimeUtils.timeAgo(_post.createdAt),
-                                      style: theme.textTheme.bodySmall?.copyWith(fontSize: 11),
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(fontSize: 11),
                                     ),
                                   ],
                                 ),
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                                  color: theme.colorScheme.primary.withValues(
+                                    alpha: 0.08,
+                                  ),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
@@ -431,41 +487,67 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                                color: isDark
+                                    ? const Color(0xFF0F172A)
+                                    : const Color(0xFFF8FAFC),
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: isDark ? Colors.grey.shade800 : Colors.grey.shade300),
+                                border: Border.all(
+                                  color: isDark
+                                      ? Colors.grey.shade800
+                                      : Colors.grey.shade300,
+                                ),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
                                     children: [
-                                      Icon(Icons.format_quote, size: 14, color: theme.colorScheme.primary),
+                                      Icon(
+                                        Icons.format_quote,
+                                        size: 14,
+                                        color: theme.colorScheme.primary,
+                                      ),
                                       const SizedBox(width: 4),
                                       Expanded(
                                         child: Text(
                                           _post.quotedPost!.authorAlias,
-                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                          ),
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
-                                        TimeUtils.timeAgo(_post.quotedPost!.createdAt),
-                                        style: TextStyle(color: Colors.grey.shade500, fontSize: 10),
+                                        TimeUtils.timeAgo(
+                                          _post.quotedPost!.createdAt,
+                                        ),
+                                        style: TextStyle(
+                                          color: Colors.grey.shade500,
+                                          fontSize: 10,
+                                        ),
                                       ),
                                     ],
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     _post.quotedPost!.title,
-                                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                    ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                   Text(
                                     _post.quotedPost!.content,
-                                    style: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.grey.shade600, fontSize: 12),
+                                    style: TextStyle(
+                                      color: isDark
+                                          ? Colors.grey.shade400
+                                          : Colors.grey.shade600,
+                                      fontSize: 12,
+                                    ),
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -480,7 +562,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             Container(
                               padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.6) : const Color(0xFFF1F5F9),
+                                color: isDark
+                                    ? const Color(
+                                        0xFF1E293B,
+                                      ).withValues(alpha: 0.6)
+                                    : const Color(0xFFF1F5F9),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Column(
@@ -497,7 +583,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                       Expanded(
                                         child: Text(
                                           _post.poll!.question,
-                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -505,29 +594,48 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                   const SizedBox(height: 10),
                                   ..._post.poll!.options.map((opt) {
                                     final total = _post.poll!.totalVotes;
-                                    final rawPercent = (total > 0) ? (opt.votesCount / total) : 0.0;
-                                    final percent = (rawPercent.isNaN || rawPercent.isInfinite) ? 0.0 : rawPercent.clamp(0.0, 1.0);
-                                    final hasVoted = _post.poll!.myVotedOptionId != null;
-                                    final isMyVote = _post.poll!.myVotedOptionId == opt.id;
+                                    final rawPercent = (total > 0)
+                                        ? (opt.votesCount / total)
+                                        : 0.0;
+                                    final percent =
+                                        (rawPercent.isNaN ||
+                                            rawPercent.isInfinite)
+                                        ? 0.0
+                                        : rawPercent.clamp(0.0, 1.0);
+                                    final hasVoted =
+                                        _post.poll!.myVotedOptionId != null;
+                                    final isMyVote =
+                                        _post.poll!.myVotedOptionId == opt.id;
 
                                     return Padding(
                                       padding: const EdgeInsets.only(bottom: 8),
                                       child: InkWell(
-                                        onTap: () => _handleVotePoll(_post.poll!.id, opt.id),
+                                        onTap: () => _handleVotePoll(
+                                          _post.poll!.id,
+                                          opt.id,
+                                        ),
                                         borderRadius: BorderRadius.circular(8),
                                         child: Container(
                                           height: 40,
                                           decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
                                             border: Border.all(
                                               color: isMyVote
                                                   ? theme.colorScheme.primary
-                                                  : (isDark ? const Color(0xFF334155) : Colors.grey.shade300),
+                                                  : (isDark
+                                                        ? const Color(
+                                                            0xFF334155,
+                                                          )
+                                                        : Colors.grey.shade300),
                                               width: isMyVote ? 1.5 : 1.0,
                                             ),
                                           ),
                                           child: ClipRRect(
-                                            borderRadius: BorderRadius.circular(7),
+                                            borderRadius: BorderRadius.circular(
+                                              7,
+                                            ),
                                             child: Stack(
                                               children: [
                                                 if (hasVoted)
@@ -536,37 +644,70 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                                     child: Container(
                                                       color: isMyVote
                                                           ? (isDark
-                                                              ? const Color(0xFF3B82F6).withValues(alpha: 0.35)
-                                                              : const Color(0xFF004B87).withValues(alpha: 0.22))
+                                                                ? const Color(
+                                                                    0xFF3B82F6,
+                                                                  ).withValues(
+                                                                    alpha: 0.35,
+                                                                  )
+                                                                : const Color(
+                                                                    0xFF004B87,
+                                                                  ).withValues(
+                                                                    alpha: 0.22,
+                                                                  ))
                                                           : (isDark
-                                                              ? Colors.white.withValues(alpha: 0.1)
-                                                              : Colors.grey.withValues(alpha: 0.15)),
+                                                                ? Colors.white
+                                                                      .withValues(
+                                                                        alpha:
+                                                                            0.1,
+                                                                      )
+                                                                : Colors.grey
+                                                                      .withValues(
+                                                                        alpha:
+                                                                            0.15,
+                                                                      )),
                                                     ),
                                                   ),
                                                 Padding(
-                                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 12,
+                                                      ),
                                                   child: Row(
-                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
                                                     children: [
                                                       Expanded(
                                                         child: Row(
                                                           children: [
                                                             if (isMyVote) ...[
                                                               Icon(
-                                                                Icons.check_circle,
+                                                                Icons
+                                                                    .check_circle,
                                                                 size: 16,
-                                                                color: theme.colorScheme.primary,
+                                                                color: theme
+                                                                    .colorScheme
+                                                                    .primary,
                                                               ),
-                                                              const SizedBox(width: 8),
+                                                              const SizedBox(
+                                                                width: 8,
+                                                              ),
                                                             ],
                                                             Flexible(
                                                               child: Text(
                                                                 opt.optionText,
                                                                 style: TextStyle(
                                                                   fontSize: 13,
-                                                                  fontWeight: isMyVote ? FontWeight.bold : FontWeight.normal,
+                                                                  fontWeight:
+                                                                      isMyVote
+                                                                      ? FontWeight
+                                                                            .bold
+                                                                      : FontWeight
+                                                                            .normal,
                                                                 ),
-                                                                overflow: TextOverflow.ellipsis,
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
                                                               ),
                                                             ),
                                                           ],
@@ -577,10 +718,23 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                                           '${(percent * 100).toStringAsFixed(0)}% · ${opt.votesCount} votos',
                                                           style: TextStyle(
                                                             fontSize: 12,
-                                                            fontWeight: FontWeight.w600,
+                                                            fontWeight:
+                                                                FontWeight.w600,
                                                             color: isMyVote
-                                                                ? (isDark ? const Color(0xFF93C5FD) : const Color(0xFF004B87))
-                                                                : (isDark ? Colors.grey.shade400 : Colors.grey.shade600),
+                                                                ? (isDark
+                                                                      ? const Color(
+                                                                          0xFF93C5FD,
+                                                                        )
+                                                                      : const Color(
+                                                                          0xFF004B87,
+                                                                        ))
+                                                                : (isDark
+                                                                      ? Colors
+                                                                            .grey
+                                                                            .shade400
+                                                                      : Colors
+                                                                            .grey
+                                                                            .shade600),
                                                           ),
                                                         ),
                                                     ],
@@ -595,7 +749,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                   }),
                                   Text(
                                     '${_post.poll!.totalVotes} votos registrados en total',
-                                    style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.grey.shade500,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -603,7 +760,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           ],
 
                           // GIF if present
-                          if (_post.gifUrl != null && _post.gifUrl!.isNotEmpty) ...[
+                          if (_post.gifUrl != null &&
+                              _post.gifUrl!.isNotEmpty) ...[
                             const SizedBox(height: 14),
                             DiscordMediaAttachment(
                               imageUrl: _post.gifUrl!,
@@ -615,7 +773,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           ],
 
                           // Image if present
-                          if (_post.imageUrl != null && _post.imageUrl!.isNotEmpty) ...[
+                          if (_post.imageUrl != null &&
+                              _post.imageUrl!.isNotEmpty) ...[
                             const SizedBox(height: 14),
                             DiscordMediaAttachment(
                               imageUrl: _post.imageUrl!,
@@ -639,22 +798,33 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 onTap: _handleLike,
                                 borderRadius: BorderRadius.circular(20),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 7,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: _post.isLikedByMe
-                                        ? theme.colorScheme.primary.withValues(alpha: 0.12)
-                                        : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
+                                        ? theme.colorScheme.primary.withValues(
+                                            alpha: 0.12,
+                                          )
+                                        : (isDark
+                                              ? const Color(0xFF1E293B)
+                                              : const Color(0xFFF1F5F9)),
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(
-                                        _post.isLikedByMe ? Icons.thumb_up : Icons.thumb_up_alt_outlined,
+                                        _post.isLikedByMe
+                                            ? Icons.thumb_up
+                                            : Icons.thumb_up_alt_outlined,
                                         size: 16,
                                         color: _post.isLikedByMe
                                             ? theme.colorScheme.primary
-                                            : (isDark ? Colors.grey.shade400 : Colors.grey.shade600),
+                                            : (isDark
+                                                  ? Colors.grey.shade400
+                                                  : Colors.grey.shade600),
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
@@ -664,7 +834,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                           fontWeight: FontWeight.bold,
                                           color: _post.isLikedByMe
                                               ? theme.colorScheme.primary
-                                              : (isDark ? Colors.grey.shade300 : Colors.grey.shade700),
+                                              : (isDark
+                                                    ? Colors.grey.shade300
+                                                    : Colors.grey.shade700),
                                         ),
                                       ),
                                     ],
@@ -674,26 +846,44 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                               // Reposts badge
                               if (_post.repostsCount > 0)
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 7,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                                    color: isDark
+                                        ? const Color(0xFF1E293B)
+                                        : const Color(0xFFF1F5F9),
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(Icons.repeat, size: 16, color: isDark ? Colors.grey.shade400 : Colors.grey.shade600),
+                                      Icon(
+                                        Icons.repeat,
+                                        size: 16,
+                                        color: isDark
+                                            ? Colors.grey.shade400
+                                            : Colors.grey.shade600,
+                                      ),
                                       const SizedBox(width: 4),
                                       Text(
                                         '${_post.repostsCount} citas',
-                                        style: TextStyle(fontSize: 12, color: isDark ? Colors.grey.shade300 : Colors.grey.shade700),
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: isDark
+                                              ? Colors.grey.shade300
+                                              : Colors.grey.shade700,
+                                        ),
                                       ),
                                     ],
                                   ),
                                 ),
                               Text(
                                 '${_comments.length} comentarios',
-                                style: theme.textTheme.bodySmall?.copyWith(fontSize: 12),
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  fontSize: 12,
+                                ),
                               ),
                             ],
                           ),
@@ -710,7 +900,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         const SizedBox(width: 8),
                         Text(
                           'Comentarios y Respuestas',
-                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
@@ -718,25 +910,60 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
                     // Comments List
                     if (_isLoadingComments)
-                      const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator()))
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(24),
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    else if (_commentsLoadError)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          children: [
+                            const Icon(Icons.error_outline, size: 32),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'No se pudieron cargar los comentarios.',
+                            ),
+                            const SizedBox(height: 8),
+                            OutlinedButton.icon(
+                              onPressed: _loadComments,
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Reintentar'),
+                            ),
+                          ],
+                        ),
+                      )
                     else if (_comments.isEmpty)
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.5) : const Color(0xFFF8FAFC),
+                          color: isDark
+                              ? const Color(0xFF1E293B).withValues(alpha: 0.5)
+                              : const Color(0xFFF8FAFC),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                            color: isDark
+                                ? const Color(0xFF334155)
+                                : const Color(0xFFE2E8F0),
                           ),
                         ),
                         child: Column(
                           children: [
-                            Icon(Icons.chat_bubble_outline, size: 32, color: Colors.grey.shade400),
+                            Icon(
+                              Icons.chat_bubble_outline,
+                              size: 32,
+                              color: Colors.grey.shade400,
+                            ),
                             const SizedBox(height: 8),
                             Text(
                               'Aún no hay respuestas',
-                              style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             Text(
                               'Sé el primero en aportar a esta consulta estudiantil.',
@@ -759,7 +986,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 reason: reason,
                               );
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Reporte enviado a moderación.')),
+                                const SnackBar(
+                                  content: Text(
+                                    'Reporte enviado a moderación.',
+                                  ),
+                                ),
                               );
                             },
                           );
@@ -777,7 +1008,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               color: isDark ? const Color(0xFF151E34) : Colors.white,
               border: Border(
                 top: BorderSide(
-                  color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                  color: isDark
+                      ? const Color(0xFF334155)
+                      : const Color(0xFFE2E8F0),
                 ),
               ),
             ),
@@ -785,21 +1018,33 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               top: false,
               child: MaxWidthContainer(
                 maxWidth: 900,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (_replyTarget != null) ...[
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         margin: const EdgeInsets.only(bottom: 6),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.08,
+                          ),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.reply, size: 14, color: theme.colorScheme.primary),
+                            Icon(
+                              Icons.reply,
+                              size: 14,
+                              color: theme.colorScheme.primary,
+                            ),
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
@@ -829,21 +1074,32 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         padding: const EdgeInsets.all(6),
                         margin: const EdgeInsets.only(bottom: 6),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                          color: isDark
+                              ? const Color(0xFF1E293B)
+                              : const Color(0xFFF1F5F9),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           children: [
                             ClipRRect(
                               borderRadius: BorderRadius.circular(6),
-                              child: Image.network(_commentGifUrl!, height: 60, width: 80, fit: BoxFit.cover),
+                              child: Image.network(
+                                _commentGifUrl!,
+                                height: 60,
+                                width: 80,
+                                fit: BoxFit.cover,
+                              ),
                             ),
                             const SizedBox(width: 8),
-                            const Text('GIF adjunto al comentario', style: TextStyle(fontSize: 12)),
+                            const Text(
+                              'GIF adjunto al comentario',
+                              style: TextStyle(fontSize: 12),
+                            ),
                             const Spacer(),
                             IconButton(
                               icon: const Icon(Icons.close, size: 16),
-                              onPressed: () => setState(() => _commentGifUrl = null),
+                              onPressed: () =>
+                                  setState(() => _commentGifUrl = null),
                             ),
                           ],
                         ),
@@ -871,13 +1127,17 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           child: TextField(
                             controller: _commentController,
                             focusNode: _commentFocusNode,
+                            onChanged: (_) => setState(() {}),
                             minLines: 1,
                             maxLines: 4,
                             decoration: InputDecoration(
                               hintText: _replyTarget != null
                                   ? 'Escribe tu respuesta a ${_replyTarget!.authorAlias}...'
                                   : 'Escribe tu respuesta pública en el foro...',
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
                             ),
                           ),
                         ),
@@ -887,10 +1147,18 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                               ? const SizedBox(
                                   width: 18,
                                   height: 18,
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
                                 )
                               : const Icon(Icons.send, size: 18),
-                          onPressed: _isSendingComment ? null : _sendComment,
+                          onPressed:
+                              _isSendingComment ||
+                                  (_commentController.text.trim().isEmpty &&
+                                      _commentGifUrl == null)
+                              ? null
+                              : _sendComment,
                         ),
                       ],
                     ),

@@ -38,6 +38,7 @@ class _SponsorRequestDialogState extends State<SponsorRequestDialog> {
 
   String _placement = 'Primera Plana - Marketplace';
   bool _isSubmitting = false;
+  String? _submitError;
 
   @override
   void dispose() {
@@ -52,28 +53,39 @@ class _SponsorRequestDialogState extends State<SponsorRequestDialog> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isSubmitting = true);
+    setState(() {
+      _isSubmitting = true;
+      _submitError = null;
+    });
 
-    final success = await MarketplaceService.requestSponsorship(
-      brandName: _brandController.text.trim(),
-      contactName: _contactController.text.trim(),
-      contactPhone: _phoneController.text.trim(),
-      email: _emailController.text.trim(),
-      proposalDetails: _proposalController.text.trim(),
-      expectedPlacement: _placement,
-    );
+    var success = false;
+    try {
+      success = await MarketplaceService.requestSponsorship(
+        brandName: _brandController.text.trim(),
+        contactName: _contactController.text.trim(),
+        contactPhone: _phoneController.text.trim(),
+        email: _emailController.text.trim(),
+        proposalDetails: _proposalController.text.trim(),
+        expectedPlacement: _placement,
+      );
+    } catch (_) {
+      success = false;
+    }
 
-    if (mounted) {
-      setState(() => _isSubmitting = false);
-      if (success) {
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('¡Solicitud enviada con éxito! El equipo se comunicará contigo por WhatsApp.'),
-            backgroundColor: Color(0xFF004B87),
-          ),
-        );
-      }
+    if (!mounted) return;
+    if (success) {
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('¡Solicitud enviada con éxito! El equipo se comunicará contigo por WhatsApp.'),
+          backgroundColor: Color(0xFF004B87),
+        ),
+      );
+    } else {
+      setState(() {
+        _isSubmitting = false;
+        _submitError = 'No se pudo enviar la solicitud. Tus datos siguen en el formulario; inténtalo de nuevo.';
+      });
     }
   }
 
@@ -157,7 +169,10 @@ class _SponsorRequestDialogState extends State<SponsorRequestDialog> {
                       labelText: 'WhatsApp',
                       hintText: '55551234',
                     ),
-                    validator: (val) => (val == null || val.trim().isEmpty) ? 'Ingresa tu WhatsApp' : null,
+                    validator: (val) => val == null ||
+                            !RegExp(r'^\d{8}$').hasMatch(val.trim())
+                        ? 'Ingresa un número de WhatsApp de 8 dígitos.'
+                        : null,
                   ),
                 ),
               ],
@@ -200,8 +215,21 @@ class _SponsorRequestDialogState extends State<SponsorRequestDialog> {
                 labelText: 'Detalle de la propuesta o productos a promocionar',
                 hintText: 'Describe qué productos o servicios ofreces a los estudiantes...',
               ),
-              validator: (val) => (val == null || val.trim().isEmpty) ? 'Describe tu propuesta' : null,
+              validator: (val) => val == null || val.trim().length < 10
+                  ? 'Describe tu propuesta con al menos 10 caracteres.'
+                  : null,
             ),
+
+            if (_submitError != null) ...[
+              const SizedBox(height: 12),
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  _submitError!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ),
+            ],
 
             const SizedBox(height: 16),
 

@@ -62,6 +62,32 @@ class GroupCard extends StatelessWidget {
     }
   }
 
+  String? _validatedExternalUrl(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return null;
+
+    final hasScheme = RegExp(r'^[a-zA-Z][a-zA-Z0-9+.-]*:').hasMatch(trimmed);
+    final uri = Uri.tryParse(hasScheme ? trimmed : 'https://$trimmed');
+    if (uri == null ||
+        !const {'http', 'https'}.contains(uri.scheme.toLowerCase()) ||
+        uri.host.isEmpty ||
+        uri.userInfo.isNotEmpty) {
+      return null;
+    }
+    return uri.toString();
+  }
+
+  Future<void> _openGroupLink(BuildContext context) async {
+    final safeUrl = _validatedExternalUrl(group.link);
+    if (safeUrl == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('El enlace del grupo no es válido.')),
+      );
+      return;
+    }
+    await UrlUtils.openUrl(context, safeUrl);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -81,16 +107,25 @@ class GroupCard extends StatelessWidget {
               children: [
                 // Platform tag
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: platformColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: platformColor.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: platformColor.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(_getPlatformIcon(platform), size: 12, color: platformColor),
+                      Icon(
+                        _getPlatformIcon(platform),
+                        size: 12,
+                        color: platformColor,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         _getPlatformLabel(platform),
@@ -107,9 +142,14 @@ class GroupCard extends StatelessWidget {
 
                 // Section tag
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                    color: isDark
+                        ? const Color(0xFF1E293B)
+                        : const Color(0xFFF1F5F9),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -117,7 +157,9 @@ class GroupCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
+                      color: isDark
+                          ? Colors.grey.shade300
+                          : Colors.grey.shade700,
                     ),
                   ),
                 ),
@@ -125,7 +167,11 @@ class GroupCard extends StatelessWidget {
                 const Spacer(),
 
                 PopupMenuButton<String>(
-                  icon: Icon(Icons.more_vert, size: 18, color: Colors.grey.shade600),
+                  icon: Icon(
+                    Icons.more_vert,
+                    size: 18,
+                    color: Colors.grey.shade600,
+                  ),
                   onSelected: (val) {
                     if (val == 'report' && onReport != null) {
                       ReportDialog.show(
@@ -148,7 +194,11 @@ class GroupCard extends StatelessWidget {
                       value: 'report',
                       child: Row(
                         children: [
-                          Icon(Icons.flag_outlined, size: 16, color: Colors.red),
+                          Icon(
+                            Icons.flag_outlined,
+                            size: 16,
+                            color: Colors.red,
+                          ),
                           SizedBox(width: 8),
                           Text('Reportar enlace caído/spam'),
                         ],
@@ -212,7 +262,8 @@ class GroupCard extends StatelessWidget {
                         width: double.infinity,
                         height: 140,
                         fit: BoxFit.cover,
-                        errorBuilder: (ctx, err, stack) => const SizedBox.shrink(),
+                        errorBuilder: (ctx, err, stack) =>
+                            const SizedBox.shrink(),
                       ),
                       Positioned(
                         bottom: 6,
@@ -223,7 +274,11 @@ class GroupCard extends StatelessWidget {
                             color: Colors.black.withValues(alpha: 0.6),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: const Icon(Icons.zoom_in, color: Colors.white, size: 16),
+                          child: const Icon(
+                            Icons.zoom_in,
+                            color: Colors.white,
+                            size: 16,
+                          ),
                         ),
                       ),
                     ],
@@ -237,11 +292,18 @@ class GroupCard extends StatelessWidget {
             // Creator & Time
             Row(
               children: [
-                Icon(Icons.person_outline, size: 13, color: Colors.grey.shade500),
+                Icon(
+                  Icons.person_outline,
+                  size: 13,
+                  color: Colors.grey.shade500,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   group.authorAlias,
-                  style: theme.textTheme.bodySmall?.copyWith(fontSize: 11, fontWeight: FontWeight.w500),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 Text(
                   ' • ${TimeUtils.timeAgo(group.createdAt)}',
@@ -255,76 +317,118 @@ class GroupCard extends StatelessWidget {
             const SizedBox(height: 12),
 
             // Actions Row: Upvote, Copy link, Join Button
-            Row(
-              children: [
-                // Upvote button
-                InkWell(
-                  onTap: onUpvote,
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: group.isUpvotedByMe
-                          ? theme.colorScheme.primary.withValues(alpha: 0.12)
-                          : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          group.isUpvotedByMe ? Icons.thumb_up : Icons.thumb_up_alt_outlined,
-                          size: 15,
-                          color: group.isUpvotedByMe
-                              ? theme.colorScheme.primary
-                              : (isDark ? Colors.grey.shade400 : Colors.grey.shade600),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final compactJoinAction = constraints.maxWidth < 360;
+                return Row(
+                  children: [
+                    // Upvote button
+                    Semantics(
+                      button: true,
+                      label: group.isUpvotedByMe
+                          ? 'Retirar voto del grupo'
+                          : 'Votar por el grupo',
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          minWidth: 48,
+                          minHeight: 48,
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '${group.upvotes}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: group.isUpvotedByMe
-                                ? theme.colorScheme.primary
-                                : (isDark ? Colors.grey.shade300 : Colors.grey.shade700),
+                        child: InkWell(
+                          onTap: onUpvote,
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: group.isUpvotedByMe
+                                  ? theme.colorScheme.primary.withValues(
+                                      alpha: 0.12,
+                                    )
+                                  : (isDark
+                                        ? const Color(0xFF1E293B)
+                                        : const Color(0xFFF1F5F9)),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  group.isUpvotedByMe
+                                      ? Icons.thumb_up
+                                      : Icons.thumb_up_alt_outlined,
+                                  size: 15,
+                                  color: group.isUpvotedByMe
+                                      ? theme.colorScheme.primary
+                                      : (isDark
+                                            ? Colors.grey.shade400
+                                            : Colors.grey.shade600),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  '${group.upvotes}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: group.isUpvotedByMe
+                                        ? theme.colorScheme.primary
+                                        : (isDark
+                                              ? Colors.grey.shade300
+                                              : Colors.grey.shade700),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
-
-                const SizedBox(width: 8),
-
-                // Copy Link Button
-                IconButton.outlined(
-                  icon: const Icon(Icons.copy, size: 16),
-                  tooltip: 'Copiar enlace',
-                  style: IconButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  onPressed: () => UrlUtils.copyToClipboard(
-                    context,
-                    group.link,
-                    message: 'Enlace del grupo copiado al portapapeles',
-                  ),
-                ),
-
-                const Spacer(),
-
-                // Join Button
-                ElevatedButton.icon(
-                  onPressed: () => UrlUtils.openUrl(context, group.link),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: platformColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  ),
-                  icon: Icon(_getPlatformIcon(platform), size: 16),
-                  label: const Text('Unirse al Grupo', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                ),
-              ],
+                    const SizedBox(width: 8),
+                    IconButton.outlined(
+                      icon: const Icon(Icons.copy, size: 16),
+                      tooltip: 'Copiar enlace',
+                      style: IconButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: () => UrlUtils.copyToClipboard(
+                        context,
+                        group.link,
+                        message: 'Enlace del grupo copiado al portapapeles',
+                      ),
+                    ),
+                    const Spacer(),
+                    if (compactJoinAction)
+                      IconButton.filled(
+                        tooltip: 'Unirse al grupo',
+                        onPressed: () => _openGroupLink(context),
+                        icon: Icon(_getPlatformIcon(platform)),
+                      )
+                    else
+                      ElevatedButton.icon(
+                        onPressed: () => _openGroupLink(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: platformColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                        ),
+                        icon: Icon(_getPlatformIcon(platform), size: 16),
+                        label: const Text(
+                          'Unirse al Grupo',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
             ),
           ],
         ),
