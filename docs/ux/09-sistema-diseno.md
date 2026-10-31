@@ -44,9 +44,9 @@ La app usa **Material 3** con una identidad cromática inspirada en la USAC
 | Nombre | Rango | Comportamiento |
 |---|---|---|
 | Móvil | `< 700px` | Una columna; `NavigationBar` + FAB; modales como hoja inferior |
-| Tablet | `700px – 1100px` | Intermedio; se pueden mostrar columnas auxiliares |
+| Tablet | `700px – 1099px` | Intermedio; se pueden mostrar columnas auxiliares |
 | Desktop | `>= 1100px` | Multi-columna; pestañas superiores; sidebar de populares |
-| Ancho ultra | `>= 1050px` | Se habilita "Comunidades más populares" a la derecha |
+| Sidebar desktop | `>= 1100px` | Se habilita "Comunidades más populares" a la derecha |
 
 ### 1.5 Contenedores
 - `MaxWidthContainer` limita el ancho de lectura (900–1200px según pantalla) y

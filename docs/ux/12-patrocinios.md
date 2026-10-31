@@ -82,10 +82,7 @@
   mediante: etiqueta textual **"Patrocinado"** (o "Publicidad"), logotipo y nombre
   del patrocinador, distintivo verificado y un acento cromático propio sobre el
   lenguaje visual de la sección.
-- **Problema actual [Mejora]:** hoy el carrusel de patrocinadores del Marketplace
-  ([`sponsor_carousel.dart`](../../comunidad_universitaria/lib/features/marketplace/widgets/sponsor_carousel.dart))
-  no tiene un modelo de etiquetado reutilizable para insertarse en Foro/Grupos;
-  se define aquí como token de diseño ([ver `UX-DSN-008` en `09-sistema-diseno.md`](09-sistema-diseno.md)).
+- **Problema pendiente:** Marketplace ya muestra la etiqueta y controles de transparencia, pero aún no existe un componente reutilizable en Foro/Grupos; el esquema actual tampoco garantiza un nombre de marca para toda unidad patrocinada. Se mantiene pendiente la consistencia transversal y el nombre obligatorio ([ver `UX-DSN-008` en `09-sistema-diseno.md`](09-sistema-diseno.md)).
 - **Validaciones y reglas de negocio:** la etiqueta es **obligatoria e
   ineludible**; ningún tema oscuro (dark pattern) puede ocultarla.
 - **Accesibilidad:** la etiqueta se anuncia explícitamente a lectores de pantalla
@@ -136,6 +133,15 @@
     esto?", **Then** se explica la razón sin exponer datos personales.
   - **Given** que el usuario oculta un anuncio, **When** recarga la sección,
     **Then** ese anuncio no vuelve a mostrarse.
+
+#### Implementación actual en Marketplace
+
+El ocultamiento se guarda localmente en `SharedPreferences`, separado por el ID
+actual de usuario de Supabase; en sesión sin ID usa el ámbito anónimo del
+dispositivo. No existe sincronización entre dispositivos ni restauración tras
+borrar los datos de la aplicación o reinstalarla. La razón visible informa que
+Marketplace actualmente no proporciona una explicación de segmentación más
+específica; no se infiere perfil, marca ni criterios de segmentación.
 
 ### UX-SPN-006 — Moderación y aprobación
 - **Actor / rol:** Moderador, Admin

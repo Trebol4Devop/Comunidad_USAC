@@ -67,7 +67,7 @@ Nombre en formato `dominio_accion` (snake_case, sin datos personales).
 
 ## 4. Matriz de trazabilidad
 
-Leyenda de estado: Cubierto · Parcial · Pendiente.
+Leyenda de estado: Cubierto · Parcial · Pendiente · Sin evaluar · No aplica.
 
 > La columna **Prueba** cita el archivo existente en `test/`,
 > `integration_test/` o `supabase/tests/` que respalda el requisito.
@@ -85,7 +85,7 @@ Leyenda de estado: Cubierto · Parcial · Pendiente.
 | UX-MAP-003 Enlaces externos | `core/utils/url_utils.dart` | `test/utils/storage_url_test.dart` | Parcial |
 | UX-NAV-001 Tres destinos (08) | `features/navigation/app_shell.dart`; `features/forum/widgets/discord/forum_server_rail.dart` | `test/widgets/app_shell_test.dart` | Parcial |
 | UX-NAV-002 Preservación de estado (08) | `app_shell.dart` (`IndexedStack`) | Pendiente | Parcial |
-| UX-NAV-005/006 Tabs / NavigationBar (08) | `app_shell.dart` | `test/widgets/app_shell_test.dart` | Parcial |
+| UX-NAV-005/006 Tabs / NavigationBar (08) | `app_shell.dart` (`Responsive.isMobile`, breakpoint 700) | `test/widgets/app_shell_test.dart` | Parcial |
 | UX-NAV-008 Aviso comunitario (08) | `app_shell.dart` (`_showDisclaimerModal`) | Parcial | Parcial |
 | UX-REG-002 Las 7 reglas | `features/rules/screens/rules_screen.dart` | `test/widgets/rules_screen_test.dart` | Cubierto |
 
@@ -183,7 +183,7 @@ Leyenda de estado: Cubierto · Parcial · Pendiente.
 
 | Requisito | Implementación | Prueba | Estado |
 |---|---|---|---|
-| UX-DSN-001 Tema claro/oscuro | `core/config/app_theme.dart`; `main.dart` | Parcial | Parcial |
+| UX-DSN-001 Tema claro/oscuro | `core/config/app_theme.dart`; `main.dart`; `core/services/local_storage_service.dart` | `test/services/local_storage_service_test.dart` | Parcial |
 | UX-DSN-003 Componentes base | `shared/widgets/empty_state_widget.dart`; `network_state_widgets.dart`; `identity_badge_chip.dart` | `test/widgets/shared/empty_state_test.dart`; `network_state_widgets_test.dart`; `identity_badge_chip_test.dart` | Cubierto |
 | UX-DSN-004 Breakpoints | `core/utils/responsive.dart` | `test/utils/responsive_test.dart` | Cubierto |
 | UX-X-003 Fallback de multimedia | `core/services/storage_service.dart` | `test/services/storage_service_test.dart` | Pendiente |
@@ -194,8 +194,8 @@ Leyenda de estado: Cubierto · Parcial · Pendiente.
 | UX-X-013 Localización es-GT | `core/utils/time_utils.dart`; textos en `lib/` | `test/utils/time_utils_test.dart` | Parcial |
 | UX-X-014 Rendimiento percibido | `features/forum/screens/forum_screen.dart` (optimista) | `test/forum_test.dart` | Parcial |
 | UX-X-015 Privacidad | `features/shared/widgets/identity_badge_chip.dart`; `features/profile/screens/profile_screen.dart` | `test/widgets/shared/identity_badge_chip_test.dart` | Parcial |
-| UX-X-016 Transparencia de patrocinios `[Mejora]` | `shared/widgets/*` + nuevo etiquetado | Pendiente | Pendiente |
-| UX-DSN-008 Lenguaje visual de patrocinios `[Mejora]` | `core/config/app_theme.dart`; nuevo `SponsoredLabel` | Pendiente | Pendiente |
+| UX-X-016 Transparencia de patrocinios `[Mejora]` | `features/marketplace/widgets/sponsored_content_controls.dart`; preferencias locales (sin sincronización) | `test/widgets/sponsored_content_controls_test.dart`; `test/services/sponsored_preferences_service_test.dart` | Parcial |
+| UX-DSN-008 Lenguaje visual de patrocinios `[Mejora]` | `features/marketplace/widgets/marketplace_card.dart`; `sponsor_carousel.dart` | `test/widgets/sponsor_carousel_test.dart` | Parcial |
 
 ### 4.8 Patrocinios
 
@@ -203,9 +203,9 @@ Leyenda de estado: Cubierto · Parcial · Pendiente.
 |---|---|---|---|
 | UX-SPN-001 Perfil de patrocinador | perfil público de patrocinador (nuevo) | Pendiente | Pendiente |
 | UX-SPN-002 Panel del patrocinador | panel `Sponsor Studio` (nuevo) | Pendiente | Pendiente |
-| UX-SPN-003 Etiquetado de patrocinios | `09-sistema-diseno.md` (`UX-DSN-008`) | Pendiente | Pendiente |
+| UX-SPN-003 Etiquetado de patrocinios | `features/marketplace/widgets/marketplace_card.dart`; `sponsor_carousel.dart` | `test/widgets/sponsor_carousel_test.dart` | Parcial |
 | UX-SPN-004 Frecuencia y rotación | servicio de inserción (nuevo) | Pendiente | Pendiente |
-| UX-SPN-005 Transparencia y control | `report_dialog.dart`; preferencias locales | `test/widgets/shared/report_dialog_test.dart` | Parcial |
+| UX-SPN-005 Transparencia y control | `features/marketplace/widgets/sponsored_content_controls.dart`; preferencias locales (sin sincronización) | `test/widgets/sponsored_content_controls_test.dart`; `test/services/sponsored_preferences_service_test.dart` | Parcial |
 | UX-SPN-006 Moderación de patrocinios | moderación existente; `rpc_moderation_test.sql` | `supabase/tests/rpc_moderation_test.sql` | Parcial |
 | UX-SPN-007 Métricas de patrocinio | analítica nueva | `11-metricas-y-trazabilidad.md` | Pendiente |
 | UX-SPN-008 Accesibilidad de patrocinios | `10-transversales.md` (`UX-X-016`) | Pendiente | Pendiente |
@@ -223,7 +223,56 @@ Leyenda de estado: Cubierto · Parcial · Pendiente.
 | UX-FORO-024 Convivencia y no intrusión | `forum_screen.dart`; moderación | Pendiente | Pendiente |
 | UX-GRP-010 Tarjeta patrocinada en Grupos `[Mejora]` | nuevo `SponsoredGroupCard`; `groups_screen.dart` | Pendiente | Pendiente |
 | UX-GRP-011 Perfil de patrocinador afín al curso `[Mejora]` | nuevo `SponsoredProfileBand` | Pendiente | Pendiente |
-| UX-GRP-012 Control y transparencia en Grupos | `groups_screen.dart`; `report_dialog.dart` | Pendiente | Pendiente |
+| UX-GRP-012 Control y transparencia en Grupos | Aún no integrado; el control existe solo en Marketplace | Pendiente | Pendiente |
+
+### 4.9 Requisitos antes no trazados individualmente
+
+La comparación de IDs de encabezados `### UX-*` con las filas previas de §4 encontró 40 requisitos sin una fila de evidencia individual. Se evaluaron ahora contra el código y los tests existentes. `Parcial` indica que hay implementación, pero al menos un criterio está incompleto o carece de prueba directa; `Pendiente` indica que falta la capacidad. La presencia de un test no equivale a auditoría visual o WCAG.
+
+| Requisito | Implementación | Prueba / evidencia | Estado |
+|---|---|---|---|
+| UX-AUTH-004 Inicio de sesión con correo y contraseña | `features/shared/widgets/auth_modal.dart`; `core/services/supabase_service.dart` | `test/widgets/shared/auth_modal_test.dart`; `test/services/supabase_service_test.dart` | Parcial |
+| UX-AUTH-007 Cierre de sesión y revocación local | `features/profile/screens/profile_screen.dart`; `shared/widgets/totp_session_guard.dart`; `supabase_service.dart` | `test/services/supabase_service_test.dart` | Parcial |
+| UX-AUTH-011 Desafío TOTP | `features/shared/widgets/totp_session_guard.dart` | `test/widgets/totp_session_guard_test.dart` | Parcial |
+| UX-AUTH-012 Desactivación de TOTP | `features/profile/screens/totp_enrollment_screen.dart`; `supabase_service.dart` | `test/services/supabase_service_test.dart` (solo validación de formato) | Parcial |
+| UX-DSN-002 Uso consistente de tokens | `core/config/app_theme.dart`; aún hay estilos y colores literales en features | Sin prueba de consistencia global | Parcial |
+| UX-DSN-005 Iconografía consistente | Iconografía Material en `features/`; restricciones/tamaños no normalizados | `test/widgets/app_shell_test.dart` (tooltips parciales) | Parcial |
+| UX-DSN-006 Movimiento sobrio | Transiciones locales en `features/forum/widgets/discord/forum_server_rail.dart`; sin preferencia global de reducir movimiento | Sin prueba de `disableAnimations` | Parcial |
+| UX-DSN-007 Coherencia visual del Foro | `features/forum/`; tema Discord y tema oscuro implementados | `test/discord_forum_test.dart` (cobertura visual parcial) | Parcial |
+| UX-FORO-018 Configuración de encuestas | `features/forum/widgets/create_post_dialog.dart`; `core/services/forum_service.dart` | `test/widgets/dialogs/create_post_dialog_test.dart`; `test/services/forum_service_test.dart` | Parcial |
+| UX-FORO-019 Estados y modo sin conexión | `features/forum/screens/forum_screen.dart`; `core/services/cache_service.dart` | `test/cache_service_test.dart`; `test/widgets/shared/network_state_widgets_test.dart` (sin flujo integrado) | Parcial |
+| UX-GRP-003 Aviso de depuración semestral | `features/groups/screens/groups_screen.dart`; persistencia local | `test/widgets/groups_screen_test.dart` | Parcial |
+| UX-GRP-004 Vista responsiva de grupos | `features/groups/screens/groups_screen.dart`; `widgets/group_card.dart`; `core/utils/responsive.dart` | `test/widgets/groups_screen_test.dart` (móvil/escritorio, falta validar tablet) | Parcial |
+| UX-GRP-007 Reporte de grupos | `core/services/groups_service.dart`; `features/shared/widgets/report_dialog.dart` | `test/services/groups_service_test.dart`; `test/widgets/shared/report_dialog_test.dart` | Parcial |
+| UX-GRP-009 Abrir y copiar enlace | `features/groups/widgets/group_card.dart`; `core/utils/url_utils.dart` | `test/utils/storage_url_test.dart` (sin interacción directa de tarjeta) | Parcial |
+| UX-MKT-001 Banner e identidad de comercio | `features/marketplace/screens/marketplace_screen.dart` | `test/widgets/marketplace_screen_test.dart` | Parcial |
+| UX-MKT-003 Solicitud de patrocinio | `features/marketplace/widgets/sponsor_carousel.dart`; `sponsor_request_dialog.dart`; `marketplace_service.dart` | `test/widgets/sponsor_carousel_test.dart`; `test/widgets/sponsor_request_dialog_test.dart` | Parcial |
+| UX-MKT-006 Galería y visor de imágenes | `features/marketplace/widgets/marketplace_card.dart`; `features/shared/widgets/image_viewer_dialog.dart` | Sin prueba directa de galería/visor | Parcial |
+| UX-MKT-007 Precio en Quetzales y gratuidad | `core/models/marketplace_item.dart`; `features/marketplace/widgets/marketplace_card.dart` | `test/models/marketplace_item_model_test.dart`; `test/widgets/marketplace_screen_test.dart` | Parcial |
+| UX-MKT-010 Votación de utilidad | `features/marketplace/widgets/marketplace_card.dart`; `core/services/marketplace_service.dart` | Sin test específico de upvote | Parcial |
+| UX-MKT-011 Reporte de anuncios | `features/marketplace/widgets/marketplace_card.dart`; `features/shared/widgets/report_dialog.dart`; `marketplace_service.dart` | `test/services/marketplace_service_test.dart` (sin flujo UI completo) | Parcial |
+| UX-NAV-003 Cabecera y distintivo no oficial | `features/navigation/app_shell.dart` | `test/widgets/app_shell_test.dart` | Parcial |
+| UX-NAV-004 Acceso a normas y alternador de tema | `app_shell.dart`; `main.dart`; `core/services/local_storage_service.dart` | `test/widgets/app_shell_test.dart`; `test/services/local_storage_service_test.dart` | Parcial |
+| UX-NAV-006 NavigationBar móvil | `features/navigation/app_shell.dart` | `test/widgets/app_shell_test.dart` (no incluye prueba a 320 dp) | Parcial |
+| UX-PRF-002 Edición y generación de alias | `features/profile/screens/profile_screen.dart`; `features/profile/widgets/alias_modal.dart` | `test/widgets/profile_screen_test.dart`; `test/widgets/shared/alias_modal_test.dart` | Parcial |
+| UX-PRF-004 Personalización de avatar | `features/profile/screens/profile_screen.dart`; `core/services/local_storage_service.dart` | `test/services/local_storage_service_test.dart` (sin flujo UI del selector) | Parcial |
+| UX-PRF-007 Canales de contacto | `features/profile/screens/profile_screen.dart`; `local_storage_service.dart`; `features/marketplace/widgets/create_listing_dialog.dart` | `test/widgets/profile_screen_test.dart`; `test/services/local_storage_service_test.dart` | Parcial |
+| UX-PRF-009 Gestión de grupos propios | `features/profile/screens/profile_screen.dart`; `core/services/profile_service.dart` | `test/widgets/profile_screen_test.dart` (solo vacío); `test/services/profile_service_test.dart` | Parcial |
+| UX-PRF-010 Gestión de anuncios propios | `features/profile/screens/profile_screen.dart`; `core/services/profile_service.dart` | `test/widgets/profile_screen_test.dart` (solo vacío); `test/services/profile_service_test.dart` | Parcial |
+| UX-PRF-012 Preferencias, tema y normas | `features/profile/screens/profile_screen.dart`; `main.dart`; `local_storage_service.dart` | `test/services/local_storage_service_test.dart`; `test/widgets/app_shell_test.dart` | Parcial |
+| UX-REG-001 Pantalla de normas | `features/rules/screens/rules_screen.dart` | `test/widgets/rules_screen_test.dart` | Parcial |
+| UX-REG-003 Descargo institucional | `features/rules/screens/rules_screen.dart` | `test/widgets/rules_screen_test.dart` (sin medir contraste) | Parcial |
+| UX-REG-004 Enlaces oficiales | `rules_screen.dart`; `core/utils/url_utils.dart` | `test/widgets/rules_screen_test.dart`; `test/utils/storage_url_test.dart` | Parcial |
+| UX-REG-005 Acceso y retorno a normas | `features/navigation/app_shell.dart`; `features/profile/screens/profile_screen.dart`; `rules_screen.dart` | `test/discord_forum_test.dart` (retorno desde shell) | Parcial |
+| UX-X-001 Errores amigables | Errores y reintento en `features/groups/screens/groups_screen.dart`; sin taxonomía común | `test/widgets/groups_screen_test.dart` (sin catálogo global de errores) | Parcial |
+| UX-X-002 Rate limiting y temporizadores | No se encontró tratamiento transversal de 429, tiempo de espera ni reintento condicionado | Sin prueba específica | Pendiente |
+| UX-X-004 Estados vacíos accionables | `features/shared/widgets/empty_state_widget.dart`; pantallas de Foro, Grupos y Marketplace | `test/widgets/shared/empty_state_test.dart` (flujo parcial) | Parcial |
+| UX-X-005 Skeletons y CLS | `features/shared/widgets/network_state_widgets.dart`; skeleton en Marketplace | `test/widgets/shared/network_state_widgets_test.dart` (sin medición CLS) | Parcial |
+| UX-X-008 Contraste WCAG 2.2 AA | Temas en `core/config/app_theme.dart`; contraste no medido | Sin auditoría o test de ratios | Parcial |
+| UX-X-009 Foco, teclado y lectores de pantalla | Semantics/tooltips parciales en `features/navigation/app_shell.dart` y controles patrocinados | Tests de navegación; sin auditoría de teclado/lector | Parcial |
+| UX-X-010 Objetivos táctiles | Controles nuevos con mínimos locales; no normalizados globalmente | `test/widgets/sponsored_content_controls_test.dart` (sin medición global) | Parcial |
+
+> `UX-PRF-005` está marcado obsoleto en su documento; `UX-AREA-001` es una plantilla del README, no un requisito de producto. Se excluyen de evaluación funcional hasta actualizar la plantilla/documentación.
 
 > **Dependencias transversales y de datos**
 >
@@ -319,3 +368,31 @@ prioritarios para el siguiente ciclo de trabajo.
 2. Si un requisito pasa a implementado, se actualiza **Estado** y se referencia
    el PR.
 3. Los requisitos con estado `Pendiente` alimentan el backlog de QA y el de la sección 5.
+
+---
+
+## 7. Avance de implementación y bloqueos externos (2026-10-30)
+
+Esta actualización describe cambios presentes en el árbol de trabajo; no convierte
+por sí sola los 181 requisitos en conformes. Actualiza la evidencia de los IDs
+indicados cuando se cierre la revisión y se integre el cambio correspondiente.
+
+| ID | Avance comprobable | Estado / límite |
+|---|---|---|
+| UX-NAV-001, UX-NAV-005/006 | Foro, Marketplace y Grupos están en la navegación principal; las pestañas desktop anuncian su selección y admiten teclado. | Cubierto en navegación base; falta revisión visual en dispositivos y tecnologías de asistencia. |
+| UX-GRP-002, UX-GRP-005/006, UX-X-001/010 | Grupos incorpora búsqueda con debounce, validación de URL HTTPS/host, reintento, feedback de voto y objetivo táctil de 48 dp. | Parcial: el filtro por facultad/carrera y el umbral automático de moderación siguen dependiendo de datos/reglas de backend. |
+| UX-FORO-009/011/013/016/017/019 | Se corrigió el destino del reporte de post, se separan errores y vacíos con reintento, se informa el fallo de like, se deshabilita el envío vacío y se ajustó el mínimo del título. | Parcial: falta compartir por deep link funcional, fallback de almacenamiento y validación integral offline. |
+| UX-X-006 | La copia persistida puede recuperarse cuando la consulta de red falla aunque haya superado el TTL de frescura. | Parcial: solo se usa como fallback en consultas predeterminadas; faltan filtros persistidos y pruebas de dispositivo sin conexión. |
+| UX-MKT-008/012/014, UX-PRF-013 | La app ya no declara verificado un carné aportado por el usuario. Publicar requiere `profiles.seller_verification_status = 'verified'`; el backend fuerza la identidad del propietario y bloquea auto-patrocinio/cambios de moderación. | Pendiente de integración institucional y pantalla/proceso de revisión de personal. Hasta entonces la publicación queda bloqueada; no existe verificación automática. |
+| UX-SPN-005, UX-X-016 | Marketplace cuenta con explicación, ocultamiento local y reporte de unidades patrocinadas. Las solicitudes tienen control de propietario y transición de estado administrativa en la migración nueva. | Parcial: no hay panel administrativo operativo ni sincronización entre dispositivos; Foro y Grupos no tienen inserción patrocinada. |
+| UX-AUTH-008 | Se conserva el requisito AAL2 sin abrir escritura durante una gracia ambigua. | Pendiente: producto debe resolver la contradicción entre la gracia de siete días y el guard AAL2 obligatorio. |
+| UX-AUTH-013/014 | No se emiten tokens `mock_sso_*`; no se exponen refresh tokens en redirecciones. | Pendiente/bloqueado: OAuth Authorization Server, registro de clientes y flujo de autorización de PEMTREE no están configurados; la pantalla SSO permanece deshabilitada. |
+| UX-AUTH-016, UX-PRD-016, UX-PRF-035, UX-MKT-017 | No se simula admisión por dominio ni validación de vendedores externos. | Pendiente: requiere lista de dominios administrable, proceso de admisión, almacenamiento documental protegido y revisión humana. |
+| UX-MET-001/002/003 | Sin cambios de instrumentación ni envío de eventos. | Pendiente: definir destino/consentimiento/retención y desplegar almacenamiento antes de emitir analítica de uso. |
+| UX-SPN-004/013/014/015, UX-GRP-010/011/012, UX-FORO-021/022/023 | No se agregó rotación, frecuencia global 1:6, vigencia, suspensión, notificaciones ni promociones en Foro/Grupos. | Pendiente: requiere modelo backend y panel de administración; los controles actuales solo cubren Marketplace. |
+
+La migración `20261004000000_require_aal2_and_verified_sellers.sql` y sus
+pruebas pgTAP se agregaron al repositorio, pero no se ejecutaron en una instancia
+PostgreSQL/Supabase en esta sesión: Supabase CLI y `psql` no están disponibles.
+La conformidad de RLS debe confirmarse ejecutando la suite SQL en CI antes del
+despliegue.
