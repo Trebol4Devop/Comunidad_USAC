@@ -1,8 +1,13 @@
+import 'dart:ui' show SemanticsRole, Tristate;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show LogicalKeyboardKey;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:comunidad_universitaria/core/config/app_theme.dart';
 import 'package:comunidad_universitaria/features/forum/screens/forum_screen.dart';
+import 'package:comunidad_universitaria/features/groups/screens/groups_screen.dart';
+import 'package:comunidad_universitaria/features/groups/widgets/create_group_dialog.dart';
 import 'package:comunidad_universitaria/features/marketplace/screens/marketplace_screen.dart';
 import 'package:comunidad_universitaria/features/navigation/app_shell.dart';
 import 'package:comunidad_universitaria/features/rules/screens/rules_screen.dart';
@@ -36,86 +41,260 @@ void main() {
   }
 
   group('AppShell Widget Tests', () {
-    testWidgets('Renderiza en vista móvil (400x800) con NavigationBar y alias activo', (tester) async {
-      tester.view.physicalSize = const Size(400, 800);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
+    testWidgets(
+      'Renderiza en vista móvil (400x800) con NavigationBar y alias activo',
+      (tester) async {
+        tester.view.physicalSize = const Size(400, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
 
-      await tester.pumpWidget(
-        buildTestShell(activeAlias: 'Estudiante #101'),
-      );
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(buildTestShell(activeAlias: 'Estudiante #101'));
+        await tester.pumpAndSettle();
 
-      // En móvil muestra título 'Comunidad USAC' y 'No Oficial'
-      expect(find.text('Comunidad USAC'), findsOneWidget);
-      expect(find.text('No Oficial'), findsOneWidget);
-      expect(find.text('Red Estudiantil Autónoma'), findsNothing);
+        // En móvil muestra título 'Comunidad USAC' y 'No Oficial'
+        expect(find.text('Comunidad USAC'), findsOneWidget);
+        expect(find.text('No Oficial'), findsOneWidget);
+        expect(find.text('Red Estudiantil Autónoma'), findsNothing);
 
-      // Botón de perfil ya no se muestra en el navbar (se ubica en la barra inferior)
-      expect(find.byType(AliasBadgeButton), findsNothing);
+        // Botón de perfil ya no se muestra en el navbar (se ubica en la barra inferior)
+        expect(find.byType(AliasBadgeButton), findsNothing);
 
-      // Bottom NavigationBar en móvil (solo Foro y Marketplace; Grupos está en el riel de servidores del Foro)
-      expect(find.byType(NavigationBar), findsOneWidget);
-      expect(find.text('Foro'), findsOneWidget);
-      expect(find.text('Grupos'), findsNothing);
-      expect(find.text('Marketplace'), findsOneWidget);
+        // Navegación móvil con los tres destinos directos.
+        expect(find.byType(NavigationBar), findsOneWidget);
+        expect(find.text('Foro'), findsOneWidget);
+        expect(find.text('Marketplace'), findsOneWidget);
+        expect(find.text('Grupos'), findsOneWidget);
 
-      // En el tab inicial (Foro), no hay FloatingActionButton
-      expect(find.byType(FloatingActionButton), findsNothing);
-    });
+        // En el tab inicial (Foro), no hay FloatingActionButton
+        expect(find.byType(FloatingActionButton), findsNothing);
+      },
+    );
 
-    testWidgets('Renderiza en escritorio (1200x800) con pestañas superiores y sin NavigationBar', (tester) async {
+    testWidgets(
+      'Renderiza en escritorio (1200x800) con pestañas superiores y sin NavigationBar',
+      (tester) async {
+        tester.view.physicalSize = const Size(1200, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
+
+        await tester.pumpWidget(buildTestShell(activeAlias: 'Ingeniero #404'));
+        await tester.pumpAndSettle();
+
+        // En escritorio muestra título 'Comunidad Universitaria'
+        expect(find.text('Comunidad Universitaria'), findsOneWidget);
+
+        // No debe tener NavigationBar inferior
+        expect(find.byType(NavigationBar), findsNothing);
+
+        // Las tres pestañas se exponen directamente en la navegación de escritorio.
+        expect(find.text('Foro Estudiantil'), findsOneWidget);
+        expect(find.text('Marketplace & Tutorías'), findsOneWidget);
+        expect(find.text('Grupos de Estudio'), findsOneWidget);
+      },
+    );
+
+    testWidgets('Pestañas de escritorio tienen semántica tablist/tab', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
+      final semantics = tester.ensureSemantics();
 
-      await tester.pumpWidget(
-        buildTestShell(activeAlias: 'Ingeniero #404'),
-      );
+      await tester.pumpWidget(buildTestShell(activeAlias: 'Semantics Tester'));
       await tester.pumpAndSettle();
 
-      // En escritorio muestra título 'Comunidad Universitaria'
-      expect(find.text('Comunidad Universitaria'), findsOneWidget);
-
-      // No debe tener NavigationBar inferior
-      expect(find.byType(NavigationBar), findsNothing);
-
-      // Pestañas de escritorio (Grupos de Estudio está en la barra lateral izquierda)
-      expect(find.text('Foro Estudiantil'), findsOneWidget);
-      expect(find.text('Grupos de Estudio'), findsNothing);
-      expect(find.text('Marketplace & Tutorías'), findsOneWidget);
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics &&
+              widget.properties.role == SemanticsRole.tabBar,
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics &&
+              widget.properties.role == SemanticsRole.tab,
+        ),
+        findsNWidgets(3),
+      );
+      expect(
+        tester
+                .getSemantics(find.bySemanticsLabel('Foro Estudiantil'))
+                .getSemanticsData()
+                .flagsCollection
+                .isSelected ==
+            Tristate.isTrue,
+        isTrue,
+      );
+      semantics.dispose();
     });
 
-    testWidgets('Navegación móvil entre tabs y verificación de FloatingActionButton contextual', (tester) async {
-      tester.view.physicalSize = const Size(400, 800);
+    testWidgets('Teclado mueve y activa las pestañas de escritorio', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+      final semantics = tester.ensureSemantics();
+
+      await tester.pumpWidget(buildTestShell(activeAlias: 'Keyboard Tester'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Foro Estudiantil'));
+      await tester.pumpAndSettle();
+      expect(FocusManager.instance.primaryFocus?.debugLabel, 'Desktop tab 0');
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pumpAndSettle();
+      expect(FocusManager.instance.primaryFocus?.debugLabel, 'Desktop tab 1');
+      expect(
+        tester
+                .getSemantics(find.bySemanticsLabel('Marketplace & Tutorías'))
+                .getSemanticsData()
+                .flagsCollection
+                .isSelected ==
+            Tristate.isTrue,
+        isTrue,
+      );
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.end);
+      await tester.pumpAndSettle();
+      expect(
+        tester
+                .getSemantics(find.bySemanticsLabel('Grupos de Estudio'))
+                .getSemanticsData()
+                .flagsCollection
+                .isSelected ==
+            Tristate.isTrue,
+        isTrue,
+      );
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.home);
+      await tester.pumpAndSettle();
+      expect(
+        tester
+                .getSemantics(find.bySemanticsLabel('Foro Estudiantil'))
+                .getSemanticsData()
+                .flagsCollection
+                .isSelected ==
+            Tristate.isTrue,
+        isTrue,
+      );
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+      await tester.pumpAndSettle();
+      expect(
+        tester
+                .getSemantics(find.bySemanticsLabel('Grupos de Estudio'))
+                .getSemanticsData()
+                .flagsCollection
+                .isSelected ==
+            Tristate.isTrue,
+        isTrue,
+      );
+      semantics.dispose();
+    });
+
+    testWidgets(
+      'Navegación móvil entre tabs y verificación de FloatingActionButton contextual',
+      (tester) async {
+        tester.view.physicalSize = const Size(400, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
+
+        await tester.pumpWidget(buildTestShell(activeAlias: 'Tester USAC'));
+        await tester.pumpAndSettle();
+
+        // Tab 0: ForumScreen activo por defecto
+        expect(find.byType(ForumScreen), findsOneWidget);
+
+        // Cambiar a Tab 1: Marketplace
+        final marketTab = find.text('Marketplace');
+        await tester.tap(marketTab);
+        await tester.pumpAndSettle();
+
+        // Debe mostrar el FAB contextual de marketplace 'Publicar Artículo'
+        expect(
+          find.widgetWithText(FloatingActionButton, 'Publicar Artículo'),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets('Breakpoint canónico conmuta a pestañas superiores en 700px', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(699, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
 
-      await tester.pumpWidget(
-        buildTestShell(activeAlias: 'Tester USAC'),
-      );
+      await tester.pumpWidget(buildTestShell(activeAlias: 'Breakpoint Tester'));
+      await tester.pumpAndSettle();
+      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(find.text('Comunidad USAC'), findsOneWidget);
+
+      tester.view.physicalSize = const Size(700, 800);
       await tester.pumpAndSettle();
 
-      // Tab 0: ForumScreen activo por defecto
-      expect(find.byType(ForumScreen), findsOneWidget);
-
-      // Cambiar a Tab 1: Marketplace
-      final marketTab = find.text('Marketplace');
-      await tester.tap(marketTab);
-      await tester.pumpAndSettle();
-
-      // Debe mostrar el FAB contextual de marketplace 'Publicar Artículo'
-      expect(find.widgetWithText(FloatingActionButton, 'Publicar Artículo'), findsOneWidget);
+      expect(find.byType(NavigationBar), findsNothing);
+      expect(find.text('Foro Estudiantil'), findsOneWidget);
+      expect(find.text('Marketplace & Tutorías'), findsOneWidget);
+      expect(find.text('Grupos de Estudio'), findsOneWidget);
+      expect(find.text('Comunidad Universitaria'), findsOneWidget);
     });
+
+    testWidgets(
+      'Acceso móvil a Grupos comparte con un solo FAB y conserva estado',
+      (tester) async {
+        tester.view.physicalSize = const Size(400, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
+
+        await tester.pumpWidget(buildTestShell(activeAlias: 'Group Tester'));
+        await tester.pumpAndSettle();
+
+        final groupsScreen = find.byType(GroupsScreen, skipOffstage: false);
+        expect(groupsScreen, findsOneWidget);
+        final groupsState = tester.state<GroupsScreenState>(groupsScreen);
+
+        await tester.tap(find.text('Grupos'));
+        await tester.pumpAndSettle();
+
+        expect(
+          find.widgetWithText(FloatingActionButton, 'Compartir Grupo'),
+          findsOneWidget,
+        );
+        expect(find.byType(FloatingActionButton), findsOneWidget);
+
+        await tester.tap(
+          find.widgetWithText(FloatingActionButton, 'Compartir Grupo'),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byType(CreateGroupDialog), findsOneWidget);
+
+        Navigator.of(tester.element(find.byType(CreateGroupDialog))).pop();
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Marketplace'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Grupos'));
+        await tester.pumpAndSettle();
+
+        expect(
+          tester.state<GroupsScreenState>(groupsScreen),
+          same(groupsState),
+        );
+      },
+    );
 
     testWidgets('Navegación escritorio entre tabs superiores', (tester) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
 
-      await tester.pumpWidget(
-        buildTestShell(activeAlias: 'Desktop User'),
-      );
+      await tester.pumpWidget(buildTestShell(activeAlias: 'Desktop User'));
       await tester.pumpAndSettle();
 
       // Seleccionar Marketplace & Tutorías
@@ -125,7 +304,19 @@ void main() {
 
       expect(find.byType(MarketplaceScreen), findsOneWidget);
 
-      // Regresar a Foro Estudiantil
+      // Entrar a Grupos y volver al Foro desde las pestañas superiores.
+      await tester.tap(find.text('Grupos de Estudio'));
+      await tester.pumpAndSettle();
+      expect(find.byType(GroupsScreen), findsOneWidget);
+      expect(find.byType(FloatingActionButton), findsNothing);
+      final shareGroupAction = find.byTooltip('Compartir Grupo');
+      expect(shareGroupAction, findsOneWidget);
+      await tester.tap(shareGroupAction);
+      await tester.pumpAndSettle();
+      expect(find.byType(CreateGroupDialog), findsOneWidget);
+      Navigator.of(tester.element(find.byType(CreateGroupDialog))).pop();
+      await tester.pumpAndSettle();
+
       final tabForo = find.text('Foro Estudiantil');
       await tester.tap(tabForo);
       await tester.pumpAndSettle();
@@ -133,7 +324,9 @@ void main() {
       expect(find.byType(ForumScreen), findsOneWidget);
     });
 
-    testWidgets('Botón de cambio de tema dispara callback onToggleTheme', (tester) async {
+    testWidgets('Botón de cambio de tema dispara callback onToggleTheme', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -165,22 +358,20 @@ void main() {
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
 
-      await tester.pumpWidget(
-        buildTestShell(activeAlias: 'PerfilTester #99'),
-      );
+      await tester.pumpWidget(buildTestShell(activeAlias: 'PerfilTester #99'));
       await tester.pumpAndSettle();
 
       expect(find.byType(AliasBadgeButton), findsNothing);
     });
 
-    testWidgets('Click en botón de normas navega hacia RulesScreen', (tester) async {
+    testWidgets('Click en botón de normas navega hacia RulesScreen', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
 
-      await tester.pumpWidget(
-        buildTestShell(activeAlias: 'Rules Tester'),
-      );
+      await tester.pumpWidget(buildTestShell(activeAlias: 'Rules Tester'));
       await tester.pumpAndSettle();
 
       final rulesButton = find.byTooltip('Normas y Descargo');
@@ -193,32 +384,44 @@ void main() {
       expect(find.text('Normas Comunitarias & Descargo Legal'), findsOneWidget);
     });
 
-    testWidgets('Click en el banner de título abre el modal de Aviso Comunitario', (tester) async {
-      tester.view.physicalSize = const Size(1200, 800);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
+    testWidgets(
+      'Click en el banner de título abre el modal de Aviso Comunitario',
+      (tester) async {
+        tester.view.physicalSize = const Size(1200, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
 
-      await tester.pumpWidget(
-        buildTestShell(activeAlias: 'Disclaimer Tester'),
-      );
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          buildTestShell(activeAlias: 'Disclaimer Tester'),
+        );
+        await tester.pumpAndSettle();
 
-      // Tocamos el encabezado Comunidad Universitaria
-      final titleHeader = find.text('Comunidad Universitaria');
-      await tester.tap(titleHeader);
-      await tester.pumpAndSettle();
+        // Tocamos el encabezado Comunidad Universitaria
+        final titleHeader = find.text('Comunidad Universitaria');
+        await tester.tap(titleHeader);
+        await tester.pumpAndSettle();
 
-      // Diálogo de aviso comunitario
-      expect(find.text('Aviso Comunitario'), findsOneWidget);
-      expect(find.textContaining('Comunidad Universitaria es una plataforma estudiantil colaborativa'), findsOneWidget);
-      expect(find.text('Ver Normas Completas'), findsOneWidget);
-      expect(find.text('Entendido'), findsOneWidget);
+        // Diálogo de aviso comunitario
+        expect(find.text('Aviso Comunitario'), findsOneWidget);
+        expect(
+          find.textContaining(
+            'Comunidad Universitaria es una plataforma estudiantil colaborativa',
+          ),
+          findsOneWidget,
+        );
+        expect(find.text('Ver Normas Completas'), findsOneWidget);
+        expect(find.text('Entendido'), findsOneWidget);
+        expect(
+          Focus.of(tester.element(find.text('Entendido'))).hasFocus,
+          isTrue,
+        );
 
-      // Tocamos 'Ver Normas Completas' y navega a RulesScreen
-      await tester.tap(find.text('Ver Normas Completas'));
-      await tester.pumpAndSettle();
+        // Tocamos 'Ver Normas Completas' y navega a RulesScreen
+        await tester.tap(find.text('Ver Normas Completas'));
+        await tester.pumpAndSettle();
 
-      expect(find.byType(RulesScreen), findsOneWidget);
-    });
+        expect(find.byType(RulesScreen), findsOneWidget);
+      },
+    );
   });
 }

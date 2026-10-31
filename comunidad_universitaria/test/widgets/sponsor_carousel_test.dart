@@ -13,6 +13,8 @@ void main() {
   Widget buildTestCarousel({
     List<MarketplaceItem> sponsoredItems = const [],
     VoidCallback? onRequestSponsor,
+    ValueChanged<MarketplaceItem>? onHideSponsored,
+    Function(MarketplaceItem item, String reason)? onReportSponsored,
   }) {
     return MaterialApp(
       theme: AppTheme.lightTheme,
@@ -21,6 +23,8 @@ void main() {
           child: SponsorCarousel(
             sponsoredItems: sponsoredItems,
             onRequestSponsor: onRequestSponsor ?? () {},
+            onHideSponsored: onHideSponsored ?? (_) {},
+            onReportSponsored: onReportSponsored ?? (_, _) {},
           ),
         ),
       ),
@@ -50,6 +54,48 @@ void main() {
       expect(requested, isTrue);
     });
 
+    testWidgets('Conecta ocultamiento y reporte del anuncio patrocinado', (tester) async {
+      final sponsor = MarketplaceItem(
+        id: 'spon-actions',
+        title: 'Anuncio de prueba',
+        description: 'Contenido promocionado.',
+        category: 'libros',
+        authorAlias: 'Marca de prueba',
+        createdAt: DateTime.now(),
+        isSponsored: true,
+      );
+      MarketplaceItem? hiddenItem;
+      MarketplaceItem? reportedItem;
+      String? reportReason;
+
+      await tester.pumpWidget(
+        buildTestCarousel(
+          sponsoredItems: [sponsor],
+          onHideSponsored: (item) => hiddenItem = item,
+          onReportSponsored: (item, reason) {
+            reportedItem = item;
+            reportReason = reason;
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Opciones del contenido patrocinado'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ocultar este anuncio'));
+      await tester.pumpAndSettle();
+      expect(hiddenItem?.id, 'spon-actions');
+
+      await tester.tap(find.byTooltip('Opciones del contenido patrocinado'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Reportar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Enviar Reporte'));
+      await tester.pumpAndSettle();
+      expect(reportedItem?.id, 'spon-actions');
+      expect(reportReason, isNotNull);
+    });
+
     testWidgets('Muestra detalles del patrocinador destacado y botón de WhatsApp', (tester) async {
       final sponsor = MarketplaceItem(
         id: 'spon-1',
@@ -67,12 +113,14 @@ void main() {
         authorAlias: 'Librería Central',
         isSponsored: true,
         sponsorBadgeText: 'PATROCINADOR OFICIAL',
+        sponsorBrandName: 'Librería Central',
       );
 
       await tester.pumpWidget(buildTestCarousel(sponsoredItems: [sponsor]));
       await tester.pumpAndSettle();
 
-      expect(find.text('PATROCINADOR OFICIAL'), findsOneWidget);
+      expect(find.text('Patrocinado'), findsOneWidget);
+      expect(find.text('por Librería Central'), findsOneWidget);
       expect(find.text('Anunciarme aquí'), findsOneWidget);
       expect(find.text('Librería & Fotocopiadora Central'), findsOneWidget);
       expect(find.text('Impresiones y útiles frente a Biblioteca Central.'), findsOneWidget);

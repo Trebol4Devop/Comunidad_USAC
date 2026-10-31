@@ -788,8 +788,9 @@ void main() {
       expect(find.byType(GroupsScreen), findsOneWidget);
       expect(find.textContaining('¡Te damos la bienvenida a #todos-los-grupos!'), findsOneWidget);
 
-      // Único botón de compartir grupo en la parte inferior
-      expect(find.text('Compartir Grupo'), findsOneWidget);
+      // Acción integrada en la cabecera; no debe haber FAB en desktop.
+      expect(find.byTooltip('Compartir Grupo'), findsOneWidget);
+      expect(find.byType(FloatingActionButton), findsNothing);
 
       // El riel de servidores y la barra de canales permanecen visibles
       expect(find.byType(ForumServerRail), findsOneWidget);

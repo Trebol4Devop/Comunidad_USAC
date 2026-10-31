@@ -167,9 +167,7 @@ void main() {
       expect(find.text('Reenviar código'), findsNothing);
     });
 
-    testWidgets('shows setup guidance if Supabase still requires email OTP', (
-      tester,
-    ) async {
+    testWidgets('shows actionable email-confirmation guidance', (tester) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -212,7 +210,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.textContaining('Authentication > Sign In / Providers > Email'),
+        find.textContaining('Revisa tu correo para completar la confirmación'),
         findsOneWidget,
       );
       expect(find.text('Código de 6 dígitos'), findsNothing);

@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:comunidad_universitaria/core/config/app_theme.dart';
 import 'package:comunidad_universitaria/core/models/user_profile.dart';
+import 'package:comunidad_universitaria/core/services/profile_service.dart';
 import 'package:comunidad_universitaria/features/profile/widgets/carne_validation_modal.dart';
 import '../../helpers/test_setup.dart';
 
@@ -17,7 +18,8 @@ void main() {
     UserProfile? currentProfile,
     Function(UserProfile)? onProfileUpdated,
   }) {
-    final profile = currentProfile ??
+    final profile =
+        currentProfile ??
         UserProfile(
           userId: 'user-123',
           alias: 'Estudiante #101',
@@ -38,25 +40,39 @@ void main() {
   }
 
   group('CarneValidationModal Widget Tests', () {
-    testWidgets('Renderiza en vista móvil (400x800) con campos y caja de privacidad', (tester) async {
-      tester.view.physicalSize = const Size(400, 800);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
+    testWidgets(
+      'Renderiza en vista móvil con consentimiento desmarcado y bloqueo explícito',
+      (tester) async {
+        tester.view.physicalSize = const Size(400, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
 
-      await tester.pumpWidget(buildTestModal());
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(buildTestModal());
+        await tester.pumpAndSettle();
 
-      expect(find.text('Validación Estudiantil con Carné'), findsOneWidget);
-      expect(find.text('Verificación institucional de confianza'), findsOneWidget);
-      expect(find.text('Consentimiento de Privacidad'), findsOneWidget);
-
-      expect(find.widgetWithText(TextFormField, 'Número de Carné Universitario'), findsOneWidget);
-      expect(find.widgetWithText(TextFormField, 'Nombre Completo Oficial'), findsOneWidget);
-
-      expect(find.byType(Checkbox), findsOneWidget);
-      expect(find.text('Cancelar'), findsOneWidget);
-      expect(find.text('Validar con Registro'), findsOneWidget);
-    });
+        expect(find.text('Datos para verificación de carné'), findsOneWidget);
+        expect(find.text('Sin fuente institucional conectada'), findsOneWidget);
+        expect(
+          find.text('Consentimiento para guardar un borrador'),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining('no se hará ninguna consulta'),
+          findsOneWidget,
+        );
+        expect(
+          find.widgetWithText(TextFormField, 'Número de Carné Universitario'),
+          findsOneWidget,
+        );
+        expect(
+          find.widgetWithText(TextFormField, 'Nombre completo para reintentar'),
+          findsOneWidget,
+        );
+        expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isFalse);
+        expect(find.text('Cancelar'), findsOneWidget);
+        expect(find.text('Guardar borrador'), findsOneWidget);
+      },
+    );
 
     testWidgets('Valida carné obligatorio y longitud mínima', (tester) async {
       tester.view.physicalSize = const Size(600, 800);
@@ -66,48 +82,162 @@ void main() {
       await tester.pumpWidget(buildTestModal());
       await tester.pumpAndSettle();
 
-      final validateBtn = find.text('Validar con Registro');
-      await tester.tap(validateBtn);
+      final saveButton = find.text('Guardar borrador');
+      await tester.tap(saveButton);
       await tester.pumpAndSettle();
 
       expect(find.text('Ingresa tu número de carné.'), findsOneWidget);
-      expect(find.text('Ingresa tu nombre completo oficial.'), findsOneWidget);
+      expect(find.text('Ingresa tu nombre completo.'), findsOneWidget);
 
-      // Carné menor a 6 dígitos
-      final carneField = find.widgetWithText(TextFormField, 'Número de Carné Universitario');
+      final carneField = find.widgetWithText(
+        TextFormField,
+        'Número de Carné Universitario',
+      );
       await tester.enterText(carneField, '1234');
-      await tester.tap(validateBtn);
+      await tester.tap(saveButton);
       await tester.pumpAndSettle();
 
-      expect(find.text('El carné debe tener al menos 6 dígitos.'), findsOneWidget);
+      expect(
+        find.text('El carné debe tener al menos 6 dígitos.'),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('Exige consentimiento activo para proceder con la validación', (tester) async {
-      tester.view.physicalSize = const Size(600, 800);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
+    testWidgets(
+      'No guarda los datos si el consentimiento explícito no está marcado',
+      (tester) async {
+        tester.view.physicalSize = const Size(600, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
 
-      await tester.pumpWidget(buildTestModal());
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(buildTestModal());
+        await tester.pumpAndSettle();
 
-      // Llenamos campos válidos
-      final carneField = find.widgetWithText(TextFormField, 'Número de Carné Universitario');
-      await tester.enterText(carneField, '202100123');
+        final carneField = find.widgetWithText(
+          TextFormField,
+          'Número de Carné Universitario',
+        );
+        final nameField = find.widgetWithText(
+          TextFormField,
+          'Nombre completo para reintentar',
+        );
+        await tester.enterText(carneField, '202100123');
+        await tester.enterText(nameField, 'Carlos Estudiante');
+        await tester.tap(find.text('Guardar borrador'));
+        await tester.pumpAndSettle();
 
-      final nameField = find.widgetWithText(TextFormField, 'Nombre Completo Oficial');
-      await tester.enterText(nameField, 'Carlos Estudiante');
+        expect(
+          find.text('Debes autorizar el guardado local antes de continuar.'),
+          findsOneWidget,
+        );
+        expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isFalse);
+        expect(
+          tester.widget<TextFormField>(carneField).controller!.text,
+          '202100123',
+        );
+        expect(
+          tester.widget<TextFormField>(nameField).controller!.text,
+          'Carlos Estudiante',
+        );
 
-      // Desmarcamos el consentimiento
-      final checkbox = find.byType(Checkbox);
-      await tester.tap(checkbox);
-      await tester.pumpAndSettle();
+        final savedProfile = await ProfileService.loadProfile();
+        expect(savedProfile.carne, isNull);
+        expect(savedProfile.studentName, isNull);
+        expect(savedProfile.isCarneVerified, isFalse);
+      },
+    );
 
-      // Intentamos validar
-      final validateBtn = find.text('Validar con Registro');
-      await tester.tap(validateBtn);
-      await tester.pumpAndSettle();
+    testWidgets(
+      'Guarda un borrador no verificado y conserva los datos para reintentar',
+      (tester) async {
+        tester.view.physicalSize = const Size(600, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
 
-      expect(find.text('Debes aceptar los términos de verificación informada.'), findsOneWidget);
-    });
+        UserProfile? profileFromCallback;
+        final previouslyVerifiedProfile = UserProfile(
+          userId: 'user-123',
+          alias: 'Estudiante #101',
+          carne: '199900001',
+          studentName: 'Nombre previo',
+          isCarneVerified: true,
+        );
+
+        await tester.pumpWidget(
+          buildTestModal(
+            currentProfile: previouslyVerifiedProfile,
+            onProfileUpdated: (updated) => profileFromCallback = updated,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final carneField = find.widgetWithText(
+          TextFormField,
+          'Número de Carné Universitario',
+        );
+        final nameField = find.widgetWithText(
+          TextFormField,
+          'Nombre completo para reintentar',
+        );
+        await tester.enterText(carneField, '202100123');
+        await tester.enterText(nameField, 'Carlos Estudiante');
+
+        final checkbox = find.byType(Checkbox);
+        expect(tester.widget<Checkbox>(checkbox).value, isFalse);
+        await tester.tap(checkbox);
+        await tester.pumpAndSettle();
+        expect(tester.widget<Checkbox>(checkbox).value, isTrue);
+
+        await tester.tap(find.text('Guardar borrador'));
+        await tester.pumpAndSettle();
+
+        expect(
+          find.textContaining('Borrador guardado en este dispositivo.'),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining('tu condición estudiantil no está verificada.'),
+          findsOneWidget,
+        );
+        expect(find.text('Guardar borrador'), findsOneWidget);
+        expect(profileFromCallback?.carne, '202100123');
+        expect(profileFromCallback?.studentName, 'Carlos Estudiante');
+        expect(profileFromCallback?.isCarneVerified, isFalse);
+        expect(
+          tester.widget<TextFormField>(carneField).controller!.text,
+          '202100123',
+        );
+        expect(
+          tester.widget<TextFormField>(nameField).controller!.text,
+          'Carlos Estudiante',
+        );
+
+        final savedProfile = await ProfileService.loadProfile();
+        expect(savedProfile.carne, '202100123');
+        expect(savedProfile.studentName, 'Carlos Estudiante');
+        expect(savedProfile.isCarneVerified, isFalse);
+
+        await tester.pumpWidget(buildTestModal(currentProfile: savedProfile));
+        await tester.pumpAndSettle();
+
+        final retriedCarneField = find.widgetWithText(
+          TextFormField,
+          'Número de Carné Universitario',
+        );
+        final retriedNameField = find.widgetWithText(
+          TextFormField,
+          'Nombre completo para reintentar',
+        );
+        expect(
+          tester.widget<TextFormField>(retriedCarneField).controller!.text,
+          '202100123',
+        );
+        expect(
+          tester.widget<TextFormField>(retriedNameField).controller!.text,
+          'Carlos Estudiante',
+        );
+        expect(savedProfile.isCarneVerified, isFalse);
+      },
+    );
   });
 }
