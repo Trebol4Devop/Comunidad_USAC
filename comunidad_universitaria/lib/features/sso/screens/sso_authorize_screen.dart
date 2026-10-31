@@ -30,6 +30,10 @@ class SsoAuthorizeScreen extends StatefulWidget {
 }
 
 class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
+  // Supabase OAuth Server / client registration is not configured in this repo.
+  // Do not treat a normal Supabase login session as an SSO authorization grant.
+  static const bool _oauthAuthorizationServerIntegrated = false;
+
   bool _isLoading = false;
   bool _isRedirecting = false;
   bool _waitingForGoogle = false;
@@ -82,14 +86,8 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
     return SsoSecurityValidator.isValidRedirectUri(widget.redirectUri);
   }
 
-  bool get _isAuthenticated {
-    // If Supabase is configured, check authenticated user
-    if (SupabaseConfig.isConfigured) {
-      return SupabaseService.isAuthenticated;
-    }
-    // If running in offline / dev mode without live Supabase, allow local test session
-    return true;
-  }
+  bool get _isAuthenticated =>
+      SupabaseConfig.isConfigured && SupabaseService.isAuthenticated;
 
   void _handleGoogleAuthState(AuthState state) {
     if (_googleAuthCompleted ||
@@ -124,7 +122,9 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
 
     try {
       final currentUrl = kIsWeb ? Uri.base.toString() : null;
-      final launched = await SupabaseService.signInWithGoogle(redirectTo: currentUrl);
+      final launched = await SupabaseService.signInWithGoogle(
+        redirectTo: currentUrl,
+      );
       if (!launched) {
         throw StateError('No se pudo iniciar el acceso con Google.');
       }
@@ -141,7 +141,8 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
         setState(() {
           _isLoading = false;
           _waitingForGoogle = false;
-          _authErrorMessage = 'Error al conectar con Google: $e';
+          _authErrorMessage =
+              'No se pudo iniciar sesión con Google. Inténtalo de nuevo o usa tu correo.';
         });
       }
     }
@@ -162,7 +163,10 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
       if (_isSignUp) {
         await SupabaseService.signUp(email: email, password: password);
       } else {
-        await SupabaseService.signInWithPassword(email: email, password: password);
+        await SupabaseService.signInWithPassword(
+          email: email,
+          password: password,
+        );
       }
 
       if (mounted) {
@@ -173,7 +177,8 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _authErrorMessage = e.toString().replaceAll('Exception: ', '').replaceAll('AuthException: ', '');
+          _authErrorMessage =
+              'No se pudo iniciar sesión. Revisa tus datos e inténtalo de nuevo.';
         });
       }
     }
@@ -187,8 +192,11 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
 
     // Si estamos en entorno web local (localhost) y el redirect_uri enviado apunta a Netlify/nube de PEMTREE,
     // garantizamos redirigir al PEMTREE local http://localhost:5173/auth/callback
-    final isLocalWeb = kIsWeb && (Uri.base.host == 'localhost' || Uri.base.host == '127.0.0.1');
-    if (isLocalWeb && (raw.contains('netlify.app') || raw.contains('pemtree.'))) {
+    final isLocalWeb =
+        kIsWeb &&
+        (Uri.base.host == 'localhost' || Uri.base.host == '127.0.0.1');
+    if (isLocalWeb &&
+        (raw.contains('netlify.app') || raw.contains('pemtree.'))) {
       return SsoSecurityValidator.defaultLocalRedirectUri;
     }
 
@@ -196,41 +204,32 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
   }
 
   Future<void> _handleAuthorize() async {
+    if (!_oauthAuthorizationServerIntegrated) return;
     setState(() {
       _isLoading = true;
     });
 
-    String accessToken = '';
-    String refreshToken = '';
-    int? expiresIn;
-
-    if (SupabaseConfig.isConfigured) {
-      try {
-        final session = SupabaseConfig.client.auth.currentSession;
-        if (session != null) {
-          accessToken = session.accessToken;
-          refreshToken = session.refreshToken ?? '';
-          expiresIn = session.expiresIn;
-        }
-      } catch (e) {
-        debugPrint('Error obteniendo sesión de Supabase: $e');
-      }
-    }
-
-    // Fallback for local mock testing
-    if (accessToken.isEmpty) {
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      accessToken = 'mock_sso_access_token_$timestamp';
-      refreshToken = 'mock_sso_refresh_token_$timestamp';
-      expiresIn = 3600;
+    final session = SupabaseConfig.isConfigured
+        ? SupabaseConfig.client.auth.currentSession
+        : null;
+    if (session == null || session.user.isAnonymous) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No se pudo verificar una sesión activa. Inicia sesión e inténtalo de nuevo.',
+          ),
+        ),
+      );
+      return;
     }
 
     final targetUrl = SsoSecurityValidator.buildSuccessRedirectUrl(
       redirectUri: _effectiveRedirectUri,
-      accessToken: accessToken,
-      refreshToken: refreshToken,
+      accessToken: session.accessToken,
       state: widget.state,
-      expiresIn: expiresIn,
+      expiresIn: session.expiresIn,
     );
 
     setState(() {
@@ -285,7 +284,9 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0B132B) : const Color(0xFFF1F5F9),
+      backgroundColor: isDark
+          ? const Color(0xFF0B132B)
+          : const Color(0xFFF1F5F9),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
@@ -320,7 +321,20 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
         title: 'Cliente SSO Desconocido',
         description:
             'El parámetro client_id "${widget.clientId ?? 'no especificado'}" no está registrado en el servicio de autorización centralizada.',
-        recommendation: 'Verifica que la aplicación cliente envíe client_id=pemtree.',
+        recommendation:
+            'Verifica que la aplicación cliente envíe client_id=pemtree.',
+      );
+    }
+
+    if (!_oauthAuthorizationServerIntegrated || !SupabaseConfig.isConfigured) {
+      return _buildSecurityErrorCard(
+        theme: theme,
+        isDark: isDark,
+        title: 'SSO no disponible',
+        description:
+            'El servidor de autorización y los clientes PEMTREE todavía no están configurados. No se emitirán tokens de sesión como sustituto.',
+        recommendation:
+            'Inténtalo más tarde o contacta al equipo administrador.',
       );
     }
 
@@ -369,7 +383,11 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
               color: Colors.red.shade50,
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.gpp_bad_rounded, size: 48, color: Colors.red.shade700),
+            child: Icon(
+              Icons.gpp_bad_rounded,
+              size: 48,
+              color: Colors.red.shade700,
+            ),
           ),
           const SizedBox(height: 20),
           Text(
@@ -392,12 +410,20 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+              border: Border.all(
+                color: isDark
+                    ? const Color(0xFF334155)
+                    : const Color(0xFFE2E8F0),
+              ),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.shield_outlined, size: 18, color: theme.colorScheme.primary),
+                Icon(
+                  Icons.shield_outlined,
+                  size: 18,
+                  color: theme.colorScheme.primary,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -417,7 +443,9 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
             ),
             icon: const Icon(Icons.home, size: 18),
             label: const Text('Ir a Comunidad USAC'),
-            onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil('/', (_) => false),
+            onPressed: () => Navigator.of(
+              context,
+            ).pushNamedAndRemoveUntil('/', (_) => false),
           ),
         ],
       ),
@@ -425,8 +453,11 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
   }
 
   Widget _buildConsentCard(ThemeData theme, bool isDark) {
-    final userEmail = SupabaseService.currentUser?.email ?? 'usuario@estudiante.usac.edu.gt';
-    final userAlias = _currentAlias.isNotEmpty ? _currentAlias : 'Estudiante USAC';
+    final userEmail =
+        SupabaseService.currentUser?.email ?? 'usuario@estudiante.usac.edu.gt';
+    final userAlias = _currentAlias.isNotEmpty
+        ? _currentAlias
+        : 'Estudiante USAC';
 
     return Container(
       padding: const EdgeInsets.all(28),
@@ -462,7 +493,11 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
                 child: const Icon(Icons.school, color: Colors.white, size: 24),
               ),
               const SizedBox(width: 14),
-              Icon(Icons.sync_alt_rounded, size: 24, color: Colors.grey.shade400),
+              Icon(
+                Icons.sync_alt_rounded,
+                size: 24,
+                color: Colors.grey.shade400,
+              ),
               const SizedBox(width: 14),
               // PEMTREE Icon
               Container(
@@ -513,7 +548,9 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
               color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                color: isDark
+                    ? const Color(0xFF334155)
+                    : const Color(0xFFE2E8F0),
               ),
             ),
             child: Row(
@@ -522,8 +559,14 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
                   radius: 22,
                   backgroundColor: const Color(0xFF004B87),
                   child: Text(
-                    userAlias.isNotEmpty ? userAlias.characters.first.toUpperCase() : 'U',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                    userAlias.isNotEmpty
+                        ? userAlias.characters.first.toUpperCase()
+                        : 'U',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -536,12 +579,19 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
                           Flexible(
                             child: Text(
                               userAlias,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           const SizedBox(width: 6),
-                          const Icon(Icons.verified, size: 14, color: Color(0xFF004B87)),
+                          const Icon(
+                            Icons.verified,
+                            size: 14,
+                            color: Color(0xFF004B87),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 2),
@@ -549,7 +599,9 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
                         userEmail,
                         style: TextStyle(
                           fontSize: 12,
-                          color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                          color: isDark
+                              ? Colors.grey.shade400
+                              : Colors.grey.shade600,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -566,7 +618,9 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.5) : const Color(0xFFF1F5F9),
+              color: isDark
+                  ? const Color(0xFF1E293B).withValues(alpha: 0.5)
+                  : const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
@@ -581,11 +635,20 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                _buildPermissionRow(Icons.account_circle_outlined, 'Ver tu identificador y alias estudiantil verificado'),
+                _buildPermissionRow(
+                  Icons.account_circle_outlined,
+                  'Ver tu identificador y alias estudiantil verificado',
+                ),
                 const SizedBox(height: 8),
-                _buildPermissionRow(Icons.rate_review_outlined, 'Emitir votos y evaluaciones de catedráticos y secciones'),
+                _buildPermissionRow(
+                  Icons.rate_review_outlined,
+                  'Emitir votos y evaluaciones de catedráticos y secciones',
+                ),
                 const SizedBox(height: 8),
-                _buildPermissionRow(Icons.lock_outline, 'Inicio de sesión seguro para la plataforma'),
+                _buildPermissionRow(
+                  Icons.lock_outline,
+                  'Inicio de sesión seguro para la plataforma',
+                ),
               ],
             ),
           ),
@@ -602,10 +665,15 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
                     foregroundColor: const Color(0xFFDC2626),
                     side: const BorderSide(color: Color(0xFFF87171)),
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   onPressed: _isLoading ? null : _handleCancel,
-                  child: const Text('Cancelar / Rechazar', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'Cancelar / Rechazar',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
               const SizedBox(width: 14),
@@ -616,16 +684,24 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
                     backgroundColor: const Color(0xFF004B87),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   onPressed: _isLoading ? null : _handleAuthorize,
                   child: _isLoading
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
-                      : const Text('Autorizar / Continuar', style: TextStyle(fontWeight: FontWeight.bold)),
+                      : const Text(
+                          'Autorizar / Continuar',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                 ),
               ),
             ],
@@ -657,10 +733,7 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
         Icon(icon, size: 15, color: const Color(0xFF004B87)),
         const SizedBox(width: 8),
         Expanded(
-          child: Text(
-            text,
-            style: const TextStyle(fontSize: 11, height: 1.3),
-          ),
+          child: Text(text, style: const TextStyle(fontSize: 11, height: 1.3)),
         ),
       ],
     );
@@ -698,7 +771,11 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
                     color: const Color(0xFF004B87).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.lock_outline, color: Color(0xFF004B87), size: 24),
+                  child: const Icon(
+                    Icons.lock_outline,
+                    color: Color(0xFF004B87),
+                    size: 24,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 const Text(
@@ -734,7 +811,10 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
                 ),
                 child: Text(
                   _authErrorMessage!,
-                  style: const TextStyle(color: Color(0xFFB91C1C), fontSize: 12),
+                  style: const TextStyle(
+                    color: Color(0xFFB91C1C),
+                    fontSize: 12,
+                  ),
                 ),
               ),
               const SizedBox(height: 14),
@@ -744,10 +824,19 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
             OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
-              icon: const Icon(Icons.g_mobiledata, size: 24, color: Color(0xFFEA4335)),
-              label: const Text('Continuar con Google', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              icon: const Icon(
+                Icons.g_mobiledata,
+                size: 24,
+                color: Color(0xFFEA4335),
+              ),
+              label: const Text(
+                'Continuar con Google',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
               onPressed: (_isLoading || _waitingForGoogle)
                   ? null
                   : _handleGoogleSignIn,
@@ -767,7 +856,10 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
                 Expanded(child: Divider()),
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 10),
-                  child: Text('o con correo', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                  child: Text(
+                    'o con correo',
+                    style: TextStyle(fontSize: 11, color: Colors.grey),
+                  ),
                 ),
                 Expanded(child: Divider()),
               ],
@@ -820,18 +912,28 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
                 backgroundColor: const Color(0xFF004B87),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 13),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
               onPressed: _isLoading ? null : _handleEmailAuth,
               child: _isLoading
                   ? const SizedBox(
                       width: 18,
                       height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
                   : Text(
-                      _isSignUp ? 'Crear Cuenta y Continuar' : 'Iniciar Sesión y Continuar',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      _isSignUp
+                          ? 'Crear Cuenta y Continuar'
+                          : 'Iniciar Sesión y Continuar',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
                     ),
             ),
 
@@ -847,7 +949,9 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
                       });
                     },
               child: Text(
-                _isSignUp ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate aquí',
+                _isSignUp
+                    ? '¿Ya tienes cuenta? Inicia sesión'
+                    : '¿No tienes cuenta? Regístrate aquí',
                 style: const TextStyle(fontSize: 12),
               ),
             ),
@@ -873,12 +977,17 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
           const SizedBox(
             width: 48,
             height: 48,
-            child: CircularProgressIndicator(strokeWidth: 3, color: Color(0xFF004B87)),
+            child: CircularProgressIndicator(
+              strokeWidth: 3,
+              color: Color(0xFF004B87),
+            ),
           ),
           const SizedBox(height: 24),
           Text(
             'Redirigiendo a PEMTREE...',
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -890,7 +999,9 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
             const SizedBox(height: 20),
             TextButton(
               onPressed: () => _performRedirect(_redirectingUrl!),
-              child: const Text('Si no eres redirigido automáticamente, haz clic aquí'),
+              child: const Text(
+                'Si no eres redirigido automáticamente, haz clic aquí',
+              ),
             ),
           ],
         ],

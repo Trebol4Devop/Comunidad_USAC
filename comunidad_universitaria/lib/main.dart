@@ -21,14 +21,25 @@ void main() async {
 
   // Load or generate default student pseudonym
   final initialAlias = await LocalStorageService.getOrGenerateAlias();
+  final initialIsDarkMode = await LocalStorageService.isDarkMode();
 
-  runApp(ComunidadUSACApp(initialAlias: initialAlias));
+  runApp(
+    ComunidadUSACApp(
+      initialAlias: initialAlias,
+      initialIsDarkMode: initialIsDarkMode,
+    ),
+  );
 }
 
 class ComunidadUSACApp extends StatefulWidget {
   final String initialAlias;
+  final bool initialIsDarkMode;
 
-  const ComunidadUSACApp({super.key, required this.initialAlias});
+  const ComunidadUSACApp({
+    super.key,
+    required this.initialAlias,
+    this.initialIsDarkMode = false,
+  });
 
   @override
   State<ComunidadUSACApp> createState() => _ComunidadUSACAppState();
@@ -36,12 +47,13 @@ class ComunidadUSACApp extends StatefulWidget {
 
 class _ComunidadUSACAppState extends State<ComunidadUSACApp> {
   late String _activeAlias;
-  ThemeMode _themeMode = ThemeMode.light;
+  late ThemeMode _themeMode;
 
   @override
   void initState() {
     super.initState();
     _activeAlias = widget.initialAlias;
+    _themeMode = widget.initialIsDarkMode ? ThemeMode.dark : ThemeMode.light;
   }
 
   void _updateAlias(String newAlias) {
@@ -50,10 +62,11 @@ class _ComunidadUSACAppState extends State<ComunidadUSACApp> {
     });
   }
 
-  void _toggleTheme() {
-    setState(() {
-      _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
-    });
+  Future<void> _toggleTheme() async {
+    final nextMode =
+        _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    setState(() => _themeMode = nextMode);
+    await LocalStorageService.saveThemeMode(nextMode == ThemeMode.dark);
   }
 
   Route<dynamic> _onGenerateRoute(RouteSettings settings) {

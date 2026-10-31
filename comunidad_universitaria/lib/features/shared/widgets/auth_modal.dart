@@ -130,33 +130,42 @@ class _AuthModalState extends State<AuthModal> {
         setState(() {
           _isLoading = false;
           _waitingForGoogle = false;
-          _errorMessage = 'Error al conectar con Google: ${e.toString()}';
+          _errorMessage =
+              'No se pudo iniciar sesión con Google. Inténtalo de nuevo o usa tu correo.';
         });
       }
     }
   }
 
   String _friendlyAuthError(Object error) {
-    final message = error
-        .toString()
-        .replaceAll('Exception: ', '')
-        .replaceAll('AuthException: ', '');
-    final lowerMessage = message.toLowerCase();
+    final lowerMessage = error.toString().toLowerCase();
 
     if (lowerMessage.contains('email not confirmed') ||
         lowerMessage.contains('email_not_confirmed') ||
         lowerMessage.contains('exige confirmar el correo')) {
-      return 'Supabase todavía exige confirmar el correo. Desactiva "Confirm email" en Authentication > Sign In / Providers > Email.';
+      return 'Revisa tu correo para completar la confirmación antes de iniciar sesión.';
     }
     if (lowerMessage.contains('invalid login credentials')) {
       return 'Credenciales inválidas. Verifica tu correo y contraseña.';
     }
-
+    if (lowerMessage.contains('weak password') ||
+        lowerMessage.contains('password should')) {
+      return 'La contraseña no cumple los requisitos mínimos. Usa una contraseña más segura.';
+    }
+    if (lowerMessage.contains('already registered') ||
+        lowerMessage.contains('user already exists')) {
+      return 'Ese correo ya tiene una cuenta. Inicia sesión o usa otro correo.';
+    }
     if (lowerMessage.contains('rate limit') ||
         lowerMessage.contains('too many')) {
       return 'Se alcanzó el límite de intentos. Espera un momento antes de volver a intentarlo.';
     }
-    return message;
+    if (lowerMessage.contains('network') ||
+        lowerMessage.contains('socket') ||
+        lowerMessage.contains('timeout')) {
+      return 'No hay conexión estable. Comprueba tu internet e inténtalo de nuevo.';
+    }
+    return 'No se pudo completar la autenticación. Revisa tus datos e inténtalo de nuevo.';
   }
 
   Future<void> _handleEmailAuth() async {

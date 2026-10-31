@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../core/models/user_profile.dart';
-import '../../../core/services/local_storage_service.dart';
 import '../../../core/services/profile_service.dart';
 
 class CarneValidationModal extends StatefulWidget {
@@ -37,15 +36,20 @@ class _CarneValidationModalState extends State<CarneValidationModal> {
   late TextEditingController _carneController;
   late TextEditingController _nameController;
 
-  bool _isSimulatingValidation = false;
-  bool _consentChecked = true;
+  bool _isSavingDraft = false;
+  bool _consentChecked = false;
   String? _errorMessage;
+  String? _statusMessage;
 
   @override
   void initState() {
     super.initState();
-    _carneController = TextEditingController(text: widget.currentProfile.carne ?? '');
-    _nameController = TextEditingController(text: widget.currentProfile.studentName ?? '');
+    _carneController = TextEditingController(
+      text: widget.currentProfile.carne ?? '',
+    );
+    _nameController = TextEditingController(
+      text: widget.currentProfile.studentName ?? '',
+    );
   }
 
   @override
@@ -55,59 +59,44 @@ class _CarneValidationModalState extends State<CarneValidationModal> {
     super.dispose();
   }
 
-  Future<void> _validateAndSave() async {
+  Future<void> _saveDraftForRetry() async {
     if (!_formKey.currentState!.validate()) return;
     if (!_consentChecked) {
       setState(() {
-        _errorMessage = 'Debes aceptar los términos de verificación informada.';
+        _errorMessage = 'Debes autorizar el guardado local antes de continuar.';
+        _statusMessage = null;
       });
       return;
     }
 
     setState(() {
-      _isSimulatingValidation = true;
+      _isSavingDraft = true;
       _errorMessage = null;
+      _statusMessage = null;
     });
 
+    final updated = widget.currentProfile.copyWith(
+      carne: _carneController.text.trim(),
+      studentName: _nameController.text.trim(),
+      isCarneVerified: false,
+    );
+
     try {
-      // Simulación de latencia con Registro y Estadística USAC
-      await Future.delayed(const Duration(milliseconds: 700));
-
-      final carneText = _carneController.text.trim();
-      final nameText = _nameController.text.trim();
-
-      final updated = widget.currentProfile.copyWith(
-        carne: carneText,
-        studentName: nameText,
-        isCarneVerified: true,
-      );
-
       await ProfileService.saveProfile(updated);
-      await LocalStorageService.saveUserProfile(updated);
+      if (!mounted) return;
 
-      if (mounted) {
-        widget.onProfileUpdated(updated);
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.verified, color: Colors.white, size: 20),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text('Carné $carneText validado exitosamente como estudiante USAC.'),
-                ),
-              ],
-            ),
-            backgroundColor: const Color(0xFF059669),
-          ),
-        );
-      }
-    } catch (e) {
+      widget.onProfileUpdated(updated);
+      setState(() {
+        _isSavingDraft = false;
+        _statusMessage =
+            'Borrador guardado en este dispositivo. No hay una fuente institucional conectada: no se consultó Registro y Estadística y tu condición estudiantil no está verificada. Podrás reintentar cuando la verificación auténtica esté disponible.';
+      });
+    } catch (_) {
       if (mounted) {
         setState(() {
-          _isSimulatingValidation = false;
-          _errorMessage = 'Error validando carné: $e';
+          _isSavingDraft = false;
+          _errorMessage =
+              'No se pudo guardar el borrador. Tus campos siguen disponibles para reintentar.';
         });
       }
     }
@@ -132,221 +121,269 @@ class _CarneValidationModalState extends State<CarneValidationModal> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                // Header with USAC Shield / Verification Icon
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF059669).withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.verified_user,
-                        color: Color(0xFF059669),
-                        size: 26,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Validación Estudiantil con Carné',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Verificación institucional de confianza',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close, size: 20),
-                      onPressed: _isSimulatingValidation ? null : () => Navigator.of(context).pop(),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-
-                // Consentimiento informado en un clic (Box destacado)
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0284C7).withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: const Color(0xFF0284C7).withValues(alpha: 0.25),
-                    ),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  // Header showing that institutional verification is unavailable
+                  Row(
                     children: [
-                      const Padding(
-                        padding: EdgeInsets.only(top: 2),
-                        child: Icon(Icons.privacy_tip_outlined, size: 18, color: Color(0xFF0284C7)),
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(
+                            0xFF0284C7,
+                          ).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.info_outline,
+                          color: Color(0xFF0284C7),
+                          size: 26,
+                        ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 14),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Consentimiento de Privacidad',
-                              style: TextStyle(
+                            Text(
+                              'Datos para verificación de carné',
+                              style: theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                                color: Color(0xFF0284C7),
+                                fontSize: 16,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 2),
                             Text(
-                              'Solo consultaremos tu nombre y estado activo en Registro y Estadística. Tus notas y datos personales privados nunca son leídos ni almacenados.',
+                              'Sin fuente institucional conectada',
                               style: TextStyle(
                                 fontSize: 12,
-                                height: 1.35,
-                                color: isDark ? Colors.grey.shade300 : const Color(0xFF0F172A),
+                                color: isDark
+                                    ? Colors.grey.shade400
+                                    : Colors.grey.shade600,
                               ),
                             ),
                           ],
                         ),
                       ),
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 20),
+                        onPressed: _isSavingDraft
+                            ? null
+                            : () => Navigator.of(context).pop(),
+                      ),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 18),
 
-                const SizedBox(height: 18),
-
-                // Carné Input
-                TextFormField(
-                  controller: _carneController,
-                  keyboardType: TextInputType.number,
-                  maxLength: 10,
-                  decoration: const InputDecoration(
-                    labelText: 'Número de Carné Universitario',
-                    hintText: 'Ej. 202100123',
-                    prefixIcon: Icon(Icons.badge_outlined, size: 20),
-                    counterText: '',
-                  ),
-                  validator: (val) {
-                    if (val == null || val.trim().isEmpty) {
-                      return 'Ingresa tu número de carné.';
-                    }
-                    if (val.trim().length < 6) {
-                      return 'El carné debe tener al menos 6 dígitos.';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-
-                // Nombre Oficial Input
-                TextFormField(
-                  controller: _nameController,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(
-                    labelText: 'Nombre Completo Oficial',
-                    hintText: 'Ej. Juan José Pérez Gómez',
-                    prefixIcon: Icon(Icons.person_outline, size: 20),
-                  ),
-                  validator: (val) {
-                    if (val == null || val.trim().length < 3) {
-                      return 'Ingresa tu nombre completo oficial.';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 14),
-
-                // Consent Checkbox
-                InkWell(
-                  onTap: () {
-                    setState(() => _consentChecked = !_consentChecked);
-                  },
-                  borderRadius: BorderRadius.circular(8),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
+                  // Consentimiento explícito para guardar el borrador local
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0284C7).withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFF0284C7).withValues(alpha: 0.25),
+                      ),
+                    ),
                     child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Checkbox(
-                          value: _consentChecked,
-                          activeColor: const Color(0xFF059669),
-                          onChanged: (val) {
-                            setState(() => _consentChecked = val ?? false);
-                          },
+                        const Padding(
+                          padding: EdgeInsets.only(top: 2),
+                          child: Icon(
+                            Icons.privacy_tip_outlined,
+                            size: 18,
+                            color: Color(0xFF0284C7),
+                          ),
                         ),
+                        const SizedBox(width: 10),
                         Expanded(
-                          child: Text(
-                            'Entiendo que mi nombre real solo se mostrará en Marketplace como "Verificado" y no en el Foro.',
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Consentimiento para guardar un borrador',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  color: Color(0xFF0284C7),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Al guardar, tu carné y nombre se conservarán en el almacenamiento local de esta app para reintentar. Actualmente no hay una fuente institucional conectada: no se hará ninguna consulta ni se confirmará tu condición estudiantil.',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  height: 1.35,
+                                  color: isDark
+                                      ? Colors.grey.shade300
+                                      : const Color(0xFF0F172A),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
-                ),
 
-                if (_errorMessage != null) ...[
-                  const SizedBox(height: 10),
-                  Text(
-                    _errorMessage!,
-                    style: const TextStyle(color: Colors.red, fontSize: 12),
+                  const SizedBox(height: 18),
+
+                  // Carné Input
+                  TextFormField(
+                    controller: _carneController,
+                    keyboardType: TextInputType.number,
+                    maxLength: 10,
+                    decoration: const InputDecoration(
+                      labelText: 'Número de Carné Universitario',
+                      hintText: 'Ej. 202100123',
+                      prefixIcon: Icon(Icons.badge_outlined, size: 20),
+                      counterText: '',
+                    ),
+                    validator: (val) {
+                      if (val == null || val.trim().isEmpty) {
+                        return 'Ingresa tu número de carné.';
+                      }
+                      if (val.trim().length < 6) {
+                        return 'El carné debe tener al menos 6 dígitos.';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Nombre Oficial Input
+                  TextFormField(
+                    controller: _nameController,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: const InputDecoration(
+                      labelText: 'Nombre completo para reintentar',
+                      hintText: 'Ej. Juan José Pérez Gómez',
+                      prefixIcon: Icon(Icons.person_outline, size: 20),
+                    ),
+                    validator: (val) {
+                      if (val == null || val.trim().length < 3) {
+                        return 'Ingresa tu nombre completo.';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Consent Checkbox
+                  InkWell(
+                    onTap: () {
+                      setState(() {
+                        _consentChecked = !_consentChecked;
+                        _errorMessage = null;
+                        _statusMessage = null;
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Checkbox(
+                            value: _consentChecked,
+                            activeColor: const Color(0xFF059669),
+                            onChanged: (val) {
+                              setState(() {
+                                _consentChecked = val ?? false;
+                                _errorMessage = null;
+                                _statusMessage = null;
+                              });
+                            },
+                          ),
+                          Expanded(
+                            child: Text(
+                              'Autorizo guardar mi carné y nombre en este dispositivo para reintentar. Entiendo que esto no verifica mi condición estudiantil.',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  if (_errorMessage != null) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      _errorMessage!,
+                      style: const TextStyle(color: Colors.red, fontSize: 12),
+                    ),
+                  ],
+                  if (_statusMessage != null) ...[
+                    const SizedBox(height: 10),
+                    Semantics(
+                      liveRegion: true,
+                      child: Text(
+                        _statusMessage!,
+                        style: const TextStyle(
+                          color: Color(0xFF0369A1),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 20),
+
+                  // Action Buttons
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Wrap(
+                      alignment: WrapAlignment.end,
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        TextButton(
+                          onPressed: _isSavingDraft
+                              ? null
+                              : () => Navigator.of(context).pop(),
+                          child: const Text('Cancelar'),
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: _isSavingDraft ? null : _saveDraftForRetry,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF0284C7),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          icon: _isSavingDraft
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.save_outlined, size: 18),
+                          label: Text(
+                            _isSavingDraft
+                                ? 'Guardando...'
+                                : 'Guardar borrador',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
-
-                const SizedBox(height: 20),
-
-                // Action Buttons
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Wrap(
-                    alignment: WrapAlignment.end,
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      TextButton(
-                        onPressed: _isSimulatingValidation ? null : () => Navigator.of(context).pop(),
-                        child: const Text('Cancelar'),
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: _isSimulatingValidation ? null : _validateAndSave,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF059669),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                        icon: _isSimulatingValidation
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                              )
-                            : const Icon(Icons.check_circle_outline, size: 18),
-                        label: Text(
-                          _isSimulatingValidation ? 'Validando...' : 'Validar con Registro',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

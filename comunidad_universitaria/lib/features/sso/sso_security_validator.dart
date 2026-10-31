@@ -1,9 +1,6 @@
 class SsoSecurityValidator {
   /// Allowed hosts for local development
-  static const Set<String> allowedLocalhostHosts = {
-    'localhost',
-    '127.0.0.1',
-  };
+  static const Set<String> allowedLocalhostHosts = {'localhost', '127.0.0.1'};
 
   /// Allowed domain suffixes for PEMTREE in production / preview
   static const List<String> allowedDomainSuffixes = [
@@ -14,7 +11,8 @@ class SsoSecurityValidator {
   ];
 
   /// Default exact local redirect URI for PEMTREE in development
-  static const String defaultLocalRedirectUri = 'http://localhost:5173/auth/callback';
+  static const String defaultLocalRedirectUri =
+      'http://localhost:5173/auth/callback';
 
   /// Validates that the redirectUri strictly belongs to authorized origins
   /// (Open Redirect Protection), without any asterisks or wildcards.
@@ -53,33 +51,38 @@ class SsoSecurityValidator {
     return false;
   }
 
-  /// Builds the success redirect URL with access_token and refresh_token
-  /// inside the hash fragment (#), preserving the state parameter.
+  /// Builds a success redirect with a short-lived access token in the hash
+  /// fragment. Refresh tokens must never be exposed to a client redirect.
   /// Uses exactly the redirect_uri provided or http://localhost:5173/auth/callback in development.
   static String buildSuccessRedirectUrl({
     required String redirectUri,
     required String accessToken,
-    required String refreshToken,
     required String? state,
     String tokenType = 'bearer',
     int? expiresIn,
   }) {
-    final cleanRedirect = redirectUri.trim().isEmpty ? defaultLocalRedirectUri : redirectUri.trim();
+    final cleanRedirect = redirectUri.trim().isEmpty
+        ? defaultLocalRedirectUri
+        : redirectUri.trim();
     final baseUri = Uri.parse(cleanRedirect);
     final params = <String, String>{
       'access_token': accessToken,
-      'refresh_token': refreshToken,
       'token_type': tokenType,
       if (expiresIn != null) 'expires_in': expiresIn.toString(),
       if (state != null && state.trim().isNotEmpty) 'state': state.trim(),
     };
 
     final hashQuery = params.entries
-        .map((e) => '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
+        .map(
+          (e) =>
+              '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}',
+        )
         .join('&');
 
     final existingFragment = baseUri.fragment;
-    final finalFragment = existingFragment.isNotEmpty ? '$existingFragment&$hashQuery' : hashQuery;
+    final finalFragment = existingFragment.isNotEmpty
+        ? '$existingFragment&$hashQuery'
+        : hashQuery;
 
     return baseUri.replace(fragment: finalFragment).toString();
   }
@@ -93,7 +96,9 @@ class SsoSecurityValidator {
     String error = 'access_denied',
     String errorDescription = 'El usuario canceló la autorización',
   }) {
-    final cleanRedirect = redirectUri.trim().isEmpty ? defaultLocalRedirectUri : redirectUri.trim();
+    final cleanRedirect = redirectUri.trim().isEmpty
+        ? defaultLocalRedirectUri
+        : redirectUri.trim();
     final baseUri = Uri.parse(cleanRedirect);
     final params = <String, String>{
       'error': error,
@@ -102,11 +107,16 @@ class SsoSecurityValidator {
     };
 
     final hashQuery = params.entries
-        .map((e) => '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
+        .map(
+          (e) =>
+              '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}',
+        )
         .join('&');
 
     final existingFragment = baseUri.fragment;
-    final finalFragment = existingFragment.isNotEmpty ? '$existingFragment&$hashQuery' : hashQuery;
+    final finalFragment = existingFragment.isNotEmpty
+        ? '$existingFragment&$hashQuery'
+        : hashQuery;
 
     return baseUri.replace(fragment: finalFragment).toString();
   }

@@ -1,6 +1,10 @@
+import 'dart:ui' show SemanticsRole;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/utils/responsive.dart';
 import '../forum/screens/forum_screen.dart';
+import '../groups/screens/groups_screen.dart';
 import '../marketplace/screens/marketplace_screen.dart';
 import '../marketplace/widgets/create_listing_dialog.dart';
 import '../rules/screens/rules_screen.dart';
@@ -25,18 +29,61 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
+  final GlobalKey<GroupsScreenState> _groupsScreenKey =
+      GlobalKey<GroupsScreenState>();
+  final List<FocusNode> _desktopTabFocusNodes = List.generate(
+    3,
+    (index) => FocusNode(debugLabel: 'Desktop tab $index'),
+  );
+
+  @override
+  void dispose() {
+    for (final focusNode in _desktopTabFocusNodes) {
+      focusNode.dispose();
+    }
+    super.dispose();
+  }
+
+  void _selectDesktopTab(int index) {
+    if (_currentIndex != index) {
+      setState(() => _currentIndex = index);
+    }
+    _desktopTabFocusNodes[index].requestFocus();
+  }
+
+  KeyEventResult _handleDesktopTabKey(int index, KeyEvent event) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
+
+    final nextIndex = switch (event.logicalKey) {
+      LogicalKeyboardKey.arrowRight =>
+        (index + 1) % _desktopTabFocusNodes.length,
+      LogicalKeyboardKey.arrowLeft =>
+        (index - 1 + _desktopTabFocusNodes.length) %
+            _desktopTabFocusNodes.length,
+      LogicalKeyboardKey.home => 0,
+      LogicalKeyboardKey.end => _desktopTabFocusNodes.length - 1,
+      LogicalKeyboardKey.enter || LogicalKeyboardKey.space => index,
+      _ => null,
+    };
+
+    if (nextIndex == null) return KeyEventResult.ignored;
+
+    _selectDesktopTab(nextIndex);
+    return KeyEventResult.handled;
+  }
 
   void _navigateToRules() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const RulesScreen(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const RulesScreen()));
   }
 
   void _showDisclaimerModal() {
     showDialog(
       context: context,
+      requestFocus: true,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
@@ -44,7 +91,10 @@ class _AppShellState extends State<AppShell> {
             Icon(Icons.info_outline, color: Color(0xFF004B87)),
             SizedBox(width: 8),
             Expanded(
-              child: Text('Aviso Comunitario', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              child: Text(
+                'Aviso Comunitario',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         ),
@@ -61,6 +111,7 @@ class _AppShellState extends State<AppShell> {
             child: const Text('Ver Normas Completas'),
           ),
           TextButton(
+            autofocus: true,
             onPressed: () => Navigator.of(ctx).pop(),
             child: const Text('Entendido'),
           ),
@@ -72,8 +123,7 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final width = MediaQuery.of(context).size.width;
-    final isDesktop = width >= 800;
+    final isMobile = Responsive.isMobile(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -101,15 +151,25 @@ class _AppShellState extends State<AppShell> {
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Text(
-                          isDesktop ? 'Comunidad Universitaria' : 'Comunidad USAC',
+                          isMobile
+                              ? 'Comunidad USAC'
+                              : 'Comunidad Universitaria',
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
                         ),
                         const SizedBox(width: 4),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 1,
+                          ),
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.12,
+                            ),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -140,21 +200,30 @@ class _AppShellState extends State<AppShell> {
 
           // Theme toggle
           IconButton(
-            icon: Icon(widget.isDarkMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined, size: 20),
+            icon: Icon(
+              widget.isDarkMode
+                  ? Icons.light_mode_outlined
+                  : Icons.dark_mode_outlined,
+              size: 20,
+            ),
             tooltip: 'Cambiar tema',
             onPressed: widget.onToggleTheme,
           ),
           const SizedBox(width: 8),
         ],
-        bottom: isDesktop
+        bottom: !isMobile
             ? PreferredSize(
                 preferredSize: const Size.fromHeight(48),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: widget.isDarkMode ? const Color(0xFF1E1F22) : Colors.white,
+                    color: widget.isDarkMode
+                        ? const Color(0xFF1E1F22)
+                        : Colors.white,
                     border: Border(
                       bottom: BorderSide(
-                        color: widget.isDarkMode ? const Color(0xFF2B2D31) : const Color(0xFFE2E8F0),
+                        color: widget.isDarkMode
+                            ? const Color(0xFF2B2D31)
+                            : const Color(0xFFE2E8F0),
                         width: 1.5,
                       ),
                     ),
@@ -162,13 +231,33 @@ class _AppShellState extends State<AppShell> {
                   child: MaxWidthContainer(
                     maxWidth: 1200,
                     padding: EdgeInsets.zero,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _buildNavTab(index: 0, label: 'Foro Estudiantil', icon: Icons.forum_outlined),
-                          _buildNavTab(index: 1, label: 'Marketplace & Tutorías', icon: Icons.storefront_outlined),
-                        ],
+                    child: FocusTraversalGroup(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Semantics(
+                          container: true,
+                          explicitChildNodes: true,
+                          role: SemanticsRole.tabBar,
+                          child: Row(
+                            children: [
+                              _buildNavTab(
+                                index: 0,
+                                label: 'Foro Estudiantil',
+                                icon: Icons.forum_outlined,
+                              ),
+                              _buildNavTab(
+                                index: 1,
+                                label: 'Marketplace & Tutorías',
+                                icon: Icons.storefront_outlined,
+                              ),
+                              _buildNavTab(
+                                index: 2,
+                                label: 'Grupos de Estudio',
+                                icon: Icons.groups_outlined,
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -180,20 +269,38 @@ class _AppShellState extends State<AppShell> {
       body: IndexedStack(
         index: _currentIndex,
         children: [
-          ForumScreen(
-            activeAlias: widget.activeAlias,
-            onAliasChanged: widget.onAliasChanged,
-            onToggleTheme: widget.onToggleTheme,
-            isDarkMode: widget.isDarkMode,
+          ExcludeSemantics(
+            excluding: _currentIndex != 0,
+            child: ForumScreen(
+              activeAlias: widget.activeAlias,
+              onAliasChanged: widget.onAliasChanged,
+              onToggleTheme: widget.onToggleTheme,
+              isDarkMode: widget.isDarkMode,
+            ),
           ),
-          MarketplaceScreen(
-            activeAlias: widget.activeAlias,
-            onAliasChanged: widget.onAliasChanged,
+          ExcludeSemantics(
+            excluding: _currentIndex != 1,
+            child: MarketplaceScreen(
+              activeAlias: widget.activeAlias,
+              onAliasChanged: widget.onAliasChanged,
+            ),
+          ),
+          ExcludeSemantics(
+            excluding: _currentIndex != 2,
+            child: GroupsScreen(
+              key: _groupsScreenKey,
+              activeAlias: widget.activeAlias,
+              onAliasChanged: widget.onAliasChanged,
+              showFloatingActionButton: false,
+              floatingActionButtonHeroTag: 'shell_groups_screen_fab',
+            ),
           ),
         ],
       ),
-      floatingActionButton: !isDesktop ? _buildContextualFloatingActionButton() : null,
-      bottomNavigationBar: isDesktop
+      floatingActionButton: isMobile
+          ? _buildContextualFloatingActionButton()
+          : null,
+      bottomNavigationBar: !isMobile
           ? null
           : NavigationBar(
               selectedIndex: _currentIndex,
@@ -211,6 +318,11 @@ class _AppShellState extends State<AppShell> {
                   selectedIcon: Icon(Icons.storefront),
                   label: 'Marketplace',
                 ),
+                NavigationDestination(
+                  icon: Icon(Icons.groups_outlined),
+                  selectedIcon: Icon(Icons.groups),
+                  label: 'Grupos',
+                ),
               ],
             ),
     );
@@ -223,39 +335,68 @@ class _AppShellState extends State<AppShell> {
   }) {
     final isSelected = _currentIndex == index;
     final theme = Theme.of(context);
-    final activeColor = widget.isDarkMode ? Colors.white : theme.colorScheme.primary;
-    final inactiveColor = widget.isDarkMode ? const Color(0xFF949BA4) : Colors.grey.shade600;
+    final activeColor = widget.isDarkMode
+        ? Colors.white
+        : theme.colorScheme.primary;
+    final inactiveColor = widget.isDarkMode
+        ? const Color(0xFF949BA4)
+        : Colors.grey.shade600;
 
-    return InkWell(
-      onTap: () => setState(() => _currentIndex = index),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: isSelected ? theme.colorScheme.primary : Colors.transparent,
-              width: 3,
-            ),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 18,
-              color: isSelected ? activeColor : inactiveColor,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: isSelected ? activeColor : inactiveColor,
+    return Semantics(
+      container: true,
+      label: label,
+      selected: isSelected,
+      role: SemanticsRole.tab,
+      onTap: () => _selectDesktopTab(index),
+      child: ExcludeSemantics(
+        child: Focus(
+          focusNode: _desktopTabFocusNodes[index],
+          skipTraversal: !isSelected,
+          onKeyEvent: (_, event) => _handleDesktopTabKey(index, event),
+          child: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: InkWell(
+              canRequestFocus: false,
+              onTap: () => _selectDesktopTab(index),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: isSelected
+                          ? theme.colorScheme.primary
+                          : Colors.transparent,
+                      width: 3,
+                    ),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      icon,
+                      size: 18,
+                      color: isSelected ? activeColor : inactiveColor,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.w500,
+                        color: isSelected ? activeColor : inactiveColor,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -278,7 +419,23 @@ class _AppShellState extends State<AppShell> {
           backgroundColor: const Color(0xFFEAB308),
           foregroundColor: Colors.black87,
           icon: const Icon(Icons.add_shopping_cart, size: 22),
-          label: const Text('Publicar Artículo', style: TextStyle(fontWeight: FontWeight.bold)),
+          label: const Text(
+            'Publicar Artículo',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        );
+      case 2:
+        return FloatingActionButton.extended(
+          heroTag: 'shell_groups_fab',
+          onPressed: () =>
+              _groupsScreenKey.currentState?.openCreateGroupDialog(),
+          backgroundColor: const Color(0xFF16A34A),
+          foregroundColor: Colors.white,
+          icon: const Icon(Icons.group_add, size: 22),
+          label: const Text(
+            'Compartir Grupo',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
         );
       default:
         return null;

@@ -327,7 +327,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDesktop = Responsive.isDesktop(context);
-    final appBar = AppBar(title: const Text('Editar perfil'));
 
     return Scaffold(
       appBar: AppBar(
@@ -619,7 +618,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                       Text(
                         (_profile?.isCarneVerified ?? false)
                             ? 'Tu nombre y badge de verificado se muestran en Marketplace. En el Foro se mantiene tu perfil estudiantil.'
-                            : 'Solo consultaremos tu nombre y estado activo en Registro y Estadística. Tus notas y datos personales privados nunca son leídos ni almacenados.',
+                            : 'No hay una fuente institucional conectada: no se ha consultado Registro y Estadística y tu condición estudiantil no está verificada.',
                         style: TextStyle(
                           fontSize: 10.5,
                           height: 1.3,
