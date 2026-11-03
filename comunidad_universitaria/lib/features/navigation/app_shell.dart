@@ -5,8 +5,10 @@ import 'package:flutter/services.dart';
 import '../../core/utils/responsive.dart';
 import '../forum/screens/forum_screen.dart';
 import '../groups/screens/groups_screen.dart';
+import '../profile/screens/profile_screen.dart';
 import '../marketplace/screens/marketplace_screen.dart';
 import '../marketplace/widgets/create_listing_dialog.dart';
+import '../map/screens/campus_map_screen.dart';
 import '../rules/screens/rules_screen.dart';
 
 class AppShell extends StatefulWidget {
@@ -29,10 +31,11 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
+  final Set<int> _visitedTabs = {0};
   final GlobalKey<GroupsScreenState> _groupsScreenKey =
       GlobalKey<GroupsScreenState>();
   final List<FocusNode> _desktopTabFocusNodes = List.generate(
-    3,
+    4,
     (index) => FocusNode(debugLabel: 'Desktop tab $index'),
   );
 
@@ -45,8 +48,11 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _selectDesktopTab(int index) {
-    if (_currentIndex != index) {
-      setState(() => _currentIndex = index);
+    if (_currentIndex != index || !_visitedTabs.contains(index)) {
+      setState(() {
+        _currentIndex = index;
+        _visitedTabs.add(index);
+      });
     }
     _desktopTabFocusNodes[index].requestFocus();
   }
@@ -127,90 +133,173 @@ class _AppShellState extends State<AppShell> {
 
     return Scaffold(
       appBar: AppBar(
-        titleSpacing: 16,
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: const Color(0xFF004B87),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.school, color: Colors.white, size: 20),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: InkWell(
+        toolbarHeight: isMobile ? 64 : kToolbarHeight,
+        centerTitle: isMobile,
+        titleSpacing: isMobile ? 0 : 16,
+        title: isMobile
+            ? InkWell(
                 onTap: _showDisclaimerModal,
-                borderRadius: BorderRadius.circular(4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                borderRadius: BorderRadius.circular(8),
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        Text(
-                          isMobile
-                              ? 'Comunidad USAC'
-                              : 'Comunidad Universitaria',
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                            vertical: 1,
-                          ),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withValues(
-                              alpha: 0.12,
-                            ),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            'No Oficial',
-                            style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.primary,
-                            ),
-                          ),
-                        ),
-                      ],
+                    _buildBrandMark(),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Zanate',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                   ],
                 ),
+              )
+            : Row(
+                children: [
+                  _buildBrandMark(),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: InkWell(
+                      onTap: _showDisclaimerModal,
+                      borderRadius: BorderRadius.circular(4),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              const Text(
+                                'Zanate',
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 5,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primary.withValues(
+                                    alpha: 0.12,
+                                  ),
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                                child: Text(
+                                  'No Oficial',
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          Text(
+                            'Comunidad Universitaria',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurfaceVariant,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
-        actions: [
-          // Rules & Norms Button
-          IconButton(
-            icon: const Icon(Icons.shield_outlined, size: 20),
-            tooltip: 'Normas y Descargo',
-            onPressed: _navigateToRules,
-          ),
-          const SizedBox(width: 4),
-
-          // Theme toggle
-          IconButton(
-            icon: Icon(
-              widget.isDarkMode
-                  ? Icons.light_mode_outlined
-                  : Icons.dark_mode_outlined,
-              size: 20,
-            ),
-            tooltip: 'Cambiar tema',
-            onPressed: widget.onToggleTheme,
-          ),
-          const SizedBox(width: 8),
-        ],
+        actions: isMobile
+            ? [
+                PopupMenuButton<String>(
+                  tooltip: 'Ajustes',
+                  color: theme.colorScheme.surface,
+                  surfaceTintColor: Colors.transparent,
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: BorderSide(color: theme.colorScheme.outlineVariant),
+                  ),
+                  icon: const Icon(Icons.settings_outlined, size: 21),
+                  onSelected: (value) {
+                    switch (value) {
+                      case 'profile':
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => ProfileScreen(
+                              activeAlias: widget.activeAlias,
+                              onAliasChanged: widget.onAliasChanged,
+                            ),
+                          ),
+                        );
+                      case 'theme':
+                        widget.onToggleTheme();
+                      case 'rules':
+                        _navigateToRules();
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'profile',
+                      child: ListTile(
+                        leading: Icon(Icons.person_outline),
+                        title: Text('Perfil'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'theme',
+                      child: ListTile(
+                        leading: Icon(
+                          widget.isDarkMode
+                              ? Icons.light_mode_outlined
+                              : Icons.dark_mode_outlined,
+                        ),
+                        title: Text(
+                          widget.isDarkMode ? 'Tema claro' : 'Tema oscuro',
+                        ),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'rules',
+                      child: ListTile(
+                        leading: Icon(Icons.shield_outlined),
+                        title: Text('Normas y descargo'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 8),
+              ]
+            : [
+                IconButton(
+                  icon: const Icon(Icons.shield_outlined, size: 20),
+                  tooltip: 'Normas y Descargo',
+                  onPressed: _navigateToRules,
+                ),
+                const SizedBox(width: 4),
+                IconButton(
+                  icon: Icon(
+                    widget.isDarkMode
+                        ? Icons.light_mode_outlined
+                        : Icons.dark_mode_outlined,
+                    size: 20,
+                  ),
+                  tooltip: 'Cambiar tema',
+                  onPressed: widget.onToggleTheme,
+                ),
+                const SizedBox(width: 8),
+              ],
         bottom: !isMobile
             ? PreferredSize(
                 preferredSize: const Size.fromHeight(48),
@@ -255,6 +344,11 @@ class _AppShellState extends State<AppShell> {
                                 label: 'Grupos de Estudio',
                                 icon: Icons.groups_outlined,
                               ),
+                              _buildNavTab(
+                                index: 3,
+                                label: 'Mapa',
+                                icon: Icons.map_outlined,
+                              ),
                             ],
                           ),
                         ),
@@ -265,36 +359,49 @@ class _AppShellState extends State<AppShell> {
               )
             : null,
       ),
-      // IndexedStack avoids destroying and re-fetching screens when switching tabs
+      // IndexedStack preserves each screen's state while switching destinations.
       body: IndexedStack(
         index: _currentIndex,
         children: [
-          ExcludeSemantics(
-            excluding: _currentIndex != 0,
-            child: ForumScreen(
-              activeAlias: widget.activeAlias,
-              onAliasChanged: widget.onAliasChanged,
-              onToggleTheme: widget.onToggleTheme,
-              isDarkMode: widget.isDarkMode,
-            ),
-          ),
-          ExcludeSemantics(
-            excluding: _currentIndex != 1,
-            child: MarketplaceScreen(
-              activeAlias: widget.activeAlias,
-              onAliasChanged: widget.onAliasChanged,
-            ),
-          ),
-          ExcludeSemantics(
-            excluding: _currentIndex != 2,
-            child: GroupsScreen(
-              key: _groupsScreenKey,
-              activeAlias: widget.activeAlias,
-              onAliasChanged: widget.onAliasChanged,
-              showFloatingActionButton: false,
-              floatingActionButtonHeroTag: 'shell_groups_screen_fab',
-            ),
-          ),
+          _visitedTabs.contains(0)
+              ? ExcludeSemantics(
+                  excluding: _currentIndex != 0,
+                  child: ForumScreen(
+                    activeAlias: widget.activeAlias,
+                    onAliasChanged: widget.onAliasChanged,
+                    onToggleTheme: widget.onToggleTheme,
+                    isDarkMode: widget.isDarkMode,
+                  ),
+                )
+              : const SizedBox.shrink(),
+          _visitedTabs.contains(1)
+              ? ExcludeSemantics(
+                  excluding: _currentIndex != 1,
+                  child: MarketplaceScreen(
+                    activeAlias: widget.activeAlias,
+                    onAliasChanged: widget.onAliasChanged,
+                    showFloatingActionButton: !isMobile,
+                  ),
+                )
+              : const SizedBox.shrink(),
+          _visitedTabs.contains(2)
+              ? ExcludeSemantics(
+                  excluding: _currentIndex != 2,
+                  child: GroupsScreen(
+                    key: _groupsScreenKey,
+                    activeAlias: widget.activeAlias,
+                    onAliasChanged: widget.onAliasChanged,
+                    showFloatingActionButton: false,
+                    floatingActionButtonHeroTag: 'shell_groups_screen_fab',
+                  ),
+                )
+              : const SizedBox.shrink(),
+          _visitedTabs.contains(3)
+              ? ExcludeSemantics(
+                  excluding: _currentIndex != 3,
+                  child: const CampusMapScreen(),
+                )
+              : const SizedBox.shrink(),
         ],
       ),
       floatingActionButton: isMobile
@@ -302,29 +409,86 @@ class _AppShellState extends State<AppShell> {
           : null,
       bottomNavigationBar: !isMobile
           ? null
-          : NavigationBar(
-              selectedIndex: _currentIndex,
-              onDestinationSelected: (index) {
-                setState(() => _currentIndex = index);
-              },
-              destinations: const [
-                NavigationDestination(
-                  icon: Icon(Icons.forum_outlined),
-                  selectedIcon: Icon(Icons.forum),
-                  label: 'Foro',
+          : Container(
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: theme.colorScheme.outlineVariant),
                 ),
-                NavigationDestination(
-                  icon: Icon(Icons.storefront_outlined),
-                  selectedIcon: Icon(Icons.storefront),
-                  label: 'Marketplace',
+              ),
+              child: NavigationBarTheme(
+                data: NavigationBarThemeData(
+                  height: 58,
+                  indicatorColor: Colors.transparent,
+                  backgroundColor: theme.colorScheme.surface,
+                  elevation: 0,
+                  iconTheme: WidgetStateProperty.resolveWith((states) {
+                    return IconThemeData(
+                      size: 23,
+                      color: theme.colorScheme.onSurface,
+                    );
+                  }),
                 ),
-                NavigationDestination(
-                  icon: Icon(Icons.groups_outlined),
-                  selectedIcon: Icon(Icons.groups),
-                  label: 'Grupos',
+                child: NavigationBar(
+                  labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
+                  selectedIndex: _navigationIndexForScreen(_currentIndex),
+                  onDestinationSelected: (index) {
+                    final screenIndex = _screenIndexForNavigation(index);
+                    setState(() {
+                      _currentIndex = screenIndex;
+                      _visitedTabs.add(screenIndex);
+                    });
+                  },
+                  destinations: const [
+                    NavigationDestination(
+                      icon: Icon(Icons.chat_bubble_outline),
+                      selectedIcon: Icon(Icons.chat_bubble_outline),
+                      label: 'Foro',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.groups_outlined),
+                      selectedIcon: Icon(Icons.groups_outlined),
+                      label: 'Grupos',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.map_outlined),
+                      selectedIcon: Icon(Icons.map_outlined),
+                      label: 'Mapa',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.local_mall_outlined),
+                      selectedIcon: Icon(Icons.local_mall_outlined),
+                      label: 'Marketplace',
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
+    );
+  }
+
+  int _screenIndexForNavigation(int navigationIndex) {
+    return const [0, 2, 3, 1][navigationIndex];
+  }
+
+  int _navigationIndexForScreen(int screenIndex) {
+    return switch (screenIndex) {
+      0 => 0,
+      2 => 1,
+      3 => 2,
+      1 => 3,
+      _ => 0,
+    };
+  }
+
+  Widget _buildBrandMark() {
+    return SizedBox(
+      width: 48,
+      height: 48,
+      child: Image.asset(
+        'assets/images/zanate_logo.png',
+        fit: BoxFit.contain,
+        semanticLabel: 'Logo de Zanate',
+      ),
     );
   }
 
@@ -416,9 +580,9 @@ class _AppShellState extends State<AppShell> {
               onListingCreated: (_) => setState(() {}),
             );
           },
-          backgroundColor: const Color(0xFFEAB308),
-          foregroundColor: Colors.black87,
-          icon: const Icon(Icons.add_shopping_cart, size: 22),
+          backgroundColor: Theme.of(context).colorScheme.onSurface,
+          foregroundColor: Theme.of(context).colorScheme.surface,
+          icon: const Icon(Icons.add_business_outlined, size: 22),
           label: const Text(
             'Publicar Artículo',
             style: TextStyle(fontWeight: FontWeight.bold),
@@ -429,8 +593,8 @@ class _AppShellState extends State<AppShell> {
           heroTag: 'shell_groups_fab',
           onPressed: () =>
               _groupsScreenKey.currentState?.openCreateGroupDialog(),
-          backgroundColor: const Color(0xFF16A34A),
-          foregroundColor: Colors.white,
+          backgroundColor: Theme.of(context).colorScheme.onSurface,
+          foregroundColor: Theme.of(context).colorScheme.surface,
           icon: const Icon(Icons.group_add, size: 22),
           label: const Text(
             'Compartir Grupo',
