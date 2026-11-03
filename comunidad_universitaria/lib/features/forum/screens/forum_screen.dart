@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../core/models/post.dart';
 import '../../../core/models/user_profile.dart';
 import '../../../core/services/forum_service.dart';
 import '../../../core/services/local_storage_service.dart';
+import '../../../core/services/forum_server_preferences_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
 import '../models/discord_forum_models.dart';
@@ -78,8 +81,16 @@ class _ForumScreenState extends State<ForumScreen> {
   @override
   void initState() {
     super.initState();
-    _servers = List.from(ForumServer.defaultServers);
-    _activeServer = widget.activeServer ?? _servers.first;
+    final generalServer = ForumServer.defaultServers.first;
+    _servers = [generalServer];
+    _activeServer =
+        widget.activeServer != null && !widget.activeServer!.isGroups
+        ? widget.activeServer!
+        : generalServer;
+    if (!_servers.any((server) => server.id == _activeServer.id)) {
+      _servers.add(_activeServer);
+    }
+    _loadSavedServers();
     _activeChannel =
         widget.activeChannel ??
         ForumChannel.defaultChannels.firstWhere(
@@ -108,6 +119,18 @@ class _ForumScreenState extends State<ForumScreen> {
     if (!_activeServer.isGroups) {
       _loadPosts();
     }
+  }
+
+  Future<void> _loadSavedServers() async {
+    final savedServers = await ForumServerPreferencesService.load();
+    if (!mounted || savedServers.isEmpty) return;
+    setState(() {
+      for (final server in savedServers) {
+        if (!_servers.any((item) => item.id == server.id)) {
+          _servers.add(server);
+        }
+      }
+    });
   }
 
   Future<void> _loadPopularServers() async {
@@ -144,9 +167,6 @@ class _ForumScreenState extends State<ForumScreen> {
             );
           }
         });
-        if (widget.initialPopularServers == null) {
-          _loadPopularServers();
-        }
       }
     } catch (e) {
       debugPrint('Error cargando estructura del foro desde DB: $e');
@@ -172,6 +192,7 @@ class _ForumScreenState extends State<ForumScreen> {
       shouldReload = true;
     }
     if (widget.activeServer != null &&
+        !widget.activeServer!.isGroups &&
         widget.activeServer!.id != _activeServer.id) {
       _activeServer = widget.activeServer!;
       if (!_activeServer.isGroups) {
@@ -231,6 +252,10 @@ class _ForumScreenState extends State<ForumScreen> {
   }
 
   void _onSelectServer(ForumServer server) {
+    if (server.isGroups) return;
+    if (!_servers.any((item) => item.id == server.id)) {
+      _onAddServer(server);
+    }
     if (_activeServer.id == server.id) return;
     setState(() {
       _activeServer = server;
@@ -257,11 +282,11 @@ class _ForumScreenState extends State<ForumScreen> {
   }
 
   void _onAddServer(ForumServer newServer) {
-    final exists = _servers.any((s) => s.id == newServer.id);
+    if (newServer.isGroups) return;
+    final exists = _servers.any((server) => server.id == newServer.id);
     if (!exists) {
-      setState(() {
-        _servers.add(newServer);
-      });
+      setState(() => _servers.add(newServer));
+      ForumServerPreferencesService.save(_servers);
     }
   }
 
@@ -450,6 +475,24 @@ class _ForumScreenState extends State<ForumScreen> {
     }
   }
 
+  Future<void> _sharePost(Post post) async {
+    final shareText =
+        '${post.title}\n\n${post.content}\n\n— ${post.authorAlias}';
+    try {
+      await SharePlus.instance.share(
+        ShareParams(text: shareText, subject: post.title),
+      );
+    } catch (_) {
+      await Clipboard.setData(ClipboardData(text: shareText));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo abrir compartir. El texto se copió.'),
+        ),
+      );
+    }
+  }
+
   void _handleQuotePost(Post post) {
     if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
       AuthModal.show(
@@ -541,8 +584,7 @@ class _ForumScreenState extends State<ForumScreen> {
     final isDesktopOrTablet = !Responsive.isMobile(context);
     final showRightSidebar = Responsive.isDesktop(context);
 
-    // Discord main chat background: #313338 dark, #FFFFFF light
-    final feedBg = isDark ? const Color(0xFF313338) : Colors.white;
+    final feedBg = theme.scaffoldBackgroundColor;
 
     final isGroups = _activeServer.isGroups;
     final currentChannel = isGroups ? _groupsActiveChannel : _activeChannel;
@@ -560,7 +602,6 @@ class _ForumScreenState extends State<ForumScreen> {
             ForumServerRail(
               servers: _servers,
               activeServer: _activeServer,
-              faculties: _faculties,
               onSelectServer: _onSelectServer,
               onAddServer: _onAddServer,
             ),
@@ -571,9 +612,6 @@ class _ForumScreenState extends State<ForumScreen> {
               activeChannel: currentChannel,
               channels: currentChannels,
               onSelectChannel: _onSelectChannel,
-              onServerChanged: _onSelectServer,
-              activeAlias: widget.activeAlias,
-              onAliasChanged: widget.onAliasChanged,
             ),
 
             // 3. Main Content: GroupsScreen if isGroups, otherwise Channel Feed
@@ -613,6 +651,7 @@ class _ForumScreenState extends State<ForumScreen> {
       key: _scaffoldKey,
       backgroundColor: feedBg,
       drawer: Drawer(
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
         width: 312,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -620,7 +659,6 @@ class _ForumScreenState extends State<ForumScreen> {
             ForumServerRail(
               servers: _servers,
               activeServer: _activeServer,
-              faculties: _faculties,
               onSelectServer: (srv) {
                 _onSelectServer(srv);
                 if (_scaffoldKey.currentState?.isDrawerOpen == true) {
@@ -630,19 +668,38 @@ class _ForumScreenState extends State<ForumScreen> {
               onAddServer: _onAddServer,
             ),
             Expanded(
-              child: ForumChannelSidebar(
-                activeServer: _activeServer,
-                activeChannel: currentChannel,
-                channels: currentChannels,
-                onSelectChannel: _onSelectChannel,
-                onServerChanged: (srv) {
-                  _onSelectServer(srv);
-                  if (_scaffoldKey.currentState?.isDrawerOpen == true) {
-                    Navigator.of(context).pop();
-                  }
-                },
-                activeAlias: widget.activeAlias,
-                onAliasChanged: widget.onAliasChanged,
+              child: Column(
+                children: [
+                  SizedBox(
+                    height: 48,
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.search_rounded, size: 20),
+                          tooltip: 'Buscar publicaciones',
+                          onPressed: _openSearchFromDrawer,
+                        ),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.local_fire_department_rounded,
+                            size: 20,
+                            color: Color(0xFFF59E0B),
+                          ),
+                          tooltip: 'Comunidades populares',
+                          onPressed: _openPopularServersFromDrawer,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: ForumChannelSidebar(
+                      activeServer: _activeServer,
+                      activeChannel: currentChannel,
+                      channels: currentChannels,
+                      onSelectChannel: _onSelectChannel,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -655,7 +712,7 @@ class _ForumScreenState extends State<ForumScreen> {
             if (isGroups)
               _buildMobileGroupsHeader(theme, isDark)
             else
-              _buildMobileChannelHeader(theme, isDark),
+              _buildMobileChannelHeader(theme),
             Expanded(
               child: isGroups
                   ? GroupsScreen(
@@ -701,7 +758,7 @@ class _ForumScreenState extends State<ForumScreen> {
           const SizedBox(width: 6),
           Expanded(
             child: Text(
-              '#${_groupsActiveChannel.name}',
+              _groupsActiveChannel.name,
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
               overflow: TextOverflow.ellipsis,
             ),
@@ -736,64 +793,101 @@ class _ForumScreenState extends State<ForumScreen> {
     );
   }
 
-  Widget _buildMobileChannelHeader(ThemeData theme, bool isDark) {
+  Widget _buildMobileChannelHeader(ThemeData theme) {
     return Container(
-      height: 48,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      height: 52,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF313338) : Colors.white,
+        color: theme.colorScheme.surface,
         border: Border(
-          bottom: BorderSide(
-            color: isDark ? const Color(0xFF202225) : const Color(0xFFE2E8F0),
-            width: 1,
-          ),
+          bottom: BorderSide(color: theme.colorScheme.outlineVariant),
         ),
       ),
       child: Row(
         children: [
           IconButton(
             icon: const Icon(Icons.menu, size: 22),
-            tooltip: 'Canales y Servidores',
+            tooltip: 'Canales y servidores',
             onPressed: () => _scaffoldKey.currentState?.openDrawer(),
           ),
-          const SizedBox(width: 4),
-          Icon(
-            _activeChannel.icon,
-            size: 18,
-            color: isDark ? const Color(0xFF949BA4) : theme.colorScheme.primary,
-          ),
-          const SizedBox(width: 6),
           Expanded(
             child: Text(
-              '#${_activeChannel.name}',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              'Te damos la bienvenida!',
+              textAlign: TextAlign.center,
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: _activeServer.color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              _activeServer.shortCode,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: _activeServer.color,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
               ),
             ),
           ),
-          const SizedBox(width: 4),
-          IconButton(
-            icon: const Icon(
-              Icons.local_fire_department_rounded,
-              size: 20,
-              color: Color(0xFFF59E0B),
-            ),
-            tooltip: 'Comunidades Populares',
-            onPressed: () => _showPopularServersModal(context),
+          if (!_activeChannel.isSpecial)
+            IconButton(
+              icon: const Icon(Icons.add, size: 22),
+              tooltip: 'Crear publicación',
+              onPressed: _openCreateDialog,
+            )
+          else
+            const SizedBox(width: 48),
+        ],
+      ),
+    );
+  }
+
+  void _openSearchFromDrawer() {
+    Navigator.of(context).pop();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _showSearchDialog();
+    });
+  }
+
+  void _openPopularServersFromDrawer() {
+    Navigator.of(context).pop();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _showPopularServersModal(context);
+    });
+  }
+
+  void _showSearchDialog() {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        title: const Text('Buscar en el foro'),
+        content: TextField(
+          controller: _searchController,
+          autofocus: true,
+          textInputAction: TextInputAction.search,
+          decoration: InputDecoration(
+            hintText: 'Buscar publicaciones...',
+            prefixIcon: const Icon(Icons.search_rounded),
+            suffixIcon: _searchController.text.isEmpty
+                ? null
+                : IconButton(
+                    tooltip: 'Limpiar búsqueda',
+                    onPressed: _searchController.clear,
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+          ),
+          onSubmitted: (value) {
+            Navigator.of(dialogContext).pop();
+            setState(() => _searchQuery = value.trim());
+            _loadPosts();
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              setState(() => _searchQuery = _searchController.text.trim());
+              _loadPosts();
+            },
+            child: const Text('Buscar'),
           ),
         ],
       ),
@@ -805,22 +899,20 @@ class _ForumScreenState extends State<ForumScreen> {
       context: context,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       builder: (ctx) {
-        return ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-          child: SizedBox(
-            height: 480,
-            child: PopularServersSidebar(
-              popularServers: _popularServers,
-              activeServer: _activeServer,
-              isLoading: _isLoadingPopular,
-              isModal: true,
-              onSelectServer: (srv) {
-                Navigator.of(ctx).pop();
-                _onSelectServer(srv);
-              },
-              onRefresh: _loadPopularServers,
-            ),
+        return SizedBox(
+          height: 480,
+          child: PopularServersSidebar(
+            popularServers: _popularServers,
+            activeServer: _activeServer,
+            isLoading: _isLoadingPopular,
+            isModal: true,
+            onSelectServer: (srv) {
+              Navigator.of(ctx).pop();
+              _onSelectServer(srv);
+            },
+            onRefresh: _loadPopularServers,
           ),
         );
       },
@@ -898,16 +990,10 @@ class _ForumScreenState extends State<ForumScreen> {
             icon: _activeChannel.icon,
             title: _activeChannel.isSpecial
                 ? 'No tienes publicaciones guardadas'
-                : 'No hay mensajes en #${_activeChannel.name}',
+                : 'No hay mensajes en ${_activeChannel.name}',
             description: _activeChannel.isSpecial
                 ? 'Guarda consultas importantes del foro tocando el icono de marcador.'
                 : 'Sé el primero en iniciar una conversación o formular una duda en este canal.',
-            buttonText: _activeChannel.isSpecial
-                ? null
-                : 'Crear Primera Publicación',
-            onButtonPressed: _activeChannel.isSpecial
-                ? null
-                : _openCreateDialog,
           ),
         ],
       );
@@ -918,7 +1004,7 @@ class _ForumScreenState extends State<ForumScreen> {
       child: ListView.builder(
         controller: _feedScrollController,
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: EdgeInsets.zero,
         itemCount: _posts.length,
         itemBuilder: (ctx, index) {
           final post = _posts[index];
@@ -930,6 +1016,7 @@ class _ForumScreenState extends State<ForumScreen> {
             onLike: () => _handleToggleLike(post),
             onBookmark: () => _handleToggleBookmark(post),
             onRepost: () => _handleQuotePost(post),
+            onShare: () => _sharePost(post),
             onVotePoll: (pollId, optionId) => _handleVotePoll(pollId, optionId),
             onReport: (reason) async {
               final success = await ForumService.reportPost(
@@ -995,7 +1082,7 @@ class _ForumScreenState extends State<ForumScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '¡Te damos la bienvenida a #${_activeChannel.name}!',
+                    '¡Te damos la bienvenida a ${_activeChannel.name}!',
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
@@ -1129,140 +1216,6 @@ class _ForumScreenState extends State<ForumScreen> {
       );
     }
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF2B2D31) : const Color(0xFFF8FAFC),
-        border: Border(
-          bottom: BorderSide(
-            color: isDark ? const Color(0xFF202225) : const Color(0xFFE2E8F0),
-            width: 1,
-          ),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                _activeChannel.icon,
-                size: 18,
-                color: theme.colorScheme.primary,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  '¡Te damos la bienvenida a #${_activeChannel.name}!',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13.5,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (!_activeChannel.isSpecial)
-                SizedBox(
-                  height: 30,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                    icon: const Icon(Icons.add, size: 14),
-                    label: const Text(
-                      'Publicar',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    onPressed: _openCreateDialog,
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 34,
-            child: TextField(
-              controller: _searchController,
-              style: TextStyle(
-                fontSize: 12,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
-              ),
-              decoration: InputDecoration(
-                hintText: 'Buscar en #${_activeChannel.name}...',
-                hintStyle: TextStyle(
-                  fontSize: 11.5,
-                  color: isDark
-                      ? const Color(0xFF949BA4)
-                      : Colors.grey.shade500,
-                ),
-                prefixIcon: Icon(
-                  Icons.search,
-                  size: 16,
-                  color: isDark
-                      ? const Color(0xFF949BA4)
-                      : Colors.grey.shade500,
-                ),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        padding: EdgeInsets.zero,
-                        icon: Icon(
-                          Icons.clear,
-                          size: 14,
-                          color: isDark
-                              ? const Color(0xFF949BA4)
-                              : Colors.grey.shade500,
-                        ),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() => _searchQuery = '');
-                          _loadPosts();
-                        },
-                      )
-                    : null,
-                contentPadding: const EdgeInsets.symmetric(
-                  vertical: 0,
-                  horizontal: 8,
-                ),
-                filled: true,
-                fillColor: isDark ? const Color(0xFF1E1F22) : Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
-                  borderSide: BorderSide(
-                    color: isDark
-                        ? const Color(0xFF383A40)
-                        : const Color(0xFFCBD5E1),
-                    width: 1,
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
-                  borderSide: BorderSide(
-                    color: isDark
-                        ? const Color(0xFF383A40)
-                        : const Color(0xFFCBD5E1),
-                    width: 1,
-                  ),
-                ),
-              ),
-              onSubmitted: (val) {
-                setState(() => _searchQuery = val);
-                _loadPosts();
-              },
-            ),
-          ),
-        ],
-      ),
-    );
+    return const SizedBox.shrink();
   }
 }

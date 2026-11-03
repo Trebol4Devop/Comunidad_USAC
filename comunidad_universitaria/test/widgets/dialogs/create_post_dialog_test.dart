@@ -111,7 +111,7 @@ void main() {
         expect(find.text('Citar Publicación'), findsOneWidget);
         expect(find.text('Citando a Sancarlista #99'), findsOneWidget);
         expect(find.text('Recomendaciones Física 1'), findsWidgets);
-        expect(find.text('#primer-ingreso'), findsOneWidget);
+        expect(find.text('primer-ingreso'), findsOneWidget);
         expect(find.text('Servidor: Facultad de Ingeniería'), findsOneWidget);
       },
     );

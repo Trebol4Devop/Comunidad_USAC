@@ -291,10 +291,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       if (mounted) {
         setState(() => _isSendingComment = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceAll('Exception: ', '')),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
         );
       }
     }
@@ -309,25 +306,48 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final accentColor = isDark ? Colors.white : const Color(0xFF111827);
+    final panelColor = isDark ? const Color(0xFF1F2937) : Colors.white;
+    final panelSurface = isDark
+        ? const Color(0xFF111827)
+        : const Color(0xFFF1F5F9);
+    final panelBorder = isDark
+        ? const Color(0xFF374151)
+        : const Color(0xFFE2E8F0);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Discusión en el Foro'),
         actions: [
           IconButton(
+            style: IconButton.styleFrom(
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.zero,
+              ),
+            ),
             icon: Icon(
               _post.isBookmarkedByMe ? Icons.bookmark : Icons.bookmark_border,
             ),
             tooltip: 'Guardar publicación',
-            color: _post.isBookmarkedByMe ? const Color(0xFFD97706) : null,
+            color: _post.isBookmarkedByMe ? accentColor : null,
             onPressed: _handleBookmark,
           ),
           IconButton(
+            style: IconButton.styleFrom(
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.zero,
+              ),
+            ),
             icon: const Icon(Icons.repeat),
             tooltip: 'Citar publicación',
             onPressed: _handleQuotePost,
           ),
           IconButton(
+            style: IconButton.styleFrom(
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.zero,
+              ),
+            ),
             icon: const Icon(Icons.flag_outlined),
             tooltip: 'Reportar post',
             onPressed: () {
@@ -367,15 +387,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     Container(
                       padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
-                        color:
-                            theme.cardTheme.color ??
-                            (isDark ? const Color(0xFF1C2541) : Colors.white),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: isDark
-                              ? const Color(0xFF334155)
-                              : const Color(0xFFE2E8F0),
-                        ),
+                        color: panelColor,
+                        border: Border.all(color: panelBorder),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -387,13 +400,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 Icon(
                                   Icons.push_pin,
                                   size: 14,
-                                  color: theme.colorScheme.primary,
+                                  color: accentColor,
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
                                   'Publicación Fijada / Anuncio Oficial',
                                   style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.primary,
+                                    color: accentColor,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 11,
                                   ),
@@ -408,12 +421,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             children: [
                               CircleAvatar(
                                 radius: 16,
-                                backgroundColor: theme.colorScheme.primary
-                                    .withValues(alpha: 0.12),
+                                backgroundColor: panelSurface,
                                 child: Icon(
                                   Icons.person,
                                   size: 18,
-                                  color: theme.colorScheme.primary,
+                                  color: accentColor,
                                 ),
                               ),
                               const SizedBox(width: 10),
@@ -442,18 +454,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                   horizontal: 8,
                                   vertical: 3,
                                 ),
-                                decoration: BoxDecoration(
-                                  color: theme.colorScheme.primary.withValues(
-                                    alpha: 0.08,
-                                  ),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
+                                decoration: BoxDecoration(color: panelSurface),
                                 child: Text(
                                   _getCategoryLabel(_post.category),
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
-                                    color: theme.colorScheme.primary,
+                                    color: accentColor,
                                   ),
                                 ),
                               ),
@@ -487,15 +494,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: isDark
-                                    ? const Color(0xFF0F172A)
-                                    : const Color(0xFFF8FAFC),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: isDark
-                                      ? Colors.grey.shade800
-                                      : Colors.grey.shade300,
-                                ),
+                                color: panelSurface,
+                                border: Border.all(color: panelBorder),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -505,7 +505,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                       Icon(
                                         Icons.format_quote,
                                         size: 14,
-                                        color: theme.colorScheme.primary,
+                                        color: accentColor,
                                       ),
                                       const SizedBox(width: 4),
                                       Expanded(
@@ -561,14 +561,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             const SizedBox(height: 14),
                             Container(
                               padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? const Color(
-                                        0xFF1E293B,
-                                      ).withValues(alpha: 0.6)
-                                    : const Color(0xFFF1F5F9),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
+                              decoration: BoxDecoration(color: panelSurface),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -577,7 +570,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                       Icon(
                                         Icons.poll_outlined,
                                         size: 18,
-                                        color: theme.colorScheme.primary,
+                                        color: accentColor,
                                       ),
                                       const SizedBox(width: 8),
                                       Expanded(
@@ -614,28 +607,19 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                           _post.poll!.id,
                                           opt.id,
                                         ),
-                                        borderRadius: BorderRadius.circular(8),
+                                        borderRadius: BorderRadius.zero,
                                         child: Container(
                                           height: 40,
                                           decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
                                             border: Border.all(
                                               color: isMyVote
-                                                  ? theme.colorScheme.primary
-                                                  : (isDark
-                                                        ? const Color(
-                                                            0xFF334155,
-                                                          )
-                                                        : Colors.grey.shade300),
+                                                  ? accentColor
+                                                  : panelBorder,
                                               width: isMyVote ? 1.5 : 1.0,
                                             ),
                                           ),
                                           child: ClipRRect(
-                                            borderRadius: BorderRadius.circular(
-                                              7,
-                                            ),
+                                            borderRadius: BorderRadius.zero,
                                             child: Stack(
                                               children: [
                                                 if (hasVoted)
@@ -643,17 +627,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                                     widthFactor: percent,
                                                     child: Container(
                                                       color: isMyVote
-                                                          ? (isDark
-                                                                ? const Color(
-                                                                    0xFF3B82F6,
-                                                                  ).withValues(
-                                                                    alpha: 0.35,
-                                                                  )
-                                                                : const Color(
-                                                                    0xFF004B87,
-                                                                  ).withValues(
-                                                                    alpha: 0.22,
-                                                                  ))
+                                                          ? accentColor
+                                                                .withValues(
+                                                                  alpha: 0.18,
+                                                                )
                                                           : (isDark
                                                                 ? Colors.white
                                                                       .withValues(
@@ -685,9 +662,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                                                 Icons
                                                                     .check_circle,
                                                                 size: 16,
-                                                                color: theme
-                                                                    .colorScheme
-                                                                    .primary,
+                                                                color:
+                                                                    accentColor,
                                                               ),
                                                               const SizedBox(
                                                                 width: 8,
@@ -721,13 +697,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                                             fontWeight:
                                                                 FontWeight.w600,
                                                             color: isMyVote
-                                                                ? (isDark
-                                                                      ? const Color(
-                                                                          0xFF93C5FD,
-                                                                        )
-                                                                      : const Color(
-                                                                          0xFF004B87,
-                                                                        ))
+                                                                ? accentColor
                                                                 : (isDark
                                                                       ? Colors
                                                                             .grey
@@ -796,7 +766,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             children: [
                               InkWell(
                                 onTap: _handleLike,
-                                borderRadius: BorderRadius.circular(20),
+                                borderRadius: BorderRadius.zero,
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 14,
@@ -804,13 +774,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                   ),
                                   decoration: BoxDecoration(
                                     color: _post.isLikedByMe
-                                        ? theme.colorScheme.primary.withValues(
-                                            alpha: 0.12,
-                                          )
-                                        : (isDark
-                                              ? const Color(0xFF1E293B)
-                                              : const Color(0xFFF1F5F9)),
-                                    borderRadius: BorderRadius.circular(20),
+                                        ? accentColor.withValues(alpha: 0.12)
+                                        : panelSurface,
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
@@ -821,7 +786,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                             : Icons.thumb_up_alt_outlined,
                                         size: 16,
                                         color: _post.isLikedByMe
-                                            ? theme.colorScheme.primary
+                                            ? accentColor
                                             : (isDark
                                                   ? Colors.grey.shade400
                                                   : Colors.grey.shade600),
@@ -833,7 +798,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,
                                           color: _post.isLikedByMe
-                                              ? theme.colorScheme.primary
+                                              ? accentColor
                                               : (isDark
                                                     ? Colors.grey.shade300
                                                     : Colors.grey.shade700),
@@ -851,10 +816,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                     vertical: 7,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: isDark
-                                        ? const Color(0xFF1E293B)
-                                        : const Color(0xFFF1F5F9),
-                                    borderRadius: BorderRadius.circular(20),
+                                    color: panelSurface,
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
@@ -929,6 +891,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             ),
                             const SizedBox(height: 8),
                             OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: accentColor,
+                                side: BorderSide(color: panelBorder),
+                                shape: const RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.zero,
+                                ),
+                              ),
                               onPressed: _loadComments,
                               icon: const Icon(Icons.refresh),
                               label: const Text('Reintentar'),
@@ -941,15 +910,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          color: isDark
-                              ? const Color(0xFF1E293B).withValues(alpha: 0.5)
-                              : const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isDark
-                                ? const Color(0xFF334155)
-                                : const Color(0xFFE2E8F0),
-                          ),
+                          color: panelSurface,
+                          border: Border.all(color: panelBorder),
                         ),
                         child: Column(
                           children: [
@@ -1005,7 +967,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           // Bottom Reply Input Bar with GIF picker
           Container(
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF151E34) : Colors.white,
+              color: panelColor,
               border: Border(
                 top: BorderSide(
                   color: isDark
@@ -1032,19 +994,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           vertical: 4,
                         ),
                         margin: const EdgeInsets.only(bottom: 6),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withValues(
-                            alpha: 0.08,
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                        decoration: BoxDecoration(color: panelSurface),
                         child: Row(
                           children: [
-                            Icon(
-                              Icons.reply,
-                              size: 14,
-                              color: theme.colorScheme.primary,
-                            ),
+                            Icon(Icons.reply, size: 14, color: accentColor),
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
@@ -1053,7 +1006,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: theme.colorScheme.primary,
+                                  color: accentColor,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -1073,16 +1026,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       Container(
                         padding: const EdgeInsets.all(6),
                         margin: const EdgeInsets.only(bottom: 6),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? const Color(0xFF1E293B)
-                              : const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                        decoration: BoxDecoration(color: panelSurface),
                         child: Row(
                           children: [
                             ClipRRect(
-                              borderRadius: BorderRadius.circular(6),
+                              borderRadius: BorderRadius.zero,
                               child: Image.network(
                                 _commentGifUrl!,
                                 height: 60,
@@ -1109,9 +1057,14 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     Row(
                       children: [
                         IconButton(
+                          style: IconButton.styleFrom(
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.zero,
+                            ),
+                          ),
                           icon: Icon(
                             Icons.gif_box_outlined,
-                            color: theme.colorScheme.primary,
+                            color: accentColor,
                           ),
                           tooltip: 'Insertar GIF',
                           onPressed: () {
@@ -1143,13 +1096,22 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         ),
                         const SizedBox(width: 8),
                         IconButton.filled(
+                          style: IconButton.styleFrom(
+                            backgroundColor: accentColor,
+                            foregroundColor: isDark
+                                ? Colors.black
+                                : Colors.white,
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.zero,
+                            ),
+                          ),
                           icon: _isSendingComment
-                              ? const SizedBox(
+                              ? SizedBox(
                                   width: 18,
                                   height: 18,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: Colors.white,
+                                    color: isDark ? Colors.black : Colors.white,
                                   ),
                                 )
                               : const Icon(Icons.send, size: 18),

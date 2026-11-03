@@ -7,6 +7,7 @@ import 'package:comunidad_universitaria/features/forum/screens/post_detail_scree
 import 'package:comunidad_universitaria/features/forum/widgets/comment_item.dart';
 import 'package:comunidad_universitaria/features/forum/widgets/create_post_dialog.dart';
 import 'package:comunidad_universitaria/features/forum/widgets/post_card.dart';
+import 'package:comunidad_universitaria/features/shared/widgets/report_dialog.dart';
 
 void main() {
   testWidgets('Forum feed muestra error de carga y permite reintentar', (
@@ -55,16 +56,38 @@ void main() {
       commentCount: 2,
     );
 
+    var sharedPost = false;
+    String? reportedReason;
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: PostCard(post: testPost, onTap: () {}, onLike: () {}),
+          body: PostCard(
+            post: testPost,
+            onTap: () {},
+            onLike: () {},
+            onShare: () => sharedPost = true,
+            onReport: (reason) => reportedReason = reason,
+          ),
         ),
       ),
     );
 
     expect(find.text('Duda sobre Matemática'), findsOneWidget);
     expect(find.text('2'), findsOneWidget);
+    expect(find.byTooltip('Compartir'), findsOneWidget);
+    await tester.tap(find.byTooltip('Compartir'));
+    expect(sharedPost, isTrue);
+
+    expect(find.text('Reportar'), findsNothing);
+    await tester.tap(find.byTooltip('Más opciones'));
+    await tester.pumpAndSettle();
+    expect(find.text('Reportar'), findsOneWidget);
+    await tester.tap(find.text('Reportar'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ReportDialog), findsOneWidget);
+    await tester.tap(find.text('Enviar Reporte'));
+    await tester.pumpAndSettle();
+    expect(reportedReason, 'Acoso / Difamación');
   });
 
   testWidgets('Renderizar CommentItemWidget con respuestas anidadas', (

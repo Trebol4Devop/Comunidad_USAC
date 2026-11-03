@@ -53,9 +53,7 @@ class CreatePostDialog extends StatefulWidget {
         isScrollControlled: true,
         useSafeArea: true,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
         builder: (ctx) => CreatePostDialog(
           activeAlias: activeAlias,
           quotedPost: quotedPost,
@@ -291,15 +289,9 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
         if (newPost != null) {
           widget.onPostCreated(newPost);
           Navigator.of(context).pop();
-          final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text(
-                'Publicación creada exitosamente en el foro.',
-              ),
-              backgroundColor: isDarkTheme
-                  ? const Color(0xFF2563EB)
-                  : const Color(0xFF004B87),
+            const SnackBar(
+              content: Text('Publicación creada exitosamente en el foro.'),
             ),
           );
         }
@@ -315,7 +307,6 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                   .replaceAll('Exception: ', '')
                   .replaceAll('AuthException: ', ''),
             ),
-            backgroundColor: Colors.red,
           ),
         );
       }
@@ -326,6 +317,13 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final accentColor = isDark ? Colors.white : const Color(0xFF111827);
+    final panelColor = isDark
+        ? const Color(0xFF1E293B)
+        : const Color(0xFFF1F5F9);
+    final panelBorder = isDark
+        ? const Color(0xFF334155)
+        : const Color(0xFFE2E8F0);
     final isMobile = Responsive.isMobile(context);
     final maxHeight =
         MediaQuery.of(context).size.height * (isMobile ? 0.90 : 0.85);
@@ -346,14 +344,14 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
+                      color: panelColor,
+                      borderRadius: BorderRadius.zero,
                     ),
                     child: Icon(
                       widget.quotedPost != null
                           ? Icons.format_quote
                           : Icons.add_comment_outlined,
-                      color: theme.colorScheme.primary,
+                      color: accentColor,
                       size: 22,
                     ),
                   ),
@@ -373,7 +371,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                         Text(
                           'Foro Estudiantil USAC · Espacio Libre',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.primary,
+                            color: accentColor,
                           ),
                         ),
                       ],
@@ -389,19 +387,12 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                   padding: const EdgeInsets.all(10),
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.2),
-                    ),
+                    color: panelColor,
+                    border: Border.all(color: panelBorder),
                   ),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.format_quote,
-                        size: 18,
-                        color: theme.colorScheme.primary,
-                      ),
+                      Icon(Icons.format_quote, size: 18, color: accentColor),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Column(
@@ -435,11 +426,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                   initialValue: _selectedCategory,
                   decoration: InputDecoration(
                     labelText: 'Canal de publicación',
-                    prefixIcon: Icon(
-                      Icons.tag,
-                      size: 20,
-                      color: theme.colorScheme.primary,
-                    ),
+                    prefixIcon: Icon(Icons.tag, size: 20, color: accentColor),
                     helperText:
                         'Publica tu consulta en el canal correspondiente dentro de $_serverLabel.',
                     contentPadding: const EdgeInsets.symmetric(
@@ -497,19 +484,12 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                     vertical: 11,
                   ),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.2),
-                    ),
+                    color: panelColor,
+                    border: Border.all(color: panelBorder),
                   ),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.tag,
-                        size: 22,
-                        color: theme.colorScheme.primary,
-                      ),
+                      Icon(Icons.tag, size: 22, color: accentColor),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(
@@ -519,7 +499,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                               children: [
                                 Flexible(
                                   child: Text(
-                                    '#$_channelLabel',
+                                    _channelLabel,
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 13,
@@ -534,10 +514,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                                     vertical: 1.5,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: theme.colorScheme.primary.withValues(
-                                      alpha: 0.15,
-                                    ),
-                                    borderRadius: BorderRadius.circular(4),
+                                    color: accentColor.withValues(alpha: 0.12),
                                   ),
                                   child: const Text(
                                     'Canal asignado',
@@ -583,7 +560,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                     prefixIcon: Icon(
                       Icons.school_outlined,
                       size: 20,
-                      color: theme.colorScheme.primary,
+                      color: accentColor,
                     ),
                     helperText:
                         'Selecciona la carrera correspondiente dentro de $_serverLabel.',
@@ -653,6 +630,11 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                 children: [
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
+                      foregroundColor: accentColor,
+                      side: BorderSide(color: panelBorder),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.zero,
+                      ),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10,
                         vertical: 6,
@@ -665,6 +647,11 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                   const SizedBox(width: 8),
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
+                      foregroundColor: accentColor,
+                      side: BorderSide(color: panelBorder),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.zero,
+                      ),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10,
                         vertical: 6,
@@ -687,14 +674,13 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                   const SizedBox(width: 8),
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
+                      foregroundColor: accentColor,
+                      side: BorderSide(color: panelBorder),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.zero,
+                      ),
                       backgroundColor: _showPollForm
-                          ? (isDark
-                                ? const Color(
-                                    0xFF3B82F6,
-                                  ).withValues(alpha: 0.25)
-                                : const Color(
-                                    0xFF004B87,
-                                  ).withValues(alpha: 0.12))
+                          ? accentColor.withValues(alpha: isDark ? 0.25 : 0.12)
                           : null,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10,
@@ -706,13 +692,13 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                     icon: Icon(
                       Icons.poll_outlined,
                       size: 16,
-                      color: _showPollForm ? theme.colorScheme.primary : null,
+                      color: _showPollForm ? accentColor : null,
                     ),
                     label: Text(
                       'Encuesta',
                       style: TextStyle(
                         fontSize: 12,
-                        color: _showPollForm ? theme.colorScheme.primary : null,
+                        color: _showPollForm ? accentColor : null,
                         fontWeight: _showPollForm
                             ? FontWeight.bold
                             : FontWeight.normal,
@@ -728,15 +714,8 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? const Color(0xFF1E293B)
-                        : const Color(0xFF004B87).withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: isDark
-                          ? const Color(0xFF334155)
-                          : const Color(0xFF004B87).withValues(alpha: 0.2),
-                    ),
+                    color: panelColor,
+                    border: Border.all(color: panelBorder),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -749,7 +728,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
-                              color: theme.colorScheme.primary,
+                              color: accentColor,
                             ),
                           ),
                           IconButton(
@@ -795,10 +774,10 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                               ),
                               if (_pollOptionControllers.length > 2)
                                 IconButton(
-                                  icon: const Icon(
+                                  icon: Icon(
                                     Icons.delete_outline,
                                     size: 18,
-                                    color: Colors.red,
+                                    color: accentColor,
                                   ),
                                   onPressed: () => _removePollOption(idx),
                                 ),
@@ -808,6 +787,12 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                       }),
                       if (_pollOptionControllers.length < 5)
                         TextButton.icon(
+                          style: TextButton.styleFrom(
+                            foregroundColor: accentColor,
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.zero,
+                            ),
+                          ),
                           onPressed: _addPollOption,
                           icon: const Icon(Icons.add, size: 16),
                           label: const Text(
@@ -826,7 +811,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                 Stack(
                   children: [
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.zero,
                       child: Image.network(
                         _selectedGifUrl!,
                         width: double.infinity,
@@ -843,7 +828,6 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                           padding: const EdgeInsets.all(4),
                           decoration: const BoxDecoration(
                             color: Colors.black54,
-                            shape: BoxShape.circle,
                           ),
                           child: const Icon(
                             Icons.close,
@@ -863,7 +847,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                 Stack(
                   children: [
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.zero,
                       child: Image.network(
                         _uploadedImageUrl!,
                         width: double.infinity,
@@ -885,7 +869,6 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                           padding: const EdgeInsets.all(4),
                           decoration: const BoxDecoration(
                             color: Colors.black54,
-                            shape: BoxShape.circle,
                           ),
                           child: const Icon(
                             Icons.close,
@@ -911,6 +894,12 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                   runSpacing: 8,
                   children: [
                     TextButton(
+                      style: TextButton.styleFrom(
+                        foregroundColor: accentColor,
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.zero,
+                        ),
+                      ),
                       onPressed: _isSubmitting
                           ? null
                           : () => Navigator.of(context).pop(),
@@ -918,8 +907,11 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                     ),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.colorScheme.primary,
-                        foregroundColor: Colors.white,
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.zero,
+                        ),
+                        backgroundColor: accentColor,
+                        foregroundColor: isDark ? Colors.black : Colors.white,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 10,
@@ -927,12 +919,12 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                       ),
                       onPressed: _isSubmitting ? null : _submit,
                       icon: _isSubmitting
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 16,
                               height: 16,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Colors.white,
+                                color: isDark ? Colors.black : Colors.white,
                               ),
                             )
                           : const Icon(Icons.send, size: 16),
@@ -956,7 +948,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
       );
     } else {
       return Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 620),
           child: content,
