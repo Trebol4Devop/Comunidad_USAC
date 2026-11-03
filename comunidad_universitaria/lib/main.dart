@@ -63,8 +63,9 @@ class _ComunidadUSACAppState extends State<ComunidadUSACApp> {
   }
 
   Future<void> _toggleTheme() async {
-    final nextMode =
-        _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    final nextMode = _themeMode == ThemeMode.light
+        ? ThemeMode.dark
+        : ThemeMode.light;
     setState(() => _themeMode = nextMode);
     await LocalStorageService.saveThemeMode(nextMode == ThemeMode.dark);
   }
@@ -74,11 +75,17 @@ class _ComunidadUSACAppState extends State<ComunidadUSACApp> {
     Uri? uri = Uri.tryParse(rawName);
 
     // In Flutter web, check Uri.base if settings.name is empty or '/'
-    if ((uri == null || (uri.path != '/auth/authorize' && uri.path != 'auth/authorize')) && kIsWeb) {
+    if ((uri == null ||
+            (uri.path != '/auth/authorize' && uri.path != 'auth/authorize')) &&
+        kIsWeb) {
       final base = Uri.base;
-      if (base.path == '/auth/authorize' || base.path == 'auth/authorize' || base.fragment.contains('auth/authorize')) {
+      if (base.path == '/auth/authorize' ||
+          base.path == 'auth/authorize' ||
+          base.fragment.contains('auth/authorize')) {
         if (base.fragment.contains('auth/authorize')) {
-          final cleanFragment = base.fragment.startsWith('/') ? base.fragment : '/${base.fragment}';
+          final cleanFragment = base.fragment.startsWith('/')
+              ? base.fragment
+              : '/${base.fragment}';
           uri = Uri.tryParse(cleanFragment);
         } else {
           uri = base;
@@ -86,7 +93,10 @@ class _ComunidadUSACAppState extends State<ComunidadUSACApp> {
       }
     }
 
-    if (uri != null && (uri.path == '/auth/authorize' || uri.path == 'auth/authorize' || uri.path.endsWith('/auth/authorize'))) {
+    if (uri != null &&
+        (uri.path == '/auth/authorize' ||
+            uri.path == 'auth/authorize' ||
+            uri.path.endsWith('/auth/authorize'))) {
       final params = Map<String, String>.from(uri.queryParameters);
       if (kIsWeb) {
         Uri.base.queryParameters.forEach((k, v) {
@@ -128,7 +138,7 @@ class _ComunidadUSACAppState extends State<ComunidadUSACApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Comunidad USAC',
+      title: 'Comunidad Universitaria',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
@@ -147,11 +157,10 @@ class AppScrollBehavior extends MaterialScrollBehavior {
 
   @override
   Set<PointerDeviceKind> get dragDevices => {
-        PointerDeviceKind.touch,
-        PointerDeviceKind.mouse,
-        PointerDeviceKind.trackpad,
-        PointerDeviceKind.stylus,
-        PointerDeviceKind.invertedStylus,
-      };
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.trackpad,
+    PointerDeviceKind.stylus,
+    PointerDeviceKind.invertedStylus,
+  };
 }
-
