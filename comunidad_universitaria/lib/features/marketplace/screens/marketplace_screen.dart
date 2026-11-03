@@ -17,11 +17,13 @@ import '../../shared/widgets/network_state_widgets.dart';
 class MarketplaceScreen extends StatefulWidget {
   final String activeAlias;
   final Function(String newAlias) onAliasChanged;
+  final bool showFloatingActionButton;
 
   const MarketplaceScreen({
     super.key,
     required this.activeAlias,
     required this.onAliasChanged,
+    this.showFloatingActionButton = true,
   });
 
   @override
@@ -320,14 +322,15 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               children: [
                 // Top Header Banner
                 Container(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF004B87), Color(0xFF1E3A8A)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: theme.brightness == Brightness.dark
+                          ? const Color(0xFF383A40)
+                          : const Color(0xFFD9D9D9),
                     ),
-                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: Row(
                     children: [
@@ -335,20 +338,19 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Marketplace & Tutorías Estudiantiles',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                             const SizedBox(height: 6),
                             Text(
                               'Espacio libre para emprendimientos sancarlistas: comidas, postres, tutorías de cursos y materiales universitarios.',
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.9),
-                                fontSize: 13,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                                fontSize: 12,
                               ),
                             ),
                           ],
@@ -356,10 +358,14 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                       ),
                       if (isDesktop) ...[
                         const SizedBox(width: 16),
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFEAB308),
-                            foregroundColor: Colors.black87,
+                        OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: theme.colorScheme.onSurface,
+                            side: BorderSide(
+                              color: theme.brightness == Brightness.dark
+                                  ? Colors.white38
+                                  : Colors.black54,
+                            ),
                           ),
                           onPressed: _handleCreateListingClick,
                           icon: const Icon(Icons.add_shopping_cart, size: 18),
@@ -596,19 +602,24 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                               ? Icons.check_circle
                               : Icons.volunteer_activism_outlined,
                           size: 16,
-                          color: _onlyFree
-                              ? Colors.white
-                              : const Color(0xFF16A34A),
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                         label: const Text('Solo Gratuitos'),
                         selected: _onlyFree,
-                        selectedColor: const Color(0xFF16A34A),
+                        selectedColor: theme.colorScheme.surface,
+                        showCheckmark: false,
+                        side: BorderSide(
+                          color: _onlyFree
+                              ? theme.colorScheme.onSurface
+                              : theme.dividerColor,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                         labelStyle: TextStyle(
                           fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: _onlyFree
-                              ? Colors.white
-                              : const Color(0xFF16A34A),
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.onSurface,
                         ),
                         onSelected: (selected) {
                           setState(() => _onlyFree = selected);
@@ -631,17 +642,22 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                               });
                               _loadData();
                             },
-                            selectedColor: theme.colorScheme.primary.withValues(
-                              alpha: 0.15,
+                            selectedColor: theme.colorScheme.surface,
+                            showCheckmark: false,
+                            side: BorderSide(
+                              color: isSelected
+                                  ? theme.colorScheme.onSurface
+                                  : theme.dividerColor,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
                             ),
                             labelStyle: TextStyle(
                               fontSize: 12,
                               fontWeight: isSelected
-                                  ? FontWeight.bold
+                                  ? FontWeight.w600
                                   : FontWeight.normal,
-                              color: isSelected
-                                  ? theme.colorScheme.primary
-                                  : null,
+                              color: theme.colorScheme.onSurface,
                             ),
                           ),
                         );
@@ -680,26 +696,29 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                   )
                 else
                   Responsive(
-                    mobile: ListView.builder(
+                    mobile: ListView.separated(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: _listings.length,
+                      separatorBuilder: (context, index) => Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: Theme.of(
+                          context,
+                        ).dividerColor.withValues(alpha: 0.6),
+                      ),
                       itemBuilder: (ctx, i) {
                         final item = _listings[i];
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: MarketplaceCard(
-                            item: item,
-                            isOwner:
-                                item.userId != null &&
-                                item.userId == SupabaseService.currentUserId,
-                            onUpvote: () => _handleToggleUpvote(item),
-                            onStatusChanged: (newStatus) =>
-                                _handleUpdateItemStatus(item, newStatus),
-                            onSponsoredHide: () => _hideSponsoredItem(item),
-                            onReport: (reason) =>
-                                _handleReportItem(item, reason),
-                          ),
+                        return MarketplaceCard(
+                          item: item,
+                          isOwner:
+                              item.userId != null &&
+                              item.userId == SupabaseService.currentUserId,
+                          onUpvote: () => _handleToggleUpvote(item),
+                          onStatusChanged: (newStatus) =>
+                              _handleUpdateItemStatus(item, newStatus),
+                          onSponsoredHide: () => _hideSponsoredItem(item),
+                          onReport: (reason) => _handleReportItem(item, reason),
                         );
                       },
                     ),
@@ -735,14 +754,16 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'marketplace_fab',
-        onPressed: _handleCreateListingClick,
-        backgroundColor: const Color(0xFF004B87),
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_business),
-        label: const Text('Publicar Anuncio'),
-      ),
+      floatingActionButton: widget.showFloatingActionButton
+          ? FloatingActionButton.extended(
+              heroTag: 'marketplace_fab',
+              onPressed: _handleCreateListingClick,
+              backgroundColor: theme.colorScheme.onSurface,
+              foregroundColor: theme.colorScheme.surface,
+              icon: const Icon(Icons.add_business),
+              label: const Text('Publicar Anuncio'),
+            )
+          : null,
     );
   }
 }

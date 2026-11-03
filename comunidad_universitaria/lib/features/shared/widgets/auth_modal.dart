@@ -31,9 +31,7 @@ class AuthModal extends StatefulWidget {
         context: context,
         isScrollControlled: true,
         useSafeArea: true,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
         builder: (ctx) => AuthModal(
           title: title ?? 'Inicia Sesión para Publicar',
           subtitle:
@@ -201,10 +199,7 @@ class _AuthModalState extends State<AuthModal> {
         setState(() => _isLoading = false);
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Cuenta creada con éxito.'),
-            backgroundColor: Color(0xFF004B87),
-          ),
+          const SnackBar(content: Text('Cuenta creada con éxito.')),
         );
         widget.onAuthenticated();
       } else {
@@ -231,6 +226,14 @@ class _AuthModalState extends State<AuthModal> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final accentColor = isDark ? Colors.white : const Color(0xFF111827);
+    final panelColor = isDark
+        ? const Color(0xFF1E293B)
+        : const Color(0xFFF1F5F9);
+    final panelBorder = isDark
+        ? const Color(0xFF334155)
+        : const Color(0xFFE2E8F0);
     final isMobile = Responsive.isMobile(context);
 
     Widget content = Form(
@@ -247,14 +250,10 @@ class _AuthModalState extends State<AuthModal> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF004B87).withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
+                    color: panelColor,
+                    borderRadius: BorderRadius.zero,
                   ),
-                  child: const Icon(
-                    Icons.lock_outline,
-                    color: Color(0xFF004B87),
-                    size: 24,
-                  ),
+                  child: Icon(Icons.lock_outline, color: accentColor, size: 24),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -272,7 +271,9 @@ class _AuthModalState extends State<AuthModal> {
                         widget.subtitle,
                         style: theme.textTheme.bodySmall?.copyWith(
                           fontSize: 11,
-                          color: Colors.grey.shade600,
+                          color: isDark
+                              ? Colors.grey.shade400
+                              : Colors.grey.shade600,
                         ),
                       ),
                     ],
@@ -287,16 +288,12 @@ class _AuthModalState extends State<AuthModal> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFEE2E2),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFFCA5A5)),
+                  color: panelColor,
+                  border: Border.all(color: panelBorder),
                 ),
                 child: Text(
                   _errorMessage!,
-                  style: const TextStyle(
-                    color: Color(0xFFB91C1C),
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: accentColor, fontSize: 12),
                 ),
               ),
               const SizedBox(height: 14),
@@ -305,9 +302,11 @@ class _AuthModalState extends State<AuthModal> {
             // Google Sign-In Button
             OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
+                foregroundColor: accentColor,
+                side: BorderSide(color: panelBorder),
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.zero,
                 ),
               ),
               icon: const Icon(
@@ -388,21 +387,21 @@ class _AuthModalState extends State<AuthModal> {
 
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF004B87),
-                foregroundColor: Colors.white,
+                backgroundColor: accentColor,
+                foregroundColor: isDark ? Colors.black : Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 13),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.zero,
                 ),
               ),
               onPressed: _isLoading ? null : _handleEmailAuth,
               child: _isLoading
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.white,
+                        color: isDark ? Colors.black : Colors.white,
                       ),
                     )
                   : Text(
@@ -417,6 +416,12 @@ class _AuthModalState extends State<AuthModal> {
             const SizedBox(height: 12),
 
             TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: accentColor,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.zero,
+                ),
+              ),
               onPressed: _isLoading
                   ? null
                   : () {
@@ -446,7 +451,7 @@ class _AuthModalState extends State<AuthModal> {
       );
     } else {
       return Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 440),
           child: content,

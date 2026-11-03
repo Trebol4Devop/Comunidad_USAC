@@ -308,10 +308,15 @@ class GroupsScreenState extends State<GroupsScreen> {
     onReport: (reason) => _handleReportGroup(group, reason),
   );
 
-  Widget _buildGroupList() => ListView.builder(
+  Widget _buildGroupList() => ListView.separated(
     shrinkWrap: true,
     physics: const NeverScrollableScrollPhysics(),
     itemCount: _groups.length,
+    separatorBuilder: (context, index) => Divider(
+      height: 1,
+      thickness: 1,
+      color: Theme.of(context).dividerColor.withValues(alpha: 0.6),
+    ),
     itemBuilder: (context, index) => _buildGroupCard(_groups[index]),
   );
 
@@ -373,23 +378,19 @@ class GroupsScreenState extends State<GroupsScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF2B2D31) : const Color(0xFFF8FAFC),
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? const Color(0xFF383A40) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF383A40) : const Color(0xFFD9D9D9),
         ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF3F4147) : const Color(0xFFDCFCE7),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(channelIcon, size: 22, color: const Color(0xFF16A34A)),
+          Icon(
+            channelIcon,
+            size: 22,
+            color: isDark ? Colors.white : Colors.black87,
           ),
           const SizedBox(width: 12),
           Expanded(

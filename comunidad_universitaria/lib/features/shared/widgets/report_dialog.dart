@@ -77,7 +77,13 @@ class _ReportDialogState extends State<ReportDialog> {
     final theme = Theme.of(context);
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      backgroundColor: theme.colorScheme.surface,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.zero,
+        side: BorderSide(color: theme.colorScheme.outlineVariant),
+      ),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 440),
         child: Padding(
@@ -88,13 +94,10 @@ class _ReportDialogState extends State<ReportDialog> {
             children: [
               Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(Icons.flag_outlined, color: Colors.red.shade700, size: 22),
+                  Icon(
+                    Icons.flag_outlined,
+                    color: theme.colorScheme.onSurface,
+                    size: 22,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -103,11 +106,15 @@ class _ReportDialogState extends State<ReportDialog> {
                       children: [
                         Text(
                           widget.title,
-                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         Text(
                           widget.subtitle,
-                          style: theme.textTheme.bodySmall,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ),
@@ -117,7 +124,9 @@ class _ReportDialogState extends State<ReportDialog> {
               const SizedBox(height: 16),
               Text(
                 'Selecciona el motivo del reporte:',
-                style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 8),
               Flexible(
@@ -134,13 +143,22 @@ class _ReportDialogState extends State<ReportDialog> {
                         child: Row(
                           children: [
                             Icon(
-                              isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                              isSelected
+                                  ? Icons.radio_button_checked
+                                  : Icons.radio_button_unchecked,
                               size: 18,
-                              color: isSelected ? theme.colorScheme.primary : Colors.grey.shade500,
+                              color: isSelected
+                                  ? theme.colorScheme.onSurface
+                                  : theme.colorScheme.onSurfaceVariant,
                             ),
                             const SizedBox(width: 8),
                             Expanded(
-                              child: Text(opt, style: theme.textTheme.bodyMedium?.copyWith(fontSize: 13)),
+                              child: Text(
+                                opt,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  fontSize: 13,
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -154,8 +172,21 @@ class _ReportDialogState extends State<ReportDialog> {
                 TextField(
                   controller: _customReasonController,
                   maxLength: 120,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'Explica brevemente la razón...',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.zero),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.zero,
+                      borderSide: BorderSide(
+                        color: theme.colorScheme.outlineVariant,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.zero,
+                      borderSide: BorderSide(
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -171,8 +202,13 @@ class _ReportDialogState extends State<ReportDialog> {
                       onPressed: () => Navigator.of(context).pop(),
                       child: const Text('Cancelar'),
                     ),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade700),
+                    FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: theme.colorScheme.onSurface,
+                        foregroundColor: theme.colorScheme.surface,
+                        elevation: 0,
+                        shape: const RoundedRectangleBorder(),
+                      ),
                       onPressed: _submit,
                       child: const Text('Enviar Reporte'),
                     ),

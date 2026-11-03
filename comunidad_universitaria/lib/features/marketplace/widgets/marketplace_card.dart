@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/categories.dart';
 import '../../../core/models/marketplace_item.dart';
+import '../../../core/utils/responsive.dart';
 import '../../../core/utils/time_utils.dart';
 import '../../../core/utils/url_utils.dart';
 import '../../shared/widgets/image_viewer_dialog.dart';
@@ -84,19 +85,24 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final isMobile = Responsive.isMobile(context);
     final item = widget.item;
 
     return Card(
       clipBehavior: Clip.antiAlias,
-      elevation: item.isSponsored ? 2 : 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: item.isSponsored
-            ? const BorderSide(color: Color(0xFFEAB308), width: 1.5)
-            : (isDark
-                  ? const BorderSide(color: Color(0xFF334155))
-                  : BorderSide(color: Colors.grey.shade200)),
-      ),
+      margin: EdgeInsets.zero,
+      elevation: 0,
+      color: theme.colorScheme.surface,
+      shape: isMobile
+          ? const RoundedRectangleBorder()
+          : RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(
+                color: isDark
+                    ? const Color(0xFF383A40)
+                    : const Color(0xFFD9D9D9),
+              ),
+            ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -142,9 +148,7 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                         child: Icon(
                           _getCategoryIcon(item.category),
                           size: 48,
-                          color: theme.colorScheme.primary.withValues(
-                            alpha: 0.4,
-                          ),
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
               ),
@@ -178,25 +182,27 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
               if (item.isSold)
                 Positioned.fill(
                   child: Container(
-                    color: Colors.black.withValues(alpha: 0.6),
+                    color: Colors.white.withValues(alpha: 0.72),
                     alignment: Alignment.center,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 6,
+                        horizontal: 12,
+                        vertical: 5,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.red.shade700,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.white, width: 2),
+                        color: theme.colorScheme.surface,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: isDark ? Colors.white54 : Colors.black54,
+                        ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'VENDIDO',
                         style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 16,
-                          letterSpacing: 2,
+                          color: theme.colorScheme.onSurface,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          letterSpacing: 1,
                         ),
                       ),
                     ),
@@ -210,16 +216,16 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                   left: 0,
                   right: 0,
                   child: Container(
-                    color: Colors.amber.shade700.withValues(alpha: 0.9),
+                    color: theme.colorScheme.surface.withValues(alpha: 0.94),
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     alignment: Alignment.center,
-                    child: const Text(
+                    child: Text(
                       'ARTÍCULO RESERVADO',
                       style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
+                        fontWeight: FontWeight.w600,
                         fontSize: 11,
-                        letterSpacing: 1,
+                        letterSpacing: 0.5,
                       ),
                     ),
                   ),
@@ -231,31 +237,21 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                 right: 8,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
+                    horizontal: 8,
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: item.isSold
-                        ? Colors.grey.shade700
-                        : (item.isFree
-                              ? const Color(0xFF16A34A)
-                              : (item.isSponsored
-                                    ? const Color(0xFFD97706)
-                                    : const Color(0xFF004B87))),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: isDark ? Colors.white54 : Colors.black54,
+                    ),
                   ),
                   child: Text(
                     item.isSold ? 'VENDIDO' : item.formattedPrice,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface,
+                      fontWeight: FontWeight.w600,
                       fontSize: 12,
                     ),
                   ),
@@ -272,8 +268,11 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                     vertical: 3,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.65),
+                    color: theme.colorScheme.surface.withValues(alpha: 0.94),
                     borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: isDark ? Colors.white54 : Colors.black54,
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -281,13 +280,13 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                       Icon(
                         _getCategoryIcon(item.category),
                         size: 12,
-                        color: Colors.white,
+                        color: theme.colorScheme.onSurface,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         _getCategoryLabel(item.category),
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface,
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
                         ),
@@ -318,6 +317,50 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Author and verification
+                Row(
+                  children: [
+                    Icon(
+                      Icons.person_outline,
+                      size: 16,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              item.authorAlias,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          if (item.isSellerVerified) ...[
+                            const SizedBox(width: 4),
+                            Tooltip(
+                              message: 'Vendedor verificado',
+                              child: Icon(
+                                Icons.verified_outlined,
+                                size: 14,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    Text(
+                      TimeUtils.timeAgo(item.createdAt),
+                      style: theme.textTheme.bodySmall?.copyWith(fontSize: 10),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+
                 // Title
                 Text(
                   item.title,
@@ -352,7 +395,7 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                     Icon(
                       Icons.place_outlined,
                       size: 14,
-                      color: theme.colorScheme.primary,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                     const SizedBox(width: 4),
                     Expanded(
@@ -391,15 +434,9 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withValues(
-                              alpha: 0.08,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: theme.colorScheme.primary.withValues(
-                                alpha: 0.2,
-                              ),
-                            ),
+                            color: theme.colorScheme.surface,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: theme.dividerColor),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -407,15 +444,15 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                               Icon(
                                 _getDomainIcon(link),
                                 size: 12,
-                                color: theme.colorScheme.primary,
+                                color: theme.colorScheme.onSurfaceVariant,
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 _getDomainLabel(link),
                                 style: TextStyle(
                                   fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.colorScheme.onSurface,
                                 ),
                               ),
                             ],
@@ -438,27 +475,25 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEF4444).withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: const Color(0xFFEF4444).withValues(alpha: 0.3),
-                        ),
+                        color: theme.colorScheme.surface,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: theme.dividerColor),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: const [
+                        children: [
                           Icon(
-                            Icons.play_circle_fill,
+                            Icons.play_circle_outline,
                             size: 13,
-                            color: Color(0xFFEF4444),
+                            color: theme.colorScheme.onSurface,
                           ),
-                          SizedBox(width: 4),
+                          const SizedBox(width: 4),
                           Text(
                             'Ver Video Promocional',
                             style: TextStyle(
                               fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFFEF4444),
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.onSurface,
                             ),
                           ),
                         ],
@@ -466,84 +501,6 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                     ),
                   ),
                 ],
-
-                const SizedBox(height: 10),
-
-                // Author & Verification Badge
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 11,
-                      backgroundColor: item.isSellerVerified
-                          ? const Color(0xFF10B981).withValues(alpha: 0.15)
-                          : theme.colorScheme.primary.withValues(alpha: 0.1),
-                      child: Icon(
-                        item.isSellerVerified
-                            ? Icons.verified_user
-                            : Icons.person,
-                        size: 13,
-                        color: item.isSellerVerified
-                            ? const Color(0xFF059669)
-                            : theme.colorScheme.primary,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              item.authorAlias,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          if (item.isSellerVerified)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 5,
-                                vertical: 1,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF059669),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: const [
-                                  Icon(
-                                    Icons.verified,
-                                    size: 10,
-                                    color: Colors.white,
-                                  ),
-                                  SizedBox(width: 2),
-                                  Text(
-                                    'Vendedor Verificado',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      TimeUtils.timeAgo(item.createdAt),
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.grey.shade500,
-                      ),
-                    ),
-                  ],
-                ),
 
                 // Preventive Banner if Seller is NOT verified
                 if (!item.isSellerVerified && !item.isSold) ...[
@@ -554,26 +511,17 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF451A03)
-                          : const Color(0xFFFEF3C7),
+                      color: theme.colorScheme.surface,
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(
-                        color: isDark
-                            ? const Color(0xFFD97706)
-                            : const Color(0xFFF59E0B),
-                        width: 0.8,
-                      ),
+                      border: Border.all(color: theme.dividerColor),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Icon(
-                          Icons.warning_amber_rounded,
+                          Icons.info_outline,
                           size: 14,
-                          color: isDark
-                              ? const Color(0xFFFBBF24)
-                              : const Color(0xFFB45309),
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                         const SizedBox(width: 6),
                         Expanded(
@@ -583,9 +531,7 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                               fontSize: 10,
                               height: 1.25,
                               fontWeight: FontWeight.w500,
-                              color: isDark
-                                  ? const Color(0xFFFDE68A)
-                                  : const Color(0xFF92400E),
+                              color: theme.colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ),
@@ -603,10 +549,10 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                     children: [
                       if (!item.isReserved && !item.isSold)
                         ActionChip(
-                          avatar: const Icon(
+                          avatar: Icon(
                             Icons.bookmark_outline,
                             size: 14,
-                            color: Colors.amber,
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                           label: const Text(
                             'Marcar Reservado',
@@ -616,14 +562,19 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                             ),
                           ),
                           onPressed: () => widget.onStatusChanged!('reserved'),
+                          backgroundColor: theme.colorScheme.surface,
+                          side: BorderSide(color: theme.dividerColor),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                         ),
                       if (item.isReserved)
                         ActionChip(
-                          avatar: const Icon(
+                          avatar: Icon(
                             Icons.check_circle_outline,
                             size: 14,
-                            color: Colors.blue,
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                           label: const Text(
                             'Disponible',
@@ -633,14 +584,19 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                             ),
                           ),
                           onPressed: () => widget.onStatusChanged!('available'),
+                          backgroundColor: theme.colorScheme.surface,
+                          side: BorderSide(color: theme.dividerColor),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                         ),
                       if (!item.isSold)
                         ActionChip(
-                          avatar: const Icon(
+                          avatar: Icon(
                             Icons.done_all,
                             size: 14,
-                            color: Colors.green,
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                           label: const Text(
                             'Marcar Vendido',
@@ -650,28 +606,38 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                             ),
                           ),
                           onPressed: () => widget.onStatusChanged!('sold'),
+                          backgroundColor: theme.colorScheme.surface,
+                          side: BorderSide(color: theme.dividerColor),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                         ),
                       if (item.status != 'paused' && !item.isSold)
                         ActionChip(
-                          avatar: const Icon(
+                          avatar: Icon(
                             Icons.pause_circle_outline,
                             size: 14,
-                            color: Colors.grey,
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                           label: const Text(
                             'Pausar',
                             style: TextStyle(fontSize: 11),
                           ),
                           onPressed: () => widget.onStatusChanged!('paused'),
+                          backgroundColor: theme.colorScheme.surface,
+                          side: BorderSide(color: theme.dividerColor),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                         ),
                       if (item.status == 'paused')
                         ActionChip(
-                          avatar: const Icon(
+                          avatar: Icon(
                             Icons.play_circle_outline,
                             size: 14,
-                            color: Colors.green,
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                           label: const Text(
                             'Reanudar',
@@ -681,6 +647,11 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                             ),
                           ),
                           onPressed: () => widget.onStatusChanged!('available'),
+                          backgroundColor: theme.colorScheme.surface,
+                          side: BorderSide(color: theme.dividerColor),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                         ),
                     ],
@@ -706,16 +677,7 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                           horizontal: 8,
                           vertical: 4,
                         ),
-                        decoration: BoxDecoration(
-                          color: item.isUpvotedByMe
-                              ? theme.colorScheme.primary.withValues(
-                                  alpha: 0.12,
-                                )
-                              : (isDark
-                                    ? const Color(0xFF1E293B)
-                                    : const Color(0xFFF1F5F9)),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
+                        decoration: const BoxDecoration(),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -725,8 +687,8 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                                   : Icons.favorite_border,
                               size: 14,
                               color: item.isUpvotedByMe
-                                  ? Colors.red
-                                  : Colors.grey.shade600,
+                                  ? theme.colorScheme.onSurface
+                                  : theme.colorScheme.onSurfaceVariant,
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -734,9 +696,7 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: item.isUpvotedByMe
-                                    ? theme.colorScheme.primary
-                                    : Colors.grey.shade700,
+                                color: theme.colorScheme.onSurface,
                               ),
                             ),
                           ],
@@ -768,24 +728,27 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                                       vertical: 5,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF25D366),
-                                      borderRadius: BorderRadius.circular(8),
+                                      color: theme.colorScheme.surface,
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                        color: theme.dividerColor,
+                                      ),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
-                                      children: const [
+                                      children: [
                                         Icon(
-                                          Icons.chat,
+                                          Icons.chat_outlined,
                                           size: 13,
-                                          color: Colors.white,
+                                          color: theme.colorScheme.onSurface,
                                         ),
-                                        SizedBox(width: 4),
+                                        const SizedBox(width: 4),
                                         Text(
                                           'WhatsApp',
                                           style: TextStyle(
-                                            color: Colors.white,
+                                            color: theme.colorScheme.onSurface,
                                             fontSize: 10,
-                                            fontWeight: FontWeight.bold,
+                                            fontWeight: FontWeight.w600,
                                           ),
                                         ),
                                       ],
@@ -810,24 +773,27 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                                       vertical: 5,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFE1306C),
-                                      borderRadius: BorderRadius.circular(8),
+                                      color: theme.colorScheme.surface,
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                        color: theme.dividerColor,
+                                      ),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
-                                      children: const [
+                                      children: [
                                         Icon(
                                           Icons.camera_alt_outlined,
                                           size: 13,
-                                          color: Colors.white,
+                                          color: theme.colorScheme.onSurface,
                                         ),
-                                        SizedBox(width: 4),
+                                        const SizedBox(width: 4),
                                         Text(
                                           'Instagram',
                                           style: TextStyle(
-                                            color: Colors.white,
+                                            color: theme.colorScheme.onSurface,
                                             fontSize: 10,
-                                            fontWeight: FontWeight.bold,
+                                            fontWeight: FontWeight.w600,
                                           ),
                                         ),
                                       ],
@@ -852,24 +818,27 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                                       vertical: 5,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF0084FF),
-                                      borderRadius: BorderRadius.circular(8),
+                                      color: theme.colorScheme.surface,
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                        color: theme.dividerColor,
+                                      ),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
-                                      children: const [
+                                      children: [
                                         Icon(
                                           Icons.message_outlined,
                                           size: 13,
-                                          color: Colors.white,
+                                          color: theme.colorScheme.onSurface,
                                         ),
-                                        SizedBox(width: 4),
+                                        const SizedBox(width: 4),
                                         Text(
                                           'Messenger',
                                           style: TextStyle(
-                                            color: Colors.white,
+                                            color: theme.colorScheme.onSurface,
                                             fontSize: 10,
-                                            fontWeight: FontWeight.bold,
+                                            fontWeight: FontWeight.w600,
                                           ),
                                         ),
                                       ],
@@ -894,24 +863,27 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                                       vertical: 5,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF229ED9),
-                                      borderRadius: BorderRadius.circular(8),
+                                      color: theme.colorScheme.surface,
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                        color: theme.dividerColor,
+                                      ),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
-                                      children: const [
+                                      children: [
                                         Icon(
                                           Icons.send_outlined,
                                           size: 13,
-                                          color: Colors.white,
+                                          color: theme.colorScheme.onSurface,
                                         ),
-                                        SizedBox(width: 4),
+                                        const SizedBox(width: 4),
                                         Text(
                                           'Telegram',
                                           style: TextStyle(
-                                            color: Colors.white,
+                                            color: theme.colorScheme.onSurface,
                                             fontSize: 10,
-                                            fontWeight: FontWeight.bold,
+                                            fontWeight: FontWeight.w600,
                                           ),
                                         ),
                                       ],
@@ -926,15 +898,28 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
 
                     const SizedBox(width: 4),
 
-                    if (!item.isSponsored)
+                    if (!item.isSponsored && widget.onReport != null)
                       PopupMenuButton<String>(
+                        tooltip: 'Más opciones',
+                        color: theme.colorScheme.surface,
+                        surfaceTintColor: Colors.transparent,
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(
+                            color: theme.colorScheme.outlineVariant,
+                          ),
+                        ),
                         icon: Icon(
                           Icons.more_vert,
-                          size: 16,
-                          color: Colors.grey.shade600,
+                          size: 18,
+                          color: theme.colorScheme.onSurface,
                         ),
                         padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
+                        constraints: const BoxConstraints(
+                          minWidth: 40,
+                          minHeight: 40,
+                        ),
                         onSelected: (val) {
                           if (val == 'report' && widget.onReport != null) {
                             ReportDialog.show(
@@ -946,17 +931,18 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                           }
                         },
                         itemBuilder: (ctx) => [
-                          const PopupMenuItem(
+                          PopupMenuItem(
                             value: 'report',
+                            height: 44,
                             child: Row(
                               children: [
                                 Icon(
                                   Icons.flag_outlined,
-                                  size: 16,
-                                  color: Colors.red,
+                                  size: 17,
+                                  color: theme.colorScheme.onSurface,
                                 ),
-                                SizedBox(width: 8),
-                                Text('Reportar contenido'),
+                                const SizedBox(width: 10),
+                                const Text('Reportar'),
                               ],
                             ),
                           ),

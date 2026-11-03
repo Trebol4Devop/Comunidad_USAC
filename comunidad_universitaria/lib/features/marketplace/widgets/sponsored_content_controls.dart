@@ -70,14 +70,24 @@ class SponsoredContentControls extends StatelessWidget {
   }
 
   void _openMobileActions(BuildContext context) {
+    final theme = Theme.of(context);
     showModalBottomSheet<void>(
       context: context,
+      backgroundColor: theme.colorScheme.surface,
+      showDragHandle: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+        side: BorderSide(color: theme.colorScheme.outlineVariant),
+      ),
       builder: (sheetContext) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.info_outline),
+              leading: Icon(
+                Icons.info_outline,
+                color: theme.colorScheme.onSurface,
+              ),
               title: const Text('¿Por qué veo esto?'),
               onTap: () {
                 Navigator.of(sheetContext).pop();
@@ -85,7 +95,10 @@ class SponsoredContentControls extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.visibility_off_outlined),
+              leading: Icon(
+                Icons.visibility_off_outlined,
+                color: theme.colorScheme.onSurface,
+              ),
               title: const Text('Ocultar este anuncio'),
               onTap: () {
                 Navigator.of(sheetContext).pop();
@@ -93,7 +106,10 @@ class SponsoredContentControls extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.flag_outlined),
+              leading: Icon(
+                Icons.flag_outlined,
+                color: theme.colorScheme.onSurface,
+              ),
               title: const Text('Reportar'),
               onTap: () {
                 Navigator.of(sheetContext).pop();
@@ -189,6 +205,15 @@ class SponsoredContentControls extends StatelessWidget {
                 )
               : PopupMenuButton<String>(
                   tooltip: 'Opciones del contenido patrocinado',
+                  color: Theme.of(context).colorScheme.surface,
+                  surfaceTintColor: Colors.transparent,
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: BorderSide(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                  ),
                   padding: EdgeInsets.zero,
                   icon: Icon(Icons.more_vert, color: menuForeground),
                   onSelected: (action) => _selectAction(context, action),
