@@ -1,9 +1,9 @@
 # Autenticación y seguridad — Estado de las fases 1 a 8
 
 Este documento registra el código y las pruebas disponibles según la propuesta
-de fases compartida. No implica que las migraciones se hayan aplicado a
-Supabase remoto. El desglose TOTP 5.1–5.4 se conserva como el plan de seguridad
-adicional que ya se acordó e implementó en paralelo.
+de fases compartida. Distingue el comportamiento implementado en la app de las
+migraciones aplicadas en remoto. El desglose TOTP 5.1–5.4 se conserva como el
+plan de seguridad adicional acordado.
 
 **Decisión de autenticación:** sin OTP por correo; con TOTP mediante app
 autenticadora para MFA. En este documento, “OTP por correo” se refiere al
@@ -21,7 +21,7 @@ autenticadora, no enviado por correo.
 | 5 | Perfil y compatibilidad con el esquema | Trigger y perfil comprobados en la prueba E2E local; migración de contribuciones guest antiguas sigue siendo una decisión de producto |
 | 6 | Google OAuth con PKCE | Código y callbacks web/móvil preparados; pendiente configurar proveedor/redirects y probar con credenciales reales |
 | 7 | Recuperación de contraseña | Aplazada; el flujo de recuperación por correo se retiró de la app por límites del SMTP incluido |
-| 8 | Seguridad adicional y pruebas | RLS de perfiles, visitantes y AAL2 cubiertos por pgTAP; TOTP validado localmente y en el proyecto remoto; verificación Flutter actualizada tras retirar códigos de recuperación MFA; Google requiere credenciales externas |
+| 8 | Seguridad adicional y pruebas | RLS de perfiles y visitantes cuenta con pruebas; el flujo TOTP existe en la app. La exigencia global de AAL2 en escrituras está en una migración local pendiente de aplicar y validar en remoto; Google requiere credenciales externas |
 
 Las pruebas y configuración descritas aquí son locales o simuladas; no
 sustituyen una prueba real contra el proveedor. No se han publicado estas
@@ -147,9 +147,8 @@ Archivos principales:
   debe permanecer en Postgres mediante permisos y RLS.
 
 La prueba E2E local histórica incluyó recuperación de contraseña mediante un
-código enviado por correo y Mailpit antes de retirar ese flujo. La configuración actual ya no incluye la
-plantilla de recuperación ni un servidor SMTP local. No se modificó Supabase
-remoto.
+código enviado por correo y Mailpit antes de retirar ese flujo. La configuración
+actual ya no incluye la plantilla de recuperación ni un servidor SMTP local.
 
 ## MFA TOTP — Subfases 5.1–5.4 y controles de seguridad de Fase 8
 
@@ -171,17 +170,23 @@ estado Auth de cada cuenta registrada:
   de error/reintento/cierre de sesión.
 - Los visitantes sin cuenta no quedan sujetos al paso de MFA.
 
-### 5.3 Escrituras protegidas por AAL2 en la base de datos (retirado)
+### 5.3 Escrituras protegidas por AAL2 en la base de datos (pendiente en remoto)
 
-Se retiró la migración pendiente que imponía `aal = aal2` a todas las escrituras
-del rol `authenticated`. Esa regla no debe publicarse: la base de datos conserva
-sus permisos y políticas RLS habituales. La prueba histórica
-`authenticated_writes_without_otp_test.sql` usaba “OTP” de forma imprecisa:
-comprobaba que una sesión AAL1 (sin AAL2) pudiera escribir cuando las políticas
-existentes lo permitían. Eso no significa que se haya retirado TOTP de la app.
+El 9 de octubre se retiró una migración anterior que exigía AAL2 para todas las
+escrituras autenticadas; en ese momento se decidió permitir escrituras AAL1
+cuando las políticas RLS lo permitieran. TOTP en la app se mantuvo.
 
-El control de sesión TOTP de la interfaz descrito en 5.2 es independiente de
-esta política global de base de datos.
+El 31 de octubre se agregó una nueva migración,
+`20261004000000_require_aal2_and_verified_sellers.sql`, que vuelve a exigir AAL2
+para las escrituras en tablas públicas protegidas por RLS. También incorpora
+verificación de vendedores para publicar en Marketplace y modifica controles de
+solicitudes de patrocinio. Esta migración **no está aplicada en remoto** y queda
+pendiente para revisión y pruebas posteriores. Su prueba asociada es
+`supabase/tests/authenticated_aal1_write_denied_test.sql`; no se declara validada
+hasta ejecutar la suite local con esta migración.
+
+El control TOTP de la interfaz descrito en 5.2 y la exigencia de AAL2 en la base
+de datos son controles distintos: el segundo requiere aplicar la migración.
 
 ### 5.4 Recuperación y baja de TOTP
 
@@ -199,23 +204,28 @@ Configuración relacionada: `supabase/config.toml`, sección
 
 ## Migraciones y entorno remoto
 
-Las migraciones nuevas descritas aquí están en el repositorio local. **No se
-hizo `db push`, `migration repair`, `db pull` ni otra operación contra Supabase
-remoto** durante estas pruebas. El historial remoto ya había mostrado versiones
-que no existen localmente y el usuario indicó que algunos cambios pertenecen a
-otra persona; por ello no se debe reparar ni publicar ese historial sin
-confirmación y sin verificar dos veces el Reference ID del proyecto Comunidad_USAC.
+Estado verificado el 6 de noviembre de 2026: las seis migraciones anteriores ya
+estaban aplicadas al proyecto Comunidad_USAC (`jsdshvnkbrkwobfhdysh`). Un
+`supabase db push --dry-run --project-ref jsdshvnkbrkwobfhdysh` mostró como única
+pendiente `20261004000000_require_aal2_and_verified_sellers.sql`. El `dry-run`
+solo consultó el estado; no aplicó cambios. La migración AAL2 queda pendiente
+para después, junto con sus pruebas y la revisión de los cambios de vendedores
+y patrocinios. No ejecutar `db push` hasta que se apruebe ese alcance.
+
+`supabase db push` aplica migraciones SQL, pero no sincroniza los ajustes de
+Supabase Auth alojado. Por ejemplo, `auth.email.enable_confirmations = false`
+en `supabase/config.toml` es configuración local; no desactiva automáticamente
+Confirm email en el Dashboard remoto.
 
 El `project_id` de `supabase/config.toml` identifica el proyecto local de la
-CLI; no confirma por sí solo a cuál proyecto remoto se encuentra enlazado.
-Antes de cualquier operación remota, revisar explícitamente el proyecto
-vinculado y su Reference ID. Ejecutar primero un `--dry-run` y revisar el
-resultado; no aplicar reparaciones de historial sugeridas automáticamente sin
-comparar las migraciones con el equipo.
+CLI, no garantiza por sí solo el proyecto remoto enlazado. Antes de cualquier
+operación remota, verificar el Reference ID, ejecutar primero `--dry-run` y
+revisar el resultado. No reparar el historial remoto automáticamente.
 
 ## Verificación ejecutada
 
-En el entorno local levantado por Supabase:
+Los resultados siguientes son históricos y no validan la migración AAL2 añadida
+el 31 de octubre. En el entorno local levantado por Supabase:
 
 - `npx --yes supabase test db --local` — **PASS**, 11 archivos y 123 pruebas.
   Incluye RLS de perfiles, lectura de visitantes y escrituras AAL1/AAL2.

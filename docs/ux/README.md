@@ -101,8 +101,10 @@ Detalle completo en [`01-producto.md`](01-producto.md).
 | Solicitar patrocinio | No | Sí | Sí | Sí | Sí | Sí |
 | Gestión global | No | No | No | No | No | Sí |
 
-**Guards transversales:** toda escritura exige sesión **AAL2** (MFA TOTP).
-Ver [`07-autenticacion.md`](07-autenticacion.md).
+**Requisito objetivo, pendiente de aplicación en remoto:** toda escritura exige
+sesión **AAL2** (MFA TOTP). La migración que agrega este control aún no está
+aplicada al proyecto remoto. Para el estado actual, ver el
+[README del proyecto](../../README.md) y el [estado de autenticación](../../AUTENTICACION_FASES_1_A_8.md).
 
 ---
 

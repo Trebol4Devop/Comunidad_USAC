@@ -15,7 +15,7 @@ Guía técnica del sistema de autenticación de Comunidad USAC con Supabase Auth
 | Autorización | Row Level Security (RLS) | Sin backend propio, la seguridad vive en la BD |
 | Proveedores | Email + contraseña, Google OAuth | Los dos pedidos |
 | Confirmación por correo | Desactivada para el flujo actual | No se envía OTP por correo ni enlace de confirmación; MFA usa TOTP en una app autenticadora |
-| Segundo factor (MFA) | TOTP con app autenticadora | Incluido en todos los planes; el MFA por SMS requiere proveedor externo y genera costo |
+| Segundo factor (MFA) | TOTP con app autenticadora | El código lo genera la app y no se envía por correo/SMS; confirmar disponibilidad de MFA Auth según el plan alojado actual |
 | Flujo OAuth | PKCE (por defecto en `supabase-js` v2) | Más seguro que el flujo implícito |
 | Correo transaccional | No configurado | El registro y la recuperación no envían correo |
 
@@ -37,7 +37,7 @@ flowchart LR
 
 ## 2. Modelo de datos
 
-`auth.users` lo gestiona Supabase; no la modifiques directamente. Crea tu propia tabla de perfil enlazada por `id`.
+`auth.users` lo gestiona Supabase; no la modifiques directamente. **El SQL siguiente es un ejemplo genérico, no se debe ejecutar en este proyecto.** Comunidad USAC ya tiene `public.profiles` y un trigger de creación de perfil administrados por sus migraciones. Para este repositorio, usa las migraciones existentes; no recrees la tabla, las policies ni el trigger.
 
 ```sql
 -- Perfil público del usuario
@@ -226,7 +226,7 @@ flowchart TD
     E --> F["Exigir verificación de correo antes de permitir uso de la cuenta"]
 ```
 
-Por eso es importante **mantener obligatoria la confirmación de correo**: evita que alguien "pre-registre" el correo de otra persona con una contraseña propia.
+**Estado acordado para esta app:** la confirmación de correo está desactivada, por lo que el registro con contraseña no demuestra que la persona controle esa dirección. TOTP añade un segundo factor, pero no valida el correo. No se debe presentar la confirmación por correo como una función actualmente configurada.
 
 ---
 
@@ -348,7 +348,9 @@ Guard de rutas: además de `ProtectedRoute` (hay sesión), agrega la condición 
 
 ### 9.3 Aplicar MFA en la base de datos (RLS)
 
-El frontend se puede saltar; **RLS no**. Esta política restrictiva exige `aal2` solo a los usuarios que ya tienen un factor verificado:
+El frontend se puede saltar; RLS debe ser la barrera de seguridad del servidor. **El SQL siguiente es un ejemplo genérico, no una política actualmente instalada en este proyecto ni una instrucción para ejecutarla.** La migración local pendiente `20261004000000_require_aal2_and_verified_sellers.sql` aplica una regla más amplia: exige AAL2 para las escrituras autenticadas en tablas públicas con RLS y también añade controles de verificación de vendedores. Su aplicación remota está pendiente de revisión y pruebas.
+
+Este ejemplo genérico exige `aal2` solo a los usuarios que ya tienen un factor verificado:
 
 ```sql
 create policy "exigir_aal2_si_tiene_mfa"
@@ -444,10 +446,15 @@ src/
 
 ---
 
-## 12. Checklist de implementación
+**Checklist genérico de referencia (no es el estado actual del proyecto)**
+
+Este checklist describe tareas comunes para un proyecto nuevo; no debe seguirse
+como una lista de pasos pendientes para Comunidad USAC. En particular, no ejecutes
+el SQL genérico de la sección 2: los perfiles y su trigger ya están definidos
+por las migraciones del repositorio.
 
 - [ ] Crear proyecto en Supabase
-- [ ] Ejecutar el SQL de `profiles`, RLS y trigger (sección 2)
+- [ ] Crear `profiles`, RLS y trigger (solo para un proyecto nuevo; no ejecutar aquí)
 - [ ] Desactivar *Confirm email* en Authentication → Sign In / Providers → Email para este flujo
 - [ ] Configurar Site URL y Redirect URLs
 - [ ] Crear credenciales OAuth en Google Cloud y activarlas en Supabase
