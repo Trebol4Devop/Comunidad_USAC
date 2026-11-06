@@ -5,18 +5,23 @@ de fases compartida. No implica que las migraciones se hayan aplicado a
 Supabase remoto. El desglose TOTP 5.1–5.4 se conserva como el plan de seguridad
 adicional que ya se acordó e implementó en paralelo.
 
+**Decisión de autenticación:** sin OTP por correo; con TOTP mediante app
+autenticadora para MFA. En este documento, “OTP por correo” se refiere al
+código enviado por email; TOTP es un código temporal generado por la app
+autenticadora, no enviado por correo.
+
 ## Estado general
 
 | Fase | Alcance | Estado |
 |---|---|---|
 | 1 | Flujo invitado y lectura pública | Implementada; pgTAP verifica restricciones de escritura |
 | 2 | Pantallas de login y registro | Integradas en `AuthModal` |
-| 3 | Confirmación de registro por correo | OTP eliminado de la app; `enable_confirmations = false` localmente. El proyecto remoto debe configurarse por separado |
+| 3 | Confirmación de registro por correo | Se retiró el OTP enviado por correo; `enable_confirmations = false` localmente. TOTP para MFA se conserva. El proyecto remoto debe configurarse por separado |
 | 4 | Sesión, cierre de sesión y navegación | Login/logout probados en Auth local; persistencia tras cerrar y reabrir la app queda pendiente de E2E |
 | 5 | Perfil y compatibilidad con el esquema | Trigger y perfil comprobados en la prueba E2E local; migración de contribuciones guest antiguas sigue siendo una decisión de producto |
 | 6 | Google OAuth con PKCE | Código y callbacks web/móvil preparados; pendiente configurar proveedor/redirects y probar con credenciales reales |
 | 7 | Recuperación de contraseña | Aplazada; el flujo de recuperación por correo se retiró de la app por límites del SMTP incluido |
-| 8 | Seguridad adicional y pruebas | RLS de perfiles, visitantes y AAL2 cubiertos por pgTAP; TOTP validado localmente y en el proyecto remoto; verificación Flutter actualizada tras retirar códigos MFA; Google requiere credenciales externas |
+| 8 | Seguridad adicional y pruebas | RLS de perfiles, visitantes y AAL2 cubiertos por pgTAP; TOTP validado localmente y en el proyecto remoto; verificación Flutter actualizada tras retirar códigos de recuperación MFA; Google requiere credenciales externas |
 
 Las pruebas y configuración descritas aquí son locales o simuladas; no
 sustituyen una prueba real contra el proveedor. No se han publicado estas
@@ -72,9 +77,10 @@ función existente `public.handle_new_user_profile()` y garantiza el trigger
 `trg_on_auth_user_created` si falta. No se agregó una tabla de perfiles
 alternativa.
 
-Una prueba E2E local histórica creó una cuenta descartable, confirmó el OTP y
-comprobó la fila en `public.profiles` creada por el trigger. La confirmación
-OTP ya no forma parte del flujo actual. La política de conservar o migrar
+Una prueba E2E local histórica creó una cuenta descartable, confirmó el código
+OTP enviado por correo y comprobó la fila en `public.profiles` creada por el
+trigger. La confirmación por correo ya no forma parte del flujo actual; TOTP
+mediante app autenticadora se conserva para MFA. La política de conservar o migrar
 contribuciones de cuentas guest antiguas debe decidirse antes de vincularlas a
 cuentas nuevas; no se debe atribuir contenido anónimo automáticamente sin esa
 decisión.
@@ -140,8 +146,8 @@ Archivos principales:
 - La sesión la administra el SDK de Supabase. La autorización efectiva de datos
   debe permanecer en Postgres mediante permisos y RLS.
 
-La prueba E2E local histórica incluyó recuperación de contraseña con OTP y
-Mailpit antes de retirar ese flujo. La configuración actual ya no incluye la
+La prueba E2E local histórica incluyó recuperación de contraseña mediante un
+código enviado por correo y Mailpit antes de retirar ese flujo. La configuración actual ya no incluye la
 plantilla de recuperación ni un servidor SMTP local. No se modificó Supabase
 remoto.
 
@@ -169,9 +175,10 @@ estado Auth de cada cuenta registrada:
 
 Se retiró la migración pendiente que imponía `aal = aal2` a todas las escrituras
 del rol `authenticated`. Esa regla no debe publicarse: la base de datos conserva
-sus permisos y políticas RLS habituales, y la prueba
-`supabase/tests/authenticated_writes_without_otp_test.sql` comprueba que una
-sesión AAL1 puede escribir cuando las políticas existentes lo permiten.
+sus permisos y políticas RLS habituales. La prueba histórica
+`authenticated_writes_without_otp_test.sql` usaba “OTP” de forma imprecisa:
+comprobaba que una sesión AAL1 (sin AAL2) pudiera escribir cuando las políticas
+existentes lo permitían. Eso no significa que se haya retirado TOTP de la app.
 
 El control de sesión TOTP de la interfaz descrito en 5.2 es independiente de
 esta política global de base de datos.

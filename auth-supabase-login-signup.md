@@ -1,6 +1,6 @@
 # Autenticación con Supabase: Login y Sign Up
 
-Guía técnica del sistema de autenticación de Comunidad USAC con Supabase Auth, PostgreSQL y RLS. En el flujo actual, el registro no confirma el correo ni envía OTP; la app conserva Google OAuth y MFA con TOTP. La recuperación de contraseña por correo está retirada. Las secciones genéricas de verificación de correo que siguen se marcan como no aplicables al proyecto.
+Guía técnica del sistema de autenticación de Comunidad USAC con Supabase Auth, PostgreSQL y RLS. La decisión acordada es **sin OTP por correo; con TOTP mediante app autenticadora** para MFA. El registro no confirma el correo ni envía códigos por email; la app conserva Google OAuth. La recuperación de contraseña por correo está retirada. Las secciones genéricas de verificación de correo que siguen se marcan como no aplicables al proyecto.
 
 > Verifica los límites del plan gratuito en https://supabase.com/pricing antes de decidir, porque cambian con el tiempo.
 
@@ -14,7 +14,7 @@ Guía técnica del sistema de autenticación de Comunidad USAC con Supabase Auth
 | Base de datos | PostgreSQL de Supabase | Tabla `auth.users` administrada por Supabase + tabla propia `public.profiles` |
 | Autorización | Row Level Security (RLS) | Sin backend propio, la seguridad vive en la BD |
 | Proveedores | Email + contraseña, Google OAuth | Los dos pedidos |
-| Confirmación por correo | Desactivada para el flujo actual | No se envía OTP ni enlace de confirmación |
+| Confirmación por correo | Desactivada para el flujo actual | No se envía OTP por correo ni enlace de confirmación; MFA usa TOTP en una app autenticadora |
 | Segundo factor (MFA) | TOTP con app autenticadora | Incluido en todos los planes; el MFA por SMS requiere proveedor externo y genera costo |
 | Flujo OAuth | PKCE (por defecto en `supabase-js` v2) | Más seguro que el flujo implícito |
 | Correo transaccional | No configurado | El registro y la recuperación no envían correo |
@@ -108,7 +108,7 @@ flowchart TD
 
 - La app espera que `signUp` devuelva sesión y continúa a `TotpSessionGuard`.
 - Si no devuelve sesión porque el proyecto aún requiere confirmación, hay que desactivar manualmente **Confirm email** en Authentication → Sign In / Providers → Email. La configuración local no modifica el proyecto alojado.
-- El registro no envía correo ni ofrece reenviar/verificar OTP. Esto permite crear cuentas sin demostrar la propiedad de la dirección.
+- El registro no envía correo ni ofrece reenviar/verificar un OTP por email. Esto permite crear cuentas sin demostrar la propiedad de la dirección. El TOTP de MFA se genera en la app autenticadora y no se envía por correo.
 - Guarda metadatos del perfil en `options.data` si se necesitan para el trigger.
 
 ```ts

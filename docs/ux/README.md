@@ -28,7 +28,7 @@ uniforme (sección 3). Los requisitos son atómicos, verificables y trazables.
 | [`04-marketplace.md`](04-marketplace.md) | Marketplace y tutorías (catálogo, publicar, contacto, carta de presentación del vendedor, patrocinios) |
 | [`05-grupos.md`](05-grupos.md) | Directorio de grupos de estudio (WhatsApp/Telegram/Discord/Drive) |
 | [`06-perfil-y-cuenta.md`](06-perfil-y-cuenta.md) | Perfil, alias, avatar, carné, vendedor externo, actividad propia, menú inicial de nuevos usuarios, intereses y tarjeta de presentación (visibilidad por campo) |
-| [`07-autenticacion.md`](07-autenticacion.md) | Login, registro, acceso por dominio de correo, OTP, recuperación, logout, MFA TOTP, SSO |
+| [`07-autenticacion.md`](07-autenticacion.md) | Login, registro sin OTP por correo, acceso por dominio, recuperación, logout, MFA TOTP con app autenticadora y SSO |
 | [`08-navegacion-shell-y-reglas.md`](08-navegacion-shell-y-reglas.md) | Cascarón de navegación, tema, normas y descargos |
 | [`09-sistema-diseno.md`](09-sistema-diseno.md) | Design tokens, componentes, temas claro/oscuro, breakpoints |
 | [`10-transversales.md`](10-transversales.md) | Errores, estados vacíos, red/offline, accesibilidad, i18n, rendimiento |
@@ -115,8 +115,9 @@ Ver [`07-autenticacion.md`](07-autenticacion.md).
 | **AAL2 guard** | Capa que bloquea escritura/navegación hasta elevar la sesión con TOTP. |
 | **Carrera / canal** | En el foro, canal temático dentro de un servidor de facultad. |
 | **Correo institucional / personal** | Institucional otorga acceso a lectura/foro sin verificar carné (lista configurable); personal exige verificación inmediata para acceder. |
-| **MFA / TOTP** | Autenticación multifactor por aplicación de códigos temporales. |
-| **OTP** | Código de un solo uso enviado por correo. |
+| **MFA / TOTP** | Autenticación multifactor con códigos temporales generados por una app autenticadora; no se envían por correo. |
+| **OTP** | Código de un solo uso (término general). TOTP es un tipo de OTP basado en tiempo. |
+| **OTP por correo** | Código de un solo uso enviado por email; no forma parte del flujo acordado. |
 | **PKCE** | Extensión de OAuth 2.0 para clientes públicos. |
 | **Punto seguro** | Punto de encuentro físico verificado del campus para intercambios. |
 | **Sede / servidor** | Unidad académica (facultad o centro universitario) usada como "servidor" del foro. |
