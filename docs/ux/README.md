@@ -123,7 +123,7 @@ aplicada al proyecto remoto. Para el estado actual, ver el
 | **PKCE** | Extensión de OAuth 2.0 para clientes públicos. |
 | **Punto seguro** | Punto de encuentro físico verificado del campus para intercambios. |
 | **Sede / servidor** | Unidad académica (facultad o centro universitario) usada como "servidor" del foro. |
-| **SSO / PEMTREE** | Proveedor de identidad académica y app satélite que la consume. |
+| **SSO / PEMTREE** | Integración objetivo: PEMTREE es una app satélite separada que podría usar la identidad de Comunidad USAC. El servidor OAuth y sus clientes aún no están configurados. |
 | **Vendedor externo verificado** | Persona no estudiante admitida por un administrador para vender y patrocinar en la comunidad. |
 
 ---
@@ -132,18 +132,18 @@ aplicada al proyecto remoto. Para el estado actual, ver el
 
 | Documento | Requisitos | Versión | Última actualización |
 |---|---:|---|---|
-| README | — | v1.1 | 2026-10-08 |
+| README | — | v1.2 | 2026-11-06 |
 | 01-producto | 18 (`UX-PRD`) | v1.3 | 2026-10-08 |
 | 02-navegacion | 3 (`UX-MAP`) | v1.0 | 2026-10-07 |
 | 03-foro | 24 (`UX-FORO`) | v1.1 | 2026-10-07 |
 | 04-marketplace | 17 (`UX-MKT`) | v1.2 | 2026-10-08 |
 | 05-grupos | 12 (`UX-GRP`) | v1.1 | 2026-10-07 |
 | 06-perfil-y-cuenta | 35 (`UX-PRF`) | v1.4 | 2026-10-08 |
-| 07-autenticacion | 16 (`UX-AUTH`) | v1.1 | 2026-10-08 |
+| 07-autenticacion | 16 (`UX-AUTH`) | v1.2 | 2026-11-06 |
 | 08-navegacion-shell-y-reglas | 13 (`UX-NAV`, `UX-REG`) | v1.0 | 2026-10-07 |
 | 09-sistema-diseno | 8 (`UX-DSN`) | v1.1 | 2026-10-07 |
 | 10-transversales | 16 (`UX-X`) | v1.1 | 2026-10-07 |
-| 11-metricas-y-trazabilidad | 3 (`UX-MET`) | v1.1 | 2026-10-08 |
+| 11-metricas-y-trazabilidad | 3 (`UX-MET`) | v1.2 | 2026-11-06 |
 | 12-patrocinios | 16 (`UX-SPN`) | v1.2 | 2026-10-08 |
 
 **Total: 181 requisitos identificados.** Cada área usa un prefijo propio para

@@ -77,7 +77,7 @@ Leyenda de estado: Cubierto · Parcial · Pendiente · Sin evaluar · No aplica.
 | Requisito | Implementación | Prueba | Estado |
 |---|---|---|---|
 | UX-PRD-010 Visitante solo lectura | `core/services/supabase_service.dart`; migración `enforce_anonymous_read_only.sql` | `supabase/tests/anonymous_read_only_test.sql`; `integration_test/guest_navigation_test.dart` | Cubierto |
-| UX-PRD-011 Segundo factor en la interfaz | `shared/widgets/totp_session_guard.dart`; la base de datos no impone AAL2 globalmente | `test/widgets/totp_session_guard_test.dart`; `supabase/tests/authenticated_writes_without_otp_test.sql` | Parcial |
+| UX-PRD-011 Segundo factor en la interfaz | `shared/widgets/totp_session_guard.dart`; la exigencia global de AAL2 está en `20261004000000_require_aal2_and_verified_sellers.sql`, pendiente en remoto | `test/widgets/totp_session_guard_test.dart`; `supabase/tests/authenticated_aal1_write_denied_test.sql` (pendiente de validar con la migración) | Parcial |
 | UX-PRD-016 Vendedor externo verificado | campos en `profiles` y panel admin (nuevo) | Pendiente | Pendiente |
 | UX-PRD-026 No lucro, financiamiento y datos | `features/rules/screens/rules_screen.dart`; `features/profile/screens/profile_screen.dart` (`UX-PRF-011`) | Pendiente | Parcial |
 | UX-MAP-001 Deep links | `main.dart` (`_onGenerateRoute`) | `test/sso_test.dart` | Parcial |
@@ -175,7 +175,7 @@ Leyenda de estado: Cubierto · Parcial · Pendiente · Sin evaluar · No aplica.
 | UX-AUTH-008 MFA con gracia `[Mejora]` | `shared/widgets/totp_session_guard.dart` | `test/widgets/totp_session_guard_test.dart` | Pendiente |
 | UX-AUTH-009/011 TOTP y desafío (UX-AUTH-010 recuperación aplazada) | `features/profile/screens/totp_enrollment_screen.dart`; `totp_session_guard.dart` | `test/widgets/totp_enrollment_screen_test.dart`; `test/widgets/totp_session_guard_test.dart` | Cubierto |
 | UX-AUTH-013 Validación de redirect SSO | `features/sso/sso_security_validator.dart` | `test/sso_test.dart` | Cubierto |
-| UX-AUTH-014 Consentimiento y tokens en fragmento | `features/sso/screens/sso_authorize_screen.dart` | `integration_test/sso_flow_test.dart` | Cubierto |
+| UX-AUTH-014 SSO Authorization Code + PKCE | Servidor OAuth/clientes no configurados; SSO deshabilitado | `integration_test/sso_flow_test.dart` solo comprueba la pantalla y estados locales; no hace intercambio OAuth real | Pendiente |
 | UX-AUTH-015 Redirect local `[Mejora]` | `sso_authorize_screen.dart` | `test/sso_test.dart` | Parcial |
 | UX-AUTH-016 Acceso según dominio de correo | lógica de autenticación y panel admin de dominios (nuevo) | Pendiente | Pendiente |
 

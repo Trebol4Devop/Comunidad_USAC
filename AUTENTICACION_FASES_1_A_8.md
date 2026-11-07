@@ -268,10 +268,11 @@ recuperación MFA.
 - `supabase/migrations/20261002000200_restore_auth_user_profile_trigger.sql`
 - `supabase/migrations/20261002000300_grant_post_trigger_and_table_permissions.sql`
 - `supabase/migrations/20261003000000_enforce_anonymous_read_only.sql`
+- `supabase/migrations/20261004000000_require_aal2_and_verified_sellers.sql` (pendiente en remoto)
 
 - `supabase/tests/anonymous_read_only_test.sql`
 - `supabase/tests/profiles_rls_test.sql`
-- `supabase/tests/authenticated_writes_without_otp_test.sql`
+- `supabase/tests/authenticated_aal1_write_denied_test.sql` (asociada a la migración AAL2 pendiente)
 - `comunidad_universitaria/lib/core/services/supabase_service.dart`
 - `comunidad_universitaria/lib/core/config/supabase_config.dart`
 - `comunidad_universitaria/lib/features/shared/widgets/auth_modal.dart`

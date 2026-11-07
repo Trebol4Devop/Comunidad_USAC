@@ -47,8 +47,9 @@ representa ni cuenta con afiliación oficial de las autoridades universitarias.
 - Marketplace de productos, servicios y tutorías, con patrocinios.
 - Directorio de grupos de estudio (WhatsApp, Telegram, Discord, Drive).
 - Perfil, alias, avatar, verificación de carné y actividad propia.
-- Autenticación: correo/contraseña, OTP, recuperación, Google OAuth, MFA TOTP y
-  SSO para PEMTREE.
+- Autenticación por correo/contraseña sin OTP por correo, Google OAuth y MFA
+  TOTP mediante app autenticadora. La recuperación por correo está retirada;
+  SSO con PEMTREE es una integración objetivo pendiente de configuración.
 - Cascarón de navegación, tema claro/oscuro, normas y descargos.
 - Sistemas transversales: estados, accesibilidad, responsividad, i18n.
 
