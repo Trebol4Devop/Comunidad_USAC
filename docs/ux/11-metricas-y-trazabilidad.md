@@ -213,20 +213,20 @@ consulta los resultados fechados antes de afirmar que una suite pasa.
 |---|---|---|---|
 | UX-SPN-001 Perfil de patrocinador | perfil público de patrocinador (nuevo) | Pendiente | Pendiente |
 | UX-SPN-002 Panel del patrocinador | panel `Sponsor Studio` (nuevo) | Pendiente | Pendiente |
-| UX-SPN-003 Etiquetado de patrocinios | `features/marketplace/widgets/marketplace_card.dart`; `features/marketplace/widgets/sponsor_carousel.dart` | `test/widgets/sponsored_content_controls_test.dart` (etiqueta, marca y semántica); `test/widgets/sponsor_carousel_test.dart` | Parcial (Marketplace; sin componente transversal para Foro/Grupos) |
+| UX-SPN-003 Etiquetado de patrocinios | `features/marketplace/widgets/sponsored_content_controls.dart`, usado en `MarketplaceCard` y `SponsorCarousel`; colores literales y sin integración en Foro/Grupos | `test/widgets/sponsored_content_controls_test.dart`; `test/widgets/sponsor_carousel_test.dart` | Parcial (Marketplace) |
 | UX-SPN-004 Frecuencia y rotación | servicio de inserción (nuevo) | Pendiente | Pendiente |
-| UX-SPN-005 Transparencia y control | `features/marketplace/widgets/sponsored_content_controls.dart`; preferencias locales (sin sincronización) | `test/widgets/sponsored_content_controls_test.dart`; `test/services/sponsored_preferences_service_test.dart` | Parcial |
+| UX-SPN-005 Transparencia y control | `features/marketplace/widgets/sponsored_content_controls.dart`; `core/services/sponsored_preferences_service.dart` (ocultamientos locales por usuario) | `test/widgets/sponsored_content_controls_test.dart`; `test/services/sponsored_preferences_service_test.dart` | Parcial (Marketplace; sin sincronización entre dispositivos) |
 | UX-SPN-006 Moderación de patrocinios | `core/services/marketplace_service.dart` llama `moderate_marketplace_item`; no existe cola de aprobación específica de promociones | `supabase/tests/rpc_moderation_test.sql` (permisos de moderación de anuncios Marketplace; no prueba aprobación de promociones) | Parcial |
 | UX-SPN-007 Métricas de patrocinio | Analítica no instrumentada; eventos/KPIs solo propuestos en este documento | Sin instrumentación ni prueba específica | Pendiente |
 | UX-SPN-008 Accesibilidad de patrocinios | `features/marketplace/widgets/sponsored_content_controls.dart`; requisitos completos en `10-transversales.md` (`UX-X-016`) | `test/widgets/sponsored_content_controls_test.dart` (etiqueta semántica y tamaño táctil; sin auditoría de contraste, teclado o carga diferida) | Parcial |
 | UX-SPN-009 Vínculo con Marketplace | `core/services/marketplace_service.dart`; `features/marketplace/widgets/sponsor_carousel.dart` | `test/services/marketplace_service_test.dart` (lectura de anuncios patrocinados); `test/widgets/sponsor_carousel_test.dart` (presentación/contacto; sin perfil público integrado) | Parcial |
 | UX-SPN-010 Segmentación contextual | servicio de targeting (nuevo) | Pendiente | Pendiente |
-| UX-SPN-011 Solicitud de cuenta de patrocinador | `sponsor_requests` (baseline L3408–3422); `features/marketplace/widgets/sponsor_request_dialog.dart` (sin validación de duplicados) | `test/widgets/sponsor_request_dialog_test.dart` (campos/validaciones); `test/services/marketplace_service_test.dart` (error de inserción; no flujo exitoso integrado) | Parcial |
-| UX-SPN-012 Aprobación/rechazo de solicitud | `sponsor_requests.status`; `idx_sponsor_requests_status`; `20260918020500_admin_panels_rls_policies.sql`; pantalla Flutter (nuevo) | Pendiente | Pendiente |
+| UX-SPN-011 Solicitud de cuenta de patrocinador | `sponsor_requests` en `20261001000000_adopt_remote_schema.sql`; `features/marketplace/widgets/sponsor_request_dialog.dart` (sin validación de duplicados) | `test/widgets/sponsor_request_dialog_test.dart` (campos/validaciones); `test/services/marketplace_service_test.dart` (error de inserción; no flujo exitoso integrado) | Parcial |
+| UX-SPN-012 Aprobación/rechazo de solicitud | `sponsor_requests.status` e índice en `20261001000000_adopt_remote_schema.sql`; políticas locales en `20261004000000_require_aal2_and_verified_sellers.sql` (sin verificación de aplicación remota); pantalla Flutter inexistente | Pendiente (panel y RLS remoto por verificar) | Pendiente |
 | UX-SPN-013 Vigencia y renovación de promoción | tabla `sponsored_promotions` (nuevo); `marketplace_items` sin `fecha_fin` | Pendiente | Pendiente |
 | UX-SPN-014 Suspensión y baja del patrocinador | campo `suspended` en `profiles` (nuevo); `profiles.is_verified` existe | Pendiente | Pendiente |
 | UX-SPN-015 Notificaciones de ciclo de vida | tabla de notificaciones (nuevo) | Pendiente | Pendiente |
-| UX-SPN-016 Panel admin de solicitudes | `idx_sponsor_requests_status` (migration `20260918020004`); `admin_panels_rls_policies`; pantalla Flutter (nuevo) | Pendiente | Pendiente |
+| UX-SPN-016 Panel admin de solicitudes | `idx_sponsor_requests_status` en `20261001000000_adopt_remote_schema.sql`; políticas locales en `20261004000000_require_aal2_and_verified_sellers.sql` (sin verificación de aplicación remota); pantalla Flutter inexistente | Pendiente (panel y RLS remoto por verificar) | Pendiente |
 | UX-FORO-021 Publicación patrocinada en el feed `[Mejora]` | nuevo `PromotedPostCard`; `forum_screen.dart` | Pendiente | Pendiente |
 | UX-FORO-022 Interacciones del patrocinio `[Mejora]` | `PromotedPostCard` | Pendiente | Pendiente |
 | UX-FORO-023 Espacio de promociones (opt-in) | `forum_screen.dart` | Pendiente | Pendiente |
@@ -335,9 +335,9 @@ prioritarios para el siguiente ciclo de trabajo.
 | UX-AUTH-008 | Resolver si habrá período de gracia y reconciliar sus criterios con AAL2 antes de implementarlo | `totp_session_guard.dart`; `07-autenticacion.md` |
 | UX-AUTH-015 | Respeto transparente del redirect local | `sso_authorize_screen.dart` |
 | UX-X-* | Mejoras transversales (estados, errores, accesibilidad, i18n, rendimiento) | ver `10-transversales.md` |
-| UX-SPN-003 / UX-DSN-008 | Etiquetado de patrocinios reutilizable y contraste AA | `app_theme.dart`; nuevo `SponsoredLabel` |
+| UX-SPN-003 / UX-DSN-008 | Token de estilo patrocinado y etiqueta reutilizable fuera de Marketplace; revisar contraste AA (el control actual solo se comparte dentro de Marketplace) | `sponsored_content_controls.dart`; `app_theme.dart` |
 | UX-SPN-004 | Inserción con tope de frecuencia (1:6) y rotación | nuevo servicio de inserción |
-| UX-SPN-005 / UX-X-016 | "¿Por qué veo esto?", ocultar y reportar | `report_dialog.dart`; preferencias |
+| UX-SPN-005 / UX-X-016 | Sincronizar preferencias ocultas y completar accesibilidad; integrar los controles al añadir patrocinios fuera de Marketplace | `sponsored_preferences_service.dart`; `10-transversales.md` |
 | UX-FORO-021/022 | Publicación patrocinada nativa en el feed | nuevo `PromotedPostCard`; `forum_screen.dart` |
 | UX-GRP-010/011 | Tarjeta patrocinada y perfil afín en Grupos | nuevo `SponsoredGroupCard`; `groups_screen.dart` |
 | UX-SPN-011 | Validación de duplicados en la solicitud de patrocinador | `sponsor_request_dialog.dart` |
