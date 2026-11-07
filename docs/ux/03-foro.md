@@ -170,7 +170,7 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
 - **Problema actual [Mejora]:** En `post_card.dart:865-884`, no hay confirmación visual previa antes de reportar un usuario o post (se llama directo a `ForumService.reportUser` sin modal confirmatorio en algunas rutas del feed), y en tarjetas con imágenes muy pesadas no hay indicador de carga progresiva ni fallback si el enlace de imagen falla (`storage_service.dart:16-107`).
 - **Precondiciones:** La publicación existe en la base de datos y no ha sido eliminada.
 - **UI / contenido:** Contenedor con borde tenue, radio 10px, elevación ligera, espaciado interno de 16px. En modo oscuro fondo `#2B2D31`, borde `#383A40`; en modo claro fondo `#FFFFFF`, borde `#E2E8F0`. Si el usuario es moderador y el post tiene `moderationStatus > 0`, se exhibe un borde amarillo/rojo con etiqueta "Pendiente de revisión" u "Ocultado por reportes".
-- **Interacciones:** Tap en la tarjeta abre el detalle completo (`PostDetailScreen`); tap en Me gusta alterna like con feedback optimista; tap en marcador alterna guardado; tap en citar abre modal de nuevo post con la cita adjunta; tap en las opciones de encuesta registra el voto directamente desde el feed. Tocar el avatar del autor abre su tarjeta de presentación ([ver UX-PRF-031 en `06-perfil-y-cuenta.md`](06-perfil-y-cuenta.md)), que respeta el anonimato y muestra solo lo que el autor haya aceptado revelar.
+- **Interacciones:** Tap en la tarjeta abre el detalle completo (`PostDetailScreen`); tap en Me gusta alterna like con feedback optimista; tap en marcador alterna guardado; tap en citar abre modal de nuevo post con la cita adjunta; tap en las opciones de encuesta registra el voto directamente desde el feed. **Comportamiento objetivo pendiente (UX-PRF-031):** tocar el avatar del autor abrirá su tarjeta de presentación, respetando el anonimato y mostrando solo lo que el autor haya aceptado revelar. La tarjeta todavía no está implementada.
 - **Estados:** Normal, Fijada (`Icons.push_pin` destacado), Hover en desktop (sutil oscurecimiento/aclarado), En revisión (para moderadores).
 - **Validaciones y reglas de negocio:** Si el post está oculto (`moderationStatus == 2`), los visitantes y estudiantes comunes no lo ven en el feed; sólo moderadores y administradores lo ven con la advertencia de moderación.
 - **Accesibilidad:** Estructura jerárquica clara de encabezados (título de post en `titleMedium`), botones de acción con etiquetas semánticas ("X me gusta", "X comentarios", "Guardar en marcadores"), tamaño táctil de botones mín 40x40px.
@@ -386,18 +386,18 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
 ### UX-FORO-020 — Desacoplamiento y claridad en el descubrimiento de Grupos de Estudio
 - **Actor / rol:** Visitante, Estudiante, Verificado, Moderador, Admin
 - **Prioridad:** Should
-- **Estado objetivo:** Experiencia diáfana que elimina la fricción de confundir el directorio de enlaces de WhatsApp (`GroupsScreen`) con un servidor de discusión del foro. En el rail de servidores, el acceso a "Grupos de Estudio" debe exhibir un distintivo visual inequívoco que indique que se trata de enlaces externos de mensajería (WhatsApp/Telegram/Discord) y no de un canal de texto del foro. Asimismo, se debe proveer un enlace cruzado contextual desde el canal `# charla-general` o la cabecera hacia el directorio de grupos de la facultad activa ([ver UX-GRP en `05-grupos.md`](05-grupos.md) y [`02-navegacion.md`](02-navegacion.md)).
-- **Problema actual [Mejora]:** [Vacío 8.4] En `app_shell.dart:198-215`, `forum_screen.dart:529-540` y `forum_server_rail.dart:600-633`, la funcionalidad completa de Grupos de Estudio está oculta como si fuera un servidor más de Discord (`isGroups = true`). Los estudiantes que entran buscando enlaces de WhatsApp no entienden que deben tocar el icono de WhatsApp en el rail del foro, asumiendo que no existe directorio de grupos.
+- **Estado objetivo:** El directorio de Grupos (`GroupsScreen`) es una sección independiente del Foro y cuenta con destino propio en la navegación principal. Además, el Foro debe ofrecer un acceso contextual claro al directorio desde su cabecera o canal activo; cuando se conozca la facultad o carrera actual, debe conservar ese contexto al abrir Grupos ([ver UX-GRP en `05-grupos.md`](05-grupos.md) y [`02-navegacion.md`](02-navegacion.md)).
+- **Problema actual [Mejora]:** La separación ya está implementada: `AppShell` ofrece Grupos como destino raíz y `ForumServerRail` excluye los servidores marcados como `isGroups`. Sin embargo, no se encontró un enlace contextual desde la cabecera/feed del Foro que abra Grupos conservando la facultad o carrera activa. La descripción anterior, que proponía acceder al directorio mediante un icono de WhatsApp dentro del rail, ya no corresponde al comportamiento actual.
 - **Precondiciones:** Navegación del foro activa.
-- **UI / contenido:** Icono verde de WhatsApp con badge "Enlaces Externos / Grupos", tooltip explicativo "Directorio de Grupos de WhatsApp por Facultad", banner sugerido en el feed si no hay grupos en el foro invitando a explorar el directorio.
-- **Interacciones:** Toque en el servidor de grupos transiciona con animación clara o abre la sección de grupos informando que son enlaces para unirse a chats externos; desde el feed del foro, botón "Ver grupos de WhatsApp de esta carrera" redirige al subdirectorio correspondiente.
-- **Estados:** Foro activo, Transición a Grupos, Banner de sugerencia cruzada.
-- **Validaciones y reglas de negocio:** La navegación hacia enlaces de grupos preserva el filtro de la facultad activa del estudiante para no obligarlo a buscar su unidad académica de nuevo.
-- **Accesibilidad:** Etiqueta semántica clara ("Acceso al directorio externo de grupos de estudio de WhatsApp").
-- **Responsive:** Acceso evidente tanto en el rail de servidores de escritorio como en el menú drawer y accesos rápidos en móvil.
+- **UI / contenido:** Acción contextual identificable como "Explorar grupos de estudio" en la cabecera o el estado vacío pertinente del Foro; el destino principal "Grupos" permanece en la navegación del cascarón.
+- **Interacciones:** La acción contextual abre el destino raíz de Grupos y, cuando esté disponible, pasa la facultad/carrera activa para mostrar el subdirectorio correspondiente.
+- **Estados:** Foro activo, transición al destino Grupos, filtro contextual aplicado o directorio general cuando no haya contexto.
+- **Validaciones y reglas de negocio:** Cuando se conozcan, la navegación a Grupos conserva los filtros de facultad y carrera activos para no obligar al estudiante a buscarlos de nuevo.
+- **Accesibilidad:** Etiqueta semántica clara ("Explorar directorio de grupos de estudio").
+- **Responsive:** El destino principal está disponible en la navegación del cascarón; la acción contextual debe ser accesible en escritorio y móvil.
 - **Criterios de aceptación (Gherkin):**
-  - **Given** un estudiante buscando grupos de WhatsApp de su curso en el foro, **When** observa el rail lateral, **Then** identifica el icono verde con el distintivo claro "Grupos de WhatsApp" y una leyenda orientativa.
-  - **Given** un estudiante que navega en el canal de una carrera sin grupos compartidos, **When** visualiza el feed, **Then** se le ofrece un botón directo "Explorar enlaces de WhatsApp de esta carrera" que lo traslada al directorio con la facultad precargada.
+  - **Given** un estudiante que consulta el canal de una carrera en el Foro, **When** activa "Explorar grupos de estudio", **Then** llega al directorio de Grupos con la facultad/carrera disponible aplicada.
+  - **Given** un estudiante en el Foro sin facultad o carrera contextual, **When** abre el directorio desde la acción contextual, **Then** accede a Grupos sin filtros previos y puede explorar el catálogo general.
 
 ---
 
@@ -490,7 +490,7 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
 | `UX-FORO-017` | Creación y publicación de temas en el foro | Must | `CreatePostDialog` | `create_post_dialog.dart:50-300`, `storage_service.dart:16-107` |
 | `UX-FORO-018` | Configuración de encuestas en creación de post | Should | `CreatePostDialog` | `create_post_dialog.dart:102-108`, `create_post_dialog.dart:228-244` |
 | `UX-FORO-019` | Estados de carga, vacío, error y offline | Must | `ForumScreen`, `NetworkStateWidgets` | `forum_screen.dart:788-853`, `network_state_widgets.dart:1-92` |
-| `UX-FORO-020` | Desacoplamiento y descubrimiento de Grupos | Should | `ForumServerRail`, `AppShell` | `app_shell.dart:198-215`, `forum_server_rail.dart:600-633` |
+| `UX-FORO-020` | Acceso contextual al directorio independiente de Grupos | Should | `ForumScreen`, `AppShell` | `test/widgets/app_shell_test.dart` (destino raíz); `test/discord_forum_test.dart` (el rail no incluye Grupos); sin prueba del enlace contextual ni del traspaso de facultad/carrera |
 | `UX-FORO-021` | Publicación patrocinada nativa en el feed | Should | `ForumScreen`, nuevo `PromotedPostCard` | `forum_screen.dart`, `sponsor_carousel.dart` |
 | `UX-FORO-022` | Interacciones de la publicación patrocinada | Should | `PromotedPostCard` | `sponsor_carousel.dart`, `report_dialog.dart` |
 | `UX-FORO-023` | Espacio de promociones por facultad (opt-in) | Could | `ForumScreen` | `forum_screen.dart` |

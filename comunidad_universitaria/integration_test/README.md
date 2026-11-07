@@ -1,6 +1,6 @@
 # Comunidad Universitaria · Suite de Pruebas E2E (`integration_test`)
 
-Este directorio contiene las pruebas de extremo a extremo (End-to-End / E2E) de la aplicación Flutter de Comunidad Universitaria (PEMTREE), ejecutadas mediante el paquete oficial `integration_test`.
+Este directorio contiene pruebas de integración de la aplicación Flutter de **Comunidad USAC**, ejecutadas mediante el paquete oficial `integration_test`. **PEMTREE es un proyecto cliente separado**; `sso_flow_test.dart` solo prueba la ruta y algunos estados de la pantalla de autorización de Comunidad USAC, no una integración real con PEMTREE ni un intercambio OAuth en vivo.
 
 ---
 
@@ -11,7 +11,7 @@ integration_test/
 ├── helpers/
 │   └── app_launcher.dart        # Helper para inicializar SupabaseConfig y montar la app
 ├── guest_navigation_test.dart   # Flujo de navegación de invitado (tabs, modales, responsive)
-├── sso_flow_test.dart           # Flujo SSO (deep links /auth/authorize, autorizar/rechazar)
+├── sso_flow_test.dart           # Prueba de pantalla/ruta SSO; no valida OAuth real con PEMTREE
 ├── forum_flow_test.dart         # Flujo real de foro estudiantil (crear, leer, dar like, borrar)
 ├── marketplace_flow_test.dart   # Flujo real de marketplace (crear, pausar, alternar upvote, borrar)
 ├── groups_flow_test.dart        # Flujo real de grupos estudiantiles (crear grupo, upvotes, borrar)
@@ -22,6 +22,15 @@ integration_test/
 ---
 
 ## 🚀 Cómo Ejecutar las Pruebas E2E
+
+> **Plataforma:** los comandos de esta guía y `scripts/e2e/run_e2e.sh` están
+> preparados para Bash/Linux; el runner usa Bash y selecciona el dispositivo
+> `linux`. No ejecutes esos bloques `export` ni el script directamente en
+> PowerShell. Flutter detecta Windows y Edge en el entorno del proyecto, pero
+> la prueba `guest_navigation_test.dart -d windows` terminó por timeout tras
+> 120 segundos el 2026-11-06; por ello no se documenta como ejecución Windows
+> validada. Hace falta probarla y preparar instrucciones/runner específico antes
+> de dar soporte E2E a Windows.
 
 ### 1. Modo Invitado / Sin Backend (Completamente Offline)
 
@@ -60,9 +69,12 @@ Para ejecutarlos contra tu stack local de Supabase:
    > cada archivo en un proceso separado para evitarlo. Para un solo archivo:
    > `flutter test integration_test/forum_flow_test.dart -d linux --dart-define=...`
 
-Los flujos con escrituras iniciativas sesión con el usuario E2E sembrado por
-`supabase/seed.sql` (`e2e@test.com` / `password123`). Por eso es necesario haber
-ejecutado `supabase db reset` al menos una vez (aplica migraciones + seed).
+Los flujos E2E con escrituras inician sesión con el usuario E2E sembrado por
+`supabase/seed.sql` (`e2e@test.com` / `password123`). Esa cuenta es solo para el
+entorno local. `supabase db reset` reconstruye la base local, vuelve a aplicar
+las migraciones y carga el seed, pero **borra los datos locales existentes**.
+Úsalo solo si aceptas perderlos; no ejecutes un reset enlazado a remoto ni uses
+esa cuenta de prueba en el proyecto alojado.
 
 ---
 

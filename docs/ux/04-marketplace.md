@@ -432,7 +432,7 @@ desordenada en redes sociales y pasillos universitarios.
 - **Actor / rol:** Vendedor verificado (Estudiante o Externo)
 - **Prioridad:** Must
 - **Estado objetivo:** Para garantizar un comercio seguro, la verificación de identidad es requisito obligatorio para publicar artículos nuevos. Para estudiantes, implica la validación del carné (UX-PRF-013). Para no estudiantes, implica la admisión por documentos mediante un administrador (UX-PRF-035). La interfaz exhibe de forma transparente el estado de verificación, solicita consentimiento informado previo y, al validarse, muestra el distintivo verde "Vendedor Verificado" o "Vendedor externo verificado". El banner preventivo ámbar de "Vendedor no validado" se conserva únicamente para listados heredados publicados antes de que esta regla entrara en vigencia.
-- **Problema actual [Mejora]:** En [`carne_validation_modal.dart:73-85`](../../comunidad_universitaria/lib/features/profile/widgets/carne_validation_modal.dart#L73-L85) e inventario 8.3, la validación de carné actual es una simulación en el cliente con un retardo estático de 700 ms (`Future.delayed`). La solución exige una verificación auténtica (ya sea por dominio institucional, comprobante de matrícula o documentos externos) con un descargo honesto en la tarjeta que especifique el nivel real de verificación y su origen.
+- **Problema actual [Mejora]:** No existe verificación institucional conectada. `CarneValidationModal` solo permite, con consentimiento, guardar localmente el carné y el nombre como borrador y fuerza `isCarneVerified = false`; no consulta Registro y Estadística ni otra fuente institucional. Marketplace consulta `profiles.seller_verification_status` y bloquea la publicación si no está en `verified`. Falta implementar y acordar una fuente auténtica para estudiantes, así como el flujo de admisión de vendedores externos; no se debe presentar el borrador como verificación.
 - **Precondiciones:** Usuario con cuenta registrada.
 - **UI / contenido:**
   - En la tarjeta del vendedor verificado:
@@ -457,7 +457,7 @@ desordenada en redes sociales y pasillos universitarios.
 - **Actor / rol:** Estudiante registrado, Vendedor verificado, Patrocinador
 - **Prioridad:** Should
 - **Estado objetivo:** La subida y visualización de imágenes de productos y tutorías no debe depender exclusivamente de un único proveedor de almacenamiento ni fallar de manera silenciosa. El servicio de almacenamiento (`StorageService`) debe implementar una estrategia resiliente en dos niveles: intento primario de carga hacia Cloudflare R2 vía Worker optimizado, y reintento automático transparente (*fallback*) hacia los buckets nativos de Supabase Storage (`bucket: listings`) si el worker no responde, arroja error HTTP o experimenta bloqueo de dominio. En la interfaz de usuario, la carga debe exhibir barra de porcentaje de progreso, compresión previa en el cliente para ahorrar datos móviles, y en caso de fallo absoluto, ofrecer retroalimentación clara con opción de "Reintentar subida" o "Publicar sin foto temporalmente". Asimismo, si una imagen alojada falla al renderizarse en el catálogo, debe mostrar un marcador de posición (*placeholder*) elegante con el icono temático de su categoría.
-- **Problema actual [Mejora]:** En [`storage_service.dart:16-107`](../../comunidad_universitaria/lib/core/services/storage_service.dart#L16-L107), [`create_listing_dialog.dart:154-171`](../../comunidad_universitaria/lib/features/marketplace/widgets/create_listing_dialog.dart#L154-L171) e inventario 8.5, la carga fotográfica se realiza únicamente contra una URL personal de Cloudflare Worker (`workers.dev`). Si la petición falla (código distinto de 200) o lanza excepción, el método retorna `null` silenciosamente y el diálogo muestra un error genérico o se queda sin imagen, sin intentar un fallback secundario a Supabase Storage ni proporcionar opciones de recuperación al alumno.
+- **Problema actual [Mejora]:** `StorageService.uploadImageFile` intenta subir únicamente mediante el Worker de Cloudflare R2; ante un error HTTP o una excepción devuelve `null` y no prueba Supabase Storage. `CreateListingDialog` muestra un SnackBar solo si se lanza una excepción; cuando el servicio devuelve `null`, no informa claramente que la imagen no se subió. `MarketplaceCard` sí tiene un `errorBuilder` con icono de categoría para imágenes que no cargan. Siguen faltando fallback de subida, progreso/reintento y pruebas de UI para esos estados.
 - **Precondiciones:** Usuario seleccionando una imagen desde galería o cámara en el diálogo de publicación.
 - **UI / contenido:**
   - Selector de imagen con botón "Subir Foto" e icono `Icons.add_photo_alternate_outlined`.
@@ -551,57 +551,62 @@ sequenceDiagram
     OS->>Vendedor: Entrega mensaje sobre el artículo solicitado
 ```
 
-### 4.2 Flujo de publicación con validación semántica y fallback de multimedia
+### 4.2 Estado actual de publicación y carga de multimedia
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Vendedor as Alumno Vendedor
+    actor Vendedor as Alumno vendedor
+    participant Screen as MarketplaceScreen
+    participant Service as MarketplaceService
+    participant DB as Supabase
     participant Modal as CreateListingDialog
     participant Storage as StorageService
-    participant Service as MarketplaceService
-    participant DB as Supabase DB
 
-    Vendedor->>Modal: Redacta título, precio, ubicación y teléfono
-    Vendedor->>Modal: Adjunta fotografía del producto
-    Modal->>Storage: uploadImageFile(file)
-    alt Worker Cloudflare R2 Responde
-        Storage-->>Modal: Retorna URL pública R2
-    else Worker R2 Falla o Excede Tiempo
-        Storage->>DB: Fallback a Supabase Storage (bucket: listings)
-        Storage-->>Modal: Retorna URL pública Supabase
-    end
-    Vendedor->>Modal: Pulsa "Publicar Anuncio"
-    Modal->>Service: validateContent(title, description)
-    alt Contiene Término Prohibido ("vender parcial", "cerveza")
-        Service-->>Modal: Retorna error formativo (Regla 5 y 6)
-        Modal-->>Vendedor: Muestra alerta roja y detiene envío
-    else Contenido Válido
-        Service->>DB: Inserta en marketplace_items (moderation_status = 0)
-        DB-->>Service: Confirma inserción
-        Service-->>Modal: Retorna MarketplaceItem creado
-        Modal-->>Vendedor: Cierra modal e inserta arriba en el feed
+    Vendedor->>Screen: Solicita publicar un anuncio
+    Screen->>Service: canCreateListing()
+    Service->>DB: Consulta profiles.seller_verification_status
+    DB-->>Service: Estado del vendedor
+    Service-->>Screen: Puede publicar solo si status = verified
+    alt Sin verificación real
+        Screen-->>Vendedor: Bloquea la publicación y no abre el formulario
+    else Vendedor verificado
+        Screen->>Modal: Abre el formulario
+        Vendedor->>Modal: Adjunta una fotografía
+        Modal->>Storage: uploadImageFile(file)
+        alt Worker R2 responde
+            Storage-->>Modal: Retorna URL pública R2
+        else Worker falla
+            Storage-->>Modal: Retorna null; no hay fallback ni aviso claro en este caso
+        end
+        Vendedor->>Modal: Pulsa "Publicar Anuncio"
+        Modal->>Service: Valida contenido y crea el anuncio
+        Service->>DB: Vuelve a comprobar verificación e inserta el anuncio
+        DB-->>Service: Confirma inserción o rechaza la operación
+        Service-->>Modal: Resultado de creación
+        Modal-->>Vendedor: Confirma la publicación o muestra error
     end
 ```
 
-### 4.3 Flujo de verificación de carné para vendedor
+### 4.3 Estado actual de los datos de carné y bloqueo de publicación
 ```mermaid
 sequenceDiagram
     autonumber
     actor Estudiante as Estudiante USAC
     participant UI as CarneValidationModal
-    participant Auth as Supabase Auth / Correo Institucional
-    participant Profile as ProfileService
+    participant Profile as ProfileService / almacenamiento local
+    participant Marketplace as MarketplaceService
+    participant DB as profiles en Supabase
 
-    Estudiante->>UI: Abre modal desde publicación o perfil
-    UI-->>Estudiante: Presenta consentimiento informado sobre privacidad
-    Estudiante->>UI: Marca checkbox de consentimiento
-    Estudiante->>UI: Ingresa número de carné y nombre oficial
-    Estudiante->>UI: Pulsa "Validar Carné"
-    UI->>Auth: Comprueba condición institucional activa
-    Auth-->>UI: Validación exitosa
-    UI->>Profile: saveProfile(isCarneVerified = true, studentName = nombre)
-    Profile-->>UI: Confirmado en base de datos
-    UI-->>Estudiante: Cierra diálogo y activa distintivo "Vendedor Verificado"
+    Estudiante->>UI: Abre el formulario de datos de carné
+    UI-->>Estudiante: Informa que no hay fuente institucional conectada
+    Estudiante->>UI: Ingresa carné y nombre y acepta guardar el borrador
+    UI->>Profile: Guarda datos localmente con isCarneVerified = false
+    Profile-->>UI: Borrador guardado en este dispositivo
+    UI-->>Estudiante: Aclara que la condición estudiantil no está verificada
+    Estudiante->>Marketplace: Intenta publicar un anuncio
+    Marketplace->>DB: Consulta seller_verification_status
+    DB-->>Marketplace: Estado distinto de verified o sin verificación
+    Marketplace-->>Estudiante: Bloquea la publicación; aún no hay verificación institucional
 ```
 
 ### 4.4 Flujo de consulta de la carta de presentación del vendedor
@@ -659,7 +664,7 @@ sequenceDiagram
 | `UX-MKT-011` | `ReportDialog`, `MarketplaceService.reportListing` | `marketplace_reports`, `marketplace_items.reported_count` | `test/features/marketplace/report_dialog_test.dart` |
 | `UX-MKT-012` | `CreateListingDialog`, `MarketplaceService.createListing` | `marketplace_items` (insert), `profiles.carne` | `test/features/marketplace/create_listing_test.dart` |
 | `UX-MKT-013` | `MarketplaceService.validateContent`, `_prohibitedKeywords` | Validado en cliente + trigger de seguridad en BD | `test/core/services/marketplace_service_test.dart` |
-| `UX-MKT-014` | `CarneValidationModal`, `IdentityBadgeChip` | `profiles.carne`, `is_carne_verified`, `student_name` | `test/features/profile/carne_validation_test.dart` |
-| `UX-MKT-015` | `StorageService.uploadImageFile`, Worker R2 + Supabase Storage | Bucket `listings` en Supabase Storage / Cloudflare R2 | `test/core/services/storage_service_test.dart` |
-| `UX-MKT-016` | `SellerProfileScreen`, `SellerPresentationCard` | `profile_card_visibility`, `seller_presentation` | (nuevo) |
+| `UX-MKT-014` | `CarneValidationModal` guarda borrador local no verificado; `MarketplaceService.canCreateListing` exige verificación del backend | Borrador local (`carne`, `student_name`, `is_carne_verified = false`); `profiles.seller_verification_status` | `test/widgets/shared/carne_validation_modal_test.dart`; `test/widgets/marketplace_screen_test.dart` (bloqueo de publicación) |
+| `UX-MKT-015` | `StorageService.uploadImageFile` usa Worker R2; `MarketplaceCard` tiene placeholder de error | Cloudflare Worker/R2; no se implementó fallback de carga a Supabase Storage | `test/services/storage_service_test.dart` (éxito R2 y errores que devuelven `null`) |
+| `UX-MKT-016` | Página/carta pública del vendedor (no implementada) | Estructura de presentación pública pendiente | Sin prueba; no existe `SellerProfileScreen` en el código actual |
 | `UX-MKT-017` | `CreateListingDialog`, `MarketplaceService.checkLimits` | `marketplace_items.count` | (nuevo) |

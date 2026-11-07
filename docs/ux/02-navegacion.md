@@ -20,9 +20,10 @@ flowchart TD
         Shell --> NavPrincipal{"Navegación principal"}
         NavPrincipal -->|"Móvil: NavigationBar + FAB contextual"| Tabs
         NavPrincipal -->|"Desktop: pestañas superiores"| Tabs
-        Tabs["Foro · Marketplace · Grupos"] --> ForoScreen["Foro"]
-        Tabs --> MarketScreen["Marketplace"]
+        Tabs["Foro · Grupos · Mapa · Marketplace"] --> ForoScreen["Foro"]
         Tabs --> GruposScreen["Grupos de estudio"]
+        Tabs --> MapScreen["Mapa de campus"]
+        Tabs --> MarketScreen["Marketplace"]
         Shell --> Perfil["Perfil y cuenta"]
         Shell --> Reglas["Normas y descargos"]
     end
@@ -45,7 +46,7 @@ flowchart TD
     end
 
     subgraph Global_Modals ["Modales globales"]
-        Auth["Autenticación / OTP / MFA"]
+        Auth["Autenticación / MFA TOTP"]
         Reporte["Reportar contenido"]
         VisorImg["Visor de imagen"]
         GIF["Selector de GIF"]
@@ -60,8 +61,9 @@ flowchart TD
 | Destino | Se llega desde | Tipo |
 |---|---|---|
 | Foro | Navegación principal (pestaña por defecto) | raíz |
-| Marketplace | Navegación principal | raíz |
 | Grupos de estudio | Navegación principal | raíz |
+| Mapa de campus | Navegación principal | raíz |
+| Marketplace | Navegación principal | raíz |
 | Detalle de publicación | Tarjeta del feed / actividad del perfil | push |
 | Crear tema | Botón del feed | modal |
 | Perfil y cuenta | Barra de usuario / badge de alias | push |

@@ -28,7 +28,7 @@ uniforme (sección 3). Los requisitos son atómicos, verificables y trazables.
 | [`04-marketplace.md`](04-marketplace.md) | Marketplace y tutorías (catálogo, publicar, contacto, carta de presentación del vendedor, patrocinios) |
 | [`05-grupos.md`](05-grupos.md) | Directorio de grupos de estudio (WhatsApp/Telegram/Discord/Drive) |
 | [`06-perfil-y-cuenta.md`](06-perfil-y-cuenta.md) | Perfil, alias, avatar, carné, vendedor externo, actividad propia, menú inicial de nuevos usuarios, intereses y tarjeta de presentación (visibilidad por campo) |
-| [`07-autenticacion.md`](07-autenticacion.md) | Login, registro, acceso por dominio de correo, OTP, recuperación, logout, MFA TOTP, SSO |
+| [`07-autenticacion.md`](07-autenticacion.md) | Login, registro sin OTP por correo, acceso por dominio, recuperación, logout, MFA TOTP con app autenticadora y SSO |
 | [`08-navegacion-shell-y-reglas.md`](08-navegacion-shell-y-reglas.md) | Cascarón de navegación, tema, normas y descargos |
 | [`09-sistema-diseno.md`](09-sistema-diseno.md) | Design tokens, componentes, temas claro/oscuro, breakpoints |
 | [`10-transversales.md`](10-transversales.md) | Errores, estados vacíos, red/offline, accesibilidad, i18n, rendimiento |
@@ -101,8 +101,10 @@ Detalle completo en [`01-producto.md`](01-producto.md).
 | Solicitar patrocinio | No | Sí | Sí | Sí | Sí | Sí |
 | Gestión global | No | No | No | No | No | Sí |
 
-**Guards transversales:** toda escritura exige sesión **AAL2** (MFA TOTP).
-Ver [`07-autenticacion.md`](07-autenticacion.md).
+**Requisito objetivo, pendiente de aplicación en remoto:** toda escritura exige
+sesión **AAL2** (MFA TOTP). La migración que agrega este control aún no está
+aplicada al proyecto remoto. Para el estado actual, ver el
+[README del proyecto](../../README.md) y el [estado de autenticación](../../AUTENTICACION_FASES_1_A_8.md).
 
 ---
 
@@ -115,12 +117,13 @@ Ver [`07-autenticacion.md`](07-autenticacion.md).
 | **AAL2 guard** | Capa que bloquea escritura/navegación hasta elevar la sesión con TOTP. |
 | **Carrera / canal** | En el foro, canal temático dentro de un servidor de facultad. |
 | **Correo institucional / personal** | Institucional otorga acceso a lectura/foro sin verificar carné (lista configurable); personal exige verificación inmediata para acceder. |
-| **MFA / TOTP** | Autenticación multifactor por aplicación de códigos temporales. |
-| **OTP** | Código de un solo uso enviado por correo. |
+| **MFA / TOTP** | Autenticación multifactor con códigos temporales generados por una app autenticadora; no se envían por correo. |
+| **OTP** | Código de un solo uso (término general). TOTP es un tipo de OTP basado en tiempo. |
+| **OTP por correo** | Código de un solo uso enviado por email; no forma parte del flujo acordado. |
 | **PKCE** | Extensión de OAuth 2.0 para clientes públicos. |
 | **Punto seguro** | Punto de encuentro físico verificado del campus para intercambios. |
 | **Sede / servidor** | Unidad académica (facultad o centro universitario) usada como "servidor" del foro. |
-| **SSO / PEMTREE** | Proveedor de identidad académica y app satélite que la consume. |
+| **SSO / PEMTREE** | Integración objetivo: PEMTREE es una app satélite separada que podría usar la identidad de Comunidad USAC. El servidor OAuth y sus clientes aún no están configurados. |
 | **Vendedor externo verificado** | Persona no estudiante admitida por un administrador para vender y patrocinar en la comunidad. |
 
 ---
@@ -129,18 +132,18 @@ Ver [`07-autenticacion.md`](07-autenticacion.md).
 
 | Documento | Requisitos | Versión | Última actualización |
 |---|---:|---|---|
-| README | — | v1.1 | 2026-10-08 |
+| README | — | v1.2 | 2026-11-06 |
 | 01-producto | 18 (`UX-PRD`) | v1.3 | 2026-10-08 |
 | 02-navegacion | 3 (`UX-MAP`) | v1.0 | 2026-10-07 |
-| 03-foro | 24 (`UX-FORO`) | v1.1 | 2026-10-07 |
+| 03-foro | 24 (`UX-FORO`) | v1.1 | 2026-11-06 |
 | 04-marketplace | 17 (`UX-MKT`) | v1.2 | 2026-10-08 |
-| 05-grupos | 12 (`UX-GRP`) | v1.1 | 2026-10-07 |
-| 06-perfil-y-cuenta | 35 (`UX-PRF`) | v1.4 | 2026-10-08 |
-| 07-autenticacion | 16 (`UX-AUTH`) | v1.1 | 2026-10-08 |
+| 05-grupos | 12 (`UX-GRP`) | v1.1 | 2026-11-06 |
+| 06-perfil-y-cuenta | 35 (`UX-PRF`) | v1.4 | 2026-11-06 |
+| 07-autenticacion | 16 (`UX-AUTH`) | v1.2 | 2026-11-06 |
 | 08-navegacion-shell-y-reglas | 13 (`UX-NAV`, `UX-REG`) | v1.0 | 2026-10-07 |
 | 09-sistema-diseno | 8 (`UX-DSN`) | v1.1 | 2026-10-07 |
 | 10-transversales | 16 (`UX-X`) | v1.1 | 2026-10-07 |
-| 11-metricas-y-trazabilidad | 3 (`UX-MET`) | v1.1 | 2026-10-08 |
+| 11-metricas-y-trazabilidad | 3 (`UX-MET`) | v1.2 | 2026-11-06 |
 | 12-patrocinios | 16 (`UX-SPN`) | v1.2 | 2026-10-08 |
 
 **Total: 181 requisitos identificados.** Cada área usa un prefijo propio para

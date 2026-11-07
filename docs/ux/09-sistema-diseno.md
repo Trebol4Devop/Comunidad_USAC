@@ -143,10 +143,11 @@ La app usa **Material 3** con una identidad cromática inspirada en la USAC
   **etiqueta canónica** "Patrocinado" (chip de fondo dorado translúcido + texto
   oscuro, contraste AA) y un borde de acento tenue en la tarjeta. Debe verse
   **integrado pero distinguible** en Foro, Grupos y Marketplace.
-- **Problema actual [Mejora]:** no existe un token unificado para el etiquetado de
-  patrocinios; el carrusel actual
-  ([`sponsor_carousel.dart`](../../comunidad_universitaria/lib/features/marketplace/widgets/sponsor_carousel.dart))
-  usa estilos propios no reutilizables. Se centraliza aquí para
+- **Problema actual [Mejora]:** existe el color general `AppTheme.usacGold`, pero
+  `SponsoredContentControls` usa colores literales y no un token específico del
+  sistema de diseño. El widget se comparte entre la tarjeta y el carrusel del
+  Marketplace; no está integrado en Foro ni Grupos y no hay auditoría completa de
+  contraste. Se mantiene pendiente la consistencia transversal para
   [`UX-SPN-003`](12-patrocinios.md).
 - **Precondiciones:** cualquier unidad patrocinada renderizada.
 - **UI / contenido:** chip "Patrocinado"; logotipo del patrocinador con distintivo

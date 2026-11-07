@@ -8,6 +8,12 @@
 
 ---
 
+> **Relación con la base de datos:** este Markdown es un catálogo de referencia,
+> no un script SQL ni una migración. El dataset que carga el entorno local al
+> resetear está declarado en `supabase/seed.sql`; no asumas que todas las filas
+> de este documento están insertadas en la base. Verifica la fuente oficial
+> antes de tratar como vigentes los datos marcados como probables o incompletos.
+
 ## Estructura de los códigos
 
 El código `facultad-unidad-carrera` es el identificador único:

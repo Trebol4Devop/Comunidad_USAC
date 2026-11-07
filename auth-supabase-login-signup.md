@@ -1,6 +1,6 @@
 # Autenticación con Supabase: Login y Sign Up
 
-Guía técnica del sistema de autenticación de Comunidad USAC con Supabase Auth, PostgreSQL y RLS. En el flujo actual, el registro no confirma el correo ni envía OTP; la app conserva Google OAuth y MFA con TOTP. La recuperación de contraseña por correo está retirada. Las secciones genéricas de verificación de correo que siguen se marcan como no aplicables al proyecto.
+Guía técnica del sistema de autenticación de Comunidad USAC con Supabase Auth, PostgreSQL y RLS. La decisión acordada es **sin OTP por correo; con TOTP mediante app autenticadora** para MFA. El registro no confirma el correo ni envía códigos por email; la app conserva Google OAuth. La recuperación de contraseña por correo está retirada. Las secciones genéricas de verificación de correo que siguen se marcan como no aplicables al proyecto.
 
 > Verifica los límites del plan gratuito en https://supabase.com/pricing antes de decidir, porque cambian con el tiempo.
 
@@ -14,8 +14,8 @@ Guía técnica del sistema de autenticación de Comunidad USAC con Supabase Auth
 | Base de datos | PostgreSQL de Supabase | Tabla `auth.users` administrada por Supabase + tabla propia `public.profiles` |
 | Autorización | Row Level Security (RLS) | Sin backend propio, la seguridad vive en la BD |
 | Proveedores | Email + contraseña, Google OAuth | Los dos pedidos |
-| Confirmación por correo | Desactivada para el flujo actual | No se envía OTP ni enlace de confirmación |
-| Segundo factor (MFA) | TOTP con app autenticadora | Incluido en todos los planes; el MFA por SMS requiere proveedor externo y genera costo |
+| Confirmación por correo | Desactivada para el flujo actual | No se envía OTP por correo ni enlace de confirmación; MFA usa TOTP en una app autenticadora |
+| Segundo factor (MFA) | TOTP con app autenticadora | El código lo genera la app y no se envía por correo/SMS; confirmar disponibilidad de MFA Auth según el plan alojado actual |
 | Flujo OAuth | PKCE (por defecto en `supabase-js` v2) | Más seguro que el flujo implícito |
 | Correo transaccional | No configurado | El registro y la recuperación no envían correo |
 
@@ -37,7 +37,7 @@ flowchart LR
 
 ## 2. Modelo de datos
 
-`auth.users` lo gestiona Supabase; no la modifiques directamente. Crea tu propia tabla de perfil enlazada por `id`.
+`auth.users` lo gestiona Supabase; no la modifiques directamente. **El SQL siguiente es un ejemplo genérico, no se debe ejecutar en este proyecto.** Comunidad USAC ya tiene `public.profiles` y un trigger de creación de perfil administrados por sus migraciones. Para este repositorio, usa las migraciones existentes; no recrees la tabla, las policies ni el trigger.
 
 ```sql
 -- Perfil público del usuario
@@ -108,7 +108,7 @@ flowchart TD
 
 - La app espera que `signUp` devuelva sesión y continúa a `TotpSessionGuard`.
 - Si no devuelve sesión porque el proyecto aún requiere confirmación, hay que desactivar manualmente **Confirm email** en Authentication → Sign In / Providers → Email. La configuración local no modifica el proyecto alojado.
-- El registro no envía correo ni ofrece reenviar/verificar OTP. Esto permite crear cuentas sin demostrar la propiedad de la dirección.
+- El registro no envía correo ni ofrece reenviar/verificar un OTP por email. Esto permite crear cuentas sin demostrar la propiedad de la dirección. El TOTP de MFA se genera en la app autenticadora y no se envía por correo.
 - Guarda metadatos del perfil en `options.data` si se necesitan para el trigger.
 
 ```ts
@@ -226,7 +226,7 @@ flowchart TD
     E --> F["Exigir verificación de correo antes de permitir uso de la cuenta"]
 ```
 
-Por eso es importante **mantener obligatoria la confirmación de correo**: evita que alguien "pre-registre" el correo de otra persona con una contraseña propia.
+**Estado acordado para esta app:** la confirmación de correo está desactivada, por lo que el registro con contraseña no demuestra que la persona controle esa dirección. TOTP añade un segundo factor, pero no valida el correo. No se debe presentar la confirmación por correo como una función actualmente configurada.
 
 ---
 
@@ -314,41 +314,51 @@ const { error: vErr } = await supabase.auth.mfa.verify({
 
 Nota: un factor que no se verifica queda como no verificado; limpia los factores sin verificar cuando el usuario abandona la inscripción.
 
-### 9.2 Login con paso de segundo factor
+### 9.2 Login con TOTP requerido en la app
 
-Aplica a los métodos de acceso habilitados (contraseña o Google): primero se autentica con el método elegido y después, si el usuario tiene MFA, se sube a `aal2`.
+En la app actual, `TotpSessionGuard` exige a toda cuenta registrada que inscriba
+un factor TOTP antes de acceder al contenido. En inicios posteriores, si la
+sesión está en AAL1, se solicita el desafío TOTP; una sesión AAL2 continúa. Los
+visitantes sin cuenta no pasan por este guard. Este control de interfaz es
+independiente de la política AAL2 en Postgres, cuya migración remota sigue
+pendiente (ver §9.3).
 
 ```mermaid
 flowchart TD
-    A(["Usuario inicia sesión con contraseña o Google"]) --> B["Sesión aal1 creada"]
-    B --> C["mfa.getAuthenticatorAssuranceLevel"]
-    C --> D{"nextLevel es aal2 y currentLevel es aal1?"}
-    D -->|"No: sin MFA inscrito"| E["Acceso al dashboard"]
-    D -->|"Sí: tiene MFA"| F["Redirigir a pantalla de verificación MFA"]
-    F --> G["mfa.listFactors y elegir factor TOTP verificado"]
-    G --> H["Usuario ingresa código de 6 dígitos"]
-    H --> I["mfa.challenge y mfa.verify"]
-    I --> J{"Resultado"}
-    J -->|"Válido"| K["Sesión aal2"] --> E
-    J -->|"Inválido"| L["Contador de intentos"] --> M{"Demasiados intentos?"}
-    M -->|"No"| H
-    M -->|"Sí"| N["Bloqueo temporal y opción de cerrar sesión"]
-    J -->|"Perdió el dispositivo"| O["Solicitar asistencia administrativa fuera de la app"]
+    A["Login con contraseña o Google"] --> B["Sesión AAL1"]
+    B --> C{"TotpSessionGuard: ¿factor TOTP verificado?"}
+    C -->|"No"| D["Inscripción TOTP obligatoria"]
+    D --> E["Verificar primer código"]
+    E --> K["Acceso al contenido de la app (AAL2)"]
+    C -->|"Sí"| F{"¿Sesión actual en AAL2?"}
+    F -->|"Sí"| K
+    F -->|"No: AAL1"| G["Solicitar desafío TOTP"]
+    G --> H["mfa.challenge y mfa.verify"]
+    H --> I{"¿Código válido?"}
+    I -->|"Sí"| K
+    I -->|"No"| J["Mostrar error y permitir reintento"]
+    J --> G
 ```
+
+Para una cuenta con factor ya inscrito, el desafío se requiere cuando la sesión
+está en AAL1:
 
 ```ts
 const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
 
 if (aal.nextLevel === 'aal2' && aal.currentLevel !== aal.nextLevel) {
-  // redirigir a /mfa/verify
+  // Solicitar el desafío TOTP y verificarlo antes de continuar.
 }
 ```
 
-Guard de rutas: además de `ProtectedRoute` (hay sesión), agrega la condición "si `nextLevel` es `aal2`, entonces `currentLevel` debe ser `aal2`".
+La app además enruta a la inscripción cuando aún no existe un factor verificado;
+no permite continuar como cuenta registrada sin TOTP.
 
 ### 9.3 Aplicar MFA en la base de datos (RLS)
 
-El frontend se puede saltar; **RLS no**. Esta política restrictiva exige `aal2` solo a los usuarios que ya tienen un factor verificado:
+El frontend se puede saltar; RLS debe ser la barrera de seguridad del servidor. **El SQL siguiente es un ejemplo genérico, no una política actualmente instalada en este proyecto ni una instrucción para ejecutarla.** La migración local pendiente `20261004000000_require_aal2_and_verified_sellers.sql` aplica una regla más amplia: exige AAL2 para las escrituras autenticadas en tablas públicas con RLS y también añade controles de verificación de vendedores. Su aplicación remota está pendiente de revisión y pruebas.
+
+Este ejemplo genérico exige `aal2` solo a los usuarios que ya tienen un factor verificado:
 
 ```sql
 create policy "exigir_aal2_si_tiene_mfa"
@@ -444,10 +454,15 @@ src/
 
 ---
 
-## 12. Checklist de implementación
+**Checklist genérico de referencia (no es el estado actual del proyecto)**
+
+Este checklist describe tareas comunes para un proyecto nuevo; no debe seguirse
+como una lista de pasos pendientes para Comunidad USAC. En particular, no ejecutes
+el SQL genérico de la sección 2: los perfiles y su trigger ya están definidos
+por las migraciones del repositorio.
 
 - [ ] Crear proyecto en Supabase
-- [ ] Ejecutar el SQL de `profiles`, RLS y trigger (sección 2)
+- [ ] Crear `profiles`, RLS y trigger (solo para un proyecto nuevo; no ejecutar aquí)
 - [ ] Desactivar *Confirm email* en Authentication → Sign In / Providers → Email para este flujo
 - [ ] Configurar Site URL y Redirect URLs
 - [ ] Crear credenciales OAuth en Google Cloud y activarlas en Supabase
