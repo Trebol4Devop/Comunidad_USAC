@@ -19,6 +19,12 @@
 
 ## 2. Taxonomía de eventos
 
+**Estado:** la taxonomía y los KPIs de este documento son propuestas; la app no
+instrumenta ni envía eventos de analítica actualmente. La confirmación por OTP
+por correo fue retirada, así que no se define un evento para reenviarla. El
+evento de omitir la gracia MFA solo aplicaría si esa experiencia futura se
+aprueba y se implementa.
+
 Nombre en formato `dominio_accion` (snake_case, sin datos personales).
 
 | Evento | Cuándo se emite | Propiedades (agregadas) |
@@ -27,7 +33,6 @@ Nombre en formato `dominio_accion` (snake_case, sin datos personales).
 | `nav_change` | Cambio de destino principal | `destino`, `plataforma` |
 | `auth_modal_open` | Se abre el flujo de autenticación | `origen` (acción interrumpida) |
 | `auth_signup_start` / `auth_signup_done` | Registro iniciado/terminado | `metodo` (email/google) |
-| `otp_resend` | Reenvío de OTP | `intento` |
 | `mfa_enroll_start` / `mfa_enroll_done` | Enrolamiento TOTP | `tiempo` |
 | `mfa_grace_skip` | El usuario pospone el MFA dentro del período de gracia | `dia` |
 | `mfa_challenge_fail` | Fallo de desafío TOTP | `motivo` (sin datos sensibles) |
@@ -69,8 +74,13 @@ Nombre en formato `dominio_accion` (snake_case, sin datos personales).
 
 Leyenda de estado: Cubierto · Parcial · Pendiente · Sin evaluar · No aplica.
 
-> La columna **Prueba** cita el archivo existente en `test/`,
-> `integration_test/` o `supabase/tests/` que respalda el requisito.
+El estado indica el nivel de evidencia de implementación descrito en esta
+matriz; no significa por sí solo que una función esté desplegada en remoto ni
+que la prueba haya pasado en la ejecución más reciente. La columna **Prueba**
+cita el archivo existente en `test/`, `integration_test/` o `supabase/tests/`
+que respalda el requisito, cuando se identificó una prueba específica. El valor
+`Pendiente` indica que no se ha documentado una prueba específica para esa fila;
+consulta los resultados fechados antes de afirmar que una suite pasa.
 
 ### 4.1 Producto y navegación
 
@@ -86,33 +96,33 @@ Leyenda de estado: Cubierto · Parcial · Pendiente · Sin evaluar · No aplica.
 | UX-NAV-001 Tres destinos (08) | `features/navigation/app_shell.dart`; `features/forum/widgets/discord/forum_server_rail.dart` | `test/widgets/app_shell_test.dart` | Parcial |
 | UX-NAV-002 Preservación de estado (08) | `app_shell.dart` (`IndexedStack`) | Pendiente | Parcial |
 | UX-NAV-005/006 Tabs / NavigationBar (08) | `app_shell.dart` (`Responsive.isMobile`, breakpoint 700) | `test/widgets/app_shell_test.dart` | Parcial |
-| UX-NAV-008 Aviso comunitario (08) | `app_shell.dart` (`_showDisclaimerModal`) | Parcial | Parcial |
+| UX-NAV-008 Aviso comunitario (08) | `app_shell.dart` (`_showDisclaimerModal`) | `test/widgets/app_shell_test.dart` (apertura, contenido, acciones y foco) | Parcial |
 | UX-REG-002 Las 7 reglas | `features/rules/screens/rules_screen.dart` | `test/widgets/rules_screen_test.dart` | Cubierto |
 
 ### 4.2 Foro
 
 | Requisito | Implementación | Prueba | Estado |
 |---|---|---|---|
-| UX-FORO-001 Feed y canales | `features/forum/screens/forum_screen.dart` | `test/forum_test.dart`; `integration_test/forum_flow_test.dart` | Cubierto |
+| UX-FORO-001 Feed y canales | `features/forum/screens/forum_screen.dart` | `test/forum_test.dart` (error/reintento); `integration_test/forum_flow_test.dart` (crea y consulta mediante el servicio, sin comprobar que el post aparezca en pantalla) | Parcial |
 | UX-FORO-002 Rail de servidores | `features/forum/widgets/discord/forum_server_rail.dart` | `test/discord_forum_test.dart` | Parcial |
 | UX-FORO-003 Explorador de carreras | `features/forum/widgets/discord/forum_carrera_picker_dialog.dart` | `test/core/categories_catalog_test.dart` | Parcial |
 | UX-FORO-008 Tarjeta de publicación | `features/forum/widgets/post_card.dart` | `test/forum_test.dart` | Parcial |
-| UX-FORO-010 Comentarios anidados | `features/forum/widgets/comment_item.dart`; `core/services/forum_service.dart` | `test/services/forum_service_test.dart`; `supabase/tests/comments_rls_test.sql` | Cubierto |
-| UX-FORO-012 Encuestas | `forum_screen.dart`; `supabase/tests/counters_triggers_test.sql` | `test/forum_test.dart` | Parcial |
+| UX-FORO-010 Comentarios anidados | `features/forum/widgets/comment_item.dart`; `core/services/forum_service.dart` | `test/forum_test.dart` (renderizado anidado); `test/services/forum_service_test.dart` (árbol); `supabase/tests/comments_rls_test.sql` | Cubierto |
+| UX-FORO-012 Encuestas | `features/forum/screens/forum_screen.dart`; `features/forum/widgets/create_post_dialog.dart`; `core/services/forum_service.dart` | `test/widgets/dialogs/create_post_dialog_test.dart` (controles); `test/services/forum_service_test.dart` (crear/votar); `test/models/post_model_test.dart` | Parcial |
 | UX-FORO-013 Me gusta | `core/services/forum_service.dart` | `test/services/forum_service_test.dart` | Parcial |
-| UX-FORO-014 Marcadores | `core/services/forum_service.dart` | `supabase/tests/posts_rls_test.sql` | Parcial |
+| UX-FORO-014 Marcadores | `core/services/forum_service.dart` | `test/services/forum_service_test.dart` (insertar/quitar marcador) | Parcial |
 | UX-FORO-016 Reporte | `features/shared/widgets/report_dialog.dart` | `test/widgets/shared/report_dialog_test.dart`; `supabase/tests/rpc_moderation_test.sql` | Cubierto |
-| UX-FORO-017 Crear post | `features/forum/widgets/create_post_dialog.dart` | `test/widgets/dialogs/create_post_dialog_test.dart` | Cubierto |
+| UX-FORO-017 Crear post | `features/forum/widgets/create_post_dialog.dart`; `core/services/forum_service.dart` | `test/widgets/dialogs/create_post_dialog_test.dart` (formulario/validación); `test/services/forum_service_test.dart` (persistencia) | Parcial |
 
 ### 4.3 Marketplace
 
 | Requisito | Implementación | Prueba | Estado |
 |---|---|---|---|
-| UX-MKT-004 Filtros y búsqueda | `features/marketplace/screens/marketplace_screen.dart` | `test/widgets/marketplace_screen_test.dart` | Cubierto |
-| UX-MKT-005/006 Grid y galería | `features/marketplace/widgets/marketplace_card.dart`; `features/shared/widgets/image_viewer_dialog.dart` | `test/widgets/shared/image_viewer_dialog_test.dart` | Cubierto |
+| UX-MKT-004 Filtros y búsqueda | `features/marketplace/screens/marketplace_screen.dart` | `test/widgets/marketplace_screen_test.dart` (comprueba controles y toque del filtro gratuito; no verifica resultados de búsqueda/facetas) | Parcial |
+| UX-MKT-005/006 Grid y galería | `features/marketplace/widgets/marketplace_card.dart`; `features/shared/widgets/image_viewer_dialog.dart` | `test/widgets/marketplace_screen_test.dart` (renderiza una tarjeta); `test/widgets/shared/image_viewer_dialog_test.dart` (visor/InteractiveViewer; sin prueba de galería multipágina) | Parcial |
 | UX-MKT-008 Ciclo de vida del artículo | `core/services/marketplace_service.dart` | `test/services/marketplace_service_test.dart` | Parcial |
-| UX-MKT-009 Contacto directo | `core/models/marketplace_item.dart`; `core/utils/url_utils.dart` | `test/models/marketplace_item_model_test.dart` | Cubierto |
-| UX-MKT-012 Crear anuncio | `features/marketplace/widgets/create_listing_dialog.dart` | `test/widgets/dialogs/create_listing_dialog_test.dart` | Cubierto |
+| UX-MKT-009 Contacto directo | `core/models/marketplace_item.dart`; `core/utils/url_utils.dart` | `test/models/marketplace_item_model_test.dart` (formato de URLs de contacto; sin prueba de apertura desde la tarjeta) | Parcial |
+| UX-MKT-012 Crear anuncio | `features/marketplace/widgets/create_listing_dialog.dart`; `core/services/marketplace_service.dart` | `test/widgets/dialogs/create_listing_dialog_test.dart` (campos/validaciones); `test/services/marketplace_service_test.dart` (persistencia; sin prueba del envío desde el diálogo) | Parcial |
 | UX-MKT-013 Filtro semántico | `core/services/marketplace_service.dart` | `test/services/marketplace_validation_test.dart` | Cubierto |
 | UX-MKT-014 Validación de carné (vendedor) | `features/profile/widgets/carne_validation_modal.dart` | `test/widgets/shared/carne_validation_modal_test.dart` | Parcial |
 | UX-MKT-015 Fallback de imágenes `[Mejora]` | `core/services/storage_service.dart` | `test/services/storage_service_test.dart` | Pendiente |
@@ -124,23 +134,23 @@ Leyenda de estado: Cubierto · Parcial · Pendiente · Sin evaluar · No aplica.
 
 | Requisito | Implementación | Prueba | Estado |
 |---|---|---|---|
-| UX-GRP-001 Acceso directo `[Mejora]` | `app_shell.dart`; `features/groups/screens/groups_screen.dart` | `test/widgets/groups_screen_test.dart`; `integration_test/groups_flow_test.dart` | Parcial |
-| UX-GRP-002 Filtrado por facultad/carrera | `core/services/groups_service.dart` | `test/services/groups_service_test.dart` | Cubierto |
+| UX-GRP-001 Acceso directo `[Mejora]` | `features/navigation/app_shell.dart`; `features/groups/screens/groups_screen.dart` | `test/widgets/app_shell_test.dart` (navegación a Grupos); `test/widgets/groups_screen_test.dart`; `integration_test/groups_flow_test.dart` (flujo de servicio/BD) | Parcial |
+| UX-GRP-002 Filtrado por facultad/carrera | `core/services/groups_service.dart`; `features/groups/screens/groups_screen.dart` | `test/services/groups_service_test.dart` (filtra por facultad; no cubre búsqueda ni todos los filtros de carrera) | Parcial |
 | UX-GRP-005 Detección de plataforma | `core/models/whatsapp_group.dart` | `test/models/whatsapp_group_model_test.dart` | Cubierto |
-| UX-GRP-008 Compartir grupo | `features/groups/widgets/create_group_dialog.dart` | `test/widgets/dialogs/create_group_dialog_test.dart` | Cubierto |
-| UX-GRP-006/007 Upvote y reporte | `core/services/groups_service.dart` | `supabase/tests/groups_marketplace_rls_test.sql` | Parcial |
+| UX-GRP-008 Compartir grupo | `features/groups/widgets/create_group_dialog.dart`; `core/services/groups_service.dart` | `test/widgets/groups_screen_test.dart` (abre el diálogo); `test/widgets/dialogs/create_group_dialog_test.dart` (campos/validación); `test/services/groups_service_test.dart` (creación en servicio, sin envío UI integrado) | Parcial |
+| UX-GRP-006/007 Upvote y reporte | `core/services/groups_service.dart`; `features/groups/widgets/group_card.dart` | `test/services/groups_service_test.dart` (upvote/reporte); `supabase/tests/counters_triggers_test.sql` (contadores de upvote/reporte; sin flujo de interfaz) | Parcial |
 
 ### 4.5 Perfil y cuenta
 
 | Requisito | Implementacion | Prueba | Estado |
 |---|---|---|---|
-| UX-PRF-001/002 Avatar y alias | `features/profile/screens/profile_screen.dart`; `features/profile/widgets/alias_modal.dart` | `test/widgets/profile_screen_test.dart`; `test/widgets/shared/alias_modal_test.dart` | Cubierto |
-| UX-PRF-003 Alias en la nube `[Mejora]` | `core/services/local_storage_service.dart`; `profile_service.dart` | `test/services/local_storage_service_test.dart` | Pendiente |
-| UX-PRF-006 Facultad/carrera/sede | `features/profile/screens/profile_screen.dart`; `core/models/facultad.dart` | `test/models/facultad_model_test.dart` | Parcial |
-| UX-PRF-008/009/010 Actividad y eliminacion | `core/services/{forum,groups,marketplace}_service.dart` | `test/widgets/profile_screen_test.dart` | Parcial |
-| UX-PRF-013 Verificacion con carne | `features/profile/widgets/carne_validation_modal.dart` | `test/widgets/shared/carne_validation_modal_test.dart` | Parcial |
-| UX-PRF-014 MFA en perfil | `features/profile/screens/totp_enrollment_screen.dart` | `test/widgets/totp_enrollment_screen_test.dart` | Cubierto |
-| UX-PRF-015 Sesion / logout | `core/services/supabase_service.dart` | `test/services/supabase_service_test.dart`; `integration_test/profile_flow_test.dart` | Cubierto |
+| UX-PRF-001/002 Avatar y alias | `features/profile/screens/profile_screen.dart`; `features/profile/widgets/alias_modal.dart` | `test/widgets/profile_screen_test.dart`; `test/widgets/shared/alias_modal_test.dart` (alias); `test/services/local_storage_service_test.dart` (persistencia local de color/icono, sin prueba del selector de avatar) | Parcial |
+| UX-PRF-003 Alias en la nube `[Mejora]` | `core/services/local_storage_service.dart` (persistencia local; sincronización con `profiles` no implementada) | `test/services/local_storage_service_test.dart` (solo almacenamiento local) | Pendiente |
+| UX-PRF-006 Facultad/carrera/sede | `features/profile/screens/profile_screen.dart`; `core/models/facultad.dart` | `test/models/facultad_model_test.dart`; `test/widgets/profile_screen_test.dart` (muestra secciones académicas, no prueba selección/guardado) | Parcial |
+| UX-PRF-008/009/010 Actividad y eliminacion | `core/services/profile_service.dart`; `features/profile/screens/profile_screen.dart` | `test/services/profile_service_test.dart` (eliminación de post/grupo/anuncio); `test/widgets/profile_screen_test.dart` (estados vacíos; sin flujo de eliminación en UI) | Parcial |
+| UX-PRF-013 Verificacion con carne | `features/profile/widgets/carne_validation_modal.dart` | `test/widgets/shared/carne_validation_modal_test.dart` (consentimiento, validaciones y borrador no verificado; no acredita verificación institucional real) | Parcial |
+| UX-PRF-014 MFA en perfil | `features/profile/screens/totp_enrollment_screen.dart`; `core/services/supabase_service.dart` | `test/widgets/totp_enrollment_screen_test.dart` (enrolamiento); `test/services/supabase_service_test.dart` (rechaza baja sin código válido; sin flujo UI completo de administración) | Parcial |
+| UX-PRF-015 Sesion / logout | `core/services/supabase_service.dart`; `features/profile/screens/profile_screen.dart` | `test/services/supabase_service_test.dart` (inicio/cierre de sesión del servicio); `integration_test/profile_flow_test.dart` (alias y carné, no prueba logout) | Parcial |
 | UX-PRF-016 Menu inicial: bienvenida y 'Omitir' `[Mejora]` | pantalla `OnboardingScreen` (nuevo); clave `usac_onboarding_done` en `SharedPreferences` | Pendiente | Pendiente |
 | UX-PRF-017 Contexto academico en primer uso `[Mejora]` | reutiliza selectores de `profile_screen.dart`; `core/models/facultad.dart` | Pendiente | Pendiente |
 | UX-PRF-018 Seleccion de intereses de contenido `[Mejora]` | tabla `user_interests` (nuevo); almacenamiento local como fallback | Pendiente | Pendiente |
@@ -168,12 +178,12 @@ Leyenda de estado: Cubierto · Parcial · Pendiente · Sin evaluar · No aplica.
 | Requisito | Implementación | Prueba | Estado |
 |---|---|---|---|
 | UX-AUTH-001 Visitante + barrera contextual | `features/shared/widgets/auth_modal.dart` | `test/widgets/shared/auth_modal_test.dart`; `integration_test/guest_navigation_test.dart` | Cubierto |
-| UX-AUTH-002 Registro | `core/services/supabase_service.dart` | `test/services/supabase_service_test.dart` | Parcial |
-| UX-AUTH-003 Confirmación OTP por correo `[Retirada]` | No aplica: la app no solicita ni envía OTP por correo | — | No aplica |
-| UX-AUTH-005 Recuperación de contraseña por correo | Aplazado por límites de entrega de correo | — | No implementado |
-| UX-AUTH-006 Google OAuth PKCE | `supabase_service.dart`; `main.dart` | `test/sso_test.dart` | Parcial |
-| UX-AUTH-008 MFA con gracia `[Mejora]` | `shared/widgets/totp_session_guard.dart` | `test/widgets/totp_session_guard_test.dart` | Pendiente |
-| UX-AUTH-009/011 TOTP y desafío (UX-AUTH-010 recuperación aplazada) | `features/profile/screens/totp_enrollment_screen.dart`; `totp_session_guard.dart` | `test/widgets/totp_enrollment_screen_test.dart`; `test/widgets/totp_session_guard_test.dart` | Cubierto |
+| UX-AUTH-002 Registro | `features/shared/widgets/auth_modal.dart`; `core/services/supabase_service.dart` | `test/widgets/shared/auth_modal_test.dart` (registro con Supabase simulado y guía de confirmación; no valida el envío remoto) | Parcial |
+| UX-AUTH-003 Confirmación OTP por correo `[Retirada]` | No se solicita ni valida un código OTP; si Supabase devuelve una cuenta pendiente de confirmar, la interfaz indica revisar el correo. El método/configuración remotos no están verificados | `test/widgets/shared/auth_modal_test.dart` (sin código; comprueba la guía de confirmación) | No aplica |
+| UX-AUTH-005 Recuperación de contraseña por correo | Aplazada; no hay flujo implementado | `test/widgets/shared/auth_modal_test.dart` (comprueba que no se ofrece recuperación) | No implementado |
+| UX-AUTH-006 Google OAuth PKCE | `core/services/supabase_service.dart` (`signInWithGoogle`); `main.dart`; configuración remota de proveedor/redirect no verificada | `test/widgets/shared/auth_modal_test.dart` (solo comprueba que aparece el botón; no prueba OAuth/callback) | Parcial |
+| UX-AUTH-008 MFA con gracia `[Mejora]` | `shared/widgets/totp_session_guard.dart` exige enrolamiento/desafío; no implementa inducción ni período de gracia | `test/widgets/totp_session_guard_test.dart` (prueba el guardián actual, no una gracia) | Pendiente |
+| UX-AUTH-009/011 TOTP y desafío (UX-AUTH-010 recuperación aplazada) | `features/profile/screens/totp_enrollment_screen.dart`; `shared/widgets/totp_session_guard.dart`; política global de AAL2 pendiente en remoto | `test/widgets/totp_enrollment_screen_test.dart`; `test/widgets/totp_session_guard_test.dart`; `test/services/supabase_service_test.dart` (Auth simulado) | Cubierto |
 | UX-AUTH-013 Validación de redirect SSO | `features/sso/sso_security_validator.dart` | `test/sso_test.dart` | Cubierto |
 | UX-AUTH-014 SSO Authorization Code + PKCE | Servidor OAuth/clientes no configurados; SSO deshabilitado | `integration_test/sso_flow_test.dart` solo comprueba la pantalla y estados locales; no hace intercambio OAuth real | Pendiente |
 | UX-AUTH-015 Redirect local `[Mejora]` | `sso_authorize_screen.dart` | `test/sso_test.dart` | Parcial |
