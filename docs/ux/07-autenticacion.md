@@ -648,7 +648,7 @@ factor y no sustituye esa comprobación.
 | **UX-AUTH-012** | `lib/features/profile/screens/totp_enrollment_screen.dart` | `unenrollTotpFactor` + `signOut` atómico                     |   AAL0    | Widget test de diálogo con código y baja       |
 | **UX-AUTH-013** | `lib/features/sso/sso_security_validator.dart` (allowlist); flujo de autorización deshabilitado | OAuth Server/clientes PEMTREE no configurados | N/A | Unit test de URI; integración de servidor pendiente |
 | **UX-AUTH-014** | SSO permanece deshabilitado hasta integrar OAuth Authorization Code + PKCE | No se emiten tokens mock ni refresh tokens en redirects | N/A | Widget test de bloqueo; flujo OAuth de producción pendiente |
-| **UX-AUTH-015** | `lib/features/sso/screens/sso_authorize_screen.dart`       | Getter configurable de `effectiveRedirectUri`                |    N/A    | Widget test de banner y selector de entorno    |
+| **UX-AUTH-015** | `lib/features/sso/screens/sso_authorize_screen.dart` | `_effectiveRedirectUri` reescribe ciertos destinos PEMTREE/Netlify a localhost en web local; SSO sigue deshabilitado | N/A | `test/sso_test.dart` solo prueba la allowlist; sin prueba del redirect efectivo, banner o selector |
 | **UX-AUTH-016** | `lib/features/shared/widgets/auth_modal.dart` (clasificación por dominio, nuevo) | Lista configurable de dominios institucionales (nuevo) | AAL1 | Widget test de acceso por dominio |
 
 ---

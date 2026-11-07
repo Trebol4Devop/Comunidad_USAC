@@ -124,9 +124,9 @@ consulta los resultados fechados antes de afirmar que una suite pasa.
 | UX-MKT-009 Contacto directo | `core/models/marketplace_item.dart`; `core/utils/url_utils.dart` | `test/models/marketplace_item_model_test.dart` (formato de URLs de contacto; sin prueba de apertura desde la tarjeta) | Parcial |
 | UX-MKT-012 Crear anuncio | `features/marketplace/widgets/create_listing_dialog.dart`; `core/services/marketplace_service.dart` | `test/widgets/dialogs/create_listing_dialog_test.dart` (campos/validaciones); `test/services/marketplace_service_test.dart` (persistencia; sin prueba del envío desde el diálogo) | Parcial |
 | UX-MKT-013 Filtro semántico | `core/services/marketplace_service.dart` | `test/services/marketplace_validation_test.dart` | Cubierto |
-| UX-MKT-014 Validación de carné (vendedor) | `features/profile/widgets/carne_validation_modal.dart` | `test/widgets/shared/carne_validation_modal_test.dart` | Parcial |
-| UX-MKT-015 Fallback de imágenes `[Mejora]` | `core/services/storage_service.dart` | `test/services/storage_service_test.dart` | Pendiente |
-| UX-MKT-016 Carta de presentacion del vendedor | (nuevo) `SellerProfileScreen` | Pendiente | Pendiente |
+| UX-MKT-014 Verificación para vender | `features/profile/widgets/carne_validation_modal.dart` (borrador local no verificado); `core/services/marketplace_service.dart` (bloquea si falta verificación backend) | `test/widgets/shared/carne_validation_modal_test.dart`; `test/widgets/marketplace_screen_test.dart` | Parcial |
+| UX-MKT-015 Resiliencia de carga de imágenes `[Mejora]` | `core/services/storage_service.dart` solo usa Worker R2; `MarketplaceCard` sí muestra placeholder ante error de visualización | `test/services/storage_service_test.dart` (cubre éxito R2 y error con retorno `null`; no prueba fallback) | Parcial |
+| UX-MKT-016 Carta de presentación del vendedor | No existe una página pública propia del Marketplace; la bio general del perfil no es equivalente | Sin prueba; no existe `SellerProfileScreen` | Pendiente |
 | UX-MKT-017 Límites del vendedor no patrocinador | validaciones de creación e interfaz (nuevo) | Pendiente | Pendiente |
 | UX-MKT-002/003 Patrocinios | `features/marketplace/widgets/sponsor_carousel.dart`; `sponsor_request_dialog.dart` | `test/widgets/sponsor_carousel_test.dart`; `sponsor_request_dialog_test.dart` | Cubierto |
 
@@ -186,7 +186,7 @@ consulta los resultados fechados antes de afirmar que una suite pasa.
 | UX-AUTH-009/011 TOTP y desafío (UX-AUTH-010 recuperación aplazada) | `features/profile/screens/totp_enrollment_screen.dart`; `shared/widgets/totp_session_guard.dart`; política global de AAL2 pendiente en remoto | `test/widgets/totp_enrollment_screen_test.dart`; `test/widgets/totp_session_guard_test.dart`; `test/services/supabase_service_test.dart` (Auth simulado) | Cubierto |
 | UX-AUTH-013 Validación de redirect SSO | `features/sso/sso_security_validator.dart` | `test/sso_test.dart` | Cubierto |
 | UX-AUTH-014 SSO Authorization Code + PKCE | Servidor OAuth/clientes no configurados; SSO deshabilitado | `integration_test/sso_flow_test.dart` solo comprueba la pantalla y estados locales; no hace intercambio OAuth real | Pendiente |
-| UX-AUTH-015 Redirect local `[Mejora]` | `sso_authorize_screen.dart` | `test/sso_test.dart` | Parcial |
+| UX-AUTH-015 Redirect local `[Mejora]` | `sso_authorize_screen.dart` reescribe ciertos redirects PEMTREE/Netlify a `localhost:5173` al ejecutarse en web local; no hay banner ni selector y SSO sigue deshabilitado | `test/sso_test.dart` solo valida la allowlist; sin prueba del redirect efectivo o del selector | Parcial |
 | UX-AUTH-016 Acceso según dominio de correo | lógica de autenticación y panel admin de dominios (nuevo) | Pendiente | Pendiente |
 
 ### 4.7 Sistema de diseño y transversales
@@ -237,7 +237,7 @@ consulta los resultados fechados antes de afirmar que una suite pasa.
 
 ### 4.9 Requisitos antes no trazados individualmente
 
-La comparación de IDs de encabezados `### UX-*` con las filas previas de §4 encontró 40 requisitos sin una fila de evidencia individual. Se evaluaron ahora contra el código y los tests existentes. `Parcial` indica que hay implementación, pero al menos un criterio está incompleto o carece de prueba directa; `Pendiente` indica que falta la capacidad. La presencia de un test no equivale a auditoría visual o WCAG.
+La comparación de IDs de encabezados `### UX-*` con las filas previas de §4 encontró 41 requisitos sin una fila de evidencia individual. Se evaluaron ahora contra el código y los tests existentes. `Parcial` indica que hay implementación, pero al menos un criterio está incompleto o carece de prueba directa; `Pendiente` indica que falta la capacidad. La presencia de un test no equivale a auditoría visual o WCAG.
 
 | Requisito | Implementación | Prueba / evidencia | Estado |
 |---|---|---|---|
@@ -251,6 +251,7 @@ La comparación de IDs de encabezados `### UX-*` con las filas previas de §4 en
 | UX-DSN-007 Coherencia visual del Foro | `features/forum/`; tema Discord y tema oscuro implementados | `test/discord_forum_test.dart` (cobertura visual parcial) | Parcial |
 | UX-FORO-018 Configuración de encuestas | `features/forum/widgets/create_post_dialog.dart`; `core/services/forum_service.dart` | `test/widgets/dialogs/create_post_dialog_test.dart`; `test/services/forum_service_test.dart` | Parcial |
 | UX-FORO-019 Estados y modo sin conexión | `features/forum/screens/forum_screen.dart`; `core/services/cache_service.dart` | `test/cache_service_test.dart`; `test/widgets/shared/network_state_widgets_test.dart` (sin flujo integrado) | Parcial |
+| UX-FORO-020 Acceso contextual del Foro al directorio de Grupos | `features/navigation/app_shell.dart` ofrece Grupos como destino raíz; el rail del Foro excluye servidores de Grupos y no hay enlace contextual que conserve facultad/carrera | `test/widgets/app_shell_test.dart` (acceso raíz); `test/discord_forum_test.dart` (Grupos no aparece en el rail); sin prueba de transición contextual | Parcial |
 | UX-GRP-003 Aviso de depuración semestral | `features/groups/screens/groups_screen.dart`; `core/services/local_storage_service.dart` | `test/widgets/groups_screen_test.dart` (descartar aviso); `test/services/local_storage_service_test.dart` (persistencia de preferencia) | Parcial |
 | UX-GRP-004 Vista responsiva de grupos | `features/groups/screens/groups_screen.dart`; `features/groups/widgets/group_card.dart`; `core/utils/responsive.dart` | `test/widgets/groups_screen_test.dart` (móvil, escritorio y cuadrícula a 800 dp; sin auditoría visual exhaustiva) | Parcial |
 | UX-GRP-007 Reporte de grupos | `core/services/groups_service.dart`; `features/shared/widgets/report_dialog.dart` | `test/services/groups_service_test.dart`; `test/widgets/shared/report_dialog_test.dart` | Parcial |
@@ -324,14 +325,14 @@ prioritarios para el siguiente ciclo de trabajo.
 | UX-FORO-012 | Prueba UI de encuesta sin votos (la guarda de porcentaje ya existe) | `post_card.dart`; `post_detail_screen.dart`; nueva prueba en `forum_test.dart` |
 | UX-FORO-013 | Prueba UI del rollback de like fallido en el feed (el feedback ya existe) | `forum_screen.dart`; nueva prueba en `forum_test.dart` |
 | UX-FORO-014 | "Deshacer" al quitar marcador en `# mis-guardados` | `forum_screen.dart` |
-| UX-FORO-015 | Elección libre de canal al citar | `forum_screen.dart` |
+| UX-FORO-015 | Elegir otro canal al citar desde un canal específico | `forum_screen.dart`; `create_post_dialog.dart` |
 | UX-FORO-017 | Fallback de imágenes al crear post | `create_post_dialog.dart`; `storage_service.dart` |
-| UX-FORO-020 | Acceso directo a Grupos | `forum_server_rail.dart` |
-| UX-MKT-014 | Verificación real de carné (no simulada) | `carne_validation_modal.dart` |
-| UX-MKT-015 | Fallback de almacenamiento | `storage_service.dart` |
-| UX-MKT-016 | Carta de presentación (página pública) del vendedor | (nuevo) |
-| UX-PRF-003 | Persistencia del alias en la nube | `local_storage_service.dart` |
-| UX-AUTH-008 | Período de gracia / explicación previa del MFA | `totp_session_guard.dart` |
+| UX-FORO-020 | Acceso contextual Foro → Grupos, conservando facultad/carrera | `forum_screen.dart`; `app_shell.dart` |
+| UX-MKT-014 | Integración institucional para estudiantes y admisión de vendedores externos; el modal solo guarda borrador local no verificado | `carne_validation_modal.dart`; `marketplace_service.dart` |
+| UX-MKT-015 | Fallback R2 → Supabase Storage y feedback al fallar la carga (el placeholder de visualización ya existe) | `storage_service.dart`; `marketplace_card.dart` |
+| UX-MKT-016 | Página pública de Marketplace con presentación y catálogo del vendedor (no confundir con la bio general del perfil) | nueva pantalla/servicio |
+| UX-PRF-003 | Sincronización del alias con Supabase; actualmente la persistencia es solo local | `local_storage_service.dart`; `profile_service.dart` |
+| UX-AUTH-008 | Resolver si habrá período de gracia y reconciliar sus criterios con AAL2 antes de implementarlo | `totp_session_guard.dart`; `07-autenticacion.md` |
 | UX-AUTH-015 | Respeto transparente del redirect local | `sso_authorize_screen.dart` |
 | UX-X-* | Mejoras transversales (estados, errores, accesibilidad, i18n, rendimiento) | ver `10-transversales.md` |
 | UX-SPN-003 / UX-DSN-008 | Etiquetado de patrocinios reutilizable y contraste AA | `app_theme.dart`; nuevo `SponsoredLabel` |
