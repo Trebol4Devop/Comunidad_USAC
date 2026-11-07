@@ -497,7 +497,7 @@ flowchart TD
 ### UX-PRF-016 — Menú inicial: bienvenida, pasos y opción "Omitir"
 - **Actor / rol:** Estudiante registrado (primer inicio de sesión exitoso)
 - **Prioridad:** Must
-- **Problema actual [Mejora]:** La plataforma no dispone de ningún flujo de incorporación guiada. Un usuario nuevo llega directamente al feed sin contexto académico ni intereses configurados, lo que produce un feed genérico y desorientación inicial (`profile_screen.dart`; ausencia de pantalla de onboarding).
+- **Problema actual [Mejora]:** La plataforma no dispone de un flujo de incorporación guiada. La app abre en el Foro; el usuario puede editar sus datos académicos desde `ProfileScreen`, pero se guardan localmente y no hay selección de intereses entre superficies. No se encontró onboarding ni una clave de finalización.
 - **Precondiciones:** El usuario acaba de completar el registro y autenticación con éxito (`SupabaseService.isAuthenticated == true`). La clave local `usac_onboarding_done` no existe o es `false` (nuevo).
 - **Estado objetivo:** Al primer inicio de sesión, la aplicación presenta un menú inicial (wizard de incorporación) con pantalla de bienvenida institucional, indicador de progreso por pasos (UX-PRF-016 a UX-PRF-020) y un botón persistente "Omitir" visible en todo momento. Al completar o saltar el menú, se marca `usac_onboarding_done = true` en almacenamiento local y se navega al feed personalizado (UX-PRF-021).
 - **UI / contenido:**
@@ -531,8 +531,9 @@ flowchart TD
 ### UX-PRF-017 — Contexto académico en el primer uso: sede, facultad y carrera
 - **Actor / rol:** Estudiante registrado (primer inicio de sesión)
 - **Prioridad:** Must
-- **Precondiciones:** Menú inicial activo (UX-PRF-016). Catálogo `USACConstants.facultades` disponible en memoria.
-- **Estado objetivo:** El paso 1 del menú inicial solicita al estudiante su sede, facultad y carrera usando los mismos tres selectores de [UX-PRF-006](06-perfil-y-cuenta.md#ux-prf-006--selección-de-información-académica-facultad-carrera-y-sede). Los valores seleccionados se persisten en el perfil y acotan el feed inicial; no se duplica la lógica, se reutiliza el mismo componente.
+- **Problema actual [Mejora]:** no existe el paso de onboarding. `ProfileScreen` contiene selectores de facultad, carrera y sede basados en `USACConstants`, y `ProfileService.saveProfile` guarda esos valores mediante `LocalStorageService` en `SharedPreferences`. No se encontró un componente reutilizable para el wizard ni conexión automática entre estos valores locales y los filtros iniciales del feed.
+- **Precondiciones:** Menú inicial activo (UX-PRF-016). Catálogos `USACConstants.facultades` y `USACConstants.sedes` disponibles en memoria.
+- **Estado objetivo:** El paso 1 del menú inicial solicita al estudiante su sede, facultad y carrera usando los selectores descritos en [UX-PRF-006](06-perfil-y-cuenta.md#ux-prf-006--selección-de-información-académica-facultad-carrera-y-sede). Los valores seleccionados se persisten en el perfil y acotan el feed inicial. Actualmente los selectores están integrados dentro de `ProfileScreen`; para reutilizarlos en el wizard se debe extraer o compartir esa lógica.
 - **UI / contenido:**
   - Título de paso: "Paso 1 de 5: Tu contexto académico".
   - Tres selectores idénticos a UX-PRF-006: Sede, Facultad, Carrera.
@@ -545,7 +546,7 @@ flowchart TD
 - **Estados:** Sin valores (predeterminados aplicados) | Con selección activa | Avanzando.
 - **Validaciones y reglas de negocio:**
   - Si el usuario omite este paso, se conservan los valores predeterminados (`Facultad de Ingenieria`, `Ingenieria en Sistemas`, `Campus Central`) conforme a UX-PRF-006.
-  - El contexto académico seleccionado aquí se sincroniza con el perfil del estudiante como si hubiera editado UX-PRF-006 directamente.
+  - **Comportamiento objetivo:** conservar en el perfil los valores elegidos, como al editar UX-PRF-006. **Estado actual:** `ProfileService.saveProfile` persiste esos campos localmente mediante `SharedPreferences`; no los sincroniza con Supabase ni aplica por sí mismo filtros de intereses al feed.
 - **Accesibilidad:** Mismos criterios de accesibilidad que UX-PRF-006. Etiquetas semánticas para cada selector.
 - **Responsive:** Selectores apilados verticalmente en móvil; distribuidos en fila de dos columnas en desktop (ancho >= 700px).
 - **Criterios de aceptación (Gherkin):**
@@ -557,6 +558,7 @@ flowchart TD
 ### UX-PRF-018 — Selección de intereses de contenido: canales de Foro, categorías de Marketplace y cursos de Grupos
 - **Actor / rol:** Estudiante registrado (primer inicio de sesión)
 - **Prioridad:** Must
+- **Problema actual [Mejora]:** no existe selector de intereses para combinar canales, categorías y grupos entre superficies, ni una tabla `user_interests` en las migraciones locales. Hay catálogos y filtros independientes por pantalla, pero no un flujo de onboarding, modelo compartido o persistencia de intereses. El fallback local descrito más abajo tampoco está implementado/verificado.
 - **Precondiciones:** Menú inicial activo (UX-PRF-016). Paso 1 completado o saltado (UX-PRF-017).
 - **Estado objetivo:** El paso 2 del menú inicial permite al estudiante seleccionar sus intereses de contenido en tres bloques: (a) canales del Foro Estudiantil ([ver `03-foro.md`](03-foro.md#ux-foro-001--feed-central-y-selector-de-canales-temáticos-canónicos)), (b) categorías de Marketplace ([ver `04-marketplace.md`](04-marketplace.md#ux-mkt-004--barra-de-búsqueda-textual-y-filtros-facetados-de-catálogo)) y (c) cursos/carreras de Grupos ([ver `05-grupos.md`](05-grupos.md#ux-grp-002--filtrado-por-facultad-carrera-y-búsqueda-de-cursos)). Los intereses seleccionados acotan el feed inicial sin eliminar el acceso completo.
 - **UI / contenido:**
@@ -573,7 +575,7 @@ flowchart TD
   - Pulsar "Siguiente" guarda los intereses seleccionados en `user_interests` (nuevo) y avanza a UX-PRF-019.
 - **Estados:** Selección parcial | Sin selección (aplica arranque mínimo al finalizar) | Conjunto mínimo por defecto.
 - **Validaciones y reglas de negocio:**
-  - Los intereses se almacenan en la tabla `user_interests` (nuevo) con columnas `user_id`, `tipo` (canal/categoria/curso), `valor`, `created_at`. Requiere creación de tabla nueva; hasta entonces se persiste en almacenamiento local.
+  - **Comportamiento objetivo:** almacenar intereses en `user_interests` (tabla nueva por definir) con campos para usuario, tipo de interés y valor. **Estado actual:** no existe esa tabla en las migraciones locales ni persistencia Flutter verificada, tampoco el fallback local. Antes de implementarlo se deben definir el esquema, las políticas RLS y el almacenamiento para visitantes.
   - El estudiante puede dejar un bloque sin selección; no hay fallback que reactive los chips automáticamente. Si finaliza el menú sin elegir nada en una superficie, se aplica la categoría mínima por defecto de esa pantalla (UX-PRF-016).
   - La selección de "Área común" en el Foro actúa como comodín e incluye publicaciones transversales a todas las facultades ([ver `03-foro.md`](03-foro.md)).
 - **Accesibilidad:** Chips con contraste mínimo 4.5:1 en ambos estados. Roles ARIA de checkbox para chips de selección múltiple.
@@ -646,6 +648,7 @@ flowchart TD
 - **Prioridad:** Must
 - **Precondiciones:** Pasos UX-PRF-016 a UX-PRF-020 completados o saltados.
 - **Estado objetivo:** El paso 5 (cierre) del menú inicial muestra un resumen de la configuración aplicada, confirma el guardado y navega al feed principal ya acotado por los intereses y contexto académico seleccionados. Si el usuario no eligió categorías, se aplica el arranque mínimo por pantalla (UX-PRF-016); si las categorías elegidas no producen resultados suficientes, se muestra el estado sin resultados de UX-PRF-030 con las acciones "Añadir categorías" y "Ver todo".
+- **Problema actual [Mejora]:** no existe `OnboardingScreen` ni se encontró la clave `usac_onboarding_done` en Flutter. `AppShell` inicia en la pestaña Foro y `ForumScreen` selecciona por defecto el canal `todos`, con el primer servidor configurado; no aplica intereses del onboarding. El feed muestra su estado vacío únicamente cuando no hay publicaciones, sin umbral de menos de cinco ni acciones "Añadir categorías" / "Ver todo". Las pruebas existentes del Foro cubren carga/error y otros componentes, no este flujo.
 - **UI / contenido:**
   - Pantalla de cierre con mensaje: "Tu perfil está listo. El feed ya muestra el contenido más relevante para ti."
   - Resumen de hasta 3 líneas con los datos configurados: sede/facultad, intereses activos, alias elegido.
@@ -805,7 +808,7 @@ flowchart TD
 ### UX-PRF-027 — Modelo de categorías personalizadas por pantalla (opt-in) [Mejora]
 - **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
 - **Prioridad:** Must
-- **Problema actual [Mejora]:** `forum_screen.dart`, `marketplace_screen.dart` y `groups_screen.dart` presentan todas las categorías o canales disponibles sin un modelo de personalización por superficie; el menú inicial partía de "ver todo" como valor por defecto, produciendo saturación de contenido.
+- **Problema actual [Mejora]:** existen filtros independientes, pero no un modelo opt-in compartido ni intereses persistentes entre superficies. El Foro inicia en el canal `todos`; Marketplace inicia en categoría `todos` y filtros de sede/facultad en `todas`; Grupos puede usar la facultad/carrera del perfil guardada localmente. Estos filtros no forman una preferencia común editable desde todas las pantallas. En el Foro, "Área común" existe como servidor/carrera y no es el canal inicial `todos`.
 - **Precondiciones:** Superficies de Foro, Marketplace y Grupos disponibles. Hub de preferencias (UX-PRF-022) accesible para editar el conjunto de categorías.
 - **Estado objetivo:** La personalización de contenido opera como opt-in sobre tres superficies: Foro = canales, Marketplace = categorías, Grupos = cursos/facultades. La personalización es opcional: cada superficie arranca con una única categoría por defecto curada y un control visible "+ Añadir categorías". El conjunto de categorías activas es editable tanto desde cada pantalla como desde el hub de preferencias (UX-PRF-022), manteniendo una única fuente de verdad.
 - **UI / contenido:**
@@ -834,7 +837,7 @@ flowchart TD
 ### UX-PRF-028 — Control "+ Categorías" y selector en cada pantalla [Mejora]
 - **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
 - **Prioridad:** Must
-- **Problema actual [Mejora]:** Los filtros de categorías y canales viven dispersos en cada pantalla (`forum_screen.dart`, `marketplace_screen.dart`, `groups_screen.dart`) sin un control común con contador ni un selector con búsqueda para añadir o quitar categorías.
+- **Problema actual [Mejora]:** hay controles distintos por superficie: canales/servidores en Foro, chips de selección de una categoría a la vez y filtros de sede/facultad en Marketplace, y búsqueda/contexto académico en Grupos. No existe un selector común con contador que permita gestionar un conjunto persistente de intereses entre las tres superficies.
 - **Precondiciones:** Superficie (Foro, Marketplace o Grupos) activa con el modelo opt-in de UX-PRF-027.
 - **Estado objetivo:** Cada pantalla (Foro, Marketplace y Grupos) muestra un control con contador que abre un selector de categorías con búsqueda. Añadir o quitar una categoría se aplica de inmediato y persiste, con comportamiento coherente entre las tres superficies.
 - **UI / contenido:**
@@ -861,8 +864,8 @@ flowchart TD
 ### UX-PRF-029 — Sugerencias contextuales de categorías [Mejora]
 - **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
 - **Prioridad:** Should
-- **Problema actual [Mejora]:** El selector de categorías no aprovecha el contexto académico del usuario (carrera y sede) para ayudarle a elegir; la lista se presenta completa y sin jerarquía.
-- **Precondiciones:** Contexto académico del usuario (UX-PRF-006 y UX-PRF-017) disponible en `core/models/facultad.dart`. Selector de categorías (UX-PRF-028) abierto.
+- **Problema actual [Mejora]:** no existe un selector unificado de categorías ni sugerencias contextuales. `GroupsScreen` sí utiliza la facultad/carrera local del perfil para filtrar grupos, pero no presenta sugerencias ni permite guardar intereses comunes entre superficies.
+- **Precondiciones:** Contexto académico local del perfil (UX-PRF-006/017) disponible y catálogos de `USACConstants`; selector de categorías (UX-PRF-028) abierto.
 - **Estado objetivo:** El selector sugiere categorías según la carrera y la sede del usuario (UX-PRF-017), pero no preselecciona nada: el usuario decide qué añadir. Las sugerencias enlazan con el hub de preferencias (UX-PRF-022) y su gestión de intereses (UX-PRF-023).
 - **UI / contenido:**
   - Sección "Sugeridas para ti" al inicio del selector, con las categorías afines a la carrera y sede del usuario.
@@ -888,7 +891,7 @@ flowchart TD
 ### UX-PRF-030 — Estado sin resultados en una pantalla filtrada [Mejora]
 - **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
 - **Prioridad:** Must
-- **Problema actual [Mejora]:** Cuando los filtros de categorías no arrojan contenido suficiente, las pantallas no ofrecen una salida explicativa; antes se recurría a un fallback que rellenaba con "Área común" alterando la percepción del filtro del usuario.
+- **Problema actual [Mejora]:** las pantallas ya muestran estados vacíos cuando no hay resultados, pero no se encontró un umbral de "resultados insuficientes" ni los dos CTAs requeridos ("Añadir categorías" y "Ver todo"). Foro muestra una invitación a iniciar conversación sin botón; Marketplace ofrece crear una publicación y Grupos compartir un enlace. `EmptyStateWidget` admite como máximo una acción, por lo que el diseño objetivo requiere ampliarlo o implementar un estado específico. No se encontró el supuesto fallback automático a "Área común".
 - **Precondiciones:** Superficie con filtro de categorías activo (UX-PRF-027/028) y consulta de contenido completada.
 - **Estado objetivo:** Cuando las categorías elegidas no arrojan contenido suficiente, la pantalla muestra un estado vacío explicativo con los CTAs "Añadir categorías" y "Ver todo". "Ver todo" activa un modo de exploración que NO altera las categorías guardadas.
 - **UI / contenido:**
@@ -916,7 +919,7 @@ flowchart TD
 ### UX-PRF-031 — Tarjeta de presentación de perfil (acceso al tocar el avatar) [Mejora]
 - **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
 - **Prioridad:** Must
-- **Problema actual [Mejora]:** El avatar del autor no es interactivo en `post_card.dart` (avatar línea 132, `authorAlias` línea 148), `comment_item.dart` (avatar línea 62, `authorAlias` línea 79), `marketplace_card.dart` (avatar línea 406, `authorAlias` línea 423) ni en la fila de autoría de `group_card.dart` (línea 243, invocado desde `groups_screen.dart`). Tocar el avatar no despliega información del autor, de modo que no existe una tarjeta de presentación consistente y respetuosa del anonimato.
+- **Problema actual [Mejora]:** no existe una tarjeta de perfil ni una acción dedicada en el autor para abrirla. En `PostCard`, el toque de la publicación abre su detalle; los componentes de comentario, Marketplace y Grupos tampoco conectan el avatar/alias con una tarjeta de perfil. No se encontró `ProfileCardSheet` ni una prueba de este flujo.
 - **Estado objetivo:** Tocar el avatar de otro usuario en el Foro, el Marketplace o los Grupos abre la tarjeta de presentación de perfil (`ProfileCardSheet` (nuevo)), un modal que muestra únicamente lo que el dueño haya aceptado revelar. Por defecto la tarjeta muestra solo avatar, seudónimo y rol/insignias (incluyendo el origen de verificación: "Vendedor Verificado (carné)" o "Vendedor externo verificado") y el badge de "Patrocinador" si aplica. Todo lo demás es opt-in por campo (UX-PRF-032/033). En móvil se presenta como hoja inferior (`showModalBottomSheet`) y en desktop como diálogo/popover centrado ([ver UX-X-012 en `10-transversales.md`](10-transversales.md)). La tarjeta no ofrece grafo social: el espectador solo puede "Reportar" y "Silenciar"; no hay seguir, agregar ni mensajería.
 - **Precondiciones:** El usuario observa una tarjeta de publicación, comentario, anuncio o grupo con avatar de autor. El perfil del autor es consultable por su identificador público.
 - **UI / contenido:**
@@ -951,7 +954,7 @@ flowchart TD
 ### UX-PRF-032 — Consentimiento por campo y visibilidad (default anónimo) [Mejora]
 - **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
 - **Prioridad:** Must
-- **Problema actual [Mejora]:** No existe un modelo de consentimiento por campo: `profile_screen.dart` guarda datos académicos y de contacto sin ningún control de qué se comparte con terceros, y no hay una tabla de visibilidad. Toda exposición adicional sería implícita e irreversible.
+- **Problema actual [Mejora]:** no hay controles de consentimiento para decidir qué campos se muestran en una tarjeta pública ni una tabla `profile_card_visibility`. El perfil permite editar datos académicos y de contacto, pero esos controles no son permisos de visibilidad. El consentimiento de `CarneValidationModal` se refiere al borrador de verificación de carné, no a compartir campos del perfil.
 - **Estado objetivo:** Cada campo revelable de la tarjeta de presentación (UX-PRF-031) cuenta con su propio interruptor de consentimiento, apagado por defecto. Nada se revela sin una aceptación explícita del dueño. El dueño puede revocar cualquier campo en cualquier momento y el efecto es retroactivo: al revocar, el campo deja de mostrarse de inmediato en todas las tarjetas y no queda copia visible para otros usuarios. Cuando no hay ningún campo aceptado, la tarjeta muestra "Este usuario mantiene su perfil anónimo".
 - **Precondiciones:** El dueño ha iniciado sesión para persistir en la nube; los visitantes solo configuran su copia local de visitante.
 - **UI / contenido:**
@@ -970,7 +973,7 @@ flowchart TD
   - *Sin conexión:* Los cambios se guardan localmente y se sincronizan al reconectar (UX-PRF-026).
 - **Validaciones y reglas de negocio:**
   - El valor por defecto de todo campo revelable es "no revelado" (opt-in).
-  - La identidad base de la tarjeta (seudónimo, avatar, insignias y datos académicos) se lee de la tabla `profiles`; el consentimiento por campo se almacena en la tabla `profile_card_visibility` (nuevo) con `user_id` (clave foránea a `profiles.id`), `campo`, `visible` y `updated_at`; para visitantes se usa `SharedPreferences`.
+  - **Modelo objetivo:** definir la fuente de datos públicos y guardar el consentimiento por campo en `profile_card_visibility` (tabla nueva por definir) con usuario, campo, visibilidad y fecha de actualización; para visitantes, definir persistencia local. **Estado actual:** el esquema local de `public.profiles` no incluye alias ni índices de avatar/color/icono, y `ProfileService` guarda alias, datos académicos, avatar y contactos en `SharedPreferences`. No existe `profile_card_visibility`; la fuente y los permisos de lectura de una futura tarjeta deben definirse antes de implementarla.
   - La revocación es retroactiva: no se persiste ni se cachea el valor revelado para terceros.
   - Nunca se revelan nombre real, carné, correo ni DPI en el Foro ([UX-X-015](10-transversales.md) y [UX-PRF-011](#ux-prf-011--transparencia-de-privacidad-y-uso-de-datos-estudiantiles)); los campos de contacto y el nombre verificado solo aplican al contexto Marketplace (UX-PRF-033).
 - **Accesibilidad:** Cada interruptor expone su estado ("activado"/"desactivado") y la etiqueta del campo. El aviso de anonimato se anuncia al abrir la tarjeta cuando no hay campos visibles.
@@ -984,7 +987,7 @@ flowchart TD
 ### UX-PRF-033 — Campos revelables y límites por contexto [Mejora]
 - **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
 - **Prioridad:** Must
-- **Problema actual [Mejora]:** No existe una lista canónica de campos revelables ni distinción de contexto: el nombre verificado y los canales de contacto ya configurados en `profile_screen.dart` (tarjeta de contacto de UX-PRF-007) no tienen control de visibilidad en una tarjeta pública.
+- **Problema actual [Mejora]:** no existe tarjeta pública que aplique una lista de campos revelables por contexto. `ProfileScreen` permite configurar canales de contacto y el Marketplace muestra datos asociados a cada anuncio, pero no hay consentimiento ni presentación de esos datos en una tarjeta de perfil distinta para Foro, Marketplace y Grupos.
 - **Estado objetivo:** Define qué campos pueden revelarse en la tarjeta de presentación y sus límites por contexto. Son opcionales y siempre con consentimiento por campo (UX-PRF-032): facultad/carrera ([UX-PRF-006](#ux-prf-006--selección-de-información-académica-facultad-carrera-y-sede)) y resumen de actividad pública (conteos agregados de publicaciones, comentarios, votos y grupos, sin detalles sensibles). El origen de verificación y el estado de patrocinador se muestran como datos de contexto inherentes (sin requerir consentimiento por campo) junto a las insignias/rol. Solo en contexto Marketplace, y nunca en el Foro, y con consentimiento explícito, se pueden mostrar además: nombre verificado de vendedor ([UX-PRF-007](#ux-prf-007--canales-de-contacto-para-marketplace-y-tutorías) y [UX-PRF-013](#ux-prf-013--verificación-de-identidad-estudiantil-con-carné-universitario)), enlace a sus anuncios ([ver UX-MKT-016 en `04-marketplace.md`](04-marketplace.md)) y canales de contacto.
 - **Precondiciones:** Consentimiento por campo activo (UX-PRF-032). En Marketplace, además, la condición de vendedor verificado cuando aplique.
 - **UI / contenido:**
@@ -1014,7 +1017,7 @@ flowchart TD
 ### UX-PRF-034 — Control y previsualización de mi tarjeta [Mejora]
 - **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
 - **Prioridad:** Should
-- **Problema actual [Mejora]:** El hub de preferencias ([UX-PRF-022](#ux-prf-022--centro-de-preferencias-e-intereses-hub-unificado), `PreferencesScreen` (nuevo)) no incluye controles de privacidad de la tarjeta ni una previsualización de cómo la ven los demás; la sección "Cuenta y Preferencias" de `profile_screen.dart` tampoco.
+- **Problema actual [Mejora]:** no existe `PreferencesScreen`, `ProfileCardSheet`, tabla `profile_card_visibility` ni controles de visibilidad/previsualización. La sección "Cuenta y Preferencias" de `ProfileScreen` no incluye esta configuración.
 - **Estado objetivo:** La sección "Privacidad de mi tarjeta" del hub de preferencias (UX-PRF-022) agrupa todos los interruptores por campo de la tarjeta de presentación y ofrece una previsualización fiel de cómo la ven los demás usuarios. La configuración persiste localmente y en la nube (UX-PRF-026) y los cambios aplican de inmediato.
 - **Precondiciones:** `PreferencesScreen` (nuevo, UX-PRF-022) accesible; consentimiento por campo (UX-PRF-032/033) definido.
 - **UI / contenido:**
@@ -1042,6 +1045,7 @@ flowchart TD
 ### UX-PRF-035 — Admisión de vendedor externo (no estudiante) (nuevo)
 - **Actor / rol:** Persona no estudiante aspirante a vendedor; Administrador (aprobador)
 - **Prioridad:** Must
+- **Problema actual [Mejora]:** hay una base parcial de verificación genérica de vendedores: la migración local `20261004000000_require_aal2_and_verified_sellers.sql` añade `seller_verification_status` (`unverified`, `pending`, `verified`, `rejected`), y `MarketplaceService` bloquea la creación de anuncios si no está en `verified`. Esto no implementa una solicitud de vendedor externo: no se encontró formulario de admisión, carga de documentos, distinción de origen externo ni panel de revisión. La política local permite al admin o moderador cambiar la verificación genérica; la aprobación por admin únicamente de vendedores externos sigue siendo un requisito por definir/aplicar. El estado de esta migración en Supabase remoto no está verificado.
 - **Estado objetivo:** una persona no estudiante que vende en la comunidad USAC solicita admisión identificándose con documentos personales; un administrador revisa y aprueba; al aprobarse queda catalogada como "Vendedor externo verificado" y puede vender en el Marketplace y postularse a patrocinador.
 - **Precondiciones:** El aspirante no posee carné universitario ni correo institucional y cuenta con documentos de identidad vigentes. La solicitud se abre desde el perfil o desde el flujo de publicación del Marketplace.
 - **UI / contenido:** formulario de solicitud con carga de documentos y consentimiento informado de tratamiento de datos; estados de la solicitud (pendiente, en revisión, aprobado, rechazado con motivo); insignia "Vendedor externo verificado". Panel de revisión para el administrador (`ExternalSellerReviewPanel` (nuevo)) con los documentos y los botones "Aprobar" y "Rechazar".
@@ -1057,62 +1061,57 @@ flowchart TD
 
 ---
 
-## 4. Flujo del menú inicial de nuevos usuarios
+## 4. Flujo objetivo del menú inicial de nuevos usuarios (pendiente)
 
-El siguiente diagrama describe la secuencia de pasos del menú inicial (UX-PRF-016 a UX-PRF-021) y la estrategia para evitar la saturación de información.
+El diagrama distingue el comportamiento actual de la app del flujo objetivo
+especificado por UX-PRF-016 a UX-PRF-021. El onboarding, la clave
+`usac_onboarding_done`, los intereses compartidos y el centro de preferencias
+mostrados como objetivo no están implementados; consulta la matriz de
+[trazabilidad](11-metricas-y-trazabilidad.md#45-perfil-y-cuenta) para la evidencia.
 
 ```mermaid
 flowchart TD
-    A["App abre — primer inicio de sesión\n(usac_onboarding_done = false)"] --> B["UX-PRF-016\nBienvenida e inicio del wizard"]
-    B -->|"Omitir en cualquier paso"| OA["Arranque mínimo: 1 categoría por defecto por pantalla\n+ #quot;+ Añadir categorías#quot;\n(Foro: Área común · Marketplace: Destacados · Grupos: Mi facultad)"]
-    B -->|"Comenzar"| C["UX-PRF-017\nPaso 1: Sede / Facultad / Carrera"]
-    C --> D["UX-PRF-018\nPaso 2: Selección de intereses\n(canales Foro, categorías Marketplace, cursos Grupos)"]
-    D --> E["UX-PRF-019\nPaso 3: Preferencias de notificaciones"]
-    E --> F["UX-PRF-020\nPaso 4: Alias y avatar"]
-    F --> G["UX-PRF-021\nPaso 5: Confirmación y cierre"]
-    OA --> G
-    G --> H{"¿Feed con resultados?"}
-    H -->|"Sí (>= 5 publicaciones)"| I["Feed personalizado acotado\npor intereses y sede/carrera"]
-    H -->|"No (< 5 publicaciones)"| J["Estado sin resultados\n+ #quot;Añadir categorías#quot; / #quot;Ver todo#quot;"]
-    I --> K["usac_onboarding_done = true\nMenú inicial NO se vuelve a mostrar"]
-    J --> K
-    K --> L["Centro de preferencias disponible\nen ProfileScreen > Cuenta y Preferencias\n(UX-PRF-022 a UX-PRF-030)"]
+    subgraph ACTUAL["Estado actual implementado"]
+        A["La app abre"] --> B["AppShell"] --> C["Foro: canal todos"]
+    end
+
+    subgraph OBJETIVO["Flujo objetivo especificado; pendiente"]
+        D["Primer inicio de sesión\n(clave propuesta: usac_onboarding_done = false)"] --> E["UX-PRF-016\nBienvenida e inicio del wizard"]
+        E -->|"Omitir en cualquier paso"| OA["Arranque mínimo propuesto: 1 categoría por pantalla\n+ Añadir categorías\n(Foro: Área común · Marketplace: Destacados · Grupos: Mi facultad)"]
+        E -->|"Comenzar"| F["UX-PRF-017\nPaso 1: Sede / Facultad / Carrera"]
+        F --> G["UX-PRF-018\nPaso 2: Intereses de Foro, Marketplace y Grupos"]
+        G --> H["UX-PRF-019\nPaso 3: Preferencias de notificaciones"]
+        H --> I["UX-PRF-020\nPaso 4: Alias y avatar"]
+        I --> J["UX-PRF-021\nPaso 5: Confirmación y cierre"]
+        OA --> J
+        J --> K{"¿Feed con resultados?"}
+        K -->|"Sí (>= 5 publicaciones)"| L["Feed personalizado propuesto\npor intereses y contexto académico"]
+        K -->|"No (< 5 publicaciones)"| M["Estado sin resultados propuesto\ncon Añadir categorías / Ver todo"]
+        L --> N["Marcar onboarding como completado"]
+        M --> N
+        N --> O["Centro de preferencias propuesto\nUX-PRF-022 a UX-PRF-030"]
+    end
 ```
 
-> **Nota:** La estrategia anti-saturación opera en tres niveles: (1) el menú inicial
-> acota el feed desde el primer día según los intereses y el contexto
-> académico del estudiante; (2) el modelo es opt-in con arranque mínimo: cada
-> pantalla comienza con una única categoría por defecto curada más el control
-> "+ Añadir categorías", de modo que nunca se activa todo ni se deja la pantalla
-> en blanco; (3) cuando las categorías elegidas no producen resultados
-> suficientes, se muestra el estado sin resultados de UX-PRF-030 con las acciones
-> "Añadir categorías" y "Ver todo" (este último en modo exploración, sin alterar
-> las categorías guardadas). Las preferencias pueden ajustarse en cualquier
-> momento desde el centro de preferencias (UX-PRF-022 a UX-PRF-030) sin repetir
-> el menú inicial.
+> **Nota:** El diagrama de la izquierda refleja el comportamiento documentado
+> actualmente: `AppShell` inicia en Foro y `ForumScreen` selecciona el canal
+> `todos`. El de la derecha es una propuesta, no un flujo disponible en la app.
+> Si se implementa, la estrategia anti-saturación tendría tres partes: (1) acotar
+> el contenido inicial según preferencias; (2) ofrecer un arranque mínimo por
+> pantalla con la opción de añadir categorías; y (3) permitir ampliar la selección
+> o explorar todo el contenido cuando haya pocos resultados. Los valores por
+> defecto —incluidos "Destacados" en Marketplace y "Mi facultad" en Grupos— y
+> las acciones "Añadir categorías" / "Ver todo" son parte del diseño pendiente,
+> no controles o comportamientos existentes. La matriz indica qué capacidades
+> relacionadas sí existen parcialmente en cada pantalla.
 
 ---
 
 ## 5. Trazabilidad
 
-Todos los requisitos de este documento (`UX-PRF-001` a `UX-PRF-035`) cuentan con
-mapeo directo hacia el código fuente de Flutter, políticas de base de datos RLS
-y pruebas automatizadas pgTAP en
-[`11-metricas-y-trazabilidad.md`](11-metricas-y-trazabilidad.md).
+La matriz de [`11-metricas-y-trazabilidad.md`](11-metricas-y-trazabilidad.md)
+registra la evidencia disponible para los requisitos `UX-PRF-001` a
+`UX-PRF-035`. No todos tienen implementación Flutter, políticas RLS o pruebas;
+el estado y la cobertura se indican requisito por requisito en esa matriz.
 
-Los requisitos UX-PRF-016 a UX-PRF-030 se encuentran en estado **Pendiente**
-de implementación. Los requisitos **UX-PRF-027 a UX-PRF-030** (modelo opt-in de
-categorías por pantalla, control "+ Categorías", sugerencias contextuales y
-estado sin resultados) son nuevos y también se encuentran en estado
-**Pendiente**. Los requisitos **UX-PRF-031 a UX-PRF-035** (tarjeta de
-presentación por perfil al tocar el avatar, consentimiento por campo con
-visibilidad anónima por defecto, campos revelables con límites por contexto,
-control/previsualización de mi tarjeta y admisión de vendedor externo) también son nuevos y se encuentran en
-estado **Pendiente**. Las tablas de base de datos requeridas (`user_interests`,
-`content_mutes`, `notification_preferences` y `profile_card_visibility`) y los
-componentes Flutter (`PreferencesScreen`, `StepProgressIndicator`, el selector
-de categorías, `ProfileCardSheet` y las categorías por defecto "Destacados" y
-"Mi facultad") son componentes nuevos marcados como `(nuevo)` en los requisitos
-correspondientes. No se han creado
-migraciones ni archivos de código para estos componentes; su inclusión en este
-documento es exclusivamente de especificación de requisitos.
+El estado de UX-PRF-016 a UX-PRF-035 no es uniforme: consulta la matriz para distinguir requisitos pendientes de los parcialmente cubiertos por funciones existentes fuera del flujo propuesto. El onboarding y el hub de preferencias (UX-PRF-016 a UX-PRF-030) siguen mayormente pendientes; UX-PRF-020 y UX-PRF-024 tienen capacidades parciales en el perfil y en el ocultamiento de anuncios patrocinados. UX-PRF-035 cuenta con verificación genérica parcial de vendedores, pero no con admisión de vendedores externos. Las tablas `user_interests`, `content_mutes` y `profile_card_visibility` no aparecen en las migraciones locales. `notification_preferences` sí existe para flags del Foro, pero no cubre las preferencias generales descritas aquí. El wizard/hub, la tarjeta de perfil, el consentimiento/visibilidad por campo y el panel/formulario de vendedor externo siguen sin implementación.

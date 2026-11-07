@@ -135,10 +135,10 @@ aplicada al proyecto remoto. Para el estado actual, ver el
 | README | — | v1.2 | 2026-11-06 |
 | 01-producto | 18 (`UX-PRD`) | v1.3 | 2026-10-08 |
 | 02-navegacion | 3 (`UX-MAP`) | v1.0 | 2026-10-07 |
-| 03-foro | 24 (`UX-FORO`) | v1.1 | 2026-10-07 |
+| 03-foro | 24 (`UX-FORO`) | v1.1 | 2026-11-06 |
 | 04-marketplace | 17 (`UX-MKT`) | v1.2 | 2026-10-08 |
-| 05-grupos | 12 (`UX-GRP`) | v1.1 | 2026-10-07 |
-| 06-perfil-y-cuenta | 35 (`UX-PRF`) | v1.4 | 2026-10-08 |
+| 05-grupos | 12 (`UX-GRP`) | v1.1 | 2026-11-06 |
+| 06-perfil-y-cuenta | 35 (`UX-PRF`) | v1.4 | 2026-11-06 |
 | 07-autenticacion | 16 (`UX-AUTH`) | v1.2 | 2026-11-06 |
 | 08-navegacion-shell-y-reglas | 13 (`UX-NAV`, `UX-REG`) | v1.0 | 2026-10-07 |
 | 09-sistema-diseno | 8 (`UX-DSN`) | v1.1 | 2026-10-07 |

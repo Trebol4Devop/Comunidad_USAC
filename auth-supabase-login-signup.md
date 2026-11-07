@@ -314,37 +314,45 @@ const { error: vErr } = await supabase.auth.mfa.verify({
 
 Nota: un factor que no se verifica queda como no verificado; limpia los factores sin verificar cuando el usuario abandona la inscripción.
 
-### 9.2 Login con paso de segundo factor
+### 9.2 Login con TOTP requerido en la app
 
-Aplica a los métodos de acceso habilitados (contraseña o Google): primero se autentica con el método elegido y después, si el usuario tiene MFA, se sube a `aal2`.
+En la app actual, `TotpSessionGuard` exige a toda cuenta registrada que inscriba
+un factor TOTP antes de acceder al contenido. En inicios posteriores, si la
+sesión está en AAL1, se solicita el desafío TOTP; una sesión AAL2 continúa. Los
+visitantes sin cuenta no pasan por este guard. Este control de interfaz es
+independiente de la política AAL2 en Postgres, cuya migración remota sigue
+pendiente (ver §9.3).
 
 ```mermaid
 flowchart TD
-    A(["Usuario inicia sesión con contraseña o Google"]) --> B["Sesión aal1 creada"]
-    B --> C["mfa.getAuthenticatorAssuranceLevel"]
-    C --> D{"nextLevel es aal2 y currentLevel es aal1?"}
-    D -->|"No: sin MFA inscrito"| E["Acceso al dashboard"]
-    D -->|"Sí: tiene MFA"| F["Redirigir a pantalla de verificación MFA"]
-    F --> G["mfa.listFactors y elegir factor TOTP verificado"]
-    G --> H["Usuario ingresa código de 6 dígitos"]
-    H --> I["mfa.challenge y mfa.verify"]
-    I --> J{"Resultado"}
-    J -->|"Válido"| K["Sesión aal2"] --> E
-    J -->|"Inválido"| L["Contador de intentos"] --> M{"Demasiados intentos?"}
-    M -->|"No"| H
-    M -->|"Sí"| N["Bloqueo temporal y opción de cerrar sesión"]
-    J -->|"Perdió el dispositivo"| O["Solicitar asistencia administrativa fuera de la app"]
+    A["Login con contraseña o Google"] --> B["Sesión AAL1"]
+    B --> C{"TotpSessionGuard: ¿factor TOTP verificado?"}
+    C -->|"No"| D["Inscripción TOTP obligatoria"]
+    D --> E["Verificar primer código"]
+    E --> K["Acceso al contenido de la app (AAL2)"]
+    C -->|"Sí"| F{"¿Sesión actual en AAL2?"}
+    F -->|"Sí"| K
+    F -->|"No: AAL1"| G["Solicitar desafío TOTP"]
+    G --> H["mfa.challenge y mfa.verify"]
+    H --> I{"¿Código válido?"}
+    I -->|"Sí"| K
+    I -->|"No"| J["Mostrar error y permitir reintento"]
+    J --> G
 ```
+
+Para una cuenta con factor ya inscrito, el desafío se requiere cuando la sesión
+está en AAL1:
 
 ```ts
 const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
 
 if (aal.nextLevel === 'aal2' && aal.currentLevel !== aal.nextLevel) {
-  // redirigir a /mfa/verify
+  // Solicitar el desafío TOTP y verificarlo antes de continuar.
 }
 ```
 
-Guard de rutas: además de `ProtectedRoute` (hay sesión), agrega la condición "si `nextLevel` es `aal2`, entonces `currentLevel` debe ser `aal2`".
+La app además enruta a la inscripción cuando aún no existe un factor verificado;
+no permite continuar como cuenta registrada sin TOTP.
 
 ### 9.3 Aplicar MFA en la base de datos (RLS)
 
