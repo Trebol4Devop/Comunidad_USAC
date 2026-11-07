@@ -58,7 +58,7 @@ identificados en el levantamiento de código:
 | **Manejo de errores** (`UX-X-001`, `002`, `003`)         | Hecho |    Hecho    | Hecho  |      Hecho      |   Hecho    | Hecho |
 | **Estados vacíos** (`UX-X-004`)                          | Hecho |    Hecho    | Hecho  |      Hecho      |    N/A     |  N/A  |
 | **Carga con skeletons** (`UX-X-005`)                     | Hecho |    Hecho    | Hecho  |      Hecho      |    N/A     |  N/A  |
-| **Modo offline y caché** (`UX-X-006`)                    | Hecho |    Hecho    | Hecho  |     Parcial     |    N/A     |  N/A  |
+| **Modo offline y caché** (`UX-X-006`)                    | Parcial | Parcial | Parcial | Parcial | N/A | N/A |
 | **Notificaciones / Snackbars** (`UX-X-007`)              | Hecho |    Hecho    | Hecho  |      Hecho      |   Hecho    | Hecho |
 | **Accesibilidad WCAG 2.2 AA** (`UX-X-008`, `009`, `010`) | Hecho |    Hecho    | Hecho  |      Hecho      |   Hecho    | Hecho |
 | **Responsividad y modales** (`UX-X-011`, `012`)          | Hecho |    Hecho    | Hecho  |      Hecho      |   Hecho    | Hecho |
@@ -230,7 +230,7 @@ identificados en el levantamiento de código:
 - **Actor / rol:** Todos (Visitante, Estudiante Registrado, Estudiante Verificado)
 - **Prioridad:** Must
 - **Estado objetivo:** La plataforma implementa la estrategia de caché **Stale-While-Revalidate** para permitir la lectura continua de contenidos académicos sin conexión a internet (en pasillos, sótanos o áreas de baja cobertura del campus universitario). Los datos guardados localmente nunca se destruyen por vencimiento de un temporizador corto; se presentan al usuario como datos en caché acompañados del banner no intrusivo `OfflineBanner`. Las acciones que requieren conectividad para escritura informan amigablemente la restricción y protegen los borradores.
-- **Problema actual [Mejora]:** En [`cache_service.dart:109-111`](../../comunidad_universitaria/lib/core/services/cache_service.dart#L109-L111) y [`network_state_widgets.dart:94-156`](../../comunidad_universitaria/lib/features/shared/widgets/network_state_widgets.dart#L94-L156), el método `getPersisted` borra y devuelve `null` si han pasado más de 45 segundos desde la captura (`difference > ttlMs return null`), dejando la aplicación vacía y deshabilitada en situaciones reales de desconexión en el campus.
+- **Problema actual [Mejora]:** `CacheService` conserva la copia persistida vencida y `getPersisted(..., allowStale: true)` permite recuperarla; los servicios de Foro, Grupos y Marketplace la usan como fallback tras fallar la consulta de red para sus consultas predeterminadas. Esto no implementa todavía SWR completo: no muestra la caché al instante mientras revalida en segundo plano, la persistencia no cubre todos los filtros y falta validar el flujo offline integrado, incluidos los estados visuales y la conservación de borradores ante fallos de escritura.
 - **Precondiciones:** El estudiante ha navegado previamente por la aplicación y el dispositivo pierde la conectividad a internet.
 - **UI / contenido:**
   - Componente `OfflineBanner` anclado bajo la barra superior (AppBar):

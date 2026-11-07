@@ -45,16 +45,16 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
 
 ## 4. Requisitos del cascarón de navegación (UX-NAV)
 
-### UX-NAV-001 — Acceso directo a tres destinos canónicos en la navegación principal [Mejora]
+### UX-NAV-001 — Acceso directo a cuatro destinos en la navegación principal
 
 - **Actor / rol:** Visitante, Estudiante Registrado, Estudiante Verificado, Moderador, Administrador
 - **Prioridad:** Must
-- **Estado objetivo:** La navegación principal del cascarón expone de forma directa, visible e inmediata tres destinos principales de primer nivel: **Foro Estudiantil**, **Marketplace & Tutorías** y **Directorio de Grupos de Estudio**, permitiendo a cualquier estudiante acceder a cualquiera de ellos en un solo toque o clic desde la vista raíz tanto en móvil como en escritorio.
-- **Problema identificado y corrección aplicada:** La versión anterior exponía solo Foro y Marketplace, ocultando Grupos dentro del foro. El shell actual tiene tres destinos de primer nivel y `GroupsScreen` como tercer hijo del `IndexedStack`; la prueba `test/widgets/app_shell_test.dart` comprueba navegación y conservación de estado.
+- **Estado objetivo:** La navegación principal del cascarón expone de forma directa, visible e inmediata cuatro destinos de primer nivel: **Foro Estudiantil**, **Marketplace & Tutorías**, **Directorio de Grupos de Estudio** y **Mapa**. Se accede a cualquiera de ellos desde la vista raíz, tanto en móvil como en escritorio.
+- **Problema identificado y corrección aplicada:** La versión anterior exponía solo Foro y Marketplace, ocultando Grupos dentro del foro. El shell actual tiene cuatro destinos; `GroupsScreen` es el tercer hijo del `IndexedStack` y Mapa el cuarto. La prueba `test/widgets/app_shell_test.dart` comprueba los destinos, la navegación y la conservación de estado.
 - **Precondiciones:** La aplicación se encuentra en ejecución en cualquier dispositivo o plataforma soportada; `AppShell` montado en pantalla.
 - **UI / contenido:**
-  - En escritorio (ancho >= 700px): Tres pestañas horizontales en el AppBar inferior: `"Foro Estudiantil"` (`Icons.forum_outlined`), `"Marketplace & Tutorías"` (`Icons.storefront_outlined`) y `"Grupos de Estudio"` (`Icons.groups_outlined`).
-  - En móvil (ancho < 700px): Tres destinos en la `NavigationBar` inferior: `"Foro"`, `"Marketplace"` y `"Grupos"`, con iconos lineales en reposo e iconos rellenos al seleccionarse.
+  - En escritorio (ancho >= 700px): Cuatro pestañas horizontales en el AppBar inferior: `"Foro Estudiantil"`, `"Marketplace & Tutorías"`, `"Grupos de Estudio"` y `"Mapa"`.
+  - En móvil (ancho < 700px): Cuatro destinos en la `NavigationBar` inferior: `"Foro"`, `"Grupos"`, `"Mapa"` y `"Marketplace"`.
 - **Interacciones:**
   - Tocar o hacer clic en cualquiera de las pestañas conmuta el índice activo `_currentIndex` de forma instantánea.
   - El destino seleccionado se destaca visualmente mediante el color primario de acento (`#004B87` o `#2563EB`) y cambio de peso tipográfico a negrita.
@@ -63,17 +63,17 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
   - _Activo:_ Destino seleccionado resaltado con indicador visual claro.
   - _Transición:_ Conmutación inmediata en memoria sin pantallas intermedias ni parpadeos.
 - **Validaciones y reglas de negocio:**
-  - La exploración entre los tres módulos es completamente libre y no requiere sesión iniciada.
+  - La exploración entre los cuatro destinos es completamente libre y no requiere sesión iniciada.
   - Si el usuario accede a través de un enlace contextual interno (ej. botón de grupos en el rail del foro), el cascarón conmuta automáticamente el índice a la pestaña de Grupos sincronizando la unidad académica activa.
 - **Accesibilidad:**
-  - Atributos de accesibilidad `Semantics` en cada destino (`"Pestaña Foro Estudiantil"`, `"Pestaña Marketplace y Tutorías"`, `"Pestaña Grupos de Estudio"`).
+  - Atributos de accesibilidad `Semantics` en cada destino (`"Pestaña Foro Estudiantil"`, `"Pestaña Marketplace y Tutorías"`, `"Pestaña Grupos de Estudio"`, `"Pestaña Mapa"`).
   - Destinos táctiles móviles de al menos 48x48 dp.
   - Navegación por teclado con tabulador y flechas direccionales en entorno de escritorio [ver [`10-transversales.md`](10-transversales.md)].
 - **Responsive:**
   - Pantallas móviles (< 700px): `NavigationBar` inferior Material 3.
   - Pantallas desktop y tablet (>= 700px): Pestañas horizontales integradas en la parte inferior del AppBar.
 - **Criterios de aceptación (Gherkin):**
-  - **Given** un estudiante que abre la aplicación desde un teléfono móvil, **When** observa la barra inferior de navegación, **Then** visualiza claramente tres destinos etiquetados "Foro", "Marketplace" y "Grupos", y al presionar "Grupos" accede inmediatamente al catálogo de enlaces de mensajería académica.
+  - **Given** un estudiante que abre la aplicación desde un teléfono móvil, **When** observa la barra inferior de navegación, **Then** encuentra los cuatro destinos "Foro", "Grupos", "Mapa" y "Marketplace", y al seleccionar "Grupos" accede inmediatamente al catálogo de enlaces de mensajería académica.
   - **Given** un usuario navegando en una computadora de escritorio con ancho de ventana de 1280px, **When** hace clic en la pestaña "Grupos de Estudio", **Then** el cascarón conmuta la vista al directorio de grupos sin recargar la página, destacando la pestaña con el indicador inferior de acento.
 
 ---
@@ -82,15 +82,16 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
 
 - **Actor / rol:** Visitante, Estudiante Registrado, Estudiante Verificado, Moderador, Administrador
 - **Prioridad:** Must
-- **Estado objetivo:** El cascarón de navegación preserva el árbol de widgets y el estado interno en memoria de cada uno de los tres módulos principales utilizando un contenedor `IndexedStack`, garantizando que al cambiar de pestaña no se destruyan las vistas activas, no se pierda la posición de scroll, no se descarten formularios a medio completar y no se repitan peticiones de red redundantes.
-- **Corrección aplicada:** El `IndexedStack` actual contiene `ForumScreen`, `MarketplaceScreen` y `GroupsScreen`; la prueba de shell verifica que el estado de Grupos se conserva al cambiar de destino.
+- **Estado objetivo:** El cascarón de navegación mantiene cuatro destinos en un contenedor `IndexedStack`: Foro, Marketplace, Grupos y Mapa. Al cambiar de destino, conserva las vistas ya visitadas y el estado interno que corresponda a cada pantalla.
+- **Corrección aplicada:** El `IndexedStack` actual contiene `ForumScreen`, `MarketplaceScreen`, `GroupsScreen` y `CampusMapScreen`; `test/widgets/app_shell_test.dart` verifica la conservación del estado de Grupos al cambiar de destino.
 - **Precondiciones:** Las pantallas hijas han sido instanciadas en el cascarón con sus parámetros de alias y tema.
 - **UI / contenido:**
   - Contenedor `IndexedStack` en el cuerpo (`body`) del `Scaffold` con `index: _currentIndex`.
-  - Tres hijos indexados:
+  - Cuatro hijos indexados:
     1. Índice 0: `ForumScreen` (foro con arquitectura Discord, canales y feeds).
     2. Índice 1: `MarketplaceScreen` (catálogo comercial, filtros y carrusel de patrocinadores).
     3. Índice 2: `GroupsScreen` (directorio de grupos de WhatsApp, Telegram y Drive).
+    4. Índice 3: `CampusMapScreen` (mapa del campus).
 - **Interacciones:**
   - Al cambiar de pestaña, el widget anterior se oculta de la vista visual pero permanece montado en memoria.
   - Al regresar a una pestaña previa, el usuario encuentra exactamente el mismo canal seleccionado, la posición del scroll y el texto introducido en filtros o barras de búsqueda.
@@ -182,8 +183,8 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
 
 - **Actor / rol:** Visitante, Estudiante Registrado, Estudiante Verificado, Moderador, Administrador
 - **Prioridad:** Must
-- **Estado objetivo:** En pantallas de escritorio y tablets en modo horizontal (ancho >= 700px), el cascarón despliega una barra de navegación por pestañas en la base del AppBar (`bottom`), acotada por un contenedor `MaxWidthContainer(maxWidth: 1200)` para preservar la ergonomía visual, con tres pestañas accesibles: `"Foro Estudiantil"`, `"Marketplace & Tutorías"` y `"Grupos de Estudio"`.
-- **Corrección aplicada:** La barra superior actual incluye Foro, Marketplace y Grupos desde el breakpoint canónico de 700px; `test/widgets/app_shell_test.dart` valida los tres destinos en tablet/escritorio.
+- **Estado objetivo:** En pantallas de escritorio y tablets en modo horizontal (ancho >= 700px), el cascarón despliega una barra de navegación por pestañas en la base del AppBar (`bottom`), acotada por un contenedor `MaxWidthContainer(maxWidth: 1200)` para preservar la ergonomía visual, con cuatro pestañas accesibles: `"Foro Estudiantil"`, `"Marketplace & Tutorías"`, `"Grupos de Estudio"` y `"Mapa"`.
+- **Corrección aplicada:** La barra superior actual incluye los cuatro destinos desde el breakpoint canónico de 700px; `test/widgets/app_shell_test.dart` valida su navegación.
 - **Precondiciones:** Ancho de pantalla `>= 700px`.
 - **UI / contenido:**
   - Altura fija de 48px en el área `bottom` del `AppBar`.
@@ -210,7 +211,7 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
   - Se muestra exclusivamente cuando `width >= 700px`. Si la ventana se reduce por debajo de dicho valor, el `bottom` del AppBar se evalúa como `null` y la navegación pasa a la barra inferior móvil.
 - **Criterios de aceptación (Gherkin):**
   - **Given** un estudiante en su laptop con ventana de 1280px de ancho, When hace clic en la pestaña "Grupos de Estudio", Then la línea de acento azul se sitúa bajo dicha pestaña y la pantalla central cambia al directorio de grupos de estudio.
-  - **Given** una ventana de escritorio con zoom del navegador al 150%, When el ancho disponible para las tres pestañas se ve reducido, Then la barra permite desplazamiento horizontal suave con la rueda del ratón sin generar desbordamientos de interfaz.
+  - **Given** una ventana de escritorio con zoom del navegador al 150%, **When** el ancho disponible para las cuatro pestañas se ve reducido, **Then** la barra permite desplazamiento horizontal suave con la rueda del ratón sin generar desbordamientos de interfaz.
 
 ---
 
@@ -218,14 +219,15 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
 
 - **Actor / rol:** Visitante, Estudiante Registrado, Estudiante Verificado, Moderador, Administrador
 - **Prioridad:** Must
-- **Estado objetivo:** En dispositivos móviles (ancho < 700px), el cascarón fija una barra de navegación inferior (`NavigationBar` Material 3) accesible con una sola mano, que proporciona acceso cómodo al alcance del pulgar a los tres destinos canónicos de la plataforma: `"Foro"`, `"Marketplace"` y `"Grupos"`.
-- **Corrección aplicada:** La `NavigationBar` móvil actual incluye Foro, Marketplace y Grupos; `test/widgets/app_shell_test.dart` comprueba selección y acceso directo.
+- **Estado objetivo:** En dispositivos móviles (ancho < 700px), el cascarón fija una barra de navegación inferior (`NavigationBar` Material 3) accesible con una sola mano, que proporciona acceso a los cuatro destinos de la plataforma: `"Foro"`, `"Grupos"`, `"Mapa"` y `"Marketplace"`.
+- **Corrección aplicada:** La `NavigationBar` móvil actual incluye los cuatro destinos; `test/widgets/app_shell_test.dart` comprueba selección y acceso directo.
 - **Precondiciones:** Ancho de pantalla `< 700px`.
 - **UI / contenido:**
-  - `NavigationBar` Material 3 con tres destinos equiespaciados:
-    1. `"Foro"`: `Icon(Icons.forum_outlined)` en reposo; `Icon(Icons.forum)` seleccionado.
-    2. `"Marketplace"`: `Icon(Icons.storefront_outlined)` en reposo; `Icon(Icons.storefront)` seleccionado.
-    3. `"Grupos"`: `Icon(Icons.groups_outlined)` en reposo; `Icon(Icons.groups)` seleccionado.
+  - `NavigationBar` Material 3 con cuatro destinos equiespaciados:
+    1. `"Foro"`: `Icon(Icons.chat_bubble_outline)`.
+    2. `"Grupos"`: `Icon(Icons.groups_outlined)`.
+    3. `"Mapa"`: `Icon(Icons.map_outlined)`.
+    4. `"Marketplace"`: `Icon(Icons.local_mall_outlined)`.
   - Píldora de selección activa con tonalidad primaria translúcida.
   - Tipografía de etiqueta compacta y legible en una sola línea.
 - **Interacciones:**
@@ -237,12 +239,12 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
   - La barra se ubica dentro de un área segura (`SafeArea`) para respetar la barra de gestos de navegación y botones nativos en iOS y Android.
 - **Accesibilidad:**
   - Altura táctil estándar de 80dp cumpliendo las pautas ergonómicas de Material 3.
-  - Etiquetas descriptivas para TalkBack y VoiceOver (`"Foro, pestaña 1 de 3"`, etc.).
+  - Etiquetas descriptivas para TalkBack y VoiceOver (`"Foro, pestaña 1 de 4"`, etc.); el test actual confirma que las etiquetas visuales de la barra se ocultan en móvil.
 - **Responsive:**
   - Se activa únicamente cuando `width < 700px`. En pantallas de escritorio se asigna `bottomNavigationBar: null`.
 - **Criterios de aceptación (Gherkin):**
   - **Given** un estudiante navegando en la app desde su teléfono inteligente, When pulsa el destino "Grupos" en la barra inferior, Then la píldora de selección resalta el icono de grupos y la vista cambia de inmediato al directorio de grupos.
-  - **Given** un dispositivo móvil de gama baja con pantalla angosta de 320dp, When se presenta la barra inferior, Then los tres destinos se distribuyen simétricamente sin recortar sus etiquetas de texto.
+  - **Given** un dispositivo móvil de gama baja con pantalla angosta de 320dp, When se presenta la barra inferior, Then los cuatro destinos se distribuyen simétricamente sin solaparse.
 
 ---
 

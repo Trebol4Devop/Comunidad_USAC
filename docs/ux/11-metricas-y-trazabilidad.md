@@ -90,10 +90,10 @@ consulta los resultados fechados antes de afirmar que una suite pasa.
 | UX-PRD-011 Segundo factor en la interfaz | `shared/widgets/totp_session_guard.dart`; la exigencia global de AAL2 está en `20261004000000_require_aal2_and_verified_sellers.sql`, pendiente en remoto | `test/widgets/totp_session_guard_test.dart`; `supabase/tests/authenticated_aal1_write_denied_test.sql` (pendiente de validar con la migración) | Parcial |
 | UX-PRD-016 Vendedor externo verificado | campos en `profiles` y panel admin (nuevo) | Pendiente | Pendiente |
 | UX-PRD-026 No lucro, financiamiento y datos | `features/rules/screens/rules_screen.dart`; `features/profile/screens/profile_screen.dart` (`UX-PRF-011`) | Pendiente | Parcial |
-| UX-MAP-001 Deep links | `main.dart` (`_onGenerateRoute`) | `test/sso_test.dart` | Parcial |
-| UX-MAP-002 Retorno en subpantallas | `features/forum/screens/post_detail_screen.dart` | `integration_test/forum_flow_test.dart` | Parcial |
-| UX-MAP-003 Enlaces externos | `core/utils/url_utils.dart` | `test/utils/storage_url_test.dart` | Parcial |
-| UX-NAV-001 Tres destinos (08) | `features/navigation/app_shell.dart`; `features/forum/widgets/discord/forum_server_rail.dart` | `test/widgets/app_shell_test.dart` | Parcial |
+| UX-MAP-001 Deep links | `main.dart` (`_onGenerateRoute`) | `integration_test/sso_flow_test.dart` (ruta local `/auth/authorize`; no prueba callbacks de deep link por plataforma) | Parcial |
+| UX-MAP-002 Retorno en subpantallas | `features/forum/screens/post_detail_screen.dart` | `test/forum_test.dart` (renderiza detalle; no prueba retorno a pantalla anterior) | Parcial |
+| UX-MAP-003 Enlaces externos | `core/utils/url_utils.dart` | Sin prueba específica de apertura segura de enlaces externos | Parcial |
+| UX-NAV-001 Cuatro destinos principales (08) | `features/navigation/app_shell.dart` | `test/widgets/app_shell_test.dart` | Parcial |
 | UX-NAV-002 Preservación de estado (08) | `app_shell.dart` (`IndexedStack`) | Pendiente | Parcial |
 | UX-NAV-005/006 Tabs / NavigationBar (08) | `app_shell.dart` (`Responsive.isMobile`, breakpoint 700) | `test/widgets/app_shell_test.dart` | Parcial |
 | UX-NAV-008 Aviso comunitario (08) | `app_shell.dart` (`_showDisclaimerModal`) | `test/widgets/app_shell_test.dart` (apertura, contenido, acciones y foco) | Parcial |
@@ -134,7 +134,7 @@ consulta los resultados fechados antes de afirmar que una suite pasa.
 
 | Requisito | Implementación | Prueba | Estado |
 |---|---|---|---|
-| UX-GRP-001 Acceso directo `[Mejora]` | `features/navigation/app_shell.dart`; `features/groups/screens/groups_screen.dart` | `test/widgets/app_shell_test.dart` (navegación a Grupos); `test/widgets/groups_screen_test.dart`; `integration_test/groups_flow_test.dart` (flujo de servicio/BD) | Parcial |
+| UX-GRP-001 Acceso directo | `features/navigation/app_shell.dart`; `features/groups/screens/groups_screen.dart` | `test/widgets/app_shell_test.dart` (navegación móvil a Grupos); `test/widgets/groups_screen_test.dart`; `integration_test/groups_flow_test.dart` (flujo de servicio/BD) | Cubierto |
 | UX-GRP-002 Filtrado por facultad/carrera | `core/services/groups_service.dart`; `features/groups/screens/groups_screen.dart` | `test/services/groups_service_test.dart` (filtra por facultad; no cubre búsqueda ni todos los filtros de carrera) | Parcial |
 | UX-GRP-005 Detección de plataforma | `core/models/whatsapp_group.dart` | `test/models/whatsapp_group_model_test.dart` | Cubierto |
 | UX-GRP-008 Compartir grupo | `features/groups/widgets/create_group_dialog.dart`; `core/services/groups_service.dart` | `test/widgets/groups_screen_test.dart` (abre el diálogo); `test/widgets/dialogs/create_group_dialog_test.dart` (campos/validación); `test/services/groups_service_test.dart` (creación en servicio, sin envío UI integrado) | Parcial |
@@ -180,7 +180,7 @@ consulta los resultados fechados antes de afirmar que una suite pasa.
 | UX-AUTH-001 Visitante + barrera contextual | `features/shared/widgets/auth_modal.dart` | `test/widgets/shared/auth_modal_test.dart`; `integration_test/guest_navigation_test.dart` | Cubierto |
 | UX-AUTH-002 Registro | `features/shared/widgets/auth_modal.dart`; `core/services/supabase_service.dart` | `test/widgets/shared/auth_modal_test.dart` (registro con Supabase simulado y guía de confirmación; no valida el envío remoto) | Parcial |
 | UX-AUTH-003 Confirmación OTP por correo `[Retirada]` | No se solicita ni valida un código OTP; si Supabase devuelve una cuenta pendiente de confirmar, la interfaz indica revisar el correo. El método/configuración remotos no están verificados | `test/widgets/shared/auth_modal_test.dart` (sin código; comprueba la guía de confirmación) | No aplica |
-| UX-AUTH-005 Recuperación de contraseña por correo | Aplazada; no hay flujo implementado | `test/widgets/shared/auth_modal_test.dart` (comprueba que no se ofrece recuperación) | No implementado |
+| UX-AUTH-005 Recuperación de contraseña por correo `[Fuera de alcance]` | No hay flujo ni envío de recuperación por correo, conforme a la decisión de alcance | `test/widgets/shared/auth_modal_test.dart` (comprueba que no se ofrece recuperación) | No aplica |
 | UX-AUTH-006 Google OAuth PKCE | `core/services/supabase_service.dart` (`signInWithGoogle`); `main.dart`; configuración remota de proveedor/redirect no verificada | `test/widgets/shared/auth_modal_test.dart` (solo comprueba que aparece el botón; no prueba OAuth/callback) | Parcial |
 | UX-AUTH-008 MFA con gracia `[Mejora]` | `shared/widgets/totp_session_guard.dart` exige enrolamiento/desafío; no implementa inducción ni período de gracia | `test/widgets/totp_session_guard_test.dart` (prueba el guardián actual, no una gracia) | Pendiente |
 | UX-AUTH-009/011 TOTP y desafío (UX-AUTH-010 recuperación aplazada) | `features/profile/screens/totp_enrollment_screen.dart`; `shared/widgets/totp_session_guard.dart`; política global de AAL2 pendiente en remoto | `test/widgets/totp_enrollment_screen_test.dart`; `test/widgets/totp_session_guard_test.dart`; `test/services/supabase_service_test.dart` (Auth simulado) | Cubierto |
@@ -197,12 +197,12 @@ consulta los resultados fechados antes de afirmar que una suite pasa.
 | UX-DSN-003 Componentes base | `shared/widgets/empty_state_widget.dart`; `network_state_widgets.dart`; `identity_badge_chip.dart` | `test/widgets/shared/empty_state_test.dart`; `network_state_widgets_test.dart`; `identity_badge_chip_test.dart` | Cubierto |
 | UX-DSN-004 Breakpoints | `core/utils/responsive.dart` | `test/utils/responsive_test.dart` | Cubierto |
 | UX-X-003 Fallback de multimedia | `core/services/storage_service.dart` | `test/services/storage_service_test.dart` | Pendiente |
-| UX-X-006 Sin conexión / SWR | `core/services/cache_service.dart` | `test/cache_service_test.dart` | Cubierto |
-| UX-X-007 Notificaciones / snackbars | `features/shared/widgets/network_state_widgets.dart` | `test/widgets/shared/network_state_widgets_test.dart` | Parcial |
+| UX-X-006 Sin conexión / SWR | `core/services/cache_service.dart`; servicios de Foro, Grupos y Marketplace (fallback persistido en consultas predeterminadas tras fallo) | `test/cache_service_test.dart` (TTL, persistencia y stale); `test/widgets/shared/network_state_widgets_test.dart` (banner/reintento; sin flujo offline integrado) | Parcial |
+| UX-X-007 Notificaciones / snackbars | `features/shared/widgets/network_state_widgets.dart`; mensajes SnackBar locales en features | `test/widgets/profile_screen_test.dart` (SnackBar de guardado); `test/widgets/shared/network_state_widgets_test.dart` (banner/reintento, no SnackBar); sin prueba de sistema global | Parcial |
 | UX-X-011 Responsive 700/1100 | `core/utils/responsive.dart` | `test/utils/responsive_test.dart` | Cubierto |
 | UX-X-012 Modales adaptativos | `shared/widgets/*` (`showModalBottomSheet`/`showDialog`) | `test/widgets/dialogs/create_post_dialog_test.dart` | Parcial |
 | UX-X-013 Localización es-GT | `core/utils/time_utils.dart`; textos en `lib/` | `test/utils/time_utils_test.dart` | Parcial |
-| UX-X-014 Rendimiento percibido | `features/forum/screens/forum_screen.dart` (optimista) | `test/forum_test.dart` | Parcial |
+| UX-X-014 Rendimiento percibido | `features/forum/screens/forum_screen.dart` (interacciones optimistas) | `test/forum_test.dart` (fallo de like y estado restaurado; sin medición de latencia/rendimiento) | Parcial |
 | UX-X-015 Privacidad | `features/shared/widgets/identity_badge_chip.dart`; `features/profile/screens/profile_screen.dart` | `test/widgets/shared/identity_badge_chip_test.dart` | Parcial |
 | UX-X-016 Transparencia de patrocinios `[Mejora]` | `features/marketplace/widgets/sponsored_content_controls.dart`; preferencias locales (sin sincronización) | `test/widgets/sponsored_content_controls_test.dart`; `test/services/sponsored_preferences_service_test.dart` | Parcial |
 | UX-DSN-008 Lenguaje visual de patrocinios `[Mejora]` | `features/marketplace/widgets/marketplace_card.dart`; `sponsor_carousel.dart` | `test/widgets/sponsor_carousel_test.dart` | Parcial |
@@ -213,15 +213,15 @@ consulta los resultados fechados antes de afirmar que una suite pasa.
 |---|---|---|---|
 | UX-SPN-001 Perfil de patrocinador | perfil público de patrocinador (nuevo) | Pendiente | Pendiente |
 | UX-SPN-002 Panel del patrocinador | panel `Sponsor Studio` (nuevo) | Pendiente | Pendiente |
-| UX-SPN-003 Etiquetado de patrocinios | `features/marketplace/widgets/marketplace_card.dart`; `sponsor_carousel.dart` | `test/widgets/sponsor_carousel_test.dart` | Parcial |
+| UX-SPN-003 Etiquetado de patrocinios | `features/marketplace/widgets/marketplace_card.dart`; `features/marketplace/widgets/sponsor_carousel.dart` | `test/widgets/sponsored_content_controls_test.dart` (etiqueta, marca y semántica); `test/widgets/sponsor_carousel_test.dart` | Parcial (Marketplace; sin componente transversal para Foro/Grupos) |
 | UX-SPN-004 Frecuencia y rotación | servicio de inserción (nuevo) | Pendiente | Pendiente |
 | UX-SPN-005 Transparencia y control | `features/marketplace/widgets/sponsored_content_controls.dart`; preferencias locales (sin sincronización) | `test/widgets/sponsored_content_controls_test.dart`; `test/services/sponsored_preferences_service_test.dart` | Parcial |
-| UX-SPN-006 Moderación de patrocinios | moderación existente; `rpc_moderation_test.sql` | `supabase/tests/rpc_moderation_test.sql` | Parcial |
-| UX-SPN-007 Métricas de patrocinio | analítica nueva | `11-metricas-y-trazabilidad.md` | Pendiente |
-| UX-SPN-008 Accesibilidad de patrocinios | `10-transversales.md` (`UX-X-016`) | Pendiente | Pendiente |
-| UX-SPN-009 Vínculo con Marketplace | `marketplace_service.dart`; `sponsor_carousel.dart` | `test/widgets/sponsor_carousel_test.dart` | Parcial |
+| UX-SPN-006 Moderación de patrocinios | `core/services/marketplace_service.dart` llama `moderate_marketplace_item`; no existe cola de aprobación específica de promociones | `supabase/tests/rpc_moderation_test.sql` (permisos de moderación de anuncios Marketplace; no prueba aprobación de promociones) | Parcial |
+| UX-SPN-007 Métricas de patrocinio | Analítica no instrumentada; eventos/KPIs solo propuestos en este documento | Sin instrumentación ni prueba específica | Pendiente |
+| UX-SPN-008 Accesibilidad de patrocinios | `features/marketplace/widgets/sponsored_content_controls.dart`; requisitos completos en `10-transversales.md` (`UX-X-016`) | `test/widgets/sponsored_content_controls_test.dart` (etiqueta semántica y tamaño táctil; sin auditoría de contraste, teclado o carga diferida) | Parcial |
+| UX-SPN-009 Vínculo con Marketplace | `core/services/marketplace_service.dart`; `features/marketplace/widgets/sponsor_carousel.dart` | `test/services/marketplace_service_test.dart` (lectura de anuncios patrocinados); `test/widgets/sponsor_carousel_test.dart` (presentación/contacto; sin perfil público integrado) | Parcial |
 | UX-SPN-010 Segmentación contextual | servicio de targeting (nuevo) | Pendiente | Pendiente |
-| UX-SPN-011 Solicitud de cuenta de patrocinador | `sponsor_requests` (baseline L3408–3422); `sponsor_request_dialog.dart` (Parcial sin validación de duplicados) | Pendiente | Parcial |
+| UX-SPN-011 Solicitud de cuenta de patrocinador | `sponsor_requests` (baseline L3408–3422); `features/marketplace/widgets/sponsor_request_dialog.dart` (sin validación de duplicados) | `test/widgets/sponsor_request_dialog_test.dart` (campos/validaciones); `test/services/marketplace_service_test.dart` (error de inserción; no flujo exitoso integrado) | Parcial |
 | UX-SPN-012 Aprobación/rechazo de solicitud | `sponsor_requests.status`; `idx_sponsor_requests_status`; `20260918020500_admin_panels_rls_policies.sql`; pantalla Flutter (nuevo) | Pendiente | Pendiente |
 | UX-SPN-013 Vigencia y renovación de promoción | tabla `sponsored_promotions` (nuevo); `marketplace_items` sin `fecha_fin` | Pendiente | Pendiente |
 | UX-SPN-014 Suspensión y baja del patrocinador | campo `suspended` en `profiles` (nuevo); `profiles.is_verified` existe | Pendiente | Pendiente |
@@ -251,16 +251,16 @@ La comparación de IDs de encabezados `### UX-*` con las filas previas de §4 en
 | UX-DSN-007 Coherencia visual del Foro | `features/forum/`; tema Discord y tema oscuro implementados | `test/discord_forum_test.dart` (cobertura visual parcial) | Parcial |
 | UX-FORO-018 Configuración de encuestas | `features/forum/widgets/create_post_dialog.dart`; `core/services/forum_service.dart` | `test/widgets/dialogs/create_post_dialog_test.dart`; `test/services/forum_service_test.dart` | Parcial |
 | UX-FORO-019 Estados y modo sin conexión | `features/forum/screens/forum_screen.dart`; `core/services/cache_service.dart` | `test/cache_service_test.dart`; `test/widgets/shared/network_state_widgets_test.dart` (sin flujo integrado) | Parcial |
-| UX-GRP-003 Aviso de depuración semestral | `features/groups/screens/groups_screen.dart`; persistencia local | `test/widgets/groups_screen_test.dart` | Parcial |
-| UX-GRP-004 Vista responsiva de grupos | `features/groups/screens/groups_screen.dart`; `widgets/group_card.dart`; `core/utils/responsive.dart` | `test/widgets/groups_screen_test.dart` (móvil/escritorio, falta validar tablet) | Parcial |
+| UX-GRP-003 Aviso de depuración semestral | `features/groups/screens/groups_screen.dart`; `core/services/local_storage_service.dart` | `test/widgets/groups_screen_test.dart` (descartar aviso); `test/services/local_storage_service_test.dart` (persistencia de preferencia) | Parcial |
+| UX-GRP-004 Vista responsiva de grupos | `features/groups/screens/groups_screen.dart`; `features/groups/widgets/group_card.dart`; `core/utils/responsive.dart` | `test/widgets/groups_screen_test.dart` (móvil, escritorio y cuadrícula a 800 dp; sin auditoría visual exhaustiva) | Parcial |
 | UX-GRP-007 Reporte de grupos | `core/services/groups_service.dart`; `features/shared/widgets/report_dialog.dart` | `test/services/groups_service_test.dart`; `test/widgets/shared/report_dialog_test.dart` | Parcial |
-| UX-GRP-009 Abrir y copiar enlace | `features/groups/widgets/group_card.dart`; `core/utils/url_utils.dart` | `test/utils/storage_url_test.dart` (sin interacción directa de tarjeta) | Parcial |
+| UX-GRP-009 Abrir y copiar enlace | `features/groups/widgets/group_card.dart`; `core/utils/url_utils.dart` | `test/widgets/groups_screen_test.dart` (rechaza esquemas inseguros; no prueba apertura válida ni copiado) | Parcial |
 | UX-MKT-001 Banner e identidad de comercio | `features/marketplace/screens/marketplace_screen.dart` | `test/widgets/marketplace_screen_test.dart` | Parcial |
 | UX-MKT-003 Solicitud de patrocinio | `features/marketplace/widgets/sponsor_carousel.dart`; `sponsor_request_dialog.dart`; `marketplace_service.dart` | `test/widgets/sponsor_carousel_test.dart`; `test/widgets/sponsor_request_dialog_test.dart` | Parcial |
-| UX-MKT-006 Galería y visor de imágenes | `features/marketplace/widgets/marketplace_card.dart`; `features/shared/widgets/image_viewer_dialog.dart` | Sin prueba directa de galería/visor | Parcial |
+| UX-MKT-006 Galería y visor de imágenes | `features/marketplace/widgets/marketplace_card.dart`; `features/shared/widgets/image_viewer_dialog.dart` | `test/widgets/shared/image_viewer_dialog_test.dart` (InteractiveViewer/cierre); sin prueba de navegación por galería multipágina | Parcial |
 | UX-MKT-007 Precio en Quetzales y gratuidad | `core/models/marketplace_item.dart`; `features/marketplace/widgets/marketplace_card.dart` | `test/models/marketplace_item_model_test.dart`; `test/widgets/marketplace_screen_test.dart` | Parcial |
 | UX-MKT-010 Votación de utilidad | `features/marketplace/widgets/marketplace_card.dart`; `core/services/marketplace_service.dart` | Sin test específico de upvote | Parcial |
-| UX-MKT-011 Reporte de anuncios | `features/marketplace/widgets/marketplace_card.dart`; `features/shared/widgets/report_dialog.dart`; `marketplace_service.dart` | `test/services/marketplace_service_test.dart` (sin flujo UI completo) | Parcial |
+| UX-MKT-011 Reporte de anuncios | `features/marketplace/widgets/marketplace_card.dart`; `features/shared/widgets/report_dialog.dart`; `core/services/marketplace_service.dart` | `test/widgets/shared/report_dialog_test.dart`; `test/services/marketplace_service_test.dart` (RPC/servicio; sin flujo UI integrado completo) | Parcial |
 | UX-NAV-003 Cabecera y distintivo no oficial | `features/navigation/app_shell.dart` | `test/widgets/app_shell_test.dart` | Parcial |
 | UX-NAV-004 Acceso a normas y alternador de tema | `app_shell.dart`; `main.dart`; `core/services/local_storage_service.dart` | `test/widgets/app_shell_test.dart`; `test/services/local_storage_service_test.dart` | Parcial |
 | UX-NAV-006 NavigationBar móvil | `features/navigation/app_shell.dart` | `test/widgets/app_shell_test.dart` (no incluye prueba a 320 dp) | Parcial |
@@ -272,8 +272,8 @@ La comparación de IDs de encabezados `### UX-*` con las filas previas de §4 en
 | UX-PRF-012 Preferencias, tema y normas | `features/profile/screens/profile_screen.dart`; `main.dart`; `local_storage_service.dart` | `test/services/local_storage_service_test.dart`; `test/widgets/app_shell_test.dart` | Parcial |
 | UX-REG-001 Pantalla de normas | `features/rules/screens/rules_screen.dart` | `test/widgets/rules_screen_test.dart` | Parcial |
 | UX-REG-003 Descargo institucional | `features/rules/screens/rules_screen.dart` | `test/widgets/rules_screen_test.dart` (sin medir contraste) | Parcial |
-| UX-REG-004 Enlaces oficiales | `rules_screen.dart`; `core/utils/url_utils.dart` | `test/widgets/rules_screen_test.dart`; `test/utils/storage_url_test.dart` | Parcial |
-| UX-REG-005 Acceso y retorno a normas | `features/navigation/app_shell.dart`; `features/profile/screens/profile_screen.dart`; `rules_screen.dart` | `test/discord_forum_test.dart` (retorno desde shell) | Parcial |
+| UX-REG-004 Enlaces oficiales | `features/rules/screens/rules_screen.dart`; `core/utils/url_utils.dart` | `test/widgets/rules_screen_test.dart` (secciones/textos; sin prueba de apertura de enlaces oficiales) | Parcial |
+| UX-REG-005 Acceso y retorno a normas | `features/navigation/app_shell.dart`; `features/profile/screens/profile_screen.dart`; `features/rules/screens/rules_screen.dart` | `test/widgets/app_shell_test.dart` (acceso a RulesScreen; sin prueba específica de retorno) | Parcial |
 | UX-X-001 Errores amigables | Errores y reintento en `features/groups/screens/groups_screen.dart`; sin taxonomía común | `test/widgets/groups_screen_test.dart` (sin catálogo global de errores) | Parcial |
 | UX-X-002 Rate limiting y temporizadores | No se encontró tratamiento transversal de 429, tiempo de espera ni reintento condicionado | Sin prueba específica | Pendiente |
 | UX-X-004 Estados vacíos accionables | `features/shared/widgets/empty_state_widget.dart`; pantallas de Foro, Grupos y Marketplace | `test/widgets/shared/empty_state_test.dart` (flujo parcial) | Parcial |
@@ -319,28 +319,20 @@ prioritarios para el siguiente ciclo de trabajo.
 | UX-FORO-005 | Alias sincronizado en la nube | `local_storage_service.dart` |
 | UX-FORO-006 | Reintento y skeletons en populares | `popular_servers_sidebar.dart` |
 | UX-FORO-007 | Búsqueda en tiempo real (debounce) en móvil | `forum_screen.dart` |
-| UX-FORO-008 | Reporte con `ReportDialog` y carga de imagen robusta | `post_card.dart` |
 | UX-FORO-009 | Botón "Compartir enlace" en el detalle | `post_detail_screen.dart` |
 | UX-FORO-010 | Control para hilos profundos en móvil | `comment_item.dart`; `forum_service.dart` |
-| UX-FORO-011 | Botón de envío con estado deshabilitado claro | `post_detail_screen.dart` |
-| UX-FORO-012 | Blindaje de porcentajes (`totalVotes == 0`) | `forum_screen.dart` |
-| UX-FORO-013 | SnackBar al revertir un like fallido | `forum_screen.dart` |
+| UX-FORO-012 | Prueba UI de encuesta sin votos (la guarda de porcentaje ya existe) | `post_card.dart`; `post_detail_screen.dart`; nueva prueba en `forum_test.dart` |
+| UX-FORO-013 | Prueba UI del rollback de like fallido en el feed (el feedback ya existe) | `forum_screen.dart`; nueva prueba en `forum_test.dart` |
 | UX-FORO-014 | "Deshacer" al quitar marcador en `# mis-guardados` | `forum_screen.dart` |
 | UX-FORO-015 | Elección libre de canal al citar | `forum_screen.dart` |
-| UX-FORO-016 | `ReportDialog` obligatorio al reportar | `post_card.dart` |
 | UX-FORO-017 | Fallback de imágenes al crear post | `create_post_dialog.dart`; `storage_service.dart` |
 | UX-FORO-020 | Acceso directo a Grupos | `forum_server_rail.dart` |
 | UX-MKT-014 | Verificación real de carné (no simulada) | `carne_validation_modal.dart` |
 | UX-MKT-015 | Fallback de almacenamiento | `storage_service.dart` |
 | UX-MKT-016 | Carta de presentación (página pública) del vendedor | (nuevo) |
-| UX-GRP-001 | Acceso directo desde navegación principal | `app_shell.dart` |
 | UX-PRF-003 | Persistencia del alias en la nube | `local_storage_service.dart` |
-| UX-AUTH-003 | Cuenta regresiva al reenviar OTP | `auth_modal.dart` |
-| UX-AUTH-005 | Recuperación de contraseña por correo (aplazada) | `auth_modal.dart` |
 | UX-AUTH-008 | Período de gracia / explicación previa del MFA | `totp_session_guard.dart` |
 | UX-AUTH-015 | Respeto transparente del redirect local | `sso_authorize_screen.dart` |
-| UX-NAV-001 | Tercer destino Grupos en la navegación | `app_shell.dart` |
-| UX-NAV-007 | FAB contextual coherente | `app_shell.dart` |
 | UX-X-* | Mejoras transversales (estados, errores, accesibilidad, i18n, rendimiento) | ver `10-transversales.md` |
 | UX-SPN-003 / UX-DSN-008 | Etiquetado de patrocinios reutilizable y contraste AA | `app_theme.dart`; nuevo `SponsoredLabel` |
 | UX-SPN-004 | Inserción con tope de frecuencia (1:6) y rotación | nuevo servicio de inserción |
