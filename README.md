@@ -15,6 +15,9 @@ pendientes estén desplegadas en producción.
   local y, mediante un procedimiento revisado, al remoto.
 - `supabase/migrations_historical/`: archivos históricos; no son la carpeta de
   migraciones activas de la CLI.
+- `remote_public_snapshot.sql`: snapshot SQL de referencia del esquema remoto;
+  no es una migración activa, no es un respaldo de datos y no debe ejecutarse
+  directamente.
 - `supabase/seed.sql`: catálogos y cuenta de prueba E2E para el entorno local.
 - `supabase/tests/`: pruebas pgTAP de RLS, triggers, RPC y reglas de datos.
 - `docs/ux/`: especificaciones funcionales y de UX; algunos requisitos son
@@ -76,6 +79,44 @@ una copia antes si necesitas conservarlos. No ejecutes `supabase db reset --link
 
 La cuenta `e2e@test.com` / `password123` del seed existe solo para pruebas
 locales. No la crees ni la uses en Supabase remoto.
+
+## Esquema y migraciones de base de datos
+
+- La CLI procesa en orden los archivos de `supabase/migrations/`. Los cambios
+  de esquema van como nuevas migraciones versionadas; no edites los archivos
+  históricos para cambiar una base ya existente.
+- `supabase/migrations_historical/` es un archivo histórico y no se aplica como
+  parte de la secuencia activa.
+- `remote_public_snapshot.sql` es material de referencia del esquema, no una
+  migración ni un volcado para restaurar datos. No lo ejecutes manualmente ni
+  lo uses para reemplazar las migraciones versionadas.
+- Algunos archivos activos tienen nombres `replica_pemtree_*` y contienen SQL
+  que crea objetos en `public` y `_triggers` de la base donde se ejecuten. El
+  nombre por sí solo no significa que la CLI se conecte a la base de datos
+  separada de PEMTREE ni que copie sus filas: revisa el SQL y el proyecto
+  destino antes de aplicar una migración.
+- Un reset local reconstruye el esquema desde las migraciones y agrega el seed;
+  **no trae los datos del remoto**. Para cambios remotos, verifica el Reference
+  ID correcto y revisa un `supabase db push --dry-run` antes de cualquier push.
+  AAL2 y la verificación de vendedores siguen pendientes y no deben publicarse
+  hasta aprobar ese alcance.
+
+### Flujo para agregar una migración
+
+1. Desde la raíz, crea un archivo versionado con `supabase migration new
+   descripcion_del_cambio` y escribe el cambio en el archivo nuevo de
+   `supabase/migrations/`. No edites el snapshot ni archivos históricos.
+2. Revisa el SQL y agrega/actualiza pruebas pgTAP en `supabase/tests/` para los
+   permisos o cambios de esquema relevantes.
+3. Valida contra el stack local con `supabase test db --local`. Si necesitas
+   reconstruir el esquema para incluir todas las migraciones y el seed, ejecuta
+   `supabase db reset` solo después de respaldar o aceptar perder los datos
+   locales; la advertencia anterior aplica.
+4. La publicación remota es un paso distinto. Confirma el Reference ID en el
+   Dashboard y revisa el plan con
+   `supabase db push --dry-run --project-ref jsdshvnkbrkwobfhdysh`. No ejecutes
+   un push real sin revisión y aprobación explícitas. La migración AAL2 sigue
+   aplazada.
 
 ## Pruebas y análisis
 
