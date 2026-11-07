@@ -599,11 +599,11 @@ flowchart TD
   - Nota informativa: "Podrás ajustar estas preferencias en cualquier momento desde tu perfil."
 - **Interacciones:**
   - Cada switch es independiente y persiste su valor localmente al cambiar.
-  - Pulsar "Siguiente" guarda la configuración en `notification_preferences` (nuevo) y avanza a UX-PRF-020.
+  - Pulsar "Siguiente" guarda la configuración y avanza a UX-PRF-020. Antes de implementar la persistencia, se debe definir cómo mapear estos canales al esquema existente: `notification_preferences` actualmente cubre preferencias del Foro, no todos los canales de este paso.
   - Pulsar "Omitir" aplica los defaults descritos (solo las dos primeras activadas).
 - **Estados:** Con defaults aplicados | Con selección personalizada | Omitido.
 - **Validaciones y reglas de negocio:**
-  - Las preferencias de notificaciones se almacenan en `notification_preferences` (nuevo) con columnas `user_id`, `tipo`, `activo`, `updated_at`. Hasta que exista la tabla, se persiste en almacenamiento local (`SharedPreferences`).
+  - La migración local `20260818161419_replica_pemtree_schema.sql` ya crea `notification_preferences` con flags específicos del Foro (`comment_enabled`, `reply_enabled`, `like_enabled`, `new_post_enabled`); no tiene el esquema genérico `tipo`/`activo` descrito antes ni cubre por sí solo Marketplace, Grupos y avisos de plataforma. Se debe decidir si se amplía o se crea un modelo separado. No se encontró integración Flutter que persista las opciones de este onboarding; tampoco se debe presentar `SharedPreferences` como fallback implementado sin evidencia de código.
   - El default "sin notificaciones intrusivas" aplica cuando el usuario omite este paso: solo respuestas directas y mensajes de Marketplace quedan activados.
 - **Accesibilidad:** Cada switch tiene etiqueta semántica descriptiva. Tamaño mínimo de toque 48px.
 - **Responsive:** Lista vertical de ancho completo en móvil; limitada a 480px centrada en desktop.
@@ -617,12 +617,13 @@ flowchart TD
 - **Actor / rol:** Estudiante registrado (primer inicio de sesión)
 - **Prioridad:** Should
 - **Precondiciones:** Menú inicial activo. Paso 3 completado o saltado (UX-PRF-019).
-- **Estado objetivo:** El paso 4 del menú inicial permite al estudiante establecer su alias y avatar público seudónimo, reutilizando los componentes ya definidos en [UX-PRF-002](06-perfil-y-cuenta.md#ux-prf-002--edición-de-alias-con-generador-de-seudónimos-aleatorios) y [UX-PRF-004](06-perfil-y-cuenta.md#ux-prf-004--personalización-visual-del-avatar-color-e-icono-estudiantil) sin duplicar lógica. Si el usuario omite este paso, conserva el alias autogenerado y el avatar predeterminado.
+- **Estado objetivo:** El paso 4 del menú inicial permite al estudiante establecer su alias y avatar público seudónimo, reutilizando la edición y generación de alias de [UX-PRF-002](06-perfil-y-cuenta.md#ux-prf-002--edición-de-alias-con-generador-de-seudónimos-aleatorios) y la personalización de avatar de [UX-PRF-004](06-perfil-y-cuenta.md#ux-prf-004--personalización-visual-del-avatar-color-e-icono-estudiantil) sin duplicar lógica. Si el usuario omite este paso, conserva el alias autogenerado y el avatar predeterminado.
+- **Problema actual [Mejora]:** no existe onboarding que integre este paso. `ProfileScreen` ya permite editar y generar el alias y personalizar color/icono del avatar; estas opciones se guardan al guardar el perfil. La prueba de perfil cubre generación/guardado del alias, pero no se encontró prueba del selector de avatar ni de un flujo de onboarding.
 - **UI / contenido:**
   - Título de paso: "Paso 4 de 5: Tu identidad en la comunidad".
   - Vista previa en tiempo real del avatar circular con el icono e insignia actual.
   - Campo de alias con botón de aleatorización (mismos controles que UX-PRF-002).
-  - Botón "Cambiar avatar" que abre `AvatarPickerModal` (mismo modal que UX-PRF-004).
+  - Botón "Cambiar avatar" que abre la hoja inferior de personalización existente en `ProfileScreen`; el flujo de onboarding deberá reutilizarla o extraer un componente común. No existe una clase `AvatarPickerModal`.
   - Nota aclaratoria: "Tu identidad en el Foro siempre es anónima. Solo en Marketplace puedes usar tu nombre real validado."
 - **Interacciones:**
   - Los cambios en alias y avatar se reflejan en la vista previa de forma inmediata.
@@ -670,7 +671,7 @@ flowchart TD
 ### UX-PRF-022 — Centro de preferencias e intereses (hub unificado)
 - **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
 - **Prioridad:** Must
-- **Problema actual [Mejora]:** La sección "Cuenta y Preferencias" de `profile_screen.dart:1337` solo ofrece el conmutador de tema visual y el enlace a Normas de Convivencia. No existe un hub de intereses, silenciado ni preferencias de patrocinios, lo que obliga al usuario a saturarse con todo el contenido disponible sin forma de acotarlo.
+- **Problema actual [Mejora]:** la sección "Cuenta y Preferencias" de `ProfileScreen` incluye controles de tema, Normas de Convivencia e inicio/cierre de sesión, pero no un hub de intereses, contenido silenciado ni preferencias de patrocinios. No se encontraron `PreferencesScreen`, `user_interests` ni `content_mutes` en la implementación Flutter o en las migraciones locales.
 - **Precondiciones:** `ProfileScreen` activa.
 - **Estado objetivo:** La sección "Cuenta y Preferencias" de `ProfileScreen` incorpora un acceso directo destacado al "Centro de preferencias e intereses", una pantalla dedicada (`PreferencesScreen` (nuevo)) que agrupa en un solo lugar todos los controles de personalización: intereses de contenido, silenciados, preferencias de patrocinios y sincronización. Los usuarios visitantes ven el hub en modo de solo lectura con invitación a registrarse para persistir cambios.
 - **UI / contenido:**
@@ -713,7 +714,7 @@ flowchart TD
 - **Estados:** Con intereses personalizados | Arranque mínimo (estado restablecido) | Sin intereses en un bloque (estado válido).
 - **Validaciones y reglas de negocio:**
   - Los bloques pueden quedar sin selección (estado válido): al quitar el último chip de un bloque no se reactiva nada; si el usuario finaliza sin elección, se aplica el arranque mínimo de UX-PRF-016.
-  - Los cambios se persisten en `user_interests` (nuevo) si el usuario está autenticado; en `SharedPreferences` para visitantes.
+  - **Comportamiento objetivo:** persistir cambios en `user_interests` (tabla nueva por definir) para usuarios autenticados y localmente para visitantes. **Estado actual:** no se encontró tabla `user_interests` en las migraciones ni implementación Flutter de esta persistencia; el fallback en `SharedPreferences` también está pendiente de implementar/verificar.
 - **Accesibilidad:** Chips con roles de checkbox accesibles. Diálogo de confirmación de restablecimiento con foco automático en el botón de cancelar (opción segura).
 - **Responsive:** Chips en flujo de línea en móvil; tres columnas en desktop (>= 1100px).
 - **Criterios de aceptación (Gherkin):**
@@ -737,7 +738,7 @@ flowchart TD
   - Pulsar "Restablecer todo" tras confirmación limpia toda la lista de silenciados.
 - **Estados:** Lista con elementos | Lista vacía por tipo | Restableciendo.
 - **Validaciones y reglas de negocio:**
-  - Los silenciamientos se almacenan en `content_mutes` (nuevo) con columnas `user_id`, `tipo`, `valor`, `created_at`. Hasta que exista la tabla, se persiste en almacenamiento local.
+  - **Comportamiento objetivo:** almacenar silenciamientos en `content_mutes` (tabla nueva por definir) con columnas como `user_id`, `tipo`, `valor` y `created_at`, además de permitir una copia local. **Estado actual:** no se encontró esta tabla en las migraciones ni implementación Flutter del flujo general. Existe un control separado para ocultar anuncios patrocinados, guardado localmente por usuario en `SponsoredPreferencesService`; no ofrece la lista general ni la acción "Deshacer" descritas aquí.
   - El silenciamiento no es permanente a nivel de BD; el usuario puede revertirlo en cualquier momento sin contactar a soporte.
 - **Accesibilidad:** Lista con roles de lista accesible. Botón "Deshacer" con etiqueta semántica que incluye el nombre del item.
 - **Responsive:** Lista de ancho completo en móvil; limitada a 600px centrada en desktop.
@@ -763,7 +764,7 @@ flowchart TD
 - **Estados:** Frecuencia Normal (default) | Frecuencia Reducida | Frecuencia Mínima | Transparencia activada | Transparencia desactivada.
 - **Validaciones y reglas de negocio:**
   - La frecuencia mínima no puede ser inferior a 1:15 para garantizar la viabilidad económica de la plataforma.
-  - La preferencia de frecuencia se almacena en `notification_preferences` (nuevo) bajo el tipo `sponsor_frequency`. Hasta que exista la tabla, se persiste en `SharedPreferences`.
+  - La tabla local `notification_preferences` contiene flags de notificación del Foro; no define `sponsor_frequency` ni la transparencia de patrocinios. Estas preferencias requieren un modelo de almacenamiento y sincronización por definir. No se encontró implementación Flutter ni fallback local para ellas.
   - Esta sección no permite ocultar permanentemente todos los patrocinios; para eso existe el silenciamiento por patrocinador individual (UX-SPN-005).
 - **Accesibilidad:** Botonera segmentada con roles de radiogroup y labels accesibles. Interruptor con etiqueta descriptiva.
 - **Responsive:** Botonera horizontal en desktop; botonera vertical apilada en móvil (< 700px).
@@ -792,7 +793,7 @@ flowchart TD
 - **Validaciones y reglas de negocio:**
   - La sincronización aplica políticas RLS de Supabase: cada usuario solo puede leer y escribir sus propias preferencias.
   - En caso de conflicto entre local y nube (p. ej. al instalar en un segundo dispositivo), la versión más reciente por `updated_at` tiene precedencia.
-  - Los datos sincronizados incluyen: `user_interests`, `content_mutes`, `notification_preferences` y la preferencia de frecuencia de patrocinios. Todas estas tablas son nuevas (nuevo).
+  - `notification_preferences` ya existe en las migraciones locales para preferencias del Foro, pero no equivale al modelo de preferencias generales descrito aquí. `user_interests`, `content_mutes` y las preferencias de patrocinios requieren esquema por definir; antes de sincronizarlos se deben establecer el modelo de datos y revisar las políticas RLS de cada tabla.
 - **Accesibilidad:** El indicador de estado de sincronización es legible por lectores de pantalla con notificación de cambio accesible. El botón "Sincronizar ahora" tiene etiqueta semántica clara.
 - **Responsive:** Sección de ancho completo en móvil; limitada al contenedor de 720px en desktop.
 - **Criterios de aceptación (Gherkin):**

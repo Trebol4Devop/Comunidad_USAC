@@ -378,12 +378,12 @@ específica; no se infiere perfil, marca ni criterios de segmentación.
   casos, todas sus promociones desaparecen de feeds de inmediato y su perfil
   público muestra "No disponible". La reactivación (para suspensiones temporales)
   restaura las promociones con vigencia vigente.
-- **Problema actual [Mejora]:** no existe una columna `suspended` ni
-  `suspended_at` en la tabla `profiles`; la suspensión de patrocinadores no puede
-  implementarse en la BD actual. `profiles.is_verified` existe
-  (`idx_profiles_unverified`) pero no cubre la suspensión de cuentas de
-  patrocinador. Requiere campo adicional (nuevo) en perfiles o en la tabla de
-  patrocinadores.
+- **Problema actual [Mejora]:** no existe un estado o marca de suspensión de
+  patrocinadores (`suspended`, `suspended_at` o equivalente) en `profiles` ni en
+  una tabla de patrocinadores. `profiles.is_verified` y los campos de
+  `seller_verification_status` son de verificación de usuario/vendedor; no
+  representan suspensión de una cuenta patrocinadora. Se requiere definir un
+  estado específico para el ciclo de vida del patrocinador.
 - **Precondiciones:** admin autenticado con AAL2; el patrocinador a suspender/dar
   de baja existe y está en estado activo.
 - **UI / contenido:** en la pantalla de administración (nuevo), opción "Suspender"
@@ -423,18 +423,24 @@ específica; no se infiere perfil, marca ni criterios de segmentación.
 - **Estado objetivo:** el sistema notifica al patrocinador en los eventos clave del
   ciclo de vida: (1) solicitud aprobada o rechazada (con motivo), (2) promoción
   aprobada o rechazada (con motivo), (3) promoción por vencer (aviso con 7 días de
-  antelación), (4) cuenta suspendida o dada de baja. Las notificaciones son
-  accesibles desde la app y/o por correo.
-- **Problema actual [Mejora]:** no existe tabla de notificaciones en el baseline
-  ni en las migrations actuales; la infraestructura de notificaciones es
-  dependencia de implementación (nuevo).
+  antelación), (4) cuenta suspendida o dada de baja. Las notificaciones se
+  consultan dentro de la app; el correo/SMTP queda fuera del alcance actual.
+- **Problema actual [Mejora]:** las migraciones locales incluyen infraestructura
+  general de notificaciones (`user_notifications`, `notification_preferences` y
+  `notification_subscriptions`) y eventos del Foro. Sin embargo, `user_notifications`
+  solo admite los tipos `comment`, `reply`, `like` y `new_post`; no hay eventos ni
+  tipos para el ciclo de vida de patrocinios, ni se encontró integración Flutter
+  para estos avisos. Además, la función SQL de push en
+  `20261001000000_adopt_remote_schema.sql` referencia un endpoint y un secreto
+  etiquetados como PEMTREE; su configuración/destino no se ha verificado para
+  Comunidad_USAC y no debe asumirse disponible para este flujo.
 - **Precondiciones:** el patrocinador tiene una cuenta activa o en proceso de
   solicitud.
-- **UI / contenido:** notificación en la campana de la app (si existe el módulo de
-  notificaciones) y/o correo electrónico; el mensaje indica el evento y, si
-  procede, el motivo o la acción requerida. Ejemplo: "Tu solicitud de patrocinio
-  fue aprobada. ¡Ya puedes crear tu primera promoción!" / "Tu promoción
-  '[Título]' vence en 7 días. Renuévala desde tu panel."
+- **UI / contenido:** notificación en la campana de la app (cuando se implemente
+  el módulo Flutter); el mensaje indica el evento y, si procede, el motivo o la
+  acción requerida. Ejemplo: "Tu solicitud de patrocinio fue aprobada. ¡Ya puedes
+  crear tu primera promoción!" / "Tu promoción '[Título]' vence en 7 días.
+  Renuévala desde tu panel."
 - **Interacciones:** al tocar la notificación, se navega a la pantalla relevante
   (panel de solicitudes, Sponsor Studio o el detalle de la promoción).
 - **Estados:** no leída | leída | acción requerida (p. ej. renovar antes de que
@@ -444,12 +450,12 @@ específica; no se infiere perfil, marca ni criterios de segmentación.
     de `fecha_fin`; no se repiten.
   - Las notificaciones de aprobación/rechazo se envían en el momento del cambio
     de estado.
-  - Dependencia de implementación: requiere tabla de notificaciones (nuevo) o
-    integración con servicio de correo transaccional.
+  - Dependencia de implementación: ampliar el flujo de notificaciones existente
+    para los eventos de patrocinio y verificar antes el canal push. No agregar
+    SMTP ni envíos por correo dentro del alcance actual.
 - **Accesibilidad:** notificaciones con texto descriptivo completo; no dependen
   solo del color para transmitir el estado.
-- **Responsive:** notificaciones in-app adaptativas; correo con plantilla legible
-  en móvil.
+- **Responsive:** notificaciones in-app adaptativas y legibles en móvil.
 - **Criterios de aceptación (Gherkin):**
   - **Given** una solicitud aprobada por el admin, **When** el sistema procesa la
     aprobación, **Then** el solicitante recibe una notificación "Tu solicitud de
@@ -563,7 +569,7 @@ específica; no se infiere perfil, marca ni criterios de segmentación.
 | UX-SPN-011 Solicitud de cuenta | `sponsor_requests` (BD Parcial); `sponsor_request_dialog.dart` (Parcial sin validación de duplicados) | Parcial |
 | UX-SPN-012 Aprobación/rechazo | `sponsor_requests.status` en el esquema local adoptado; políticas admin en `20261004000000_require_aal2_and_verified_sellers.sql` (remoto no verificado); pantalla Flutter inexistente | Pendiente |
 | UX-SPN-013 Vigencia y renovación | tabla `sponsored_promotions` (nuevo Pendiente) | Pendiente |
-| UX-SPN-014 Suspensión y baja | campo `suspended` en `profiles` (nuevo Pendiente) | Pendiente |
-| UX-SPN-015 Notificaciones de ciclo de vida | tabla de notificaciones (nuevo Pendiente) | Pendiente |
+| UX-SPN-014 Suspensión y baja | Sin estado específico de suspensión de patrocinador; `profiles.is_verified` y `seller_verification_status` son verificaciones distintas | Pendiente |
+| UX-SPN-015 Notificaciones de ciclo de vida | Infraestructura local para notificaciones del Foro; sin eventos de patrocinio ni integración Flutter; referencia push PEMTREE no verificada para Comunidad_USAC | Pendiente |
 | UX-SPN-016 Panel admin de solicitudes | Índice en el esquema local adoptado; políticas admin en `20261004000000_require_aal2_and_verified_sellers.sql` (remoto no verificado); pantalla Flutter inexistente | Pendiente |
 
