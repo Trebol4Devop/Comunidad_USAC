@@ -7,8 +7,27 @@ import '../models/post.dart';
 import 'cache_service.dart';
 import 'supabase_service.dart';
 
+enum FeedMode { hot, recent }
+
+class LegalHoldException implements Exception {
+  final String message;
+  const LegalHoldException([
+    this.message =
+        'Este contenido está bajo retención legal y no puede eliminarse.',
+  ]);
+
+  @override
+  String toString() => 'LegalHoldException: $message';
+}
+
 class ForumService {
   static const String _cacheNamespace = 'forum_posts';
+
+  static const String _postFallbackColumns =
+      'id, title, category, content, author_alias, author_hash, likes, carrera, image_url, gif_url, is_pinned, quoted_post_id, reposts_count, moderation_status, created_at, comments_count, hot_score, expires_at, deleted_at, is_legal_hold';
+
+  static const String _commentFallbackColumns =
+      'id, post_id, parent_id, content, author_alias, author_hash, gif_url, created_at, moderation_status, is_op, likes_count, deleted_at';
 
   static Set<String> _getCareerIdsForFaculty(String facultadId) {
     if (facultadId == 'todas') return <String>{'todas'};
@@ -44,12 +63,16 @@ class ForumService {
     String carrera = 'todas',
     String searchQuery = '',
     bool showOnlyBookmarks = false,
+    FeedMode feedMode = FeedMode.hot,
   }) async {
-    final isDefaultQuery = category == 'todos' &&
+    final isDefaultQuery =
+        category == 'todos' &&
         facultad == 'todas' &&
         carrera == 'todas' &&
         searchQuery.trim().isEmpty &&
-        !showOnlyBookmarks;
+        !showOnlyBookmarks &&
+        feedMode == FeedMode.hot;
+
     final cacheKey = CacheService.buildKey({
       'user': SupabaseService.currentUserId ?? 'anon',
       'category': category,
@@ -57,6 +80,7 @@ class ForumService {
       'carrera': carrera,
       'search': searchQuery.trim().toLowerCase(),
       'bookmarks': showOnlyBookmarks,
+      'feedMode': feedMode.name,
     });
 
     final cached = CacheService.get<List<Post>>(_cacheNamespace, cacheKey);
@@ -82,11 +106,13 @@ class ForumService {
             .eq('user_id', currentUserId)
             .order('created_at', ascending: false)
             .timeout(const Duration(seconds: 10));
-        final bookmarkedIds = (bookmarksRes as List<dynamic>).map((e) => e['post_id'].toString()).toList();
+        final bookmarkedIds = (bookmarksRes as List<dynamic>)
+            .map((e) => e['post_id'].toString())
+            .toList();
         if (bookmarkedIds.isEmpty) return [];
 
         var bookmarksQuery = SupabaseService.client
-            .from('v_public_posts')
+            .from('safe_posts_feed')
             .select('*')
             .inFilter('id', bookmarkedIds);
 
@@ -94,27 +120,42 @@ class ForumService {
           bookmarksQuery = bookmarksQuery.eq('carrera', carrera);
         } else if (facultad != 'todas') {
           final careerIds = _getCareerIdsForFaculty(facultad);
-          bookmarksQuery = bookmarksQuery.inFilter('carrera', careerIds.isNotEmpty ? careerIds.toList() : const ['__none__']);
+          bookmarksQuery = bookmarksQuery.inFilter(
+            'carrera',
+            careerIds.isNotEmpty ? careerIds.toList() : const ['__none__'],
+          );
         }
 
         if (searchQuery.trim().isNotEmpty) {
           final q = searchQuery.trim();
-          bookmarksQuery = bookmarksQuery.or('title.ilike.%$q%,content.ilike.%$q%');
+          bookmarksQuery = bookmarksQuery.or(
+            'title.ilike.%$q%,content.ilike.%$q%',
+          );
         }
 
-        final postsRes = await bookmarksQuery
-            .order('is_pinned', ascending: false)
-            .order('created_at', ascending: false)
-            .timeout(const Duration(seconds: 10));
+        final PostgrestTransformBuilder<List<Map<String, dynamic>>>
+        orderedBookmarksQuery;
+        if (feedMode == FeedMode.hot) {
+          orderedBookmarksQuery = bookmarksQuery
+              .order('is_pinned', ascending: false)
+              .order('hot_score', ascending: false)
+              .order('created_at', ascending: false);
+        } else {
+          orderedBookmarksQuery = bookmarksQuery
+              .order('is_pinned', ascending: false)
+              .order('created_at', ascending: false);
+        }
+
+        final postsRes = await orderedBookmarksQuery.timeout(
+          const Duration(seconds: 10),
+        );
         final List<dynamic> data = postsRes as List<dynamic>;
         final posts = await _hydratePosts(data, currentUserId);
         CacheService.set(_cacheNamespace, cacheKey, List<Post>.from(posts));
         return posts;
       }
 
-      var query = SupabaseService.client
-          .from('v_public_posts')
-          .select('*');
+      var query = SupabaseService.client.from('safe_posts_feed').select('*');
 
       if (category != 'todos') {
         query = query.eq('category', category);
@@ -124,7 +165,10 @@ class ForumService {
         query = query.eq('carrera', carrera);
       } else if (facultad != 'todas') {
         final careerIds = _getCareerIdsForFaculty(facultad);
-        query = query.inFilter('carrera', careerIds.isNotEmpty ? careerIds.toList() : const ['__none__']);
+        query = query.inFilter(
+          'carrera',
+          careerIds.isNotEmpty ? careerIds.toList() : const ['__none__'],
+        );
       }
 
       if (searchQuery.trim().isNotEmpty) {
@@ -132,9 +176,19 @@ class ForumService {
         query = query.or('title.ilike.%$q%,content.ilike.%$q%');
       }
 
-      final response = await query
-          .order('is_pinned', ascending: false)
-          .order('created_at', ascending: false)
+      final PostgrestTransformBuilder<List<Map<String, dynamic>>> orderedQuery;
+      if (feedMode == FeedMode.hot) {
+        orderedQuery = query
+            .order('is_pinned', ascending: false)
+            .order('hot_score', ascending: false)
+            .order('created_at', ascending: false);
+      } else {
+        orderedQuery = query
+            .order('is_pinned', ascending: false)
+            .order('created_at', ascending: false);
+      }
+
+      final response = await orderedQuery
           .limit(50)
           .timeout(const Duration(seconds: 10));
       final List<dynamic> data = response as List<dynamic>;
@@ -150,11 +204,15 @@ class ForumService {
       }
       return posts;
     } catch (e) {
-      if (e is PostgrestException && (e.code == '42501' || e.message.contains('generate_author_hash'))) {
+      if (e is PostgrestException &&
+          (e.code == '42501' ||
+              e.message.contains('generate_author_hash') ||
+              e.code == '42P01')) {
         try {
           var fallbackQuery = SupabaseService.client
               .from('posts')
-              .select('id, title, category, content, author_alias, author_hash, likes, carrera, image_url, gif_url, is_pinned, quoted_post_id, created_at, moderation_status')
+              .select(_postFallbackColumns)
+              .isFilter('deleted_at', null)
               .neq('moderation_status', 2);
 
           if (showOnlyBookmarks) {
@@ -166,7 +224,9 @@ class ForumService {
                 .eq('user_id', currentUserId)
                 .order('created_at', ascending: false)
                 .timeout(const Duration(seconds: 10));
-            final bookmarkedIds = (bookmarksRes as List<dynamic>).map((e) => e['post_id'].toString()).toList();
+            final bookmarkedIds = (bookmarksRes as List<dynamic>)
+                .map((e) => e['post_id'].toString())
+                .toList();
             if (bookmarkedIds.isEmpty) return [];
             fallbackQuery = fallbackQuery.inFilter('id', bookmarkedIds);
           } else if (category != 'todos') {
@@ -177,21 +237,40 @@ class ForumService {
             fallbackQuery = fallbackQuery.eq('carrera', carrera);
           } else if (facultad != 'todas') {
             final careerIds = _getCareerIdsForFaculty(facultad);
-            fallbackQuery = fallbackQuery.inFilter('carrera', careerIds.isNotEmpty ? careerIds.toList() : const ['__none__']);
+            fallbackQuery = fallbackQuery.inFilter(
+              'carrera',
+              careerIds.isNotEmpty ? careerIds.toList() : const ['__none__'],
+            );
           }
 
           if (searchQuery.trim().isNotEmpty) {
             final q = searchQuery.trim();
-            fallbackQuery = fallbackQuery.or('title.ilike.%$q%,content.ilike.%$q%');
+            fallbackQuery = fallbackQuery.or(
+              'title.ilike.%$q%,content.ilike.%$q%',
+            );
           }
 
-          final response = await fallbackQuery
-              .order('is_pinned', ascending: false)
-              .order('created_at', ascending: false)
+          final PostgrestTransformBuilder<List<Map<String, dynamic>>>
+          orderedFallbackQuery;
+          if (feedMode == FeedMode.hot) {
+            orderedFallbackQuery = fallbackQuery
+                .order('is_pinned', ascending: false)
+                .order('hot_score', ascending: false)
+                .order('created_at', ascending: false);
+          } else {
+            orderedFallbackQuery = fallbackQuery
+                .order('is_pinned', ascending: false)
+                .order('created_at', ascending: false);
+          }
+
+          final response = await orderedFallbackQuery
               .limit(50)
               .timeout(const Duration(seconds: 10));
           final List<dynamic> data = response as List<dynamic>;
-          final posts = await _hydratePosts(data, SupabaseService.currentUserId);
+          final posts = await _hydratePosts(
+            data,
+            SupabaseService.currentUserId,
+          );
 
           CacheService.set(_cacheNamespace, cacheKey, List<Post>.from(posts));
           return posts;
@@ -210,17 +289,15 @@ class ForumService {
 
   /// Lee la primera página persistida (solo consultas por defecto).
   static Future<List<Post>?> _readPersistedPosts(String cacheKey) {
-    return CacheService.getPersisted<List<Post>>(
-      _cacheNamespace,
-      cacheKey,
-      (data) {
-        if (data is! List) throw const FormatException('Caché de posts inválida');
-        return data
-            .whereType<Map>()
-            .map((item) => _postFromCacheMap(Map<String, dynamic>.from(item)))
-            .toList();
-      },
-    );
+    return CacheService.getPersisted<List<Post>>(_cacheNamespace, cacheKey, (
+      data,
+    ) {
+      if (data is! List) throw const FormatException('Caché de posts inválida');
+      return data
+          .whereType<Map>()
+          .map((item) => _postFromCacheMap(Map<String, dynamic>.from(item)))
+          .toList();
+    });
   }
 
   static Map<String, dynamic> _postToCacheMap(Post post) {
@@ -231,7 +308,6 @@ class ForumService {
       'content': post.content,
       'author_alias': post.authorAlias,
       'likes': post.likes,
-      'user_id': post.userId,
       'author_hash': post.authorHash,
       'created_at': post.createdAt.toIso8601String(),
       'carrera': post.carrera,
@@ -241,12 +317,20 @@ class ForumService {
       'reposts_count': post.repostsCount,
       'is_pinned': post.isPinned,
       'moderation_status': post.moderationStatus,
+      'is_mine': post.isMine,
       'is_my_post': post.isMyPost,
+      'comments_count': post.commentsCount,
       'comment_count': post.commentCount,
+      'hot_score': post.hotScore,
+      'expires_at': post.expiresAt?.toIso8601String(),
+      'deleted_at': post.deletedAt?.toIso8601String(),
+      'is_legal_hold': post.isLegalHold,
       'cache_liked': post.isLikedByMe,
       'cache_bookmarked': post.isBookmarkedByMe,
       'cache_poll': post.poll == null ? null : _pollToCacheMap(post.poll!),
-      'cache_quoted_post': post.quotedPost == null ? null : _postToCacheMap(post.quotedPost!),
+      'cache_quoted_post': post.quotedPost == null
+          ? null
+          : _postToCacheMap(post.quotedPost!),
     };
   }
 
@@ -257,9 +341,12 @@ class ForumService {
       map,
       isLikedByMe: map['cache_liked'] == true,
       isBookmarkedByMe: map['cache_bookmarked'] == true,
-      poll: rawPoll is Map ? _pollFromCacheMap(Map<String, dynamic>.from(rawPoll)) : null,
-      quotedPost:
-          rawQuoted is Map ? _postFromCacheMap(Map<String, dynamic>.from(rawQuoted)) : null,
+      poll: rawPoll is Map
+          ? _pollFromCacheMap(Map<String, dynamic>.from(rawPoll))
+          : null,
+      quotedPost: rawQuoted is Map
+          ? _postFromCacheMap(Map<String, dynamic>.from(rawQuoted))
+          : null,
     );
   }
 
@@ -274,13 +361,16 @@ class ForumService {
   }
 
   static PostPoll _pollFromCacheMap(Map<String, dynamic> map) {
-    return PostPoll.fromMap(
-      {...map, 'options': map['options'] ?? const []},
-      myVotedOptionId: map['my_voted_option_id']?.toString(),
-    );
+    return PostPoll.fromMap({
+      ...map,
+      'options': map['options'] ?? const [],
+    }, myVotedOptionId: map['my_voted_option_id']?.toString());
   }
 
-  static Future<List<Post>> _hydratePosts(List<dynamic> data, String? currentUserId) async {
+  static Future<List<Post>> _hydratePosts(
+    List<dynamic> data,
+    String? currentUserId,
+  ) async {
     if (data.isEmpty) return [];
 
     final postIds = data.map((item) => item['id'].toString()).toList();
@@ -290,7 +380,7 @@ class ForumService {
     final Map<String, PostPoll> pollsByPostId = {};
     final Map<String, Post> quotedPostsMap = {};
 
-    // 1. Liked and Bookmarked sets
+    // 1. Liked and Bookmarked sets (sin proyectar user_id)
     if (currentUserId != null) {
       final likesRes = await SupabaseService.client
           .from('post_likes')
@@ -320,7 +410,9 @@ class ForumService {
           .select('*, post_poll_options(*)')
           .inFilter('post_id', postIds);
 
-      final pollIds = (pollsRes as List<dynamic>).map((p) => p['id'].toString()).toList();
+      final pollIds = (pollsRes as List<dynamic>)
+          .map((p) => p['id'].toString())
+          .toList();
 
       if (currentUserId != null && pollIds.isNotEmpty) {
         final votesRes = await SupabaseService.client
@@ -330,7 +422,8 @@ class ForumService {
             .inFilter('poll_id', pollIds);
 
         for (var v in votesRes) {
-          userVotesByPollId[v['poll_id'].toString()] = v['option_id'].toString();
+          userVotesByPollId[v['poll_id'].toString()] = v['option_id']
+              .toString();
         }
       }
 
@@ -338,8 +431,9 @@ class ForumService {
         final pollId = p['id'].toString();
         final postId = p['post_id'].toString();
         final rawOptions = p['post_poll_options'] as List<dynamic>? ?? [];
-        final options = rawOptions.map((o) => PollOption.fromMap(Map<String, dynamic>.from(o))).toList();
-        // Sort options deterministically
+        final options = rawOptions
+            .map((o) => PollOption.fromMap(Map<String, dynamic>.from(o)))
+            .toList();
         options.sort((a, b) => a.id.compareTo(b.id));
 
         pollsByPostId[postId] = PostPoll(
@@ -354,7 +448,7 @@ class ForumService {
       debugPrint('Error cargando encuestas: $e');
     }
 
-    // 3. Quoted posts
+    // 3. Quoted posts (usando safe_posts_feed)
     final quotedIds = data
         .map((item) => item['quoted_post_id']?.toString())
         .where((id) => id != null && id.isNotEmpty)
@@ -365,7 +459,7 @@ class ForumService {
     if (quotedIds.isNotEmpty) {
       try {
         final quotedRes = await SupabaseService.client
-            .from('v_public_posts')
+            .from('safe_posts_feed')
             .select('*')
             .inFilter('id', quotedIds);
 
@@ -472,7 +566,6 @@ class ForumService {
     if (currentUserId == null) return false;
 
     try {
-      // Delete previous vote on this poll if any, then insert new vote
       await SupabaseService.client
           .from('post_poll_votes')
           .delete()
@@ -504,6 +597,8 @@ class ForumService {
     String? quotedPostId,
     String? pollQuestion,
     List<String>? pollOptions,
+    bool ephemeral = false,
+    DateTime? expiresAt,
   }) async {
     if (!SupabaseConfig.isConfigured) {
       throw Exception('La aplicación no está conectada a la base de datos.');
@@ -511,10 +606,19 @@ class ForumService {
 
     final userId = SupabaseService.currentUserId;
     if (userId == null) {
-      throw Exception('Debes iniciar sesión para publicar en el foro estudiantil.');
+      throw Exception(
+        'Debes iniciar sesión para publicar en el foro estudiantil.',
+      );
     }
 
     try {
+      DateTime? effectiveExpiresAt = expiresAt;
+      if (effectiveExpiresAt == null && ephemeral) {
+        effectiveExpiresAt = DateTime.now().toUtc().add(
+          const Duration(hours: 24),
+        );
+      }
+
       final postMap = {
         'title': title.trim(),
         'content': content.trim(),
@@ -528,15 +632,22 @@ class ForumService {
         'likes': 0,
         'reposts_count': 0,
         'moderation_status': 0,
+        if (effectiveExpiresAt != null)
+          'expires_at': effectiveExpiresAt.toUtc().toIso8601String(),
       };
+
+      const selectColumns =
+          'id, title, category, content, author_alias, author_hash, likes, carrera, image_url, gif_url, is_pinned, quoted_post_id, reposts_count, moderation_status, created_at, comments_count, hot_score, expires_at, deleted_at, is_legal_hold';
 
       final res = await SupabaseService.client
           .from('posts')
           .insert(postMap)
-          .select('id, title, category, content, author_alias, author_hash, likes, carrera, image_url, gif_url, is_pinned, quoted_post_id, reposts_count, moderation_status, created_at')
+          .select(selectColumns)
           .single();
 
-      final createdPost = Post.fromMap(Map<String, dynamic>.from(res));
+      final createdPost = Post.fromMap(
+        Map<String, dynamic>.from(res),
+      ).copyWith(isMine: true);
 
       // Create poll if provided
       if (pollQuestion != null &&
@@ -559,7 +670,9 @@ class ForumService {
             .toList();
 
         if (optionsInserts.isNotEmpty) {
-          await SupabaseService.client.from('post_poll_options').insert(optionsInserts);
+          await SupabaseService.client
+              .from('post_poll_options')
+              .insert(optionsInserts);
         }
       }
 
@@ -578,7 +691,7 @@ class ForumService {
 
     try {
       final response = await SupabaseService.client
-          .from('v_public_comments')
+          .from('safe_comments')
           .select('*')
           .eq('post_id', postId)
           .order('created_at', ascending: true)
@@ -589,12 +702,10 @@ class ForumService {
           .map((item) => PostComment.fromMap(Map<String, dynamic>.from(item)))
           .toList();
 
-      // Clear any pre-existing children references
       for (var c in allComments) {
         c.children = [];
       }
 
-      // Build hierarchical tree with cycle and loop prevention
       final Map<String, PostComment> map = {};
       final List<PostComment> rootComments = [];
 
@@ -630,18 +741,24 @@ class ForumService {
 
       return rootComments;
     } catch (e) {
-      if (e is PostgrestException && (e.code == '42501' || e.message.contains('generate_author_hash'))) {
+      if (e is PostgrestException &&
+          (e.code == '42501' ||
+              e.message.contains('generate_author_hash') ||
+              e.code == '42P01')) {
         try {
           final fallbackRes = await SupabaseService.client
               .from('comments')
-              .select('id, post_id, parent_id, content, author_alias, author_hash, gif_url, created_at, moderation_status')
+              .select(_commentFallbackColumns)
               .eq('post_id', postId)
+              .isFilter('deleted_at', null)
               .neq('moderation_status', 2)
               .order('created_at', ascending: true)
               .timeout(const Duration(seconds: 10));
           final List<dynamic> data = fallbackRes as List<dynamic>;
           final List<PostComment> allComments = data
-              .map((item) => PostComment.fromMap(Map<String, dynamic>.from(item)))
+              .map(
+                (item) => PostComment.fromMap(Map<String, dynamic>.from(item)),
+              )
               .toList();
           for (var c in allComments) {
             c.children = [];
@@ -653,7 +770,10 @@ class ForumService {
           }
           for (var c in allComments) {
             final pId = c.parentId;
-            if (pId != null && pId.trim().isNotEmpty && map.containsKey(pId) && pId != c.id) {
+            if (pId != null &&
+                pId.trim().isNotEmpty &&
+                map.containsKey(pId) &&
+                pId != c.id) {
               map[pId]!.children.add(c);
             } else {
               rootComments.add(c);
@@ -691,24 +811,99 @@ class ForumService {
         'content': content.trim(),
         'author_alias': authorAlias.trim(),
         'user_id': userId,
-        'parent_id': (parentId != null && parentId.trim().isNotEmpty) ? parentId.trim() : null,
+        'parent_id': (parentId != null && parentId.trim().isNotEmpty)
+            ? parentId.trim()
+            : null,
         'gif_url': gifUrl?.trim().isEmpty == true ? null : gifUrl?.trim(),
         'moderation_status': 0,
       };
 
+      const selectColumns =
+          'id, post_id, parent_id, content, author_alias, author_hash, gif_url, created_at, moderation_status, is_op, likes_count, deleted_at';
+
       final res = await SupabaseService.client
           .from('comments')
           .insert(commentMap)
-          .select('id, post_id, parent_id, content, author_alias, author_hash, gif_url, created_at, moderation_status')
+          .select(selectColumns)
           .single()
           .timeout(const Duration(seconds: 12));
 
-      final comment = PostComment.fromMap(Map<String, dynamic>.from(res));
+      final comment = PostComment.fromMap(
+        Map<String, dynamic>.from(res),
+      ).copyWith(isMine: true);
       await CacheService.invalidateAll(_cacheNamespace);
       return comment;
     } catch (e) {
       debugPrint('Error al agregar comentario: $e');
       rethrow;
+    }
+  }
+
+  /// Soft delete de un post previa verificación de retención legal (is_legal_hold).
+  /// Retorna false si existe legal hold o si ocurre un fallo.
+  static Future<bool> softDeletePost(String postId) async {
+    if (!SupabaseConfig.isConfigured) return true;
+    try {
+      final check = await SupabaseService.client
+          .from('posts')
+          .select('is_legal_hold')
+          .eq('id', postId)
+          .maybeSingle();
+
+      if (check != null && check['is_legal_hold'] == true) {
+        debugPrint(
+          'Post $postId está bajo retención legal y no puede eliminarse.',
+        );
+        return false;
+      }
+
+      await SupabaseService.client
+          .from('posts')
+          .update({'deleted_at': DateTime.now().toUtc().toIso8601String()})
+          .eq('id', postId);
+
+      await CacheService.invalidateAll(_cacheNamespace);
+      return true;
+    } on PostgrestException catch (e) {
+      debugPrint('Error Postgrest al soft delete post: $e');
+      return false;
+    } catch (e) {
+      debugPrint('Error al soft delete post: $e');
+      return false;
+    }
+  }
+
+  /// Soft delete de un comentario previa verificación de retención legal (is_legal_hold).
+  /// Retorna false si existe legal hold o si ocurre un fallo.
+  static Future<bool> softDeleteComment(String commentId) async {
+    if (!SupabaseConfig.isConfigured) return true;
+    try {
+      final check = await SupabaseService.client
+          .from('comments')
+          .select('is_legal_hold')
+          .eq('id', commentId)
+          .maybeSingle();
+
+      if (check != null && check['is_legal_hold'] == true) {
+        debugPrint(
+          'Comentario $commentId está bajo retención legal y no puede eliminarse.',
+        );
+        return false;
+      }
+
+      await SupabaseService.client
+          .from('comments')
+          .update({'deleted_at': DateTime.now().toUtc().toIso8601String()})
+          .eq('id', commentId);
+
+      await CacheService.invalidateAll(_cacheNamespace);
+      return true;
+    } on PostgrestException catch (e) {
+      debugPrint('Error Postgrest al soft delete comment: $e');
+      return false;
+    } catch (e) {
+      debugPrint('Error al soft delete comment: $e');
+      return false;
     }
   }
 
@@ -721,11 +916,14 @@ class ForumService {
       throw Exception('La aplicación no está conectada a la base de datos.');
     }
     try {
-      final res = await SupabaseService.client.rpc('report_forum_post', params: {
-        'p_post_id': postId,
-        'p_reason': reason.trim(),
-        'p_details': details?.trim(),
-      });
+      final res = await SupabaseService.client.rpc(
+        'report_forum_post',
+        params: {
+          'p_post_id': postId,
+          'p_reason': reason.trim(),
+          'p_details': details?.trim(),
+        },
+      );
       return res == true;
     } catch (e) {
       debugPrint('Error reportando post: $e');
@@ -742,11 +940,14 @@ class ForumService {
       throw Exception('La aplicación no está conectada a la base de datos.');
     }
     try {
-      final res = await SupabaseService.client.rpc('report_forum_comment', params: {
-        'p_comment_id': commentId,
-        'p_reason': reason.trim(),
-        'p_details': details?.trim(),
-      });
+      final res = await SupabaseService.client.rpc(
+        'report_forum_comment',
+        params: {
+          'p_comment_id': commentId,
+          'p_reason': reason.trim(),
+          'p_details': details?.trim(),
+        },
+      );
       return res == true;
     } catch (e) {
       debugPrint('Error reportando comentario: $e');
@@ -797,8 +998,13 @@ class ForumService {
         return List<ForumChannel>.from(ForumChannel.defaultChannels);
       }
 
-      // Orden estándar alineado con el flujo de uso del foro (sin charla-general)
-      const canonicalOrder = ['todos', 'prerrequisitos', 'catedraticos', 'apuntes', 'horarios'];
+      const canonicalOrder = [
+        'todos',
+        'prerrequisitos',
+        'catedraticos',
+        'apuntes',
+        'horarios',
+      ];
       final List<dynamic> sortedData = List.from(data);
       sortedData.sort((a, b) {
         final idA = a['id']?.toString() ?? '';
@@ -814,7 +1020,7 @@ class ForumService {
       final List<ForumChannel> channels = [];
       for (final row in sortedData) {
         final id = row['id']?.toString() ?? '';
-        if (id == 'general') continue; // Redundante con todos los temas
+        if (id == 'general') continue;
         final nombre = row['nombre']?.toString() ?? id;
         channels.add(ForumChannel.fromDbCategory(id: id, nombre: nombre));
       }
@@ -851,7 +1057,6 @@ class ForumService {
         return ForumFaculty.defaultFaculties;
       }
 
-      // Mapa de metadatos predefinidos (íconos, colores, códigos cortos)
       final Map<String, ForumCareerItem> careerMeta = {};
       final Map<String, ForumFaculty> facultyMeta = {};
       for (final f in ForumFaculty.defaultFaculties) {
@@ -868,16 +1073,20 @@ class ForumService {
         var nombre = row['nombre']?.toString() ?? '';
         final codigo = row['codigo']?.toString() ?? '';
 
-        // Limpieza canónica exhaustiva: remover cualquier texto entre paréntesis o redundancias
         nombre = nombre
             .replaceAll('(Campus Central)', '')
             .replaceAll('(Extensión)', ' - Extensión')
             .replaceAll(RegExp(r'\s*\([^)]*\)'), '')
-            .replaceAll(RegExp(r'\s*[/|-]\s*(Cursos Básicos|General).*', caseSensitive: false), '')
+            .replaceAll(
+              RegExp(
+                r'\s*[/|-]\s*(Cursos Básicos|General).*',
+                caseSensitive: false,
+              ),
+              '',
+            )
             .replaceAll(RegExp(r'\s+'), ' ')
             .trim();
 
-        // Normalización canónica: Área Común pertenece exclusivamente a Ingeniería ('08')
         if (carId == 'area_comun' ||
             nombre.toLowerCase().contains('área común') ||
             nombre.toLowerCase().contains('area comun')) {
@@ -886,30 +1095,34 @@ class ForumService {
         }
 
         final existing = careerMeta[carId];
-        final shortCode = existing?.shortCode ??
+        final shortCode =
+            existing?.shortCode ??
             (codigo.isNotEmpty && codigo.length <= 6
                 ? codigo
-                : (carId.length > 4 ? carId.substring(0, 4).toUpperCase() : carId.toUpperCase()));
+                : (carId.length > 4
+                      ? carId.substring(0, 4).toUpperCase()
+                      : carId.toUpperCase()));
 
-        careersByFacultad.putIfAbsent(facId, () => []).add(
-          ForumCareerItem(
-            id: carId,
-            name: nombre,
-            shortCode: shortCode,
-            icon: existing?.icon ?? Icons.school_outlined,
-            facultadId: facId,
-            codigo: codigo,
-          ),
-        );
+        careersByFacultad
+            .putIfAbsent(facId, () => [])
+            .add(
+              ForumCareerItem(
+                id: carId,
+                name: nombre,
+                shortCode: shortCode,
+                icon: existing?.icon ?? Icons.school_outlined,
+                facultadId: facId,
+                codigo: codigo,
+              ),
+            );
       }
 
-      // 'todas' jamás debe tener sub-carreras provenientes de la base de datos
       careersByFacultad.remove('todas');
 
-      // Garantizar que la Facultad de Ingeniería ('08') tenga siempre Área Común como su primer subservidor
       final ingCareers = careersByFacultad.putIfAbsent('08', () => []);
       final areaComunIndex = ingCareers.indexWhere((c) => c.id == 'area_comun');
-      final ForumCareerItem defaultAreaComun = careerMeta['area_comun'] ??
+      final ForumCareerItem defaultAreaComun =
+          careerMeta['area_comun'] ??
           const ForumCareerItem(
             id: 'area_comun',
             name: 'Área Común',
@@ -938,10 +1151,12 @@ class ForumService {
         var nombre = facRow['nombre']?.toString() ?? '';
         final codigo = facRow['codigo']?.toString() ?? '';
 
-        // Limpieza canónica: remover paréntesis y sufijos redundantes de nombres de facultades
         nombre = nombre
             .replaceAll(RegExp(r'\s*\([^)]*\)'), '')
-            .replaceAll(RegExp(r'\s*[/|-]\s*General.*', caseSensitive: false), '')
+            .replaceAll(
+              RegExp(r'\s*[/|-]\s*General.*', caseSensitive: false),
+              '',
+            )
             .replaceAll(RegExp(r'\s+'), ' ')
             .trim();
 
@@ -952,7 +1167,9 @@ class ForumService {
           ForumFaculty(
             id: facId,
             name: nombre,
-            shortCode: existing?.shortCode ?? (codigo.isNotEmpty ? codigo : facId.toUpperCase()),
+            shortCode:
+                existing?.shortCode ??
+                (codigo.isNotEmpty ? codigo : facId.toUpperCase()),
             icon: existing?.icon ?? Icons.school,
             color: existing?.color ?? const Color(0xFF004B87),
             careers: careers,
@@ -960,7 +1177,6 @@ class ForumService {
         );
       }
 
-      // El servidor de hasta arriba SIEMPRE debe ser el de Todas las Facultades
       final defaultRoot = ForumFaculty.defaultFaculties.first;
       final todasIndex = faculties.indexWhere((f) => f.id == 'todas');
       ForumFaculty todasFaculty;
@@ -990,7 +1206,10 @@ class ForumService {
     List<ForumFaculty>? faculties,
   }) async {
     const cacheKey = 'popular_servers_top5';
-    final cached = CacheService.get<List<PopularServerItem>>(_cacheNamespace, cacheKey);
+    final cached = CacheService.get<List<PopularServerItem>>(
+      _cacheNamespace,
+      cacheKey,
+    );
     if (cached != null) return List<PopularServerItem>.from(cached);
 
     if (!SupabaseConfig.isConfigured) {
@@ -1001,6 +1220,7 @@ class ForumService {
       final res = await SupabaseService.client
           .from('posts')
           .select('id, carrera, likes, created_at')
+          .isFilter('deleted_at', null)
           .neq('moderation_status', 2)
           .order('created_at', ascending: false)
           .limit(300)
@@ -1025,10 +1245,13 @@ class ForumService {
             ? row['likes'] as int
             : int.tryParse(row['likes']?.toString() ?? '0') ?? 0;
         final createdAtStr = row['created_at']?.toString();
-        final createdAt = createdAtStr != null ? DateTime.tryParse(createdAtStr) : null;
+        final createdAt = createdAtStr != null
+            ? DateTime.tryParse(createdAtStr)
+            : null;
 
         postsCountByCarrera[carrera] = (postsCountByCarrera[carrera] ?? 0) + 1;
-        likesCountByCarrera[carrera] = (likesCountByCarrera[carrera] ?? 0) + likes;
+        likesCountByCarrera[carrera] =
+            (likesCountByCarrera[carrera] ?? 0) + likes;
 
         double recencyBonus = 0.5;
         if (createdAt != null) {
@@ -1043,7 +1266,8 @@ class ForumService {
             recencyBonus = 1.0;
           }
 
-          if (latestDateByCarrera[carrera] == null || createdAt.isAfter(latestDateByCarrera[carrera]!)) {
+          if (latestDateByCarrera[carrera] == null ||
+              createdAt.isAfter(latestDateByCarrera[carrera]!)) {
             latestDateByCarrera[carrera] = createdAt;
           }
         }
@@ -1087,14 +1311,16 @@ class ForumService {
             color: foundFac.color,
           );
 
-          results.add(PopularServerItem(
-            server: server,
-            facultyName: foundFac.name,
-            postCount: pCount,
-            likesCount: lCount,
-            score: score,
-            latestPostDate: lDate,
-          ));
+          results.add(
+            PopularServerItem(
+              server: server,
+              facultyName: foundFac.name,
+              postCount: pCount,
+              likesCount: lCount,
+              score: score,
+              latestPostDate: lDate,
+            ),
+          );
         }
       }
 
@@ -1102,7 +1328,11 @@ class ForumService {
 
       final top5 = results.take(5).toList();
 
-      CacheService.set(_cacheNamespace, cacheKey, List<PopularServerItem>.from(top5));
+      CacheService.set(
+        _cacheNamespace,
+        cacheKey,
+        List<PopularServerItem>.from(top5),
+      );
       return top5;
     } catch (e) {
       debugPrint('Error obteniendo servidores populares: $e');

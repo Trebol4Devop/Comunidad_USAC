@@ -64,8 +64,18 @@ void main() {
         'post_id': 'post-10',
         'question': '¿Qué opinás?',
         'options': [
-          {'id': 'o1', 'poll_id': 'poll-10', 'option_text': 'Bien', 'votes_count': 3},
-          {'id': 'o2', 'poll_id': 'poll-10', 'option_text': 'Mal', 'votes_count': 1},
+          {
+            'id': 'o1',
+            'poll_id': 'poll-10',
+            'option_text': 'Bien',
+            'votes_count': 3,
+          },
+          {
+            'id': 'o2',
+            'poll_id': 'poll-10',
+            'option_text': 'Mal',
+            'votes_count': 1,
+          },
         ],
       };
 
@@ -76,7 +86,10 @@ void main() {
       expect(poll.options.length, 2);
       expect(poll.myVotedOptionId, 'o1');
 
-      final copy = poll.copyWith(myVotedOptionId: 'o2', question: 'Nueva pregunta');
+      final copy = poll.copyWith(
+        myVotedOptionId: 'o2',
+        question: 'Nueva pregunta',
+      );
       expect(copy.myVotedOptionId, 'o2');
       expect(copy.question, 'Nueva pregunta');
       expect(copy.id, poll.id);
@@ -84,40 +97,66 @@ void main() {
   });
 
   group('PostComment Model', () {
-    test('PostComment.fromMap limpia parent_id y user_id ("null", vacío o ausente -> null)', () {
-      final mapNullStr = {
-        'id': 'c-1',
-        'post_id': 'p-1',
-        'content': 'Comentario de prueba',
-        'parent_id': 'null',
-        'user_id': 'null',
-      };
-      final comment1 = PostComment.fromMap(mapNullStr);
-      expect(comment1.parentId, isNull);
-      expect(comment1.userId, isNull);
+    test(
+      'PostComment.fromMap limpia parent_id y user_id ("null", vacío o ausente -> null)',
+      () {
+        final mapNullStr = {
+          'id': 'c-1',
+          'post_id': 'p-1',
+          'content': 'Comentario de prueba',
+          'parent_id': 'null',
+          'user_id': 'null',
+        };
+        final comment1 = PostComment.fromMap(mapNullStr);
+        expect(comment1.parentId, isNull);
+        expect(comment1.userId, isNull);
 
-      final mapEmptyStr = {
-        'id': 'c-2',
-        'post_id': 'p-1',
-        'content': 'Comentario de prueba 2',
-        'parent_id': '   ',
-        'user_id': '',
-      };
-      final comment2 = PostComment.fromMap(mapEmptyStr);
-      expect(comment2.parentId, isNull);
-      expect(comment2.userId, isNull);
+        final mapEmptyStr = {
+          'id': 'c-2',
+          'post_id': 'p-1',
+          'content': 'Comentario de prueba 2',
+          'parent_id': '   ',
+          'user_id': '',
+        };
+        final comment2 = PostComment.fromMap(mapEmptyStr);
+        expect(comment2.parentId, isNull);
+        expect(comment2.userId, isNull);
 
-      final mapMissing = {
-        'id': 'c-3',
-        'post_id': 'p-1',
-        'content': 'Comentario con ids válidos',
-        'parent_id': 'c-parent',
-        'user_id': 'user-123',
-      };
-      final comment3 = PostComment.fromMap(mapMissing);
-      expect(comment3.parentId, 'c-parent');
-      expect(comment3.userId, 'user-123');
-    });
+        final mapMissing = {
+          'id': 'c-3',
+          'post_id': 'p-1',
+          'content': 'Comentario con ids válidos',
+          'parent_id': 'c-parent',
+          'user_id': 'user-123',
+        };
+        final comment3 = PostComment.fromMap(mapMissing);
+        expect(comment3.parentId, 'c-parent');
+        expect(comment3.userId, isNull);
+      },
+    );
+
+    test(
+      'PostComment.fromMap parsea columnas de safe_comments y respeta privacidad',
+      () {
+        final comment = PostComment.fromMap({
+          'id': 'c-safe',
+          'post_id': 'p-safe',
+          'content': 'Comentario público',
+          'is_op': true,
+          'likes_count': 14,
+          'is_mine': true,
+          'deleted_at': '2026-03-01T12:00:00.000Z',
+          'user_id': 'ignored-uuid',
+        });
+        expect(comment.isOp, isTrue);
+        expect(comment.isPostAuthor, isTrue);
+        expect(comment.likesCount, 14);
+        expect(comment.isMine, isTrue);
+        expect(comment.isMyComment, isTrue);
+        expect(comment.deletedAt, isNotNull);
+        expect(comment.userId, isNull);
+      },
+    );
 
     test('PostComment.fromMap parsea flags is_post_author y is_my_comment', () {
       final comment = PostComment.fromMap({
@@ -186,12 +225,52 @@ void main() {
     });
 
     test('Post.fromMap parsea comment_count como int y como string', () {
-      final p1 = Post.fromMap({'id': '1', 'title': 'T', 'content': 'C', 'comment_count': 5});
+      final p1 = Post.fromMap({
+        'id': '1',
+        'title': 'T',
+        'content': 'C',
+        'comment_count': 5,
+      });
       expect(p1.commentCount, 5);
 
-      final p2 = Post.fromMap({'id': '2', 'title': 'T', 'content': 'C', 'comment_count': '8'});
+      final p2 = Post.fromMap({
+        'id': '2',
+        'title': 'T',
+        'content': 'C',
+        'comment_count': '8',
+      });
       expect(p2.commentCount, 8);
     });
+
+    test(
+      'Post.fromMap con payload de safe_posts_feed produce isMine correcto y userId == null',
+      () {
+        final safeFeedMap = {
+          'id': 'post-safe-1',
+          'title': 'Post de safe feed',
+          'content': 'Contenido seguro',
+          'comments_count': 7,
+          'hot_score': 45.5,
+          'is_mine': true,
+          'is_legal_hold': true,
+          'expires_at': '2026-03-02T10:00:00.000Z',
+          'deleted_at': null,
+          'user_id': 'should-be-ignored',
+        };
+
+        final post = Post.fromMap(safeFeedMap);
+        expect(post.id, 'post-safe-1');
+        expect(post.userId, isNull);
+        expect(post.isMine, isTrue);
+        expect(post.isMyPost, isTrue);
+        expect(post.commentsCount, 7);
+        expect(post.commentCount, 7);
+        expect(post.hotScore, 45.5);
+        expect(post.isLegalHold, isTrue);
+        expect(post.expiresAt, isNotNull);
+        expect(post.deletedAt, isNull);
+      },
+    );
 
     test('Post.toInsertMap incluye campos esperados', () {
       final post = TestFixtures.post(

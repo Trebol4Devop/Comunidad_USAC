@@ -49,13 +49,18 @@ class PostPoll {
 
   int get totalVotes => options.fold(0, (sum, opt) => sum + opt.votesCount);
 
-  factory PostPoll.fromMap(Map<String, dynamic> map, {String? myVotedOptionId}) {
+  factory PostPoll.fromMap(
+    Map<String, dynamic> map, {
+    String? myVotedOptionId,
+  }) {
     final rawOptions = map['options'] as List<dynamic>? ?? [];
     return PostPoll(
       id: map['id']?.toString() ?? '',
       postId: map['post_id']?.toString() ?? '',
       question: map['question'] ?? '',
-      options: rawOptions.map((o) => PollOption.fromMap(Map<String, dynamic>.from(o))).toList(),
+      options: rawOptions
+          .map((o) => PollOption.fromMap(Map<String, dynamic>.from(o)))
+          .toList(),
       myVotedOptionId: myVotedOptionId,
     );
   }
@@ -98,8 +103,16 @@ class Post {
   final int moderationStatus;
   final bool isLikedByMe;
   final bool isBookmarkedByMe;
-  final bool isMyPost;
-  final int commentCount;
+  final bool isMine;
+  final int commentsCount;
+  final double hotScore;
+  final DateTime? expiresAt;
+  final DateTime? deletedAt;
+  final bool isLegalHold;
+
+  // Compatibility getters
+  bool get isMyPost => isMine;
+  int get commentCount => commentsCount;
 
   Post({
     required this.id,
@@ -122,9 +135,16 @@ class Post {
     this.moderationStatus = 0,
     this.isLikedByMe = false,
     this.isBookmarkedByMe = false,
-    this.isMyPost = false,
-    this.commentCount = 0,
-  });
+    bool? isMine,
+    bool? isMyPost,
+    int? commentsCount,
+    int? commentCount,
+    this.hotScore = 0.0,
+    this.expiresAt,
+    this.deletedAt,
+    this.isLegalHold = false,
+  }) : isMine = isMine ?? isMyPost ?? false,
+       commentsCount = commentsCount ?? commentCount ?? 0;
 
   Post copyWith({
     String? id,
@@ -147,8 +167,14 @@ class Post {
     int? moderationStatus,
     bool? isLikedByMe,
     bool? isBookmarkedByMe,
+    bool? isMine,
     bool? isMyPost,
+    int? commentsCount,
     int? commentCount,
+    double? hotScore,
+    DateTime? expiresAt,
+    DateTime? deletedAt,
+    bool? isLegalHold,
   }) {
     return Post(
       id: id ?? this.id,
@@ -171,8 +197,12 @@ class Post {
       moderationStatus: moderationStatus ?? this.moderationStatus,
       isLikedByMe: isLikedByMe ?? this.isLikedByMe,
       isBookmarkedByMe: isBookmarkedByMe ?? this.isBookmarkedByMe,
-      isMyPost: isMyPost ?? this.isMyPost,
-      commentCount: commentCount ?? this.commentCount,
+      isMine: isMine ?? isMyPost ?? this.isMine,
+      commentsCount: commentsCount ?? commentCount ?? this.commentsCount,
+      hotScore: hotScore ?? this.hotScore,
+      expiresAt: expiresAt ?? this.expiresAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+      isLegalHold: isLegalHold ?? this.isLegalHold,
     );
   }
 
@@ -180,27 +210,52 @@ class Post {
     Map<String, dynamic> map, {
     bool isLikedByMe = false,
     bool isBookmarkedByMe = false,
-    int commentCount = 0,
+    int? commentCount,
+    int? commentsCount,
     Post? quotedPost,
     PostPoll? poll,
   }) {
-    int parsedCommentCount = commentCount;
-    if (map['comment_count'] != null) {
-      parsedCommentCount = (map['comment_count'] is int)
-          ? map['comment_count']
-          : int.tryParse(map['comment_count'].toString()) ?? commentCount;
+    final rawCount = map['comments_count'] ?? map['comment_count'];
+    int parsedCount = commentsCount ?? commentCount ?? 0;
+    if (rawCount != null) {
+      parsedCount = (rawCount is int)
+          ? rawCount
+          : int.tryParse(rawCount.toString()) ?? parsedCount;
     }
 
+    final rawHotScore = map['hot_score'];
+    final double parsedHotScore = (rawHotScore is num)
+        ? rawHotScore.toDouble()
+        : double.tryParse(rawHotScore?.toString() ?? '0') ?? 0.0;
+
+    final expiresAt = map['expires_at'] != null
+        ? DateTime.tryParse(map['expires_at'].toString())
+        : null;
+    final deletedAt = map['deleted_at'] != null
+        ? DateTime.tryParse(map['deleted_at'].toString())
+        : null;
+
+    final bool isMine = map.containsKey('is_mine')
+        ? map['is_mine'] == true
+        : map['is_my_post'] == true;
+
+    final bool isLegalHold = map['is_legal_hold'] == true;
+
+    // NO leas user_id del mapa: deja userId en null al leer datos públicos.
     return Post(
       id: map['id']?.toString() ?? '',
       title: map['title'] ?? '',
       category: map['category'] ?? 'general',
       content: map['content'] ?? '',
       authorAlias: map['author_alias'] ?? 'Estudiante USAC',
-      likes: (map['likes'] is int) ? map['likes'] : int.tryParse(map['likes']?.toString() ?? '0') ?? 0,
-      userId: map['user_id']?.toString(),
+      likes: (map['likes'] is int)
+          ? map['likes']
+          : int.tryParse(map['likes']?.toString() ?? '0') ?? 0,
+      userId: null,
       authorHash: map['author_hash']?.toString(),
-      createdAt: map['created_at'] != null ? DateTime.tryParse(map['created_at'].toString()) ?? DateTime.now() : DateTime.now(),
+      createdAt: map['created_at'] != null
+          ? DateTime.tryParse(map['created_at'].toString()) ?? DateTime.now()
+          : DateTime.now(),
       carrera: map['carrera'] ?? 'todas',
       imageUrl: map['image_url'],
       gifUrl: map['gif_url'],
@@ -216,8 +271,12 @@ class Post {
           : int.tryParse(map['moderation_status']?.toString() ?? '0') ?? 0,
       isLikedByMe: isLikedByMe,
       isBookmarkedByMe: isBookmarkedByMe,
-      isMyPost: map['is_my_post'] == true,
-      commentCount: parsedCommentCount,
+      isMine: isMine,
+      commentsCount: parsedCount,
+      hotScore: parsedHotScore,
+      expiresAt: expiresAt,
+      deletedAt: deletedAt,
+      isLegalHold: isLegalHold,
     );
   }
 
@@ -235,6 +294,7 @@ class Post {
       'is_pinned': isPinned,
       'likes': likes,
       'moderation_status': moderationStatus,
+      if (expiresAt != null) 'expires_at': expiresAt!.toUtc().toIso8601String(),
     };
   }
 }
@@ -250,9 +310,15 @@ class PostComment {
   final String? parentId;
   final String? gifUrl;
   final int moderationStatus;
-  final bool isPostAuthor;
-  final bool isMyComment;
+  final bool isOp;
+  final int likesCount;
+  final bool isMine;
+  final DateTime? deletedAt;
   List<PostComment> children;
+
+  // Compatibility getters
+  bool get isPostAuthor => isOp;
+  bool get isMyComment => isMine;
 
   PostComment({
     required this.id,
@@ -265,28 +331,86 @@ class PostComment {
     this.parentId,
     this.gifUrl,
     this.moderationStatus = 0,
-    this.isPostAuthor = false,
-    this.isMyComment = false,
+    bool? isOp,
+    bool? isPostAuthor,
+    this.likesCount = 0,
+    bool? isMine,
+    bool? isMyComment,
+    this.deletedAt,
     List<PostComment>? children,
-  }) : children = children ?? [];
+  }) : isOp = isOp ?? isPostAuthor ?? false,
+       isMine = isMine ?? isMyComment ?? false,
+       children = children ?? [];
+
+  PostComment copyWith({
+    String? id,
+    String? postId,
+    String? authorAlias,
+    String? content,
+    String? userId,
+    String? authorHash,
+    DateTime? createdAt,
+    String? parentId,
+    String? gifUrl,
+    int? moderationStatus,
+    bool? isOp,
+    bool? isPostAuthor,
+    int? likesCount,
+    bool? isMine,
+    bool? isMyComment,
+    DateTime? deletedAt,
+    List<PostComment>? children,
+  }) {
+    return PostComment(
+      id: id ?? this.id,
+      postId: postId ?? this.postId,
+      authorAlias: authorAlias ?? this.authorAlias,
+      content: content ?? this.content,
+      userId: userId ?? this.userId,
+      authorHash: authorHash ?? this.authorHash,
+      createdAt: createdAt ?? this.createdAt,
+      parentId: parentId ?? this.parentId,
+      gifUrl: gifUrl ?? this.gifUrl,
+      moderationStatus: moderationStatus ?? this.moderationStatus,
+      isOp: isOp ?? isPostAuthor ?? this.isOp,
+      likesCount: likesCount ?? this.likesCount,
+      isMine: isMine ?? isMyComment ?? this.isMine,
+      deletedAt: deletedAt ?? this.deletedAt,
+      children: children ?? this.children,
+    );
+  }
 
   factory PostComment.fromMap(Map<String, dynamic> map) {
     final rawParentId = map['parent_id']?.toString().trim();
-    final parentId = (rawParentId != null && rawParentId.isNotEmpty && rawParentId != 'null')
+    final parentId =
+        (rawParentId != null && rawParentId.isNotEmpty && rawParentId != 'null')
         ? rawParentId
         : null;
 
-    final rawUserId = map['user_id']?.toString().trim();
-    final userId = (rawUserId != null && rawUserId.isNotEmpty && rawUserId != 'null')
-        ? rawUserId
+    final isOp = map.containsKey('is_op')
+        ? map['is_op'] == true
+        : map['is_post_author'] == true;
+
+    final isMine = map.containsKey('is_mine')
+        ? map['is_mine'] == true
+        : map['is_my_comment'] == true;
+
+    final rawLikesCount = map['likes_count'];
+    final likesCount = (rawLikesCount is int)
+        ? rawLikesCount
+        : int.tryParse(rawLikesCount?.toString() ?? '0') ?? 0;
+
+    final deletedAt = map['deleted_at'] != null
+        ? DateTime.tryParse(map['deleted_at'].toString())
         : null;
 
+    // NO leas user_id del mapa: deja userId en null al leer datos públicos.
     return PostComment(
       id: map['id']?.toString() ?? '',
       postId: map['post_id']?.toString() ?? '',
       authorAlias: map['author_alias'] ?? 'Estudiante',
       content: map['content'] ?? '',
-      userId: userId,
+      userId: null,
       authorHash: map['author_hash']?.toString(),
       createdAt: map['created_at'] != null
           ? DateTime.tryParse(map['created_at'].toString()) ?? DateTime.now()
@@ -296,8 +420,10 @@ class PostComment {
       moderationStatus: (map['moderation_status'] is int)
           ? map['moderation_status']
           : int.tryParse(map['moderation_status']?.toString() ?? '0') ?? 0,
-      isPostAuthor: map['is_post_author'] == true,
-      isMyComment: map['is_my_comment'] == true,
+      isOp: isOp,
+      likesCount: likesCount,
+      isMine: isMine,
+      deletedAt: deletedAt,
     );
   }
 
