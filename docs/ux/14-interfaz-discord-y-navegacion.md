@@ -48,7 +48,9 @@ Para ofrecer una experiencia de usuario familiar, inmersiva y de alto rendimient
 ---
 
 ### 2.2 Panel de Canales y Navegación Directa (`ForumChannelSidebar`)
-- **Dimensiones:** Ancho estándar de **240px**, flexible según el contenedor padre o drawer móvil.
+- **Dimensiones y Adaptabilidad:** 
+  - **Móvil:** La barra lateral (drawer) ocupa **el 100% del ancho de la pantalla** (`width: MediaQuery.sizeOf(context).width`), permitiendo que el panel de canales se expanda horizontalmente (`Expanded`) en todo el espacio contiguo al riel de 76px, incluyendo botón de cierre (`Icons.close_rounded`) en la cabecera.
+  - **Escritorio:** Ampliado a **280px** de ancho fijo para lectura cómoda y balance visual.
 - **Filas de Canal / Chat:**
   - **Avatar Circular:** Contenedor circular de **38px** de diámetro (rango 36px – 40px) que enmarca el icono representativo del canal o foto de usuario.
   - **Insignia de Estado:** Punto circular de **10px** en la esquina inferior derecha (`Positioned(right: -1, bottom: -1)`) en color verde online Discord (`#23A55A`) con borde recortado de 2px a tono del fondo del canal.
@@ -68,14 +70,13 @@ Para ofrecer una experiencia de usuario familiar, inmersiva y de alto rendimient
   - Borde de cristal esmerilado con translucidez blanca: `Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.2)`.
   - Sombra sutil con halo azul invernal: `blurRadius: 10`, `offset: Offset(0, 3)`.
 - **Avatar del Usuario Actual:**
-  - Ligeramente más grande (**44px** de diámetro).
-  - Borde blanco sólido de 2px y fondo con halo cristalino.
-  - Insignia de estado online de **12px** en verde Discord con reborde de contraste `#0C4A6E`.
+  - Diámetro ergonómico de **44px**.
+  - Borde blanco sólido de 2px y fondo con halo cristalino, **sin punto verde de estado** para máxima sobriedad y limpieza estética.
 - **Información Textual:**
   - Nombre principal / seudónimo activo en tipografía blanca `FontWeight.w700` (`13px`).
-  - Selector desplegable discreto con icono chevron (`Icons.keyboard_arrow_down_rounded`).
-  - Subtítulo de estado de conexión: indicador micro-verde de 6px junto al texto `"En línea"` en blanco tenue (`Colors.white70`, `11px`).
-- **Interacción:** El toque completo sobre la tarjeta conduce inmediatamente a la pantalla de preferencias del usuario (`ProfileScreen`).
+  - Selector desplegable discreto con icono chevron (`Icons.keyboard_arrow_down_rounded`, 20px).
+  - **Sin etiqueta 'En línea'**: Presentación limpia y directa sin textos redundantes.
+- **Apertura de Perfil desde Abajo:** Al pulsar sobre la tarjeta de usuario, la pantalla de perfil (`ProfileScreen`) se despliega **desde abajo** mediante un modal inferior deslizante (`showModalBottomSheet` con `isScrollControlled: true` y bordes superiores redondeados de 20px), ocupando el 94% de altura de la pantalla y permitiendo cerrarlo deslizando hacia abajo o tocando el botón de regreso.
 
 ---
 

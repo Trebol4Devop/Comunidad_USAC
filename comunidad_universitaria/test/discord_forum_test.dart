@@ -133,7 +133,7 @@ void main() {
         expect(find.byTooltip('Normas y descargo legal'), findsOneWidget);
         expect(find.byIcon(Icons.settings_outlined), findsNothing);
         expect(find.text('Alias oculto'), findsOneWidget);
-        expect(find.text('En línea'), findsOneWidget);
+        expect(find.text('En línea'), findsNothing);
         expect(find.text('CANALES'), findsOneWidget);
       },
     );

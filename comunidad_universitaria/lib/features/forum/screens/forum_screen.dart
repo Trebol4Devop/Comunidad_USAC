@@ -579,9 +579,19 @@ class _ForumScreenState extends State<ForumScreen> {
   }
 
   void _openProfile() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ProfileScreen(
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalContext) => Container(
+        height: MediaQuery.sizeOf(modalContext).height * 0.94,
+        decoration: BoxDecoration(
+          color: Theme.of(modalContext).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: ProfileScreen(
           activeAlias: widget.activeAlias,
           onAliasChanged: widget.onAliasChanged,
           onToggleTheme: widget.onToggleTheme,
@@ -620,8 +630,9 @@ class _ForumScreenState extends State<ForumScreen> {
               onAddServer: _onAddServer,
             ),
 
-            // 2. Channel Sidebar (240px)
+            // 2. Channel Sidebar (más amplio horizontalmente: 280px)
             ForumChannelSidebar(
+              width: 280,
               activeServer: _activeServer,
               activeChannel: currentChannel,
               channels: currentChannels,
@@ -668,7 +679,7 @@ class _ForumScreenState extends State<ForumScreen> {
       backgroundColor: feedBg,
       drawer: Drawer(
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-        width: 312,
+        width: MediaQuery.sizeOf(context).width,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -704,6 +715,17 @@ class _ForumScreenState extends State<ForumScreen> {
                           tooltip: 'Comunidades populares',
                           onPressed: _openPopularServersFromDrawer,
                         ),
+                        const Spacer(),
+                        IconButton(
+                          icon: const Icon(Icons.close_rounded, size: 20),
+                          tooltip: 'Cerrar menú',
+                          onPressed: () {
+                            if (_scaffoldKey.currentState?.isDrawerOpen == true) {
+                              Navigator.of(context).pop();
+                            }
+                          },
+                        ),
+                        const SizedBox(width: 4),
                       ],
                     ),
                   ),
@@ -712,14 +734,14 @@ class _ForumScreenState extends State<ForumScreen> {
                       activeServer: _activeServer,
                       activeChannel: currentChannel,
                       channels: currentChannels,
-                      onSelectChannel: _onSelectChannel,
-                      activeAlias: widget.activeAlias,
-                      onOpenProfile: () {
+                      onSelectChannel: (ch) {
+                        _onSelectChannel(ch);
                         if (_scaffoldKey.currentState?.isDrawerOpen == true) {
                           Navigator.of(context).pop();
                         }
-                        _openProfile();
                       },
+                      activeAlias: widget.activeAlias,
+                      onOpenProfile: _openProfile,
                     ),
                   ),
                 ],
