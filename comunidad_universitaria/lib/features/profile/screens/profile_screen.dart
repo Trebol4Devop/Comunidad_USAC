@@ -338,6 +338,64 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 onPressed: () => Navigator.of(context).pop(),
               )
             : null,
+        actions: [
+          PopupMenuButton<String>(
+            tooltip: 'Ajustes',
+            icon: const Icon(Icons.settings_outlined),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            onSelected: (value) {
+              switch (value) {
+                case 'theme':
+                  widget.onToggleTheme?.call();
+                case 'rules':
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const RulesScreen()),
+                  );
+                case 'totp':
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const TotpEnrollmentScreen(),
+                    ),
+                  );
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'theme',
+                child: ListTile(
+                  leading: Icon(
+                    widget.isDarkMode
+                        ? Icons.light_mode_outlined
+                        : Icons.dark_mode_outlined,
+                  ),
+                  title: Text(
+                    widget.isDarkMode ? 'Tema claro' : 'Tema oscuro',
+                  ),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'rules',
+                child: ListTile(
+                  leading: Icon(Icons.shield_outlined),
+                  title: Text('Normas y descargo'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'totp',
+                child: ListTile(
+                  leading: Icon(Icons.security_outlined),
+                  title: Text('Seguridad TOTP'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())

@@ -17,6 +17,7 @@ import '../widgets/discord/popular_servers_sidebar.dart';
 import '../widgets/post_card.dart';
 import 'post_detail_screen.dart';
 import '../../groups/screens/groups_screen.dart';
+import '../../profile/screens/profile_screen.dart';
 import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/empty_state_widget.dart';
 
@@ -577,6 +578,19 @@ class _ForumScreenState extends State<ForumScreen> {
     _loadPosts();
   }
 
+  void _openProfile() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ProfileScreen(
+          activeAlias: widget.activeAlias,
+          onAliasChanged: widget.onAliasChanged,
+          onToggleTheme: widget.onToggleTheme,
+          isDarkMode: widget.isDarkMode,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -612,6 +626,8 @@ class _ForumScreenState extends State<ForumScreen> {
               activeChannel: currentChannel,
               channels: currentChannels,
               onSelectChannel: _onSelectChannel,
+              activeAlias: widget.activeAlias,
+              onOpenProfile: _openProfile,
             ),
 
             // 3. Main Content: GroupsScreen if isGroups, otherwise Channel Feed
@@ -697,6 +713,13 @@ class _ForumScreenState extends State<ForumScreen> {
                       activeChannel: currentChannel,
                       channels: currentChannels,
                       onSelectChannel: _onSelectChannel,
+                      activeAlias: widget.activeAlias,
+                      onOpenProfile: () {
+                        if (_scaffoldKey.currentState?.isDrawerOpen == true) {
+                          Navigator.of(context).pop();
+                        }
+                        _openProfile();
+                      },
                     ),
                   ),
                 ],

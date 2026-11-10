@@ -63,7 +63,8 @@ void main() {
         );
         expect(logo, findsOneWidget);
         expect(tester.getSize(logo), const Size(48, 48));
-        expect(find.byTooltip('Ajustes'), findsOneWidget);
+        // El icono de configuración se removió de la barra superior donde está Zanate
+        expect(find.byTooltip('Ajustes'), findsNothing);
         expect(find.text('Comunidad Universitaria'), findsNothing);
         expect(find.text('No Oficial'), findsNothing);
         expect(find.text('Red Estudiantil Autónoma'), findsNothing);
@@ -301,7 +302,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(NavigationBar), findsOneWidget);
       expect(find.text('Zanate'), findsOneWidget);
-      expect(find.byTooltip('Ajustes'), findsOneWidget);
+      expect(find.byTooltip('Ajustes'), findsNothing);
 
       tester.view.physicalSize = const Size(700, 800);
       await tester.pumpAndSettle();

@@ -130,8 +130,10 @@ void main() {
         expect(find.byTooltip('Todas las Facultades'), findsOneWidget);
         expect(find.byTooltip('Grupos de Estudio'), findsNothing);
         expect(find.byTooltip('Agregar servidor'), findsOneWidget);
+        expect(find.byTooltip('Normas y descargo legal'), findsOneWidget);
         expect(find.byIcon(Icons.settings_outlined), findsNothing);
-        expect(find.text('Alias oculto'), findsNothing);
+        expect(find.text('Alias oculto'), findsOneWidget);
+        expect(find.text('En línea'), findsOneWidget);
         expect(find.text('CANALES'), findsOneWidget);
       },
     );
