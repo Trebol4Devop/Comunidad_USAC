@@ -7,6 +7,8 @@ select plan(14);
 
 create extension if not exists pgtap;
 
+set role postgres;
+
 -- -----------------------------------------------------------------------------
 -- Fixtures
 -- -----------------------------------------------------------------------------
@@ -24,21 +26,21 @@ begin
     insert into public.posts (
         id, user_id, title, content, category, carrera, author_alias, likes, moderation_status
     ) values (
-        '10000000-0000-0000-0000-000000000001', v_u1, 'Post para Contador de Likes', 'Contenido', 'general', 'sistemas', 'U1', 0, 0
+        '10000000-0000-0000-0000-000000000001', v_u1, 'Post para Contador de Likes', 'Contenido', 'general', 'sistemas', 'Compilador Desvelado', 0, 0
     ) on conflict (id) do nothing;
 
     -- Grupo con upvotes y reports en 0
     insert into public.student_groups (
-        id, user_id, title, description, carrera, curso, section, link, upvotes, reported_count, moderation_status
+        id, user_id, title, description, carrera, curso, section, link, author_alias, upvotes, reported_count, moderation_status
     ) values (
-        '20000000-0000-0000-0000-000000000001', v_u1, 'Grupo para Contadores', 'Desc', 'sistemas', 'Curso A', 'A', 'https://chat.whatsapp.com/cnt', 0, 0, 0
+        '20000000-0000-0000-0000-000000000001', v_u1, 'Grupo para Contadores', 'Desc', 'sistemas', 'Curso A', 'A', 'https://chat.whatsapp.com/cnt', 'Compilador Desvelado', 0, 0, 0
     ) on conflict (id) do nothing;
 
     -- Marketplace con upvotes y reports en 0
     insert into public.marketplace_items (
         id, user_id, title, description, price, category, facultad, upvotes, reported_count, status, moderation_status, author_alias
     ) values (
-        '30000000-0000-0000-0000-000000000001', v_u1, 'Item para Contadores', 'Desc', 50.0, 'otros_articulos', '08', 0, 0, 'available', 0, 'U1'
+        '30000000-0000-0000-0000-000000000001', v_u1, 'Item para Contadores', 'Desc', 50.0, 'otros_articulos', '08', 0, 0, 'available', 0, 'Compilador Desvelado'
     ) on conflict (id) do nothing;
 end $$;
 

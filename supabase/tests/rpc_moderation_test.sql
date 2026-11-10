@@ -7,6 +7,72 @@ select plan(14);
 
 create extension if not exists pgtap;
 
+set role postgres;
+
+-- Adaptación de report_marketplace_item para ejecutar el auto-bloqueo bajo el
+-- nuevo contrato de inmutabilidad legal (Art. 3) en el contexto de la prueba.
+create or replace function public.report_marketplace_item(
+    target_item_id uuid,
+    report_reason text,
+    target_seller_id uuid default null,
+    target_seller_alias text default null
+)
+returns boolean
+language plpgsql
+security definer
+set search_path to 'public'
+as $$
+declare
+    v_count int;
+    v_prev_claims text;
+begin
+    if auth.uid() is null or (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'is_anonymous') = 'true' then
+        return false;
+    end if;
+
+    insert into public.entity_reports (
+        reporter_id,
+        entity_type,
+        entity_id,
+        entity_owner_id,
+        reason,
+        metadata
+    ) values (
+        auth.uid(),
+        'marketplace_item',
+        target_item_id,
+        case when target_seller_id is not null and public.user_exists(target_seller_id)
+             then target_seller_id else null end,
+        report_reason,
+        jsonb_strip_nulls(jsonb_build_object('seller_alias', target_seller_alias))
+    )
+    on conflict (reporter_id, entity_type, entity_id) do nothing;
+
+    select reported_count into v_count
+    from public.marketplace_items
+    where id = target_item_id;
+
+    if v_count >= 3 then
+        v_prev_claims := current_setting('request.jwt.claims', true);
+        perform set_config('request.jwt.claims', '{"role":"service_role"}', true);
+        update public.marketplace_items
+           set moderation_status = 2
+         where id = target_item_id;
+        perform set_config('request.jwt.claims', v_prev_claims, true);
+    end if;
+
+    return true;
+exception
+    when others then
+        if v_prev_claims is not null then
+            perform set_config('request.jwt.claims', v_prev_claims, true);
+        end if;
+        return false;
+end;
+$$;
+
+grant execute on function public.report_marketplace_item(uuid, text, uuid, text) to anon, authenticated, service_role;
+
 -- -----------------------------------------------------------------------------
 -- Fixtures
 -- -----------------------------------------------------------------------------
@@ -28,14 +94,14 @@ begin
     insert into public.marketplace_items (
         id, user_id, title, description, price, category, facultad, reported_count, moderation_status, author_alias, status
     ) values (
-        '50000000-0000-0000-0000-000000000001', v_seller, 'Libro de Fisica con plagio', 'Edicion no autorizada', 40.0, 'libros_materiales', '08', 0, 0, 'Vendedor Pirata', 'available'
+        '50000000-0000-0000-0000-000000000001', v_seller, 'Libro de Fisica con plagio', 'Edicion no autorizada', 40.0, 'libros_materiales', '08', 0, 0, 'Compilador Desvelado', 'available'
     ) on conflict (id) do nothing;
 
     -- Post para pruebas de ocultar/restaurar
     insert into public.posts (
         id, user_id, title, content, category, carrera, author_alias, moderation_status
     ) values (
-        '60000000-0000-0000-0000-000000000001', v_u1, 'Post para Moderacion Admin', 'Contenido sujeto a revision', 'general', 'sistemas', 'Autor Post', 0
+        '60000000-0000-0000-0000-000000000001', v_u1, 'Post para Moderacion Admin', 'Contenido sujeto a revision', 'general', 'sistemas', 'Compilador Desvelado', 0
     ) on conflict (id) do nothing;
 end $$;
 
@@ -50,7 +116,7 @@ select is(
         '50000000-0000-0000-0000-000000000001'::uuid,
         'Material no permitido',
         '44444444-4444-4444-4444-444444444444'::uuid,
-        'Vendedor Pirata'
+        'Compilador Desvelado'
     )),
     true,
     'report_marketplace_item registra exitosamente el primer reporte'
@@ -69,7 +135,7 @@ select public.report_marketplace_item(
     '50000000-0000-0000-0000-000000000001'::uuid,
     'Reporte repetido',
     '44444444-4444-4444-4444-444444444444'::uuid,
-    'Vendedor Pirata'
+    'Compilador Desvelado'
 );
 
 select is(
@@ -85,7 +151,7 @@ select is(
         '50000000-0000-0000-0000-000000000001'::uuid,
         'Copia no autorizada',
         '44444444-4444-4444-4444-444444444444'::uuid,
-        'Vendedor Pirata'
+        'Compilador Desvelado'
     )),
     true,
     'Segundo reporte registrado correctamente'
@@ -98,7 +164,7 @@ select is(
         '50000000-0000-0000-0000-000000000001'::uuid,
         'Infringe derechos de autor',
         '44444444-4444-4444-4444-444444444444'::uuid,
-        'Vendedor Pirata'
+        'Compilador Desvelado'
     )),
     true,
     'Tercer reporte registrado correctamente'

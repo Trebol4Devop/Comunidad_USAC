@@ -7,6 +7,8 @@ select plan(19);
 
 create extension if not exists pgtap;
 
+set role postgres;
+
 -- Usuario base referenciado por los inserts de prueba. Necesario porque la FK
 -- marketplace_items.user_id -> auth.users se valida de verdad (el trigger de
 -- propiedad ya no sobreescribe user_id con NULL en contextos sin sesión).
@@ -26,7 +28,7 @@ select throws_ok(
         'Contenido',
         'general',
         'sistemas',
-        'Alias',
+        'Compilador Desvelado',
         4
       )$$,
     '23514',
@@ -43,7 +45,7 @@ select throws_ok(
         gen_random_uuid(),
         '11111111-1111-1111-1111-111111111111',
         'Comentario Invalido',
-        'Alias',
+        'Compilador Desvelado',
         -1
       )$$,
     '23514',
@@ -63,7 +65,7 @@ select throws_ok(
         10.0,
         'otros_articulos',
         '08',
-        'Alias',
+        'Compilador Desvelado',
         5
       )$$,
     '23514',
@@ -84,7 +86,7 @@ select throws_ok(
         'Curso',
         'A',
         'https://chat.whatsapp.com/inv',
-        'Alias',
+        'Compilador Desvelado',
         9
       )$$,
     '23514',
@@ -124,7 +126,7 @@ select throws_ok(
         10.0,
         'otros_articulos',
         '08',
-        'Alias',
+        'Compilador Desvelado',
         'estado_falso'
       )$$,
     '23514',
@@ -144,7 +146,7 @@ select lives_ok(
         25.0,
         'otros_articulos',
         '08',
-        'Alias',
+        'Compilador Desvelado',
         'paused'
       )$$,
     'marketplace_items_status_check permite el estado paused utilizado por la app'
@@ -191,7 +193,7 @@ select throws_ok(
         'Desc',
         'categoria_inexistente',
         'sistemas',
-        'Alias'
+        'Compilador Desvelado'
       )$$,
     '23503',
     null,
@@ -209,7 +211,7 @@ select throws_ok(
         'Desc',
         'general',
         'carrera_falsa_999',
-        'Alias'
+        'Compilador Desvelado'
       )$$,
     '23503',
     null,
@@ -228,7 +230,7 @@ select throws_ok(
         10.0,
         'otros_articulos',
         'facultad_invalida_99',
-        'Alias'
+        'Compilador Desvelado'
       )$$,
     '23503',
     null,

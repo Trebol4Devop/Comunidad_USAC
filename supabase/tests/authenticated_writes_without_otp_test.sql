@@ -29,7 +29,7 @@ select lives_ok(
         'Contenido de prueba',
         'general',
         'sistemas',
-        'Usuario de prueba',
+        'Compilador Desvelado',
         0
       )$$,
     'AAL1 puede insertar contenido autenticado'
@@ -64,17 +64,19 @@ select lives_ok(
     'AAL1 puede llamar al RPC de reporte sin exigir OTP'
 );
 
-select lives_ok(
+select throws_ok(
     $$delete from public.posts
        where id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0077'$$,
-    'AAL1 puede eliminar su contenido según las políticas existentes'
+    '42501',
+    null,
+    'AAL1 no puede eliminar físicamente su contenido (DELETE revocado)'
 );
 
 select is(
     (select count(*)::integer from public.posts
       where id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0077'),
-    0,
-    'La fila eliminada por AAL1 ya no existe'
+    1,
+    'La fila permanece tras el intento de eliminación física'
 );
 
 select * from finish();
