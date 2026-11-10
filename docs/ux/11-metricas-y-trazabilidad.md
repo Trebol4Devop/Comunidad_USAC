@@ -33,9 +33,14 @@ Nombre en formato `dominio_accion` (snake_case, sin datos personales).
 | `mfa_challenge_fail` | Fallo de desafío TOTP | `motivo` (sin datos sensibles) |
 | `forum_post_create` | Publicación creada | `canal`, `tiene_encuesta`, `tiene_adjunto` |
 | `forum_comment_create` | Comentario creado | `es_respuesta` |
-| `market_listing_create` | Anuncio creado | `categoria`, `es_gratis` |
-| `market_contact_click` | Clic en contacto externo | `red` (whatsapp/telegram/instagram) |
-| `market_listing_sold` | Anuncio marcado vendido | `dias_publicado` |
+| `market_listing_create` | Anuncio creado | `categoria`, `es_gratis`, `plan` |
+| `market_item_view` | Se abrió la ficha de producto (una vez por ítem y sesión) | `item_id`, `plan`, `sede` |
+| `market_contact_click` | Clic en contacto externo | `red` (whatsapp/telegram/instagram/messenger), `plan` |
+| `market_listing_sold` | Anuncio marcado vendido | `dias_publicado`, `plan` |
+| `market_bookmark` | Producto guardado o quitado de guardados | `accion` (save/remove) |
+| `market_share` | Se compartió un producto o tienda | `entidad` (item/store) |
+| `market_presence_toggle` | Check-in de presencia activado/desactivado | `plan`, `building_code` |
+| `market_plan_request` | Solicitud de plan o mejora enviada | `plan`, `origen` |
 | `group_share` / `group_open` | Grupo compartido/abierto | `plataforma` |
 | `carne_validation_done` | Carné validado | `resultado` |
 | `report_sent` | Reporte enviado | `tipo_entidad`, `motivo` |
@@ -56,6 +61,9 @@ Nombre en formato `dominio_accion` (snake_case, sin datos personales).
 | Finalización de onboarding | `auth_signup_done` + `mfa_enroll_done` / inicios | ≥ 60 % |
 | Abandono en MFA | `mfa_grace_skip` + caídas entre `mfa_enroll_start` y `done` | ≤ 25 % |
 | Contacto exitoso | `market_contact_click` por anuncio visto | creciente |
+| Conversión de ficha a contacto | `market_contact_click` / `market_item_view` | creciente |
+| Adopción de planes de pago | vendedores `pro_student` + `business_local` / vendedores activos | informativo |
+| Retención de vendedores | vendedores con ≥ 1 publicación activa mes a mes | creciente |
 | Resolución de reportes | reportes cerrados / recibidos (semanal) | ≥ 90 % |
 | Adopción de Grupos | `group_open` / usuarios activos | creciente |
 | Efectividad de errores | `error_shown` con acción posterior | ≥ 70 % |
@@ -78,7 +86,8 @@ Leyenda de estado: Cubierto · Parcial · Pendiente.
 |---|---|---|---|
 | UX-PRD-010 Visitante solo lectura | `core/services/supabase_service.dart`; migración `enforce_anonymous_read_only.sql` | `supabase/tests/anonymous_read_only_test.sql`; `integration_test/guest_navigation_test.dart` | Cubierto |
 | UX-PRD-011 Segundo factor en la interfaz | `shared/widgets/totp_session_guard.dart`; la base de datos no impone AAL2 globalmente | `test/widgets/totp_session_guard_test.dart`; `supabase/tests/authenticated_writes_without_otp_test.sql` | Parcial |
-| UX-PRD-016 Vendedor externo verificado | campos en `profiles` y panel admin (nuevo) | Pendiente | Pendiente |
+| UX-PRD-016 Vendedor externo verificado | `seller_profiles` (`seller_type = 'local_business'`); panel admin (nuevo) | Pendiente | Pendiente |
+| UX-PRD-017 Vendedor con plan de visibilidad | `marketplace_plans`; `seller_profiles.plan_id`; `sponsor_requests` (nuevo) | Pendiente | Pendiente |
 | UX-PRD-026 No lucro, financiamiento y datos | `features/rules/screens/rules_screen.dart`; `features/profile/screens/profile_screen.dart` (`UX-PRF-011`) | Pendiente | Parcial |
 | UX-MAP-001 Deep links | `main.dart` (`_onGenerateRoute`) | `test/sso_test.dart` | Parcial |
 | UX-MAP-002 Retorno en subpantallas | `features/forum/screens/post_detail_screen.dart` | `integration_test/forum_flow_test.dart` | Parcial |
@@ -108,17 +117,28 @@ Leyenda de estado: Cubierto · Parcial · Pendiente.
 
 | Requisito | Implementación | Prueba | Estado |
 |---|---|---|---|
+| UX-MKT-001 Banner e identidad | `marketplace_screen.dart`; `MaxWidthContainer` | `test/widgets/marketplace_screen_test.dart` | Cubierto |
 | UX-MKT-004 Filtros y búsqueda | `features/marketplace/screens/marketplace_screen.dart` | `test/widgets/marketplace_screen_test.dart` | Cubierto |
-| UX-MKT-005/006 Grid y galería | `features/marketplace/widgets/marketplace_card.dart`; `features/shared/widgets/image_viewer_dialog.dart` | `test/widgets/shared/image_viewer_dialog_test.dart` | Cubierto |
+| UX-MKT-005/006 Grid, galería y video | `features/marketplace/widgets/marketplace_card.dart`; `features/shared/widgets/image_viewer_dialog.dart` | `test/widgets/shared/image_viewer_dialog_test.dart` | Parcial |
 | UX-MKT-008 Ciclo de vida del artículo | `core/services/marketplace_service.dart` | `test/services/marketplace_service_test.dart` | Parcial |
-| UX-MKT-009 Contacto directo | `core/models/marketplace_item.dart`; `core/utils/url_utils.dart` | `test/models/marketplace_item_model_test.dart` | Cubierto |
-| UX-MKT-012 Crear anuncio | `features/marketplace/widgets/create_listing_dialog.dart` | `test/widgets/dialogs/create_listing_dialog_test.dart` | Cubierto |
+| UX-MKT-009 Contacto directo y evento de clic | `core/models/marketplace_item.dart`; `core/utils/url_utils.dart`; telemetría (nuevo) | `test/models/marketplace_item_model_test.dart` | Parcial |
+| UX-MKT-010 Upvote | `core/services/marketplace_service.dart` | `test/services/marketplace_service_test.dart` | Cubierto |
+| UX-MKT-012 Crear anuncio con límites de plan | `features/marketplace/widgets/create_listing_dialog.dart`; `marketplace_plans` (nuevo) | `test/widgets/dialogs/create_listing_dialog_test.dart` | Parcial |
 | UX-MKT-013 Filtro semántico | `core/services/marketplace_service.dart` | `test/services/marketplace_validation_test.dart` | Cubierto |
-| UX-MKT-014 Validación de carné (vendedor) | `features/profile/widgets/carne_validation_modal.dart` | `test/widgets/shared/carne_validation_modal_test.dart` | Parcial |
-| UX-MKT-015 Fallback de imágenes `[Mejora]` | `core/services/storage_service.dart` | `test/services/storage_service_test.dart` | Pendiente |
-| UX-MKT-016 Carta de presentacion del vendedor | (nuevo) `SellerProfileScreen` | Pendiente | Pendiente |
-| UX-MKT-017 Límites del vendedor no patrocinador | validaciones de creación e interfaz (nuevo) | Pendiente | Pendiente |
-| UX-MKT-002/003 Patrocinios | `features/marketplace/widgets/sponsor_carousel.dart`; `sponsor_request_dialog.dart` | `test/widgets/sponsor_carousel_test.dart`; `sponsor_request_dialog_test.dart` | Cubierto |
+| UX-MKT-014 Verificación de vendedor (carné o cuenta comercial) | `features/profile/widgets/carne_validation_modal.dart`; `seller_profiles` (nuevo) | `test/widgets/shared/carne_validation_modal_test.dart` | Parcial |
+| UX-MKT-015 Fallback de multimedia `[Mejora]` | `core/services/storage_service.dart` | `test/services/storage_service_test.dart` | Pendiente |
+| UX-MKT-016 Perfil de tienda y carta del vendedor | `SellerProfileScreen` / `StoreProfileScreen` (nuevo) | Pendiente | Pendiente |
+| UX-MKT-017 Límites y vigencia por plan | `marketplace_plans`; `seller_profiles`; `MarketplaceService.checkPlanLimits` (nuevo) | Pendiente | Pendiente |
+| UX-MKT-018 Catálogo y contratación de planes | `MarketplacePlansSheet` (nuevo); `marketplace_plans`; `sponsor_requests` | Pendiente | Pendiente |
+| UX-MKT-019 Perfil comercial y presencia | `StoreSettingsScreen` (nuevo); `seller_profiles.*` | Pendiente | Pendiente |
+| UX-MKT-020 Feed ponderado y destacados | RPC `get_marketplace_feed`; índices de feed (nuevo) | Pendiente | Pendiente |
+| UX-MKT-021 Ficha de producto (6 bloques) | `ProductDetailScreen` (nuevo) | Pendiente | Pendiente |
+| UX-MKT-022 Catálogo del mismo vendedor | RPC `get_seller_catalog`; `SellerCatalogCarousel` (nuevo) | Pendiente | Pendiente |
+| UX-MKT-023 Relacionados y escaparate protegido | RPC `get_related_marketplace_items`; `RelatedItemsGrid` (nuevo) | Pendiente | Pendiente |
+| UX-MKT-024 Telemetría de conversión | `marketplace_item_events`; `MarketplaceTelemetryService` (nuevo) | Pendiente | Pendiente |
+| UX-MKT-025 Guardados | `marketplace_bookmarks`; `SavedItemsScreen` (nuevo) | Pendiente | Pendiente |
+| UX-MKT-026 Panel "Mis ventas" | `MisVentasScreen`; métricas agregadas (nuevo) | Pendiente | Pendiente |
+| UX-MKT-002/003 Patrocinios y solicitud de plan | `features/marketplace/widgets/sponsor_carousel.dart`; `sponsor_request_dialog.dart`; `marketplace_plans` | `test/widgets/sponsor_carousel_test.dart`; `sponsor_request_dialog_test.dart` | Parcial |
 
 ### 4.4 Grupos
 
@@ -235,6 +255,9 @@ Leyenda de estado: Cubierto · Parcial · Pendiente.
 >   ([`10-transversales.md`](10-transversales.md)); estado: Pendiente (ver §4.7).
 >
 > **Tablas de BD pendientes de crear** (bloqueantes para los requisitos indicados):
+> - `marketplace_plans`, `seller_profiles`, `marketplace_item_events` y
+>   `marketplace_bookmarks` — planes, perfil comercial, telemetría y guardados
+>   (bloqueantes para UX-MKT-017 a UX-MKT-026 y UX-PRD-017).
 > - `sponsored_promotions` — con columnas `id`, `sponsor_id`, `status`,
 >   `fecha_inicio`, `fecha_fin`, `moderation_status`, `created_at`, `updated_at`
 >   (bloqueante para UX-SPN-013, UX-GRP-010, UX-GRP-011).
@@ -273,7 +296,17 @@ prioritarios para el siguiente ciclo de trabajo.
 | UX-FORO-020 | Acceso directo a Grupos | `forum_server_rail.dart` |
 | UX-MKT-014 | Verificación real de carné (no simulada) | `carne_validation_modal.dart` |
 | UX-MKT-015 | Fallback de almacenamiento | `storage_service.dart` |
-| UX-MKT-016 | Carta de presentación (página pública) del vendedor | (nuevo) |
+| UX-MKT-016 | Perfil público de tienda con logo, banner, horario y estado | `StoreProfileScreen` (nuevo); `seller_profiles` |
+| UX-MKT-017 | Límites y vigencia por plan (free 14 días) | `marketplace_plans`; `seller_profiles` |
+| UX-MKT-018 | Catálogo de planes y contratación sin pago in-app | `MarketplacePlansSheet` (nuevo); `sponsor_requests` |
+| UX-MKT-019 | Perfil comercial, horarios y presencia en campus | `StoreSettingsScreen` (nuevo); `seller_profiles.business_hours` |
+| UX-MKT-020 | Feed ponderado (time-decay + tier boost) | RPC `get_marketplace_feed` (nuevo) |
+| UX-MKT-021 | Ficha de producto con jerarquía de 6 bloques | `ProductDetailScreen` (nuevo) |
+| UX-MKT-022 | Carrusel "Más productos del vendedor" | RPC `get_seller_catalog` (nuevo) |
+| UX-MKT-023 | Relacionados y protección de escaparate | RPC `get_related_marketplace_items` (nuevo) |
+| UX-MKT-024 | Telemetría de vistas y clics con debounce | `marketplace_item_events` (nuevo) |
+| UX-MKT-025 | Guardados de productos | `marketplace_bookmarks` (nuevo) |
+| UX-MKT-026 | Panel "Mis ventas" con analíticas y upselling | `MisVentasScreen` (nuevo) |
 | UX-GRP-001 | Acceso directo desde navegación principal | `app_shell.dart` |
 | UX-PRF-003 | Persistencia del alias en la nube | `local_storage_service.dart` |
 | UX-AUTH-003 | Cuenta regresiva al reenviar OTP | `auth_modal.dart` |
@@ -307,10 +340,11 @@ prioritarios para el siguiente ciclo de trabajo.
 | UX-PRF-032 | Consentimiento por campo y visibilidad anónima por defecto | `profiles`; tabla `profile_card_visibility` (nuevo); `SharedPreferences` |
 | UX-PRF-033 | Campos revelables y límites por contexto (Foro vs Marketplace) | `profile_screen.dart`; `profile_card_visibility` (nuevo) |
 | UX-PRF-034 | Control y previsualización de mi tarjeta en preferencias | `PreferencesScreen` (nuevo); `ProfileCardSheet` (nuevo) |
-| UX-PRD-016 | Definición e identidad de vendedor externo verificado | `profiles` (nuevo campo) |
+| UX-PRD-016 | Definición e identidad de vendedor externo verificado | `seller_profiles` (nuevo) |
+| UX-PRD-017 | Planes de visibilidad del vendedor (freemium) | `marketplace_plans`; `seller_profiles` (nuevo) |
 | UX-AUTH-016 | Clasificación de acceso por dominio de correo y gestión de dominios | lógica de autenticación y panel admin (nuevo) |
 | UX-PRF-035 | Flujo de admisión de vendedor externo con documentos | formulario de admisión y panel admin (nuevo) |
-| UX-MKT-017 | Aplicación de límites a vendedores no patrocinadores | validaciones en creación de anuncio y conteo (nuevo) |
+| UX-MKT-017 | Límites por plan (3/20/ilimitadas, 14 días, multimedia) | validaciones en creación, vigencia y conteo (nuevo) |
 
 ---
 
