@@ -113,6 +113,7 @@ void main() {
         'carrera': 'todas',
         'search': '',
         'bookmarks': false,
+        'feedMode': 'hot',
       });
       CacheService.set('forum_posts', key, [post]);
 
