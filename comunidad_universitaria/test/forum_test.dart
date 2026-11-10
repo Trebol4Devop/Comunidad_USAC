@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:comunidad_universitaria/core/models/post.dart';
+import 'package:comunidad_universitaria/features/forum/screens/forum_screen.dart';
 import 'package:comunidad_universitaria/features/forum/screens/post_detail_screen.dart';
 import 'package:comunidad_universitaria/features/forum/widgets/comment_item.dart';
 import 'package:comunidad_universitaria/features/forum/widgets/post_card.dart';
+import 'package:comunidad_universitaria/features/reviews/screens/seccion_reviews_screen.dart';
 
 void main() {
   testWidgets('Abrir PostDetailScreen desde ForumScreen o PostCard', (
@@ -101,4 +103,28 @@ void main() {
 
     expect(find.text('Duda sobre Matemática'), findsOneWidget);
   });
+
+  testWidgets(
+    'Botón de reseñas de secciones en ForumScreen navega a SeccionReviewsScreen',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ForumScreen(
+            activeAlias: 'Estudiante #42',
+            onAliasChanged: (_) {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final reviewsButton = find.byTooltip('Reseñas de secciones');
+      expect(reviewsButton, findsOneWidget);
+
+      await tester.tap(reviewsButton);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SeccionReviewsScreen), findsOneWidget);
+      expect(find.text('Reseñas de Secciones'), findsOneWidget);
+    },
+  );
 }
