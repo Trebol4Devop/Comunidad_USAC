@@ -46,10 +46,21 @@ class TestFixtures {
       'id': id,
       'post_id': postId,
       'question': question,
-      'options': options ??
+      'options':
+          options ??
           [
-            pollOptionMap(id: 'opt-1', pollId: id, optionText: 'Fácil', votesCount: 10),
-            pollOptionMap(id: 'opt-2', pollId: id, optionText: 'Difícil', votesCount: 20),
+            pollOptionMap(
+              id: 'opt-1',
+              pollId: id,
+              optionText: 'Fácil',
+              votesCount: 10,
+            ),
+            pollOptionMap(
+              id: 'opt-2',
+              pollId: id,
+              optionText: 'Difícil',
+              votesCount: 20,
+            ),
           ],
     };
   }
@@ -65,10 +76,21 @@ class TestFixtures {
       id: id,
       postId: postId,
       question: question,
-      options: options ??
+      options:
+          options ??
           [
-            pollOption(id: 'opt-1', pollId: id, optionText: 'Fácil', votesCount: 10),
-            pollOption(id: 'opt-2', pollId: id, optionText: 'Difícil', votesCount: 20),
+            pollOption(
+              id: 'opt-1',
+              pollId: id,
+              optionText: 'Fácil',
+              votesCount: 10,
+            ),
+            pollOption(
+              id: 'opt-2',
+              pollId: id,
+              optionText: 'Difícil',
+              votesCount: 20,
+            ),
           ],
       myVotedOptionId: myVotedOptionId,
     );
@@ -262,6 +284,7 @@ class TestFixtures {
     dynamic upvotes = 5,
     String status = 'available',
     bool isSellerVerified = true,
+    bool isMine = false,
   }) {
     return {
       'id': id,
@@ -291,6 +314,7 @@ class TestFixtures {
       'upvotes': upvotes,
       'status': status,
       'is_seller_verified': isSellerVerified,
+      'is_mine': isMine,
     };
   }
 
@@ -323,6 +347,7 @@ class TestFixtures {
     bool isUpvotedByMe = false,
     String status = 'available',
     bool isSellerVerified = true,
+    bool isMine = false,
   }) {
     return MarketplaceItem(
       id: id,
@@ -353,6 +378,7 @@ class TestFixtures {
       isUpvotedByMe: isUpvotedByMe,
       status: status,
       isSellerVerified: isSellerVerified,
+      isMine: isMine,
     );
   }
 
@@ -374,6 +400,7 @@ class TestFixtures {
     String? createdAt = '2026-03-01T08:00:00.000Z',
     String? imageUrl,
     dynamic moderationStatus = 0,
+    bool isMine = false,
   }) {
     return {
       'id': id,
@@ -390,6 +417,7 @@ class TestFixtures {
       'created_at': createdAt,
       'image_url': imageUrl,
       'moderation_status': moderationStatus,
+      'is_mine': isMine,
     };
   }
 
@@ -409,6 +437,7 @@ class TestFixtures {
     String? imageUrl,
     int moderationStatus = 0,
     bool isUpvotedByMe = false,
+    bool isMine = false,
   }) {
     return WhatsAppGroup(
       id: id,
@@ -426,6 +455,7 @@ class TestFixtures {
       imageUrl: imageUrl,
       moderationStatus: moderationStatus,
       isUpvotedByMe: isUpvotedByMe,
+      isMine: isMine,
     );
   }
 
@@ -523,9 +553,13 @@ class TestFixtures {
       'codigo': codigo,
       'nombre': nombre,
       'sitio': sitio,
-      'carreras': carreras ??
+      'carreras':
+          carreras ??
           [
-            carreraMap(id: 'sistemas', nombre: 'Ingeniería en Ciencias y Sistemas'),
+            carreraMap(
+              id: 'sistemas',
+              nombre: 'Ingeniería en Ciencias y Sistemas',
+            ),
           ],
     };
   }

@@ -1,10 +1,4 @@
-enum GroupPlatform {
-  whatsApp,
-  telegram,
-  discord,
-  drive,
-  other,
-}
+enum GroupPlatform { whatsApp, telegram, discord, drive, other }
 
 class WhatsAppGroup {
   final String id;
@@ -22,6 +16,7 @@ class WhatsAppGroup {
   final String? imageUrl;
   final int moderationStatus;
   final bool isUpvotedByMe;
+  final bool isMine;
 
   WhatsAppGroup({
     required this.id,
@@ -39,6 +34,7 @@ class WhatsAppGroup {
     this.imageUrl,
     this.moderationStatus = 0,
     this.isUpvotedByMe = false,
+    this.isMine = false,
   });
 
   static String platformToString(GroupPlatform p) {
@@ -81,7 +77,8 @@ class WhatsAppGroup {
     if (lower.contains('discord.gg') || lower.contains('discord.com')) {
       return GroupPlatform.discord;
     }
-    if (lower.contains('drive.google.com') || lower.contains('docs.google.com')) {
+    if (lower.contains('drive.google.com') ||
+        lower.contains('docs.google.com')) {
       return GroupPlatform.drive;
     }
     return GroupPlatform.other;
@@ -105,6 +102,7 @@ class WhatsAppGroup {
     String? imageUrl,
     int? moderationStatus,
     bool? isUpvotedByMe,
+    bool? isMine,
   }) {
     return WhatsAppGroup(
       id: id ?? this.id,
@@ -122,10 +120,14 @@ class WhatsAppGroup {
       imageUrl: imageUrl ?? this.imageUrl,
       moderationStatus: moderationStatus ?? this.moderationStatus,
       isUpvotedByMe: isUpvotedByMe ?? this.isUpvotedByMe,
+      isMine: isMine ?? this.isMine,
     );
   }
 
-  factory WhatsAppGroup.fromMap(Map<String, dynamic> map, {bool isUpvotedByMe = false}) {
+  factory WhatsAppGroup.fromMap(
+    Map<String, dynamic> map, {
+    bool isUpvotedByMe = false,
+  }) {
     return WhatsAppGroup(
       id: map['id']?.toString() ?? '',
       title: map['title'] ?? '',
@@ -134,7 +136,7 @@ class WhatsAppGroup {
       section: map['section'] ?? 'Sección Única',
       link: map['link'] ?? '',
       description: map['description'] ?? '',
-      userId: map['user_id']?.toString(),
+      userId: null,
       authorAlias: map['author_alias'] ?? 'Estudiante USAC',
       upvotes: (map['upvotes'] is int)
           ? map['upvotes']
@@ -150,6 +152,7 @@ class WhatsAppGroup {
           ? map['moderation_status']
           : int.tryParse(map['moderation_status']?.toString() ?? '0') ?? 0,
       isUpvotedByMe: isUpvotedByMe,
+      isMine: map['is_mine'] == true,
     );
   }
 

@@ -30,7 +30,10 @@ class MarketplaceService {
     'licor',
   ];
 
-  static String? validateContent({required String title, required String description}) {
+  static String? validateContent({
+    required String title,
+    required String description,
+  }) {
     final combined = '$title $description'.toLowerCase();
     for (var keyword in _prohibitedKeywords) {
       if (combined.contains(keyword)) {
@@ -47,7 +50,8 @@ class MarketplaceService {
     bool onlyFree = false,
     String searchQuery = '',
   }) async {
-    final isDefaultQuery = category == 'todos' &&
+    final isDefaultQuery =
+        category == 'todos' &&
         facultad == 'todas' &&
         sede == 'todas' &&
         !onlyFree &&
@@ -61,7 +65,10 @@ class MarketplaceService {
       'search': searchQuery.trim().toLowerCase(),
     });
 
-    final cached = CacheService.get<List<MarketplaceItem>>(_cacheNamespace, cacheKey);
+    final cached = CacheService.get<List<MarketplaceItem>>(
+      _cacheNamespace,
+      cacheKey,
+    );
     if (cached != null) return List<MarketplaceItem>.from(cached);
 
     if (!SupabaseConfig.isConfigured) {
@@ -75,7 +82,7 @@ class MarketplaceService {
 
     try {
       var query = SupabaseService.client
-          .from('marketplace_items')
+          .from('safe_marketplace_items')
           .select('*')
           .lt('moderation_status', 2);
 
@@ -97,7 +104,9 @@ class MarketplaceService {
 
       if (searchQuery.trim().isNotEmpty) {
         final q = searchQuery.trim();
-        query = query.or('title.ilike.%$q%,description.ilike.%$q%,building_code.ilike.%$q%');
+        query = query.or(
+          'title.ilike.%$q%,description.ilike.%$q%,building_code.ilike.%$q%',
+        );
       }
 
       final response = await query
@@ -133,7 +142,11 @@ class MarketplaceService {
         );
       }).toList();
 
-      CacheService.set(_cacheNamespace, cacheKey, List<MarketplaceItem>.from(listings));
+      CacheService.set(
+        _cacheNamespace,
+        cacheKey,
+        List<MarketplaceItem>.from(listings),
+      );
       if (isDefaultQuery) {
         await CacheService.setPersisted(
           _cacheNamespace,
@@ -153,15 +166,21 @@ class MarketplaceService {
   }
 
   /// Lee la primera página persistida (solo consultas por defecto).
-  static Future<List<MarketplaceItem>?> _readPersistedListings(String cacheKey) {
+  static Future<List<MarketplaceItem>?> _readPersistedListings(
+    String cacheKey,
+  ) {
     return CacheService.getPersisted<List<MarketplaceItem>>(
       _cacheNamespace,
       cacheKey,
       (data) {
-        if (data is! List) throw const FormatException('Caché de marketplace inválida');
+        if (data is! List) {
+          throw const FormatException('Caché de marketplace inválida');
+        }
         return data
             .whereType<Map>()
-            .map((item) => _listingFromCacheMap(Map<String, dynamic>.from(item)))
+            .map(
+              (item) => _listingFromCacheMap(Map<String, dynamic>.from(item)),
+            )
             .toList();
       },
     );
@@ -169,14 +188,19 @@ class MarketplaceService {
 
   static Map<String, dynamic> _listingToCacheMap(MarketplaceItem item) {
     final map = item.toInsertMap();
+    map.remove('user_id');
     map['id'] = item.id;
     map['created_at'] = item.createdAt.toIso8601String();
     map['cache_upvoted'] = item.isUpvotedByMe;
+    map['is_mine'] = item.isMine;
     return map;
   }
 
   static MarketplaceItem _listingFromCacheMap(Map<String, dynamic> map) {
-    return MarketplaceItem.fromMap(map, isUpvotedByMe: map['cache_upvoted'] == true);
+    return MarketplaceItem.fromMap(
+      map,
+      isUpvotedByMe: map['cache_upvoted'] == true,
+    );
   }
 
   static Future<List<MarketplaceItem>> fetchSponsoredListings() async {
@@ -186,7 +210,7 @@ class MarketplaceService {
 
     try {
       final response = await SupabaseService.client
-          .from('marketplace_items')
+          .from('safe_marketplace_items')
           .select('*')
           .eq('is_sponsored', true)
           .lt('moderation_status', 2)
@@ -194,7 +218,11 @@ class MarketplaceService {
           .limit(10);
 
       final List<dynamic> data = response as List<dynamic>;
-      return data.map((item) => MarketplaceItem.fromMap(Map<String, dynamic>.from(item))).toList();
+      return data
+          .map(
+            (item) => MarketplaceItem.fromMap(Map<String, dynamic>.from(item)),
+          )
+          .toList();
     } catch (e) {
       debugPrint('Error obteniendo patrocinadores: $e');
       return [];
@@ -223,7 +251,10 @@ class MarketplaceService {
     required String authorAlias,
   }) async {
     // 1. Validate content with moderation blacklist
-    final violationError = validateContent(title: title, description: description);
+    final violationError = validateContent(
+      title: title,
+      description: description,
+    );
     if (violationError != null) {
       throw Exception(violationError);
     }
@@ -248,10 +279,18 @@ class MarketplaceService {
         'sede': sede,
         'building_code': buildingCode.trim(),
         'location_detail': locationDetail.trim(),
-        'contact_whatsapp': contactWhatsapp?.trim().isEmpty == true ? null : contactWhatsapp?.trim(),
-        'contact_instagram': contactInstagram?.trim().isEmpty == true ? null : contactInstagram?.trim(),
-        'contact_messenger': contactMessenger?.trim().isEmpty == true ? null : contactMessenger?.trim(),
-        'contact_telegram': contactTelegram?.trim().isEmpty == true ? null : contactTelegram?.trim(),
+        'contact_whatsapp': contactWhatsapp?.trim().isEmpty == true
+            ? null
+            : contactWhatsapp?.trim(),
+        'contact_instagram': contactInstagram?.trim().isEmpty == true
+            ? null
+            : contactInstagram?.trim(),
+        'contact_messenger': contactMessenger?.trim().isEmpty == true
+            ? null
+            : contactMessenger?.trim(),
+        'contact_telegram': contactTelegram?.trim().isEmpty == true
+            ? null
+            : contactTelegram?.trim(),
         'social_links': socialLinks,
         'image_urls': imageUrls,
         'video_url': videoUrl?.trim().isEmpty == true ? null : videoUrl?.trim(),
@@ -264,13 +303,23 @@ class MarketplaceService {
         'upvotes': 1,
       };
 
+      const explicitColumns =
+          'id, title, description, price, is_free, category, facultad, sede, '
+          'building_code, location_detail, contact_whatsapp, contact_telegram, '
+          'image_urls, video_url, is_sponsored, sponsor_badge_text, author_alias, '
+          'upvotes, moderation_status, created_at, contact_instagram, '
+          'contact_messenger, social_links, reported_count, status';
+
       final res = await SupabaseService.client
           .from('marketplace_items')
           .insert(itemMap)
-          .select()
+          .select(explicitColumns)
           .single();
 
-      final created = MarketplaceItem.fromMap(Map<String, dynamic>.from(res), isUpvotedByMe: true);
+      final created = MarketplaceItem.fromMap(
+        Map<String, dynamic>.from(res),
+        isUpvotedByMe: true,
+      ).copyWith(isMine: true);
       await CacheService.invalidateAll(_cacheNamespace);
       return created;
     } catch (e) {
@@ -292,23 +341,30 @@ class MarketplaceService {
     try {
       // RPC con umbral de auto-moderación; si no existe, inserción directa.
       // Todo reporte vive en entity_reports (entity_type = marketplace_item).
-      await SupabaseService.client.rpc('report_marketplace_item', params: {
-        'target_item_id': itemId,
-        'report_reason': reason.trim(),
-        'target_seller_id': sellerUserId,
-        'target_seller_alias': sellerAlias,
-      }).catchError((_) async {
-        await SupabaseService.client.from('entity_reports').insert({
-          'reporter_id': SupabaseService.currentUserId,
-          'entity_type': 'marketplace_item',
-          'entity_id': itemId,
-          'entity_owner_id':
-              (sellerUserId != null && sellerUserId.isNotEmpty) ? sellerUserId : null,
-          'reason': reason.trim(),
-          'moderation_status': 0,
-          'metadata': {'seller_alias': sellerAlias},
-        });
-      });
+      await SupabaseService.client
+          .rpc(
+            'report_marketplace_item',
+            params: {
+              'target_item_id': itemId,
+              'report_reason': reason.trim(),
+              'target_seller_id': sellerUserId,
+              'target_seller_alias': sellerAlias,
+            },
+          )
+          .catchError((_) async {
+            await SupabaseService.client.from('entity_reports').insert({
+              'reporter_id': SupabaseService.currentUserId,
+              'entity_type': 'marketplace_item',
+              'entity_id': itemId,
+              'entity_owner_id':
+                  (sellerUserId != null && sellerUserId.isNotEmpty)
+                  ? sellerUserId
+                  : null,
+              'reason': reason.trim(),
+              'moderation_status': 0,
+              'metadata': {'seller_alias': sellerAlias},
+            });
+          });
 
       return true;
     } catch (e) {
@@ -326,16 +382,18 @@ class MarketplaceService {
     }
 
     try {
-      final res = await SupabaseService.client.rpc('moderate_marketplace_item', params: {
-        'target_item_id': itemId,
-        'new_status': newStatus,
-      }).catchError((_) async {
-        await SupabaseService.client
-            .from('marketplace_items')
-            .update({'moderation_status': newStatus})
-            .eq('id', itemId);
-        return true;
-      });
+      final res = await SupabaseService.client
+          .rpc(
+            'moderate_marketplace_item',
+            params: {'target_item_id': itemId, 'new_status': newStatus},
+          )
+          .catchError((_) async {
+            await SupabaseService.client
+                .from('marketplace_items')
+                .update({'moderation_status': newStatus})
+                .eq('id', itemId);
+            return true;
+          });
 
       await CacheService.invalidateAll(_cacheNamespace);
       return res == true;
@@ -428,4 +486,3 @@ class MarketplaceService {
     }
   }
 }
-
