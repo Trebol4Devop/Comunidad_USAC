@@ -269,6 +269,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  forge2d:
+    dependency: transitive
+    description:
+      name: forge2d
+      sha256: "0f63d177f2e137a5007b879fda4076d0b81de065fcd72056c6fc896c82758bb7"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.14.2+1"
   fuchsia_remote_debug_protocol:
     dependency: transitive
     description: flutter
@@ -599,6 +607,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.5"
+  morphnext:
+    dependency: transitive
+    description:
+      name: morphnext
+      sha256: "738457cb22674c6aaf900029f753f2693d2efa30156677a250fa6bbd5316f55c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.7.1"
+  morphtext:
+    dependency: "direct main"
+    description:
+      name: morphtext
+      sha256: "7490f34dd42812f9ce914ebac4924bf3ee453c46d6d5ed201b6aa0ac155fc0dd"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.1"
   nm:
     dependency: transitive
     description:
@@ -735,6 +759,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.9.1"
+  pretty_animated_text:
+    dependency: "direct main"
+    description:
+      name: pretty_animated_text
+      sha256: a4d444e228fbe706fd46a4401f4bacb7cfc1982481658ddffe20285f6e74faf6
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.3.0"
   process:
     dependency: transitive
     description:

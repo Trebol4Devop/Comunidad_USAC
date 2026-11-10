@@ -10,6 +10,7 @@ import '../../../core/utils/url_utils.dart';
 import '../../shared/widgets/network_state_widgets.dart';
 import '../services/map_sync_service.dart';
 import '../services/supabase_campus_community_repository.dart';
+import '../widgets/building_3d_viewer.dart';
 
 class CampusMapScreen extends StatefulWidget {
   const CampusMapScreen({super.key});

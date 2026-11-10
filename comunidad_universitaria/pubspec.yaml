@@ -23,6 +23,8 @@ dependencies:
   usac_campus_map:
     path: ../../usac_campus_map
   connectivity_plus: ^7.3.2
+  pretty_animated_text: ^3.3.0
+  morphtext: ^0.2.1
 
 dev_dependencies:
   flutter_test:
