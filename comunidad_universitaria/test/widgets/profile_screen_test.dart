@@ -66,10 +66,10 @@ void main() {
       await tester.tap(find.text('Abrir perfil'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Editar perfil'), findsOneWidget);
-      expect(find.byType(BackButton), findsOneWidget);
+      expect(find.text('Preferencias de Usuario'), findsOneWidget);
+      expect(find.byTooltip('Regresar'), findsOneWidget);
 
-      await tester.tap(find.byType(BackButton));
+      await tester.tap(find.byTooltip('Regresar'));
       await tester.pumpAndSettle();
 
       expect(find.text('Abrir perfil'), findsOneWidget);

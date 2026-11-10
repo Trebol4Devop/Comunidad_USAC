@@ -327,7 +327,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDesktop = Responsive.isDesktop(context);
-    final appBar = AppBar(title: const Text('Editar perfil'));
 
     return Scaffold(
       appBar: AppBar(
