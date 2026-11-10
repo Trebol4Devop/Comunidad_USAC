@@ -158,19 +158,10 @@ class ProfileService {
     }
 
     try {
-      const explicitColumns =
-          'id, title, carrera, curso, section, link, description, author_alias, upvotes, reported_count, created_at, image_url, moderation_status';
-      var query = SupabaseService.client
-          .from('student_groups')
-          .select(explicitColumns);
-
-      if (userId != null && userId.isNotEmpty && userId != 'local_user') {
-        query = query.eq('user_id', userId);
-      } else {
-        query = query.eq('author_alias', alias.trim());
-      }
-
-      final response = await query
+      final response = await SupabaseService.client
+          .from('safe_student_groups')
+          .select('*')
+          .eq('is_mine', true)
           .order('created_at', ascending: false)
           .limit(50);
       final List<dynamic> data = response as List<dynamic>;
@@ -194,19 +185,10 @@ class ProfileService {
     }
 
     try {
-      const explicitColumns =
-          'id, title, description, price, is_free, category, facultad, sede, building_code, location_detail, contact_whatsapp, contact_instagram, contact_messenger, contact_telegram, social_links, image_urls, video_url, is_sponsored, sponsor_badge_text, author_alias, created_at, moderation_status, reported_count, upvotes, status';
-      var query = SupabaseService.client
-          .from('marketplace_items')
-          .select(explicitColumns);
-
-      if (userId != null && userId.isNotEmpty && userId != 'local_user') {
-        query = query.eq('user_id', userId);
-      } else {
-        query = query.eq('author_alias', alias.trim());
-      }
-
-      final response = await query
+      final response = await SupabaseService.client
+          .from('safe_marketplace_items')
+          .select('*')
+          .eq('is_mine', true)
           .order('created_at', ascending: false)
           .limit(50);
       final List<dynamic> data = response as List<dynamic>;

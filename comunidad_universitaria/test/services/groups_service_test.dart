@@ -24,50 +24,53 @@ void main() {
   });
 
   group('GroupsService.createGroup', () {
-    test('crea grupo con sección default "Sección Única", plataforma por link, upvotes=1 y auto-upvote', () async {
-      Map<String, dynamic>? insertedGroup;
-      Map<String, dynamic>? insertedUpvote;
+    test(
+      'crea grupo con sección default "Sección Única", plataforma por link, upvotes=1 y auto-upvote',
+      () async {
+        Map<String, dynamic>? insertedGroup;
+        Map<String, dynamic>? insertedUpvote;
 
-      fakeServer.onPost('/rest/v1/student_groups', (req) {
-        insertedGroup = jsonDecode(req.body) as Map<String, dynamic>;
-        return {
-          ...insertedGroup!,
-          'id': 'new-group-10',
-          'created_at': DateTime.now().toIso8601String(),
-        };
-      });
+        fakeServer.onPost('/rest/v1/student_groups', (req) {
+          insertedGroup = jsonDecode(req.body) as Map<String, dynamic>;
+          return {
+            ...insertedGroup!,
+            'id': 'new-group-10',
+            'created_at': DateTime.now().toIso8601String(),
+          };
+        });
 
-      fakeServer.onPost('/rest/v1/student_group_upvotes', (req) {
-        insertedUpvote = jsonDecode(req.body) as Map<String, dynamic>;
-        return [];
-      });
+        fakeServer.onPost('/rest/v1/student_group_upvotes', (req) {
+          insertedUpvote = jsonDecode(req.body) as Map<String, dynamic>;
+          return [];
+        });
 
-      final created = await GroupsService.createGroup(
-        title: '  Matemática Intermedia 1  ',
-        carrera: 'sistemas',
-        curso: '  Matemática Intermedia 1  ',
-        section: '   ', // Vacía -> debe asignar 'Sección Única'
-        link: 'https://t.me/mate_intermedia1',
-        description: 'Grupo de estudio',
-        authorAlias: 'Auxiliar',
-      );
+        final created = await GroupsService.createGroup(
+          title: '  Matemática Intermedia 1  ',
+          carrera: 'sistemas',
+          curso: '  Matemática Intermedia 1  ',
+          section: '   ', // Vacía -> debe asignar 'Sección Única'
+          link: 'https://t.me/mate_intermedia1',
+          description: 'Grupo de estudio',
+          authorAlias: 'Auxiliar',
+        );
 
-      expect(created, isNotNull);
-      expect(created!.id, 'new-group-10');
-      expect(created.section, 'Sección Única');
-      expect(created.platform, GroupPlatform.telegram);
-      expect(created.upvotes, 1);
-      expect(created.isUpvotedByMe, isTrue);
+        expect(created, isNotNull);
+        expect(created!.id, 'new-group-10');
+        expect(created.section, 'Sección Única');
+        expect(created.platform, GroupPlatform.telegram);
+        expect(created.upvotes, 1);
+        expect(created.isUpvotedByMe, isTrue);
 
-      expect(insertedGroup, isNotNull);
-      expect(insertedGroup!['section'], 'Sección Única');
-      expect(insertedGroup!['platform'], 'telegram');
-      expect(insertedGroup!['upvotes'], 1);
+        expect(insertedGroup, isNotNull);
+        expect(insertedGroup!['section'], 'Sección Única');
+        expect(insertedGroup!['platform'], 'telegram');
+        expect(insertedGroup!['upvotes'], 1);
 
-      expect(insertedUpvote, isNotNull);
-      expect(insertedUpvote!['group_id'], 'new-group-10');
-      expect(insertedUpvote!['user_id'], 'group-creator-id');
-    });
+        expect(insertedUpvote, isNotNull);
+        expect(insertedUpvote!['group_id'], 'new-group-10');
+        expect(insertedUpvote!['user_id'], 'group-creator-id');
+      },
+    );
   });
 
   group('GroupsService.toggleUpvote', () {
@@ -130,64 +133,75 @@ void main() {
   });
 
   group('GroupsService.fetchGroups', () {
-    test('en un subservidor de facultad específico solo devuelve los grupos de esa facultad y no los de todo', () async {
-      final mockGroups = [
-        TestFixtures.whatsAppGroupMap(
-          id: 'g-ing-1',
-          title: 'Física 1',
-          carrera: 'sistemas',
-          curso: 'Física 1',
-        ),
-        TestFixtures.whatsAppGroupMap(
-          id: 'g-ing-2',
-          title: 'Cálculo 1',
-          carrera: '08_todas',
-          curso: 'Cálculo 1',
-        ),
-        TestFixtures.whatsAppGroupMap(
-          id: 'g-med-1',
-          title: 'Anatomía Humana 1',
-          carrera: 'medicina',
-          curso: 'Anatomía',
-        ),
-        TestFixtures.whatsAppGroupMap(
-          id: 'g-der-1',
-          title: 'Derecho Romano',
-          carrera: 'derecho',
-          curso: 'Derecho Romano',
-        ),
-        TestFixtures.whatsAppGroupMap(
-          id: 'g-gen-1',
-          title: 'Avisos Generales USAC',
+    test(
+      'en un subservidor de facultad específico solo devuelve los grupos de esa facultad y no los de todo',
+      () async {
+        final mockGroups = [
+          TestFixtures.whatsAppGroupMap(
+            id: 'g-ing-1',
+            title: 'Física 1',
+            carrera: 'sistemas',
+            curso: 'Física 1',
+          ),
+          TestFixtures.whatsAppGroupMap(
+            id: 'g-ing-2',
+            title: 'Cálculo 1',
+            carrera: '08_todas',
+            curso: 'Cálculo 1',
+          ),
+          TestFixtures.whatsAppGroupMap(
+            id: 'g-med-1',
+            title: 'Anatomía Humana 1',
+            carrera: 'medicina',
+            curso: 'Anatomía',
+          ),
+          TestFixtures.whatsAppGroupMap(
+            id: 'g-der-1',
+            title: 'Derecho Romano',
+            carrera: 'derecho',
+            curso: 'Derecho Romano',
+          ),
+          TestFixtures.whatsAppGroupMap(
+            id: 'g-gen-1',
+            title: 'Avisos Generales USAC',
+            carrera: 'todas',
+            curso: 'General',
+          ),
+        ];
+
+        fakeServer.onGet('/rest/v1/safe_student_groups', (req) => mockGroups);
+
+        // Consulta canal #todos-los-grupos de Ingeniería (08)
+        final ingGroups = await GroupsService.fetchGroups(
+          facultad: '08',
           carrera: 'todas',
-          curso: 'General',
-        ),
-      ];
+        );
+        final ingIds = ingGroups.map((g) => g.id).toList();
+        expect(ingIds, contains('g-ing-1'));
+        expect(ingIds, contains('g-ing-2'));
+        expect(ingIds, isNot(contains('g-med-1')));
+        expect(ingIds, isNot(contains('g-der-1')));
+        expect(ingIds, isNot(contains('g-gen-1')));
 
-      fakeServer.onGet('/rest/v1/student_groups', (req) => mockGroups);
+        // Consulta canal #todos-los-grupos de Medicina (05)
+        final medGroups = await GroupsService.fetchGroups(
+          facultad: '05',
+          carrera: 'todas',
+        );
+        final medIds = medGroups.map((g) => g.id).toList();
+        expect(medIds, contains('g-med-1'));
+        expect(medIds, isNot(contains('g-ing-1')));
+        expect(medIds, isNot(contains('g-ing-2')));
+        expect(medIds, isNot(contains('g-der-1')));
+        expect(medIds, isNot(contains('g-gen-1')));
 
-      // Consulta canal #todos-los-grupos de Ingeniería (08)
-      final ingGroups = await GroupsService.fetchGroups(facultad: '08', carrera: 'todas');
-      final ingIds = ingGroups.map((g) => g.id).toList();
-      expect(ingIds, contains('g-ing-1'));
-      expect(ingIds, contains('g-ing-2'));
-      expect(ingIds, isNot(contains('g-med-1')));
-      expect(ingIds, isNot(contains('g-der-1')));
-      expect(ingIds, isNot(contains('g-gen-1')));
-
-      // Consulta canal #todos-los-grupos de Medicina (05)
-      final medGroups = await GroupsService.fetchGroups(facultad: '05', carrera: 'todas');
-      final medIds = medGroups.map((g) => g.id).toList();
-      expect(medIds, contains('g-med-1'));
-      expect(medIds, isNot(contains('g-ing-1')));
-      expect(medIds, isNot(contains('g-ing-2')));
-      expect(medIds, isNot(contains('g-der-1')));
-      expect(medIds, isNot(contains('g-gen-1')));
-
-      // Consulta canal #todos-los-grupos de Todas las Facultades (todas)
-      final allGroups = await GroupsService.fetchGroups(facultad: 'todas', carrera: 'todas');
-      expect(allGroups.length, equals(5));
-    });
+        // Consulta canal #todos-los-grupos de Todas las Facultades (todas)
+        final allGroups = await GroupsService.fetchGroups(
+          facultad: 'todas',
+          carrera: 'todas',
+        );
+        expect(allGroups.length, equals(5));
+      },
+    );
   });
 }
-

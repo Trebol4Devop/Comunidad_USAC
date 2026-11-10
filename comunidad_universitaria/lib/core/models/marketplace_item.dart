@@ -82,6 +82,7 @@ class MarketplaceItem {
   final bool isUpvotedByMe;
   final String status; // available, reserved, sold, paused, archived
   final bool isSellerVerified;
+  final bool isMine;
 
   MarketplaceItem({
     required this.id,
@@ -112,6 +113,7 @@ class MarketplaceItem {
     this.isUpvotedByMe = false,
     this.status = 'available',
     this.isSellerVerified = false,
+    this.isMine = false,
   });
 
   String get formattedPrice {
@@ -140,12 +142,16 @@ class MarketplaceItem {
     final phone = cleanPhone.startsWith('+')
         ? cleanPhone.substring(1)
         : (cleanPhone.length == 8 ? '502$cleanPhone' : cleanPhone);
-    final msg = Uri.encodeComponent('¡Hola! Vi tu publicación en Comunidad USAC sobre "$title". ¿Sigue disponible?');
+    final msg = Uri.encodeComponent(
+      '¡Hola! Vi tu publicación en Comunidad USAC sobre "$title". ¿Sigue disponible?',
+    );
     return 'https://wa.me/$phone?text=$msg';
   }
 
   String? get instagramUrl {
-    if (contactInstagram == null || contactInstagram!.trim().isEmpty) return null;
+    if (contactInstagram == null || contactInstagram!.trim().isEmpty) {
+      return null;
+    }
     var user = contactInstagram!.trim();
     if (user.startsWith('http://') || user.startsWith('https://')) return user;
     if (user.startsWith('@')) user = user.substring(1);
@@ -153,7 +159,9 @@ class MarketplaceItem {
   }
 
   String? get messengerUrl {
-    if (contactMessenger == null || contactMessenger!.trim().isEmpty) return null;
+    if (contactMessenger == null || contactMessenger!.trim().isEmpty) {
+      return null;
+    }
     var user = contactMessenger!.trim();
     if (user.startsWith('http://') || user.startsWith('https://')) return user;
     if (user.startsWith('@')) user = user.substring(1);
@@ -197,6 +205,7 @@ class MarketplaceItem {
     bool? isUpvotedByMe,
     String? status,
     bool? isSellerVerified,
+    bool? isMine,
   }) {
     return MarketplaceItem(
       id: id ?? this.id,
@@ -227,14 +236,19 @@ class MarketplaceItem {
       isUpvotedByMe: isUpvotedByMe ?? this.isUpvotedByMe,
       status: status ?? this.status,
       isSellerVerified: isSellerVerified ?? this.isSellerVerified,
+      isMine: isMine ?? this.isMine,
     );
   }
 
-  factory MarketplaceItem.fromMap(Map<String, dynamic> map, {bool isUpvotedByMe = false}) {
+  factory MarketplaceItem.fromMap(
+    Map<String, dynamic> map, {
+    bool isUpvotedByMe = false,
+  }) {
     List<String> imgs = [];
     if (map['image_urls'] is List) {
       imgs = (map['image_urls'] as List).map((e) => e.toString()).toList();
-    } else if (map['image_url'] is String && (map['image_url'] as String).isNotEmpty) {
+    } else if (map['image_url'] is String &&
+        (map['image_url'] as String).isNotEmpty) {
       imgs = [map['image_url'] as String];
     }
 
@@ -244,7 +258,9 @@ class MarketplaceItem {
     }
 
     final rawPrice = map['price'];
-    final priceVal = (rawPrice is num) ? rawPrice.toDouble() : double.tryParse(rawPrice?.toString() ?? '0') ?? 0.0;
+    final priceVal = (rawPrice is num)
+        ? rawPrice.toDouble()
+        : double.tryParse(rawPrice?.toString() ?? '0') ?? 0.0;
     final isFreeVal = map['is_free'] == true || priceVal <= 0.0;
 
     return MarketplaceItem(
@@ -268,14 +284,24 @@ class MarketplaceItem {
       isSponsored: map['is_sponsored'] == true,
       sponsorBadgeText: map['sponsor_badge_text'],
       authorAlias: map['author_alias'] ?? 'Estudiante Emprendedor',
-      userId: map['user_id']?.toString(),
-      createdAt: map['created_at'] != null ? DateTime.tryParse(map['created_at'].toString()) ?? DateTime.now() : DateTime.now(),
-      moderationStatus: (map['moderation_status'] is int) ? map['moderation_status'] : int.tryParse(map['moderation_status']?.toString() ?? '0') ?? 0,
-      reportedCount: (map['reported_count'] is int) ? map['reported_count'] : int.tryParse(map['reported_count']?.toString() ?? '0') ?? 0,
-      upvotes: (map['upvotes'] is int) ? map['upvotes'] : int.tryParse(map['upvotes']?.toString() ?? '0') ?? 0,
+      userId: null,
+      createdAt: map['created_at'] != null
+          ? DateTime.tryParse(map['created_at'].toString()) ?? DateTime.now()
+          : DateTime.now(),
+      moderationStatus: (map['moderation_status'] is int)
+          ? map['moderation_status']
+          : int.tryParse(map['moderation_status']?.toString() ?? '0') ?? 0,
+      reportedCount: (map['reported_count'] is int)
+          ? map['reported_count']
+          : int.tryParse(map['reported_count']?.toString() ?? '0') ?? 0,
+      upvotes: (map['upvotes'] is int)
+          ? map['upvotes']
+          : int.tryParse(map['upvotes']?.toString() ?? '0') ?? 0,
       isUpvotedByMe: isUpvotedByMe,
       status: map['status']?.toString() ?? 'available',
-      isSellerVerified: map['is_seller_verified'] == true || map['is_verified'] == true,
+      isSellerVerified:
+          map['is_seller_verified'] == true || map['is_verified'] == true,
+      isMine: map['is_mine'] == true,
     );
   }
 
@@ -305,7 +331,6 @@ class MarketplaceItem {
       'reported_count': reportedCount,
       'upvotes': upvotes,
       'status': status,
-      'is_seller_verified': isSellerVerified,
     };
   }
 }
