@@ -13,6 +13,7 @@ import '../widgets/discord/popular_servers_sidebar.dart';
 import '../widgets/post_card.dart';
 import 'post_detail_screen.dart';
 import '../../groups/screens/groups_screen.dart';
+import '../../reviews/screens/seccion_reviews_screen.dart';
 import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/empty_state_widget.dart';
 
@@ -1028,6 +1029,21 @@ class _ForumScreenState extends State<ForumScreen> {
                   setState(() => _feedMode = FeedMode.recent);
                   _loadPosts();
                 }
+              },
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(Icons.rate_review_outlined, size: 20),
+              tooltip: 'Reseñas de secciones',
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.all(6),
+              constraints: const BoxConstraints(),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const SeccionReviewsScreen(),
+                  ),
+                );
               },
             ),
           ],
