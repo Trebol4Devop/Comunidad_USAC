@@ -150,7 +150,11 @@ La app usa **Material 3** con una identidad cromática inspirada en la USAC
   [`UX-SPN-003`](12-patrocinios.md).
 - **Precondiciones:** cualquier unidad patrocinada renderizada.
 - **UI / contenido:** chip "Patrocinado"; logotipo del patrocinador con distintivo
-  verificado; borde/acento dorado tenue; CTA con estilo primario de la sección.
+  verificado; **insignia del plan** (`sponsor_badge_text`: "Estudiante
+  Verificado", "Emprendedor Verificado", "Tienda / Local Oficial") con icono
+  `Icons.verified` y color por nivel; borde/acento dorado tenue; CTA con estilo
+  primario de la sección. La insignia del plan no sustituye la etiqueta
+  "Patrocinado": ambas pueden coexistir.
 - **Estados:** activo | pausado/finalizado (se atenúa y muestra "Promoción
   finalizada") | en revisión (visible solo en el panel del patrocinador).
 - **Validaciones y reglas de negocio:** la etiqueta es **obligatoria** y su estilo
@@ -162,6 +166,9 @@ La app usa **Material 3** con una identidad cromática inspirada en la USAC
   - **Given** una unidad patrocinada en Foro, Grupos o Marketplace, **When** se
     renderiza, **Then** muestra el chip "Patrocinado" con el token dorado y
     contraste AA.
+  - **Given** un vendedor `business_local`, **When** se muestra su unidad, **Then**
+    aparece la insignia "Tienda / Local Oficial" con el icono verificado, además
+    del chip "Patrocinado".
   - **Given** el tema oscuro, **When** se muestra el chip, **Then** conserva
     legibilidad y distinción frente al contenido orgánico.
 
