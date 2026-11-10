@@ -37,6 +37,7 @@ class ForumScreen extends StatefulWidget {
   final List<PopularServerItem>? initialPopularServers;
   final bool showFloatingActionButton;
   final String floatingActionButtonHeroTag;
+  final ValueChanged<bool>? onDrawerChanged;
 
   const ForumScreen({
     super.key,
@@ -55,6 +56,7 @@ class ForumScreen extends StatefulWidget {
     this.initialPopularServers,
     this.showFloatingActionButton = true,
     this.floatingActionButtonHeroTag = 'forum_mobile_create_post_fab',
+    this.onDrawerChanged,
   });
 
   @override
@@ -63,6 +65,9 @@ class ForumScreen extends StatefulWidget {
 
 class ForumScreenState extends State<ForumScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _isDrawerOpen = false;
+
+  bool get isDrawerOpen => _isDrawerOpen;
 
   void openCreateDialog() => _openCreateDialog();
 
@@ -683,6 +688,15 @@ class ForumScreenState extends State<ForumScreen> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: feedBg,
+      onDrawerChanged: (isOpen) {
+        if (_isDrawerOpen != isOpen) {
+          setState(() {
+            _isDrawerOpen = isOpen;
+          });
+          widget.onDrawerChanged?.call(isOpen);
+        }
+      },
+      appBar: _buildMobileAppBar(theme, isDark, isGroups),
       drawer: Drawer(
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
         width: MediaQuery.sizeOf(context).width,
@@ -692,12 +706,7 @@ class ForumScreenState extends State<ForumScreen> {
             ForumServerRail(
               servers: _servers,
               activeServer: _activeServer,
-              onSelectServer: (srv) {
-                _onSelectServer(srv);
-                if (_scaffoldKey.currentState?.isDrawerOpen == true) {
-                  Navigator.of(context).pop();
-                }
-              },
+              onSelectServer: _onSelectServer,
               onAddServer: _onAddServer,
             ),
             Expanded(
@@ -757,6 +766,7 @@ class ForumScreenState extends State<ForumScreen> {
         ),
       ),
       floatingActionButton: (widget.showFloatingActionButton &&
+              !_isDrawerOpen &&
               !isGroups &&
               !_activeChannel.isSpecial)
           ? FloatingActionButton(
@@ -767,152 +777,78 @@ class ForumScreenState extends State<ForumScreen> {
             )
           : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      body: SafeArea(
-        top: false,
-        child: Column(
+      body: isGroups
+          ? GroupsScreen(
+              activeAlias: widget.activeAlias,
+              onAliasChanged: widget.onAliasChanged,
+              activeFacultadId: _activeServer.facultadId,
+              activeCarreraId: _groupsActiveChannel.categoryId,
+              activeChannelName: _groupsActiveChannel.name,
+              activeChannelDescription:
+                  _groupsActiveChannel.description,
+              activeChannelIcon: _groupsActiveChannel.icon,
+            )
+          : _buildFeedContainer(theme, isDark),
+    );
+  }
+
+  PreferredSizeWidget _buildMobileAppBar(
+    ThemeData theme,
+    bool isDark,
+    bool isGroups,
+  ) {
+    final channelName =
+        isGroups ? _groupsActiveChannel.name : _activeChannel.name;
+
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(64),
+      child: AppBar(
+        toolbarHeight: 64,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: theme.colorScheme.surface,
+        shape: Border(
+          bottom: BorderSide(
+            color: theme.colorScheme.outlineVariant,
+          ),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.menu, size: 24),
+          tooltip: 'Canales y servidores',
+          onPressed: () {
+            setState(() => _isDrawerOpen = true);
+            widget.onDrawerChanged?.call(true);
+            _scaffoldKey.currentState?.openDrawer();
+          },
+        ),
+        centerTitle: true,
+        titleSpacing: 0,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            if (isGroups)
-              _buildMobileGroupsHeader(theme, isDark)
-            else
-              _buildMobileChannelHeader(theme),
-            Expanded(
-              child: isGroups
-                  ? GroupsScreen(
-                      activeAlias: widget.activeAlias,
-                      onAliasChanged: widget.onAliasChanged,
-                      activeFacultadId: _activeServer.facultadId,
-                      activeCarreraId: _groupsActiveChannel.categoryId,
-                      activeChannelName: _groupsActiveChannel.name,
-                      activeChannelDescription:
-                          _groupsActiveChannel.description,
-                      activeChannelIcon: _groupsActiveChannel.icon,
-                    )
-                  : _buildFeedContainer(theme, isDark),
+            SizedBox(
+              width: 48,
+              height: 48,
+              child: Image.asset(
+                'assets/images/zanate_logo.png',
+                fit: BoxFit.contain,
+                semanticLabel: 'Logo de Zanate',
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'Zanate',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildMobileGroupsHeader(ThemeData theme, bool isDark) {
-    return Container(
-      height: 48,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF313338) : Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: isDark ? const Color(0xFF202225) : const Color(0xFFE2E8F0),
-            width: 1,
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.menu, size: 22),
-            tooltip: 'Canales y Servidores',
-            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-          ),
-          const SizedBox(width: 4),
-          const Icon(Icons.chat, size: 18, color: Color(0xFF25D366)),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              _groupsActiveChannel.name,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: const Color(0xFF25D366).withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: const Text(
-              'WAPP',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF25D366),
-              ),
-            ),
-          ),
-          const SizedBox(width: 4),
-          IconButton(
-            icon: const Icon(
-              Icons.local_fire_department_rounded,
-              size: 20,
-              color: Color(0xFFF59E0B),
-            ),
-            tooltip: 'Comunidades Populares',
-            onPressed: () => _showPopularServersModal(context),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMobileChannelHeader(ThemeData theme) {
-    final isDark = theme.brightness == Brightness.dark;
-    final channelName = _activeChannel.name;
-
-    return Container(
-      height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(color: theme.colorScheme.outlineVariant),
-        ),
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // 1. Izquierda: Acceso al drawer de canales y servidores
-          Align(
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              icon: const Icon(Icons.menu, size: 24),
-              tooltip: 'Canales y servidores',
-              onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-            ),
-          ),
-
-          // 2. Centro: 'Zanate' con el logo centrado
-          Align(
-            alignment: Alignment.center,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  width: 48,
-                  height: 48,
-                  child: Image.asset(
-                    'assets/images/zanate_logo.png',
-                    fit: BoxFit.contain,
-                    semanticLabel: 'Logo de Zanate',
-                  ),
-                ),
-                const SizedBox(width: 8),
-                const Text(
-                  'Zanate',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // 3. Derecha: Nombre del canal con '#' al inicio
-          Align(
-            alignment: Alignment.centerRight,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 10),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 14),
+            child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 130),
                 child: Text(
@@ -923,7 +859,9 @@ class ForumScreenState extends State<ForumScreen> {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: isDark ? const Color(0xFFDBDEE1) : const Color(0xFF475569),
+                    color: isDark
+                        ? const Color(0xFFDBDEE1)
+                        : const Color(0xFF475569),
                   ),
                 ),
               ),

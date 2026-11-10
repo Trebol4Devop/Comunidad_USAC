@@ -35,6 +35,7 @@ class _AppShellState extends State<AppShell> {
       GlobalKey<ForumScreenState>();
   final GlobalKey<GroupsScreenState> _groupsScreenKey =
       GlobalKey<GroupsScreenState>();
+  bool _isForumDrawerOpen = false;
   final List<FocusNode> _desktopTabFocusNodes = List.generate(
     4,
     (index) => FocusNode(debugLabel: 'Desktop tab $index'),
@@ -314,6 +315,13 @@ class _AppShellState extends State<AppShell> {
                     onToggleTheme: widget.onToggleTheme,
                     isDarkMode: widget.isDarkMode,
                     showFloatingActionButton: false,
+                    onDrawerChanged: (isOpen) {
+                      if (_isForumDrawerOpen != isOpen) {
+                        setState(() {
+                          _isForumDrawerOpen = isOpen;
+                        });
+                      }
+                    },
                   ),
                 )
               : const SizedBox.shrink(),
@@ -360,14 +368,24 @@ class _AppShellState extends State<AppShell> {
               ),
               child: NavigationBarTheme(
                 data: NavigationBarThemeData(
-                  height: 58,
-                  indicatorColor: Colors.transparent,
+                  height: 60,
+                  indicatorColor: widget.isDarkMode
+                      ? const Color(0xFF004B87).withValues(alpha: 0.45)
+                      : const Color(0xFF004B87).withValues(alpha: 0.15),
+                  indicatorShape: const StadiumBorder(),
                   backgroundColor: theme.colorScheme.surface,
                   elevation: 0,
                   iconTheme: WidgetStateProperty.resolveWith((states) {
+                    final isSelected = states.contains(WidgetState.selected);
                     return IconThemeData(
-                      size: 23,
-                      color: theme.colorScheme.onSurface,
+                      size: isSelected ? 24 : 22,
+                      color: isSelected
+                          ? (widget.isDarkMode
+                              ? const Color(0xFF60A5FA)
+                              : const Color(0xFF004B87))
+                          : (widget.isDarkMode
+                              ? const Color(0xFF94A3B8)
+                              : const Color(0xFF64748B)),
                     );
                   }),
                 ),
@@ -384,22 +402,18 @@ class _AppShellState extends State<AppShell> {
                   destinations: const [
                     NavigationDestination(
                       icon: Icon(Icons.chat_bubble_outline),
-                      selectedIcon: Icon(Icons.chat_bubble_outline),
                       label: 'Foro',
                     ),
                     NavigationDestination(
                       icon: Icon(Icons.groups_outlined),
-                      selectedIcon: Icon(Icons.groups_outlined),
                       label: 'Grupos',
                     ),
                     NavigationDestination(
                       icon: Icon(Icons.map_outlined),
-                      selectedIcon: Icon(Icons.map_outlined),
                       label: 'Mapa',
                     ),
                     NavigationDestination(
                       icon: Icon(Icons.local_mall_outlined),
-                      selectedIcon: Icon(Icons.local_mall_outlined),
                       label: 'Marketplace',
                     ),
                   ],
@@ -512,6 +526,7 @@ class _AppShellState extends State<AppShell> {
   Widget? _buildContextualFloatingActionButton() {
     switch (_currentIndex) {
       case 0:
+        if (_isForumDrawerOpen) return null;
         return FloatingActionButton(
           heroTag: 'shell_forum_fab',
           onPressed: () => _forumScreenKey.currentState?.openCreateDialog(),

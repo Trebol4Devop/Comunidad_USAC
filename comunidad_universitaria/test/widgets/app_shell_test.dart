@@ -275,6 +275,17 @@ void main() {
 
         // Tab 0: ForumScreen activo por defecto
         expect(find.byType(ForumScreen), findsOneWidget);
+        expect(find.byTooltip('Crear publicación'), findsOneWidget);
+
+        // Al abrir la barra lateral de canales/servidores, el FAB se oculta
+        await tester.tap(find.byIcon(Icons.menu));
+        await tester.pumpAndSettle();
+        expect(find.byType(FloatingActionButton), findsNothing);
+
+        // Al cerrar la barra lateral, el FAB reaparece
+        await tester.tap(find.byTooltip('Cerrar menú'));
+        await tester.pumpAndSettle();
+        expect(find.byTooltip('Crear publicación'), findsOneWidget);
 
         // El cuarto icono visual abre Marketplace (pantalla interna 1).
         final marketTab = find.descendant(

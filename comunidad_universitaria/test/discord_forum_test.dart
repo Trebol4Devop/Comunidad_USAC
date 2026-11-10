@@ -252,10 +252,15 @@ void main() {
         expect(find.byType(ForumChannelSidebar), findsOneWidget);
         expect(find.byTooltip('Agregar servidor'), findsOneWidget);
         expect(find.byTooltip('Grupos de Estudio'), findsNothing);
+        // El botón flotante desaparece al abrir la barra lateral
+        expect(find.byType(FloatingActionButton), findsNothing);
 
         // Seleccionar canal dudas-y-pensum en móvil
         await tester.tap(find.text('dudas-y-pensum'));
         await tester.pumpAndSettle();
+
+        // Al cerrarse el menú lateral, el botón flotante reaparece
+        expect(find.byType(FloatingActionButton), findsOneWidget);
 
         // La cabecera móvil se actualiza dinámicamente con el canal activo a la derecha
         expect(
@@ -283,7 +288,14 @@ void main() {
               .first,
         );
         await tester.pumpAndSettle();
+        // Al cambiar / agregar un servidor, la barra lateral NO se cierra
+        expect(find.byType(ForumServerRail), findsOneWidget);
+
+        // Al presionar el botón de cerrar menú, se cierra la barra lateral
+        await tester.tap(find.byTooltip('Cerrar menú'));
+        await tester.pumpAndSettle();
         expect(find.byType(ForumServerRail), findsNothing);
+        expect(find.byType(FloatingActionButton), findsOneWidget);
       },
     );
 
