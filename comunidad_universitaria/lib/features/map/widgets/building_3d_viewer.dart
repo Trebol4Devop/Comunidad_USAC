@@ -32,21 +32,21 @@ class UsacBuilding3DModel {
 }
 
 /// Visor volumétrico 3D / isométrico interactivo con soporte de rotación y zoom táctil.
-class Building3DViewer extends StatefulWidget {
+class UsacBuilding3DViewer extends StatefulWidget {
   final UsacBuilding3DModel model;
   final UsacMapTheme theme;
 
-  const Building3DViewer({
+  const UsacBuilding3DViewer({
     super.key,
     required this.model,
     required this.theme,
   });
 
   @override
-  State<Building3DViewer> createState() => _Building3DViewerState();
+  State<UsacBuilding3DViewer> createState() => _UsacBuilding3DViewerState();
 }
 
-class _Building3DViewerState extends State<Building3DViewer> {
+class _UsacBuilding3DViewerState extends State<UsacBuilding3DViewer> {
   double _rotationAngle = -0.55; // Ángulo de rotación horizontal
   double _tiltAngle = 0.65;      // Inclinación vertical isométrica
   double _scale = 1.0;

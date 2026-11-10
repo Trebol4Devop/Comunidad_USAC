@@ -262,7 +262,7 @@ class _CampusMapScreenState extends State<CampusMapScreen> {
                 backgroundColor: Colors.transparent,
               ),
               Expanded(
-                child: Building3DViewer(
+                child: UsacBuilding3DViewer(
                   model: model,
                   theme: _getMapTheme(Theme.of(context).brightness == Brightness.dark),
                 ),
