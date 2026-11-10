@@ -193,7 +193,7 @@ void main() {
     });
 
     testWidgets(
-      'Los títulos de canales y el estado vacío no incluyen hashtag ni CTA duplicado',
+      'Los títulos de canales muestran el canal con hashtag sin bienvenida ni CTA duplicado',
       (tester) async {
         tester.view.physicalSize = const Size(1200, 800);
         tester.view.devicePixelRatio = 1;
@@ -210,19 +210,17 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(
-          find.text('¡Te damos la bienvenida a todos-los-temas!'),
+          find.text('#todos-los-temas'),
           findsOneWidget,
         );
-        expect(find.textContaining('#todos-los-temas'), findsNothing);
         expect(find.text('Crear Primera Publicación'), findsNothing);
 
         await tester.tap(find.text('catedraticos-opiniones'));
         await tester.pumpAndSettle();
         expect(
-          find.text('¡Te damos la bienvenida a catedraticos-opiniones!'),
+          find.text('#catedraticos-opiniones'),
           findsOneWidget,
         );
-        expect(find.textContaining('#catedraticos-opiniones'), findsNothing);
       },
     );
 
@@ -243,11 +241,10 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Cabecera móvil dinámica inicial
-        expect(
-          find.text('¡Te damos la bienvenida a todos-los-temas!'),
-          findsOneWidget,
-        );
+        // Cabecera móvil con Zanate centrado y canal con hashtag a la derecha
+        expect(find.text('Zanate'), findsOneWidget);
+        expect(find.text('#todos-los-temas'), findsOneWidget);
+        expect(find.byType(FloatingActionButton), findsOneWidget);
 
         await tester.tap(find.byIcon(Icons.menu));
         await tester.pumpAndSettle();
@@ -260,9 +257,9 @@ void main() {
         await tester.tap(find.text('dudas-y-pensum'));
         await tester.pumpAndSettle();
 
-        // La cabecera móvil se actualiza dinámicamente con el canal activo
+        // La cabecera móvil se actualiza dinámicamente con el canal activo a la derecha
         expect(
-          find.text('¡Te damos la bienvenida a dudas-y-pensum!'),
+          find.text('#dudas-y-pensum'),
           findsOneWidget,
         );
 

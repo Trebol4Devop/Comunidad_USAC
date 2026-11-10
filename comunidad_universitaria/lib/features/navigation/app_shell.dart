@@ -31,6 +31,8 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
   final Set<int> _visitedTabs = {0};
+  final GlobalKey<ForumScreenState> _forumScreenKey =
+      GlobalKey<ForumScreenState>();
   final GlobalKey<GroupsScreenState> _groupsScreenKey =
       GlobalKey<GroupsScreenState>();
   final List<FocusNode> _desktopTabFocusNodes = List.generate(
@@ -131,8 +133,10 @@ class _AppShellState extends State<AppShell> {
     final isMobile = Responsive.isMobile(context);
 
     return Scaffold(
-      appBar: AppBar(
-        toolbarHeight: isMobile ? 64 : kToolbarHeight,
+      appBar: (isMobile && _currentIndex == 0)
+          ? null
+          : AppBar(
+              toolbarHeight: isMobile ? 64 : kToolbarHeight,
         centerTitle: isMobile,
         titleSpacing: isMobile ? 0 : 16,
         title: isMobile
@@ -304,10 +308,12 @@ class _AppShellState extends State<AppShell> {
               ? ExcludeSemantics(
                   excluding: _currentIndex != 0,
                   child: ForumScreen(
+                    key: _forumScreenKey,
                     activeAlias: widget.activeAlias,
                     onAliasChanged: widget.onAliasChanged,
                     onToggleTheme: widget.onToggleTheme,
                     isDarkMode: widget.isDarkMode,
+                    showFloatingActionButton: false,
                   ),
                 )
               : const SizedBox.shrink(),
@@ -505,6 +511,13 @@ class _AppShellState extends State<AppShell> {
 
   Widget? _buildContextualFloatingActionButton() {
     switch (_currentIndex) {
+      case 0:
+        return FloatingActionButton(
+          heroTag: 'shell_forum_fab',
+          onPressed: () => _forumScreenKey.currentState?.openCreateDialog(),
+          tooltip: 'Crear publicación',
+          child: const Icon(Icons.add),
+        );
       case 1:
         // Marketplace: Publica un Artículo
         return FloatingActionButton.extended(

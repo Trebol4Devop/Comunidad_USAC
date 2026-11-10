@@ -35,6 +35,8 @@ class ForumScreen extends StatefulWidget {
   final String activeSection;
   final String? activeCommunityId;
   final List<PopularServerItem>? initialPopularServers;
+  final bool showFloatingActionButton;
+  final String floatingActionButtonHeroTag;
 
   const ForumScreen({
     super.key,
@@ -51,14 +53,18 @@ class ForumScreen extends StatefulWidget {
     this.activeSection = 'featured',
     this.activeCommunityId,
     this.initialPopularServers,
+    this.showFloatingActionButton = true,
+    this.floatingActionButtonHeroTag = 'forum_mobile_create_post_fab',
   });
 
   @override
-  State<ForumScreen> createState() => _ForumScreenState();
+  State<ForumScreen> createState() => ForumScreenState();
 }
 
-class _ForumScreenState extends State<ForumScreen> {
+class ForumScreenState extends State<ForumScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  void openCreateDialog() => _openCreateDialog();
 
   // Discord Forum Models State
   late List<ForumServer> _servers;
@@ -750,6 +756,17 @@ class _ForumScreenState extends State<ForumScreen> {
           ],
         ),
       ),
+      floatingActionButton: (widget.showFloatingActionButton &&
+              !isGroups &&
+              !_activeChannel.isSpecial)
+          ? FloatingActionButton(
+              heroTag: widget.floatingActionButtonHeroTag,
+              onPressed: _openCreateDialog,
+              tooltip: 'Crear publicación',
+              child: const Icon(Icons.add),
+            )
+          : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SafeArea(
         top: false,
         child: Column(
@@ -839,8 +856,11 @@ class _ForumScreenState extends State<ForumScreen> {
   }
 
   Widget _buildMobileChannelHeader(ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
+    final channelName = _activeChannel.name;
+
     return Container(
-      height: 52,
+      height: 56,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
@@ -848,33 +868,67 @@ class _ForumScreenState extends State<ForumScreen> {
           bottom: BorderSide(color: theme.colorScheme.outlineVariant),
         ),
       ),
-      child: Row(
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          IconButton(
-            icon: const Icon(Icons.menu, size: 22),
-            tooltip: 'Canales y servidores',
-            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+          // 1. Izquierda: Acceso al drawer de canales y servidores
+          Align(
+            alignment: Alignment.centerLeft,
+            child: IconButton(
+              icon: const Icon(Icons.menu, size: 24),
+              tooltip: 'Canales y servidores',
+              onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+            ),
           ),
-          Expanded(
-            child: Text(
-              '¡Te damos la bienvenida a ${_activeChannel.name}!',
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-                fontSize: 14,
+
+          // 2. Centro: 'Zanate' con el logo centrado
+          Align(
+            alignment: Alignment.center,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: Image.asset(
+                    'assets/images/zanate_logo.png',
+                    fit: BoxFit.contain,
+                    semanticLabel: 'Logo de Zanate',
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Zanate',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // 3. Derecha: Nombre del canal con '#' al inicio
+          Align(
+            alignment: Alignment.centerRight,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 10),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 130),
+                child: Text(
+                  '#$channelName',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.end,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? const Color(0xFFDBDEE1) : const Color(0xFF475569),
+                  ),
+                ),
               ),
             ),
           ),
-          if (!_activeChannel.isSpecial)
-            IconButton(
-              icon: const Icon(Icons.add, size: 22),
-              tooltip: 'Crear publicación',
-              onPressed: _openCreateDialog,
-            )
-          else
-            const SizedBox(width: 48),
         ],
       ),
     );
@@ -1127,10 +1181,10 @@ class _ForumScreenState extends State<ForumScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '¡Te damos la bienvenida a ${_activeChannel.name}!',
+                    '#${_activeChannel.name}',
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
-                      fontSize: 13,
+                      fontSize: 14,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

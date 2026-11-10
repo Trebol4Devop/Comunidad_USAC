@@ -102,8 +102,9 @@ void main() {
           );
         }
 
-        // En el tab inicial (Foro), no hay FloatingActionButton
-        expect(find.byType(FloatingActionButton), findsNothing);
+        // En el tab inicial (Foro), se muestra el FloatingActionButton '+' en la esquina inferior derecha
+        expect(find.byType(FloatingActionButton), findsOneWidget);
+        expect(find.byTooltip('Crear publicación'), findsOneWidget);
       },
     );
 

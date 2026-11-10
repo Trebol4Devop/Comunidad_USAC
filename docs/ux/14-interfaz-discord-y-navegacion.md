@@ -98,6 +98,19 @@ Para ofrecer una experiencia de usuario familiar, inmersiva y de alto rendimient
 - **Ubicación:** `ForumServerRail`, inmediatamente después del botón de agregar servidor (`+`).
 - **Objetivo UX:** Ofrecer acceso contextual directo a las reglas del foro y transparencia legal sin obligar a los estudiantes a buscar en submenús ocultos.
 
+### 3.4 Cabecera Móvil y Botón de Creación Flotante (`FAB`)
+- **Cabecera Móvil Centrada con Identidad Zanate:**
+  - **Izquierda:** Icono de menú hamburguesa (`Icons.menu`) para abrir la navegación lateral a pantalla completa.
+  - **Centro:** Logotipo institucional de Zanate (`assets/images/zanate_logo.png`, 48x48px) junto con el rótulo distintivo **"Zanate"** en `FontWeight.w800`.
+  - **Derecha:** Indicador dinámico del canal actual precedido por numeral (ej. `#todos-los-temas`), estilizado en color primario / contraste y recortado de forma adaptativa (`TextOverflow.ellipsis`, `maxWidth: 130px`) para evitar cualquier desbordamiento visual en pantallas compactas.
+  - **Integración con `AppShell`:** En la vista móvil dentro del tab del Foro (`index == 0`), el `AppBar` superior de la concha de navegación se desactiva (`appBar: null`), delegando toda la cabecera unificada al widget del foro y eliminando barras redundantes apiladas.
+- **Eliminación del Saludo Fijo en el Feed:**
+  - Se eliminó el texto estático `¡Te damos la bienvenida a [Canal]!`.
+  - Ahora se presenta directamente el nombre del canal activo `#canal` en tipografía bold (`FontWeight.w800`, 22px), seguido de la descripción dinámica del canal.
+- **Botón Flotante de Creación (`+`):**
+  - El botón superior de crear publicación fue sustituido por un **Floating Action Button (`FloatingActionButton`)** posicionado en la esquina inferior derecha (`FloatingActionButtonLocation.endFloat`).
+  - Tanto en la pantalla aislada de `ForumScreen` como dentro del flujo de pestañas de `AppShell` (a través de `GlobalKey<ForumScreenState>`), se garantiza acceso táctil con una sola mano mediante `Icons.add` y tooltip `"Crear publicación"`.
+
 ---
 
 ## 4. Trazabilidad de Archivos Modificados
@@ -105,12 +118,12 @@ Para ofrecer una experiencia de usuario familiar, inmersiva y de alto rendimient
 | Componente | Archivo | Modificación |
 |---|---|---|
 | `ForumServerRail` | [`forum_server_rail.dart`](file:///C:/Users/HP/Documents/Programacion/Flutter/Comunidad_USAC/comunidad_universitaria/lib/features/forum/widgets/discord/forum_server_rail.dart) | Ancho 76px, squircles 48x48px con radio dinámico 20px/14px, píldora animada y botón de normas bajo el botón `+`. |
-| `ForumChannelSidebar` | [`forum_channel_sidebar.dart`](file:///C:/Users/HP/Documents/Programacion/Flutter/Comunidad_USAC/comunidad_universitaria/lib/features/forum/widgets/discord/forum_channel_sidebar.dart) | Filas con avatar 38px + badge 10px, User Footer Card con degradado invernal, avatar 44px, chevron y estado "En línea". |
-| `ForumScreen` | [`forum_screen.dart`](file:///C:/Users/HP/Documents/Programacion/Flutter/Comunidad_USAC/comunidad_universitaria/lib/features/forum/screens/forum_screen.dart) | Inyección de `activeAlias` y callback `onOpenProfile` en versiones de escritorio y drawer móvil. |
-| `AppShell` | [`app_shell.dart`](file:///C:/Users/HP/Documents/Programacion/Flutter/Comunidad_USAC/comunidad_universitaria/lib/features/navigation/app_shell.dart) | Eliminación del botón de configuración en la barra superior móvil donde está Zanate (`actions: isMobile ? null : [...]`). |
+| `ForumChannelSidebar` | [`forum_channel_sidebar.dart`](file:///C:/Users/HP/Documents/Programacion/Flutter/Comunidad_USAC/comunidad_universitaria/lib/features/forum/widgets/discord/forum_channel_sidebar.dart) | Filas con avatar 38px + badge 10px, User Footer Card con degradado invernal, avatar 44px, chevron y apertura inferior. |
+| `ForumScreen` | [`forum_screen.dart`](file:///C:/Users/HP/Documents/Programacion/Flutter/Comunidad_USAC/comunidad_universitaria/lib/features/forum/screens/forum_screen.dart) | Cabecera móvil con Zanate centrado y `#canal` a la derecha; reemplazo de bienvenida por `#canal`; FAB `+` inferior derecho y `openCreateDialog()`. |
+| `AppShell` | [`app_shell.dart`](file:///C:/Users/HP/Documents/Programacion/Flutter/Comunidad_USAC/comunidad_universitaria/lib/features/navigation/app_shell.dart) | Eliminación de AppBar superior móvil en pestaña Foro (`appBar: null`), coordinación con `GlobalKey<ForumScreenState>` para FAB contextual en pestaña 0. |
 | `ProfileScreen` | [`profile_screen.dart`](file:///C:/Users/HP/Documents/Programacion/Flutter/Comunidad_USAC/comunidad_universitaria/lib/features/profile/screens/profile_screen.dart) | Incorporación del botón de configuración (`Icons.settings_outlined`) en `AppBar.actions` con menú de tema, normas y TOTP. |
-| Pruebas Unitarias | [`discord_forum_test.dart`](file:///C:/Users/HP/Documents/Programacion/Flutter/Comunidad_USAC/comunidad_universitaria/test/discord_forum_test.dart) | Verificación de squircles, botón de normas bajo el `+`, User Footer Card y estado online. |
-| Pruebas de Shell | [`app_shell_test.dart`](file:///C:/Users/HP/Documents/Programacion/Flutter/Comunidad_USAC/comunidad_universitaria/test/widgets/app_shell_test.dart) | Verificación de remoción del icono de ajustes en la barra superior de Zanate. |
+| Pruebas Unitarias | [`discord_forum_test.dart`](file:///C:/Users/HP/Documents/Programacion/Flutter/Comunidad_USAC/comunidad_universitaria/test/discord_forum_test.dart) | Verificación de squircles, botón de normas, User Footer Card, `#canal` dinámico y eliminación de textos de bienvenida fijos. |
+| Pruebas de Shell | [`app_shell_test.dart`](file:///C:/Users/HP/Documents/Programacion/Flutter/Comunidad_USAC/comunidad_universitaria/test/widgets/app_shell_test.dart) | Verificación de remoción del icono de ajustes superior y presencia del FloatingActionButton contextual en la pestaña Foro. |
 
 ---
 
