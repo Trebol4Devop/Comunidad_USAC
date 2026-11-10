@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/models/post.dart';
-import '../../../core/utils/time_utils.dart';
+import '../../shared/widgets/anonymous_author_header.dart';
 import '../../shared/widgets/report_dialog.dart';
 import 'discord/discord_media_attachment.dart';
 
@@ -10,6 +10,7 @@ class CommentItemWidget extends StatelessWidget {
   final int depth;
   final Function(PostComment targetComment) onReply;
   final Function(PostComment targetComment, String reason)? onReport;
+  final Function(PostComment targetComment)? onDelete;
 
   const CommentItemWidget({
     super.key,
@@ -18,14 +19,13 @@ class CommentItemWidget extends StatelessWidget {
     this.depth = 0,
     required this.onReply,
     this.onReport,
+    this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final isPostAuthor = comment.isPostAuthor ||
-        (comment.userId != null && postAuthorUserId.isNotEmpty && comment.userId == postAuthorUserId);
 
     // Cap visual indentation depth to 4 levels so it looks clean on mobile
     final visualDepth = depth.clamp(0, 4);
@@ -43,119 +43,77 @@ class CommentItemWidget extends StatelessWidget {
             decoration: BoxDecoration(
               color: depth == 0
                   ? (isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC))
-                  : (isDark ? const Color(0xFF162032) : const Color(0xFFF1F5F9)),
+                  : (isDark
+                        ? const Color(0xFF162032)
+                        : const Color(0xFFF1F5F9)),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: depth == 0
-                    ? (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0))
-                    : (isDark ? const Color(0xFF243044) : const Color(0xFFE2E8F0).withValues(alpha: 0.5)),
+                    ? (isDark
+                          ? const Color(0xFF334155)
+                          : const Color(0xFFE2E8F0))
+                    : (isDark
+                          ? const Color(0xFF243044)
+                          : const Color(0xFFE2E8F0).withValues(alpha: 0.5)),
               ),
             ),
             padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header: Author alias, author badge, time ago, reply button
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    CircleAvatar(
-                      radius: 11,
-                      backgroundColor: isDark
-                          ? const Color(0xFF3B82F6).withValues(alpha: 0.2)
-                          : theme.colorScheme.primary.withValues(alpha: 0.15),
-                      child: Icon(
-                        Icons.person,
-                        size: 12,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              comment.authorAlias,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                          if (isPostAuthor) ...[
-                            const SizedBox(width: 4),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? const Color(0xFF3B82F6).withValues(alpha: 0.25)
-                                    : theme.colorScheme.primary.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                'AUTOR',
-                                style: TextStyle(
-                                  fontSize: 8,
-                                  fontWeight: FontWeight.bold,
-                                  color: theme.colorScheme.primary,
-                                ),
-                              ),
-                            ),
-                          ],
-                          const SizedBox(width: 4),
-                          Text(
-                            '• ${TimeUtils.timeAgo(comment.createdAt)}',
-                            style: theme.textTheme.bodySmall?.copyWith(fontSize: 10),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    InkWell(
-                      onTap: () => onReply(comment),
-                      borderRadius: BorderRadius.circular(6),
-                      child: Container(
-                        constraints: const BoxConstraints(minHeight: 48, minWidth: 48),
-                        alignment: Alignment.center,
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.reply,
-                              size: 14,
-                              color: theme.colorScheme.primary,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Responder',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: theme.colorScheme.primary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    if (onReport != null)
-                      IconButton(
-                        icon: Icon(Icons.flag_outlined, size: 16, color: Colors.grey.shade500),
-                        constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-                        tooltip: 'Reportar comentario',
-                        onPressed: () {
+                // Header determinista anónimo
+                AnonymousAuthorHeader(
+                  authorAlias: comment.authorAlias,
+                  authorHash: comment.authorHash,
+                  isOp: comment.isOp,
+                  isMine: comment.isMine,
+                  createdAt: comment.createdAt,
+                  compact: true,
+                  onDelete: onDelete != null ? () => onDelete!(comment) : null,
+                  onReport: onReport != null
+                      ? () {
                           ReportDialog.show(
                             context,
                             title: 'Reportar Comentario',
                             subtitle: 'Comentario de ${comment.authorAlias}',
                             onSubmitted: (reason) => onReport!(comment, reason),
                           );
-                        },
+                        }
+                      : null,
+                  trailing: InkWell(
+                    onTap: () => onReply(comment),
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
+                      constraints: const BoxConstraints(
+                        minHeight: 48,
+                        minWidth: 48,
                       ),
-                  ],
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.reply,
+                            size: 14,
+                            color: theme.colorScheme.primary,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Responder',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 6),
                 // Comment text
@@ -190,6 +148,7 @@ class CommentItemWidget extends StatelessWidget {
                 depth: depth + 1,
                 onReply: onReply,
                 onReport: onReport,
+                onDelete: onDelete,
               ),
             ),
         ],

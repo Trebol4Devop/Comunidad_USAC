@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/categories.dart';
 import '../../../core/models/post.dart';
 import '../../../core/utils/time_utils.dart';
+import '../../shared/widgets/anonymous_author_header.dart';
 import '../../shared/widgets/report_dialog.dart';
 import 'discord/discord_media_attachment.dart';
 
@@ -13,6 +14,7 @@ class PostCard extends StatelessWidget {
   final VoidCallback? onRepost;
   final Function(String pollId, String optionId)? onVotePoll;
   final Function(String reason)? onReport;
+  final VoidCallback? onDelete;
   final bool isModerator;
 
   const PostCard({
@@ -24,6 +26,7 @@ class PostCard extends StatelessWidget {
     this.onRepost,
     this.onVotePoll,
     this.onReport,
+    this.onDelete,
     this.isModerator = false,
   });
 
@@ -38,7 +41,9 @@ class PostCard extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final modStatus = post.moderationStatus;
     final showModBanner = isModerator && modStatus > 0;
-    final modColor = modStatus == 1 ? const Color(0xFFEAB308) : const Color(0xFFEF4444);
+    final modColor = modStatus == 1
+        ? const Color(0xFFEAB308)
+        : const Color(0xFFEF4444);
 
     // Discord styling: Card #2B2D31 (dark) / #FFFFFF (light), border #383A40 / #E2E8F0
     final cardBg = isDark ? const Color(0xFF2B2D31) : Colors.white;
@@ -65,513 +70,655 @@ class PostCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         child: InkWell(
           borderRadius: BorderRadius.circular(10),
-          hoverColor: isDark ? const Color(0xFF35373C) : const Color(0xFFF8FAFC),
+          hoverColor: isDark
+              ? const Color(0xFF35373C)
+              : const Color(0xFFF8FAFC),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-              if (showModBanner) ...[
-                Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: modColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: modColor.withValues(alpha: 0.4)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        modStatus == 1 ? Icons.hourglass_top : Icons.visibility_off,
-                        size: 13,
-                        color: modColor,
+                if (showModBanner) ...[
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: modColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: modColor.withValues(alpha: 0.4),
                       ),
-                      const SizedBox(width: 5),
-                      Text(
-                        modStatus == 1 ? 'Pendiente de revisión' : 'Ocultado por reportes',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          modStatus == 1
+                              ? Icons.hourglass_top
+                              : Icons.visibility_off,
+                          size: 13,
                           color: modColor,
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-              // Pinned badge if applicable
-              if (post.isPinned) ...[
-                Row(
-                  children: [
-                    Icon(
-                      Icons.push_pin,
-                      size: 14,
-                      color: theme.colorScheme.primary,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Publicación Fijada',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-              ],
-
-              // Header: Author alias, Carrera/Faculty badge, Time ago
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  CircleAvatar(
-                    radius: 14,
-                    backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.12),
-                    child: Icon(Icons.person, size: 16, color: theme.colorScheme.primary),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Wrap(
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          spacing: 6,
-                          runSpacing: 2,
-                          children: [
-                            Text(
-                              post.authorAlias,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.primary.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                _getCategoryLabel(post.category),
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: theme.colorScheme.primary,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                        const SizedBox(width: 5),
                         Text(
-                          TimeUtils.timeAgo(post.createdAt),
-                          style: theme.textTheme.bodySmall?.copyWith(fontSize: 11),
+                          modStatus == 1
+                              ? 'Pendiente de revisión'
+                              : 'Ocultado por reportes',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: modColor,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  PopupMenuButton<String>(
-                    icon: Icon(Icons.more_vert, size: 18, color: Colors.grey.shade600),
-                    onSelected: (val) {
-                      if (val == 'report' && onReport != null) {
-                        ReportDialog.show(
-                          context,
-                          title: 'Reportar Publicación',
-                          subtitle: 'Publicación de ${post.authorAlias}',
-                          onSubmitted: onReport!,
-                        );
-                      }
-                    },
-                    itemBuilder: (ctx) => [
-                      const PopupMenuItem(
-                        value: 'report',
-                        child: Row(
-                          children: [
-                            Icon(Icons.flag_outlined, size: 16, color: Colors.red),
-                            SizedBox(width: 8),
-                            Text('Reportar contenido'),
-                          ],
+                ],
+                // Pinned badge if applicable
+                if (post.isPinned) ...[
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.push_pin,
+                        size: 14,
+                        color: theme.colorScheme.primary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Publicación Fijada',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
                         ),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 8),
                 ],
-              ),
-              const SizedBox(height: 12),
 
-              // Post Title
-              Text(
-                post.title,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  height: 1.25,
-                ),
-              ),
-              const SizedBox(height: 6),
-
-              // Post Preview Content
-              Text(
-                post.content,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontSize: 13,
-                  color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
-                  height: 1.4,
-                ),
-              ),
-
-              // Quoted Post Card (Quote Tweet style)
-              if (post.quotedPost != null) ...[
-                const SizedBox(height: 10),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: isDark ? Colors.grey.shade800 : Colors.grey.shade300),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                // Header: Author alias, Category badge, Time ago y menú de acciones
+                AnonymousAuthorHeader(
+                  authorAlias: post.authorAlias,
+                  authorHash: post.authorHash,
+                  isOp: false,
+                  isMine: post.isMine,
+                  createdAt: post.createdAt,
+                  onDelete: post.isMine && onDelete != null ? onDelete : null,
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Row(
-                        children: [
-                          Icon(Icons.format_quote, size: 14, color: theme.colorScheme.primary),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              post.quotedPost!.authorAlias,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.08,
                           ),
-                          const SizedBox(width: 6),
-                          Text(
-                            TimeUtils.timeAgo(post.quotedPost!.createdAt),
-                            style: TextStyle(color: Colors.grey.shade500, fontSize: 10),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        post.quotedPost!.title,
-                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        post.quotedPost!.content,
-                        style: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.grey.shade600, fontSize: 12),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-
-              // Interactive Poll Widget if available
-              if (post.poll != null) ...[
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.6) : const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.poll_outlined,
-                            size: 16,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          _getCategoryLabel(post.category),
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
                             color: theme.colorScheme.primary,
                           ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              post.poll!.question,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                      ),
+                      PopupMenuButton<String>(
+                        icon: Icon(
+                          Icons.more_vert,
+                          size: 18,
+                          color: Colors.grey.shade600,
+                        ),
+                        onSelected: (val) {
+                          if (val == 'report' && onReport != null) {
+                            ReportDialog.show(
+                              context,
+                              title: 'Reportar Publicación',
+                              subtitle: 'Publicación de ${post.authorAlias}',
+                              onSubmitted: onReport!,
+                            );
+                          } else if (val == 'delete' && onDelete != null) {
+                            onDelete!();
+                          }
+                        },
+                        itemBuilder: (ctx) => [
+                          if (post.isMine && onDelete != null)
+                            const PopupMenuItem(
+                              value: 'delete',
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.delete_outline,
+                                    size: 16,
+                                    color: Colors.red,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Eliminar publicación',
+                                    style: TextStyle(color: Colors.red),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          const PopupMenuItem(
+                            value: 'report',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.flag_outlined,
+                                  size: 16,
+                                  color: Colors.red,
+                                ),
+                                SizedBox(width: 8),
+                                Text('Reportar contenido'),
+                              ],
                             ),
                           ),
                         ],
-                      ),
-                      const SizedBox(height: 8),
-                      ...post.poll!.options.map((opt) {
-                        final total = post.poll!.totalVotes;
-                        final rawPercent = total > 0 ? (opt.votesCount / total) : 0.0;
-                        final percent = (rawPercent.isNaN || rawPercent.isInfinite) ? 0.0 : rawPercent.clamp(0.0, 1.0);
-                        final hasVoted = post.poll!.myVotedOptionId != null;
-                        final isMyVote = post.poll!.myVotedOptionId == opt.id;
-
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 6),
-                          child: InkWell(
-                            onTap: onVotePoll != null
-                                ? () => onVotePoll!(post.poll!.id, opt.id)
-                                : null,
-                            borderRadius: BorderRadius.circular(8),
-                            child: Container(
-                              height: 36,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: isMyVote
-                                      ? theme.colorScheme.primary
-                                      : (isDark ? const Color(0xFF334155) : Colors.grey.shade300),
-                                  width: isMyVote ? 1.5 : 1.0,
-                                ),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(7),
-                                child: Stack(
-                                  children: [
-                                    if (hasVoted)
-                                      FractionallySizedBox(
-                                        widthFactor: percent,
-                                        child: Container(
-                                          color: isMyVote
-                                              ? (isDark
-                                                  ? const Color(0xFF3B82F6).withValues(alpha: 0.35)
-                                                  : const Color(0xFF004B87).withValues(alpha: 0.22))
-                                              : (isDark
-                                                  ? Colors.white.withValues(alpha: 0.1)
-                                                  : Colors.grey.withValues(alpha: 0.15)),
-                                        ),
-                                      ),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Expanded(
-                                            child: Row(
-                                              children: [
-                                                if (isMyVote) ...[
-                                                  Icon(
-                                                    Icons.check_circle,
-                                                    size: 14,
-                                                    color: theme.colorScheme.primary,
-                                                  ),
-                                                  const SizedBox(width: 6),
-                                                ],
-                                                Flexible(
-                                                  child: Text(
-                                                    opt.optionText,
-                                                    style: TextStyle(
-                                                      fontSize: 12,
-                                                      fontWeight: isMyVote ? FontWeight.bold : FontWeight.normal,
-                                                    ),
-                                                    overflow: TextOverflow.ellipsis,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          if (hasVoted)
-                                            Text(
-                                              '${(percent * 100).toStringAsFixed(0)}% · ${opt.votesCount} votos',
-                                              style: TextStyle(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w600,
-                                                color: isMyVote
-                                                    ? (isDark ? const Color(0xFF93C5FD) : const Color(0xFF004B87))
-                                                    : (isDark ? Colors.grey.shade400 : Colors.grey.shade600),
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                      Text(
-                        '${post.poll!.totalVotes} votos registrados',
-                        style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
                       ),
                     ],
                   ),
                 ),
-              ],
+                const SizedBox(height: 12),
 
-              // GIF Preview if available
-              if (post.gifUrl != null && post.gifUrl!.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                DiscordMediaAttachment(
-                  imageUrl: post.gifUrl!,
-                  title: post.title,
-                  isGif: true,
-                  maxHeight: 240,
-                  maxWidth: 460,
+                // Post Title
+                Text(
+                  post.title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    height: 1.25,
+                  ),
                 ),
-              ],
+                const SizedBox(height: 6),
 
-              // Image Preview if available
-              if (post.imageUrl != null && post.imageUrl!.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                DiscordMediaAttachment(
-                  imageUrl: post.imageUrl!,
-                  title: post.title,
-                  isGif: false,
-                  maxHeight: 280,
-                  maxWidth: 480,
+                // Post Preview Content
+                Text(
+                  post.content,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontSize: 13,
+                    color: isDark
+                        ? const Color(0xFFCBD5E1)
+                        : const Color(0xFF334155),
+                    height: 1.4,
+                  ),
                 ),
-              ],
 
-              const SizedBox(height: 14),
-
-              // Footer: Likes, Comments, Repost, Bookmark
-              Row(
-                children: [
-                  // Likes
-                  InkWell(
-                    onTap: onLike,
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: post.isLikedByMe
-                            ? theme.colorScheme.primary.withValues(alpha: isDark ? 0.25 : 0.12)
-                            : (isDark ? const Color(0xFF1E1F22) : const Color(0xFFF1F5F9)),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            post.isLikedByMe ? Icons.thumb_up : Icons.thumb_up_alt_outlined,
-                            size: 15,
-                            color: post.isLikedByMe
-                                ? theme.colorScheme.primary
-                                : (isDark ? Colors.grey.shade400 : Colors.grey.shade600),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            '${post.likes}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: post.isLikedByMe
-                                  ? theme.colorScheme.primary
-                                  : (isDark ? Colors.grey.shade300 : Colors.grey.shade700),
-                            ),
-                          ),
-                        ],
+                // Quoted Post Card (Quote Tweet style)
+                if (post.quotedPost != null) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF0F172A)
+                          : const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isDark
+                            ? Colors.grey.shade800
+                            : Colors.grey.shade300,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-
-                  // Comments
-                  InkWell(
-                    onTap: onTap,
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E1F22) : const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.chat_bubble_outline,
-                            size: 15,
-                            color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            '${post.commentCount}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.format_quote,
+                              size: 14,
+                              color: theme.colorScheme.primary,
                             ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                post.quotedPost!.authorAlias,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              TimeUtils.timeAgo(post.quotedPost!.createdAt),
+                              style: TextStyle(
+                                color: Colors.grey.shade500,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          post.quotedPost!.title,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
                           ),
-                        ],
-                      ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          post.quotedPost!.content,
+                          style: TextStyle(
+                            color: isDark
+                                ? Colors.grey.shade400
+                                : Colors.grey.shade600,
+                            fontSize: 12,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 8),
+                ],
 
-                  // Repost
-                  if (onRepost != null)
+                // Interactive Poll Widget if available
+                if (post.poll != null) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF1E293B).withValues(alpha: 0.6)
+                          : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.poll_outlined,
+                              size: 16,
+                              color: theme.colorScheme.primary,
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                post.poll!.question,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        ...post.poll!.options.map((opt) {
+                          final total = post.poll!.totalVotes;
+                          final rawPercent = total > 0
+                              ? (opt.votesCount / total)
+                              : 0.0;
+                          final percent =
+                              (rawPercent.isNaN || rawPercent.isInfinite)
+                              ? 0.0
+                              : rawPercent.clamp(0.0, 1.0);
+                          final hasVoted = post.poll!.myVotedOptionId != null;
+                          final isMyVote = post.poll!.myVotedOptionId == opt.id;
+
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: InkWell(
+                              onTap: onVotePoll != null
+                                  ? () => onVotePoll!(post.poll!.id, opt.id)
+                                  : null,
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: isMyVote
+                                        ? theme.colorScheme.primary
+                                        : (isDark
+                                              ? const Color(0xFF334155)
+                                              : Colors.grey.shade300),
+                                    width: isMyVote ? 1.5 : 1.0,
+                                  ),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(7),
+                                  child: Stack(
+                                    children: [
+                                      if (hasVoted)
+                                        FractionallySizedBox(
+                                          widthFactor: percent,
+                                          child: Container(
+                                            color: isMyVote
+                                                ? (isDark
+                                                      ? const Color(
+                                                          0xFF3B82F6,
+                                                        ).withValues(
+                                                          alpha: 0.35,
+                                                        )
+                                                      : const Color(
+                                                          0xFF004B87,
+                                                        ).withValues(
+                                                          alpha: 0.22,
+                                                        ))
+                                                : (isDark
+                                                      ? Colors.white.withValues(
+                                                          alpha: 0.1,
+                                                        )
+                                                      : Colors.grey.withValues(
+                                                          alpha: 0.15,
+                                                        )),
+                                          ),
+                                        ),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: Row(
+                                                children: [
+                                                  if (isMyVote) ...[
+                                                    Icon(
+                                                      Icons.check_circle,
+                                                      size: 14,
+                                                      color: theme
+                                                          .colorScheme
+                                                          .primary,
+                                                    ),
+                                                    const SizedBox(width: 6),
+                                                  ],
+                                                  Flexible(
+                                                    child: Text(
+                                                      opt.optionText,
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight: isMyVote
+                                                            ? FontWeight.bold
+                                                            : FontWeight.normal,
+                                                      ),
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            if (hasVoted)
+                                              Text(
+                                                '${(percent * 100).toStringAsFixed(0)}% · ${opt.votesCount} votos',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: isMyVote
+                                                      ? (isDark
+                                                            ? const Color(
+                                                                0xFF93C5FD,
+                                                              )
+                                                            : const Color(
+                                                                0xFF004B87,
+                                                              ))
+                                                      : (isDark
+                                                            ? Colors
+                                                                  .grey
+                                                                  .shade400
+                                                            : Colors
+                                                                  .grey
+                                                                  .shade600),
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                        Text(
+                          '${post.poll!.totalVotes} votos registrados',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                // GIF Preview if available
+                if (post.gifUrl != null && post.gifUrl!.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  DiscordMediaAttachment(
+                    imageUrl: post.gifUrl!,
+                    title: post.title,
+                    isGif: true,
+                    maxHeight: 240,
+                    maxWidth: 460,
+                  ),
+                ],
+
+                // Image Preview if available
+                if (post.imageUrl != null && post.imageUrl!.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  DiscordMediaAttachment(
+                    imageUrl: post.imageUrl!,
+                    title: post.title,
+                    isGif: false,
+                    maxHeight: 280,
+                    maxWidth: 480,
+                  ),
+                ],
+
+                const SizedBox(height: 14),
+
+                // Footer: Likes, Comments, Repost, Bookmark
+                Row(
+                  children: [
+                    // Likes
                     InkWell(
-                      onTap: onRepost,
+                      onTap: onLike,
                       borderRadius: BorderRadius.circular(20),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E1F22) : const Color(0xFFF1F5F9),
+                          color: post.isLikedByMe
+                              ? theme.colorScheme.primary.withValues(
+                                  alpha: isDark ? 0.25 : 0.12,
+                                )
+                              : (isDark
+                                    ? const Color(0xFF1E1F22)
+                                    : const Color(0xFFF1F5F9)),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.repeat, size: 15, color: isDark ? Colors.grey.shade400 : Colors.grey.shade600),
-                            if (post.repostsCount > 0) ...[
-                              const SizedBox(width: 4),
-                              Text(
-                                '${post.repostsCount}',
-                                style: TextStyle(fontSize: 12, color: isDark ? Colors.grey.shade300 : Colors.grey.shade700),
+                            Icon(
+                              post.isLikedByMe
+                                  ? Icons.thumb_up
+                                  : Icons.thumb_up_alt_outlined,
+                              size: 15,
+                              color: post.isLikedByMe
+                                  ? theme.colorScheme.primary
+                                  : (isDark
+                                        ? Colors.grey.shade400
+                                        : Colors.grey.shade600),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              '${post.likes}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: post.isLikedByMe
+                                    ? theme.colorScheme.primary
+                                    : (isDark
+                                          ? Colors.grey.shade300
+                                          : Colors.grey.shade700),
                               ),
-                            ],
+                            ),
                           ],
                         ),
                       ),
                     ),
-                  const SizedBox(width: 8),
+                    const SizedBox(width: 8),
 
-                  // Bookmark
-                  if (onBookmark != null)
+                    // Comments
                     InkWell(
-                      onTap: onBookmark,
+                      onTap: onTap,
                       borderRadius: BorderRadius.circular(20),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
                         decoration: BoxDecoration(
-                          color: post.isBookmarkedByMe
-                              ? const Color(0xFFD97706).withValues(alpha: 0.15)
-                              : (isDark ? const Color(0xFF1E1F22) : const Color(0xFFF1F5F9)),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Icon(
-                        post.isBookmarkedByMe ? Icons.bookmark : Icons.bookmark_border,
-                        size: 15,
-                        color: post.isBookmarkedByMe
-                            ? const Color(0xFFD97706)
-                            : (isDark ? Colors.grey.shade400 : Colors.grey.shade600),
+                          color: isDark
+                              ? const Color(0xFF1E1F22)
+                              : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.chat_bubble_outline,
+                              size: 15,
+                              color: isDark
+                                  ? Colors.grey.shade400
+                                  : Colors.grey.shade600,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              '${post.commentCount}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: isDark
+                                    ? Colors.grey.shade300
+                                    : Colors.grey.shade700,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
+                    const SizedBox(width: 8),
 
-                  const Spacer(),
-                  Icon(
-                    Icons.chevron_right,
-                    size: 20,
-                    color: Colors.grey.shade400,
-                  ),
-                ],
-              ),
-            ],
+                    // Repost
+                    if (onRepost != null)
+                      InkWell(
+                        onTap: onRepost,
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? const Color(0xFF1E1F22)
+                                : const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.repeat,
+                                size: 15,
+                                color: isDark
+                                    ? Colors.grey.shade400
+                                    : Colors.grey.shade600,
+                              ),
+                              if (post.repostsCount > 0) ...[
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${post.repostsCount}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: isDark
+                                        ? Colors.grey.shade300
+                                        : Colors.grey.shade700,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    const SizedBox(width: 8),
+
+                    // Bookmark
+                    if (onBookmark != null)
+                      InkWell(
+                        onTap: onBookmark,
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: post.isBookmarkedByMe
+                                ? const Color(
+                                    0xFFD97706,
+                                  ).withValues(alpha: 0.15)
+                                : (isDark
+                                      ? const Color(0xFF1E1F22)
+                                      : const Color(0xFFF1F5F9)),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Icon(
+                            post.isBookmarkedByMe
+                                ? Icons.bookmark
+                                : Icons.bookmark_border,
+                            size: 15,
+                            color: post.isBookmarkedByMe
+                                ? const Color(0xFFD97706)
+                                : (isDark
+                                      ? Colors.grey.shade400
+                                      : Colors.grey.shade600),
+                          ),
+                        ),
+                      ),
+
+                    const Spacer(),
+                    Icon(
+                      Icons.chevron_right,
+                      size: 20,
+                      color: Colors.grey.shade400,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
