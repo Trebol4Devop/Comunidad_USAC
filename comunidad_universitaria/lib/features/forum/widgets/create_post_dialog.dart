@@ -7,9 +7,11 @@ import '../../../core/services/forum_service.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
+import '../../legal/widgets/terms_consent_modal.dart';
 import '../../shared/widgets/alias_dice_button.dart';
 import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/gif_picker_modal.dart';
+import '../../../core/services/profile_service.dart';
 import '../models/discord_forum_models.dart';
 
 class CreatePostDialog extends StatefulWidget {
@@ -112,6 +114,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
   late String _selectedFacultad;
   late String _selectedCarrera;
   bool _isSubmitting = false;
+  bool _isEphemeral = false;
 
   bool get _canSelectCarrera =>
       widget.initialFacultad != null &&
@@ -249,15 +252,24 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
-      AuthModal.show(
-        context,
-        title: 'Inicia Sesión para Publicar',
-        subtitle:
-            'Para crear consultas o citar posts en el foro universitario, debes iniciar sesión.',
-        onAuthenticated: () => _submit(),
-      );
-      return;
+    if (SupabaseConfig.isConfigured) {
+      if (!SupabaseService.isAuthenticated) {
+        AuthModal.show(
+          context,
+          title: 'Inicia Sesión para Publicar',
+          subtitle:
+              'Para crear consultas o citar posts en el foro universitario, debes iniciar sesión.',
+          onAuthenticated: () => _submit(),
+        );
+        return;
+      }
+
+      final hasAccepted = await ProfileService.hasAcceptedTerms();
+      if (!hasAccepted) {
+        if (!mounted) return;
+        final accepted = await TermsConsentModal.show(context);
+        if (!accepted) return;
+      }
     }
 
     setState(() => _isSubmitting = true);
@@ -287,6 +299,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
         quotedPostId: widget.quotedPost?.id,
         pollQuestion: _showPollForm ? pollQuestion : null,
         pollOptions: _showPollForm ? pollOptions : null,
+        ephemeral: _isEphemeral,
       );
 
       if (mounted) {
@@ -674,6 +687,81 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                   }
                   return null;
                 },
+              ),
+
+              if (_isEphemeral) ...[
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Chip(
+                    avatar: const Icon(
+                      Icons.timer,
+                      size: 15,
+                      color: Color(0xFFD97706),
+                    ),
+                    label: const Text(
+                      'Expira en 24 h',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFB45309),
+                      ),
+                    ),
+                    backgroundColor: isDark
+                        ? const Color(0xFF451A03).withValues(alpha: 0.6)
+                        : const Color(0xFFFEF3C7),
+                    side: BorderSide(
+                      color: isDark
+                          ? const Color(0xFF78350F)
+                          : const Color(0xFFFDE68A),
+                    ),
+                    visualDensity: VisualDensity.compact,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 10),
+
+              // SwitchListTile para post efímero (La Pizarra Nocturna)
+              Material(
+                color: isDark
+                    ? const Color(0xFF1E293B).withValues(alpha: 0.6)
+                    : const Color(0xFFF1F5F9),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  side: BorderSide(
+                    color: isDark
+                        ? const Color(0xFF334155)
+                        : const Color(0xFFE2E8F0),
+                  ),
+                ),
+                child: SwitchListTile(
+                  value: _isEphemeral,
+                  onChanged: (val) => setState(() => _isEphemeral = val),
+                  title: const Text(
+                    'Desaparece en 24h',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: const Text(
+                    'La Pizarra Nocturna: el post se ocultará al amanecer.',
+                    style: TextStyle(fontSize: 11),
+                  ),
+                  secondary: Icon(
+                    Icons.nightlight_round,
+                    color: _isEphemeral
+                        ? Colors.amber.shade600
+                        : (isDark
+                              ? Colors.grey.shade400
+                              : Colors.grey.shade600),
+                    size: 22,
+                  ),
+                  dense: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 0,
+                  ),
+                ),
               ),
 
               const SizedBox(height: 14),
