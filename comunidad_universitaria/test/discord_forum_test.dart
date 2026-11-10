@@ -243,12 +243,31 @@ void main() {
         );
         await tester.pumpAndSettle();
 
+        // Cabecera móvil dinámica inicial
+        expect(
+          find.text('¡Te damos la bienvenida a todos-los-temas!'),
+          findsOneWidget,
+        );
+
         await tester.tap(find.byIcon(Icons.menu));
         await tester.pumpAndSettle();
         expect(find.byType(ForumServerRail), findsOneWidget);
         expect(find.byType(ForumChannelSidebar), findsOneWidget);
         expect(find.byTooltip('Agregar servidor'), findsOneWidget);
         expect(find.byTooltip('Grupos de Estudio'), findsNothing);
+
+        // Seleccionar canal dudas-y-pensum en móvil
+        await tester.tap(find.text('dudas-y-pensum'));
+        await tester.pumpAndSettle();
+
+        // La cabecera móvil se actualiza dinámicamente con el canal activo
+        expect(
+          find.text('¡Te damos la bienvenida a dudas-y-pensum!'),
+          findsOneWidget,
+        );
+
+        await tester.tap(find.byIcon(Icons.menu));
+        await tester.pumpAndSettle();
 
         await tester.tap(find.byTooltip('Agregar servidor'));
         await tester.pumpAndSettle();

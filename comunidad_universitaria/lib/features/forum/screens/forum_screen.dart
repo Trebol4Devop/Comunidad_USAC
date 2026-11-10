@@ -857,7 +857,7 @@ class _ForumScreenState extends State<ForumScreen> {
           ),
           Expanded(
             child: Text(
-              'Te damos la bienvenida!',
+              '¡Te damos la bienvenida a ${_activeChannel.name}!',
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
