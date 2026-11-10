@@ -18,6 +18,11 @@ dependencies:
   http: ^1.2.0
   qr_flutter: ^4.1.0
   share_plus: 13.3.1
+  path_provider: ^2.1.2
+  latlong2: ^0.9.1
+  usac_campus_map:
+    path: ../../usac_campus_map
+  connectivity_plus: ^7.3.2
 
 dev_dependencies:
   flutter_test:
