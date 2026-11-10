@@ -17,6 +17,7 @@ import '../widgets/discord/popular_servers_sidebar.dart';
 import '../widgets/post_card.dart';
 import 'post_detail_screen.dart';
 import '../../groups/screens/groups_screen.dart';
+import '../../profile/screens/profile_screen.dart';
 import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/empty_state_widget.dart';
 
@@ -34,6 +35,9 @@ class ForumScreen extends StatefulWidget {
   final String activeSection;
   final String? activeCommunityId;
   final List<PopularServerItem>? initialPopularServers;
+  final bool showFloatingActionButton;
+  final String floatingActionButtonHeroTag;
+  final ValueChanged<bool>? onDrawerChanged;
 
   const ForumScreen({
     super.key,
@@ -50,14 +54,22 @@ class ForumScreen extends StatefulWidget {
     this.activeSection = 'featured',
     this.activeCommunityId,
     this.initialPopularServers,
+    this.showFloatingActionButton = true,
+    this.floatingActionButtonHeroTag = 'forum_mobile_create_post_fab',
+    this.onDrawerChanged,
   });
 
   @override
-  State<ForumScreen> createState() => _ForumScreenState();
+  State<ForumScreen> createState() => ForumScreenState();
 }
 
-class _ForumScreenState extends State<ForumScreen> {
+class ForumScreenState extends State<ForumScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _isDrawerOpen = false;
+
+  bool get isDrawerOpen => _isDrawerOpen;
+
+  void openCreateDialog() => _openCreateDialog();
 
   // Discord Forum Models State
   late List<ForumServer> _servers;
@@ -577,6 +589,29 @@ class _ForumScreenState extends State<ForumScreen> {
     _loadPosts();
   }
 
+  void _openProfile() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalContext) => Container(
+        height: MediaQuery.sizeOf(modalContext).height * 0.94,
+        decoration: BoxDecoration(
+          color: Theme.of(modalContext).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: ProfileScreen(
+          activeAlias: widget.activeAlias,
+          onAliasChanged: widget.onAliasChanged,
+          onToggleTheme: widget.onToggleTheme,
+          isDarkMode: widget.isDarkMode,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -606,12 +641,15 @@ class _ForumScreenState extends State<ForumScreen> {
               onAddServer: _onAddServer,
             ),
 
-            // 2. Channel Sidebar (240px)
+            // 2. Channel Sidebar (más amplio horizontalmente: 280px)
             ForumChannelSidebar(
+              width: 280,
               activeServer: _activeServer,
               activeChannel: currentChannel,
               channels: currentChannels,
               onSelectChannel: _onSelectChannel,
+              activeAlias: widget.activeAlias,
+              onOpenProfile: _openProfile,
             ),
 
             // 3. Main Content: GroupsScreen if isGroups, otherwise Channel Feed
@@ -650,21 +688,25 @@ class _ForumScreenState extends State<ForumScreen> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: feedBg,
+      onDrawerChanged: (isOpen) {
+        if (_isDrawerOpen != isOpen) {
+          setState(() {
+            _isDrawerOpen = isOpen;
+          });
+          widget.onDrawerChanged?.call(isOpen);
+        }
+      },
+      appBar: _buildMobileAppBar(theme, isDark, isGroups),
       drawer: Drawer(
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-        width: 312,
+        width: MediaQuery.sizeOf(context).width,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             ForumServerRail(
               servers: _servers,
               activeServer: _activeServer,
-              onSelectServer: (srv) {
-                _onSelectServer(srv);
-                if (_scaffoldKey.currentState?.isDrawerOpen == true) {
-                  Navigator.of(context).pop();
-                }
-              },
+              onSelectServer: _onSelectServer,
               onAddServer: _onAddServer,
             ),
             Expanded(
@@ -688,6 +730,17 @@ class _ForumScreenState extends State<ForumScreen> {
                           tooltip: 'Comunidades populares',
                           onPressed: _openPopularServersFromDrawer,
                         ),
+                        const Spacer(),
+                        IconButton(
+                          icon: const Icon(Icons.close_rounded, size: 20),
+                          tooltip: 'Cerrar menú',
+                          onPressed: () {
+                            if (_scaffoldKey.currentState?.isDrawerOpen == true) {
+                              Navigator.of(context).pop();
+                            }
+                          },
+                        ),
+                        const SizedBox(width: 4),
                       ],
                     ),
                   ),
@@ -696,7 +749,14 @@ class _ForumScreenState extends State<ForumScreen> {
                       activeServer: _activeServer,
                       activeChannel: currentChannel,
                       channels: currentChannels,
-                      onSelectChannel: _onSelectChannel,
+                      onSelectChannel: (ch) {
+                        _onSelectChannel(ch);
+                        if (_scaffoldKey.currentState?.isDrawerOpen == true) {
+                          Navigator.of(context).pop();
+                        }
+                      },
+                      activeAlias: widget.activeAlias,
+                      onOpenProfile: _openProfile,
                     ),
                   ),
                 ],
@@ -705,131 +765,108 @@ class _ForumScreenState extends State<ForumScreen> {
           ],
         ),
       ),
-      body: SafeArea(
-        top: false,
-        child: Column(
+      floatingActionButton: (widget.showFloatingActionButton &&
+              !_isDrawerOpen &&
+              !isGroups &&
+              !_activeChannel.isSpecial)
+          ? FloatingActionButton(
+              heroTag: widget.floatingActionButtonHeroTag,
+              onPressed: _openCreateDialog,
+              tooltip: 'Crear publicación',
+              child: const Icon(Icons.add),
+            )
+          : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      body: isGroups
+          ? GroupsScreen(
+              activeAlias: widget.activeAlias,
+              onAliasChanged: widget.onAliasChanged,
+              activeFacultadId: _activeServer.facultadId,
+              activeCarreraId: _groupsActiveChannel.categoryId,
+              activeChannelName: _groupsActiveChannel.name,
+              activeChannelDescription:
+                  _groupsActiveChannel.description,
+              activeChannelIcon: _groupsActiveChannel.icon,
+            )
+          : _buildFeedContainer(theme, isDark),
+    );
+  }
+
+  PreferredSizeWidget _buildMobileAppBar(
+    ThemeData theme,
+    bool isDark,
+    bool isGroups,
+  ) {
+    final channelName =
+        isGroups ? _groupsActiveChannel.name : _activeChannel.name;
+
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(64),
+      child: AppBar(
+        toolbarHeight: 64,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: theme.colorScheme.surface,
+        shape: Border(
+          bottom: BorderSide(
+            color: theme.colorScheme.outlineVariant,
+          ),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.menu, size: 24),
+          tooltip: 'Canales y servidores',
+          onPressed: () {
+            setState(() => _isDrawerOpen = true);
+            widget.onDrawerChanged?.call(true);
+            _scaffoldKey.currentState?.openDrawer();
+          },
+        ),
+        centerTitle: true,
+        titleSpacing: 0,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            if (isGroups)
-              _buildMobileGroupsHeader(theme, isDark)
-            else
-              _buildMobileChannelHeader(theme),
-            Expanded(
-              child: isGroups
-                  ? GroupsScreen(
-                      activeAlias: widget.activeAlias,
-                      onAliasChanged: widget.onAliasChanged,
-                      activeFacultadId: _activeServer.facultadId,
-                      activeCarreraId: _groupsActiveChannel.categoryId,
-                      activeChannelName: _groupsActiveChannel.name,
-                      activeChannelDescription:
-                          _groupsActiveChannel.description,
-                      activeChannelIcon: _groupsActiveChannel.icon,
-                    )
-                  : _buildFeedContainer(theme, isDark),
+            SizedBox(
+              width: 48,
+              height: 48,
+              child: Image.asset(
+                'assets/images/zanate_logo.png',
+                fit: BoxFit.contain,
+                semanticLabel: 'Logo de Zanate',
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'Zanate',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildMobileGroupsHeader(ThemeData theme, bool isDark) {
-    return Container(
-      height: 48,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF313338) : Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: isDark ? const Color(0xFF202225) : const Color(0xFFE2E8F0),
-            width: 1,
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.menu, size: 22),
-            tooltip: 'Canales y Servidores',
-            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-          ),
-          const SizedBox(width: 4),
-          const Icon(Icons.chat, size: 18, color: Color(0xFF25D366)),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              _groupsActiveChannel.name,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: const Color(0xFF25D366).withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: const Text(
-              'WAPP',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF25D366),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 14),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 130),
+                child: Text(
+                  '#$channelName',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.end,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: isDark
+                        ? const Color(0xFFDBDEE1)
+                        : const Color(0xFF475569),
+                  ),
+                ),
               ),
             ),
           ),
-          const SizedBox(width: 4),
-          IconButton(
-            icon: const Icon(
-              Icons.local_fire_department_rounded,
-              size: 20,
-              color: Color(0xFFF59E0B),
-            ),
-            tooltip: 'Comunidades Populares',
-            onPressed: () => _showPopularServersModal(context),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMobileChannelHeader(ThemeData theme) {
-    return Container(
-      height: 52,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(color: theme.colorScheme.outlineVariant),
-        ),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.menu, size: 22),
-            tooltip: 'Canales y servidores',
-            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-          ),
-          Expanded(
-            child: Text(
-              'Te damos la bienvenida!',
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-                fontSize: 14,
-              ),
-            ),
-          ),
-          if (!_activeChannel.isSpecial)
-            IconButton(
-              icon: const Icon(Icons.add, size: 22),
-              tooltip: 'Crear publicación',
-              onPressed: _openCreateDialog,
-            )
-          else
-            const SizedBox(width: 48),
         ],
       ),
     );
@@ -1082,10 +1119,10 @@ class _ForumScreenState extends State<ForumScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '¡Te damos la bienvenida a ${_activeChannel.name}!',
+                    '#${_activeChannel.name}',
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
-                      fontSize: 13,
+                      fontSize: 14,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

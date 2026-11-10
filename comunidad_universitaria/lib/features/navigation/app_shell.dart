@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import '../../core/utils/responsive.dart';
 import '../forum/screens/forum_screen.dart';
 import '../groups/screens/groups_screen.dart';
-import '../profile/screens/profile_screen.dart';
 import '../marketplace/screens/marketplace_screen.dart';
 import '../marketplace/widgets/create_listing_dialog.dart';
 import '../map/screens/campus_map_screen.dart';
@@ -32,8 +31,11 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
   final Set<int> _visitedTabs = {0};
+  final GlobalKey<ForumScreenState> _forumScreenKey =
+      GlobalKey<ForumScreenState>();
   final GlobalKey<GroupsScreenState> _groupsScreenKey =
       GlobalKey<GroupsScreenState>();
+  bool _isForumDrawerOpen = false;
   final List<FocusNode> _desktopTabFocusNodes = List.generate(
     4,
     (index) => FocusNode(debugLabel: 'Desktop tab $index'),
@@ -132,8 +134,10 @@ class _AppShellState extends State<AppShell> {
     final isMobile = Responsive.isMobile(context);
 
     return Scaffold(
-      appBar: AppBar(
-        toolbarHeight: isMobile ? 64 : kToolbarHeight,
+      appBar: (isMobile && _currentIndex == 0)
+          ? null
+          : AppBar(
+              toolbarHeight: isMobile ? 64 : kToolbarHeight,
         centerTitle: isMobile,
         titleSpacing: isMobile ? 0 : 16,
         title: isMobile
@@ -218,69 +222,7 @@ class _AppShellState extends State<AppShell> {
                 ],
               ),
         actions: isMobile
-            ? [
-                PopupMenuButton<String>(
-                  tooltip: 'Ajustes',
-                  color: theme.colorScheme.surface,
-                  surfaceTintColor: Colors.transparent,
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    side: BorderSide(color: theme.colorScheme.outlineVariant),
-                  ),
-                  icon: const Icon(Icons.settings_outlined, size: 21),
-                  onSelected: (value) {
-                    switch (value) {
-                      case 'profile':
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => ProfileScreen(
-                              activeAlias: widget.activeAlias,
-                              onAliasChanged: widget.onAliasChanged,
-                            ),
-                          ),
-                        );
-                      case 'theme':
-                        widget.onToggleTheme();
-                      case 'rules':
-                        _navigateToRules();
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: 'profile',
-                      child: ListTile(
-                        leading: Icon(Icons.person_outline),
-                        title: Text('Perfil'),
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: 'theme',
-                      child: ListTile(
-                        leading: Icon(
-                          widget.isDarkMode
-                              ? Icons.light_mode_outlined
-                              : Icons.dark_mode_outlined,
-                        ),
-                        title: Text(
-                          widget.isDarkMode ? 'Tema claro' : 'Tema oscuro',
-                        ),
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'rules',
-                      child: ListTile(
-                        leading: Icon(Icons.shield_outlined),
-                        title: Text('Normas y descargo'),
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 8),
-              ]
+            ? null
             : [
                 IconButton(
                   icon: const Icon(Icons.shield_outlined, size: 20),
@@ -367,10 +309,19 @@ class _AppShellState extends State<AppShell> {
               ? ExcludeSemantics(
                   excluding: _currentIndex != 0,
                   child: ForumScreen(
+                    key: _forumScreenKey,
                     activeAlias: widget.activeAlias,
                     onAliasChanged: widget.onAliasChanged,
                     onToggleTheme: widget.onToggleTheme,
                     isDarkMode: widget.isDarkMode,
+                    showFloatingActionButton: false,
+                    onDrawerChanged: (isOpen) {
+                      if (_isForumDrawerOpen != isOpen) {
+                        setState(() {
+                          _isForumDrawerOpen = isOpen;
+                        });
+                      }
+                    },
                   ),
                 )
               : const SizedBox.shrink(),
@@ -417,14 +368,24 @@ class _AppShellState extends State<AppShell> {
               ),
               child: NavigationBarTheme(
                 data: NavigationBarThemeData(
-                  height: 58,
-                  indicatorColor: Colors.transparent,
+                  height: 60,
+                  indicatorColor: widget.isDarkMode
+                      ? const Color(0xFF004B87).withValues(alpha: 0.45)
+                      : const Color(0xFF004B87).withValues(alpha: 0.15),
+                  indicatorShape: const StadiumBorder(),
                   backgroundColor: theme.colorScheme.surface,
                   elevation: 0,
                   iconTheme: WidgetStateProperty.resolveWith((states) {
+                    final isSelected = states.contains(WidgetState.selected);
                     return IconThemeData(
-                      size: 23,
-                      color: theme.colorScheme.onSurface,
+                      size: isSelected ? 24 : 22,
+                      color: isSelected
+                          ? (widget.isDarkMode
+                              ? const Color(0xFF60A5FA)
+                              : const Color(0xFF004B87))
+                          : (widget.isDarkMode
+                              ? const Color(0xFF94A3B8)
+                              : const Color(0xFF64748B)),
                     );
                   }),
                 ),
@@ -441,22 +402,18 @@ class _AppShellState extends State<AppShell> {
                   destinations: const [
                     NavigationDestination(
                       icon: Icon(Icons.chat_bubble_outline),
-                      selectedIcon: Icon(Icons.chat_bubble_outline),
                       label: 'Foro',
                     ),
                     NavigationDestination(
                       icon: Icon(Icons.groups_outlined),
-                      selectedIcon: Icon(Icons.groups_outlined),
                       label: 'Grupos',
                     ),
                     NavigationDestination(
                       icon: Icon(Icons.map_outlined),
-                      selectedIcon: Icon(Icons.map_outlined),
                       label: 'Mapa',
                     ),
                     NavigationDestination(
                       icon: Icon(Icons.local_mall_outlined),
-                      selectedIcon: Icon(Icons.local_mall_outlined),
                       label: 'Marketplace',
                     ),
                   ],
@@ -568,6 +525,14 @@ class _AppShellState extends State<AppShell> {
 
   Widget? _buildContextualFloatingActionButton() {
     switch (_currentIndex) {
+      case 0:
+        if (_isForumDrawerOpen) return null;
+        return FloatingActionButton(
+          heroTag: 'shell_forum_fab',
+          onPressed: () => _forumScreenKey.currentState?.openCreateDialog(),
+          tooltip: 'Crear publicación',
+          child: const Icon(Icons.add),
+        );
       case 1:
         // Marketplace: Publica un Artículo
         return FloatingActionButton.extended(

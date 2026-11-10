@@ -34,6 +34,8 @@ uniforme (sección 3). Los requisitos son atómicos, verificables y trazables.
 | [`10-transversales.md`](10-transversales.md) | Errores, estados vacíos, red/offline, accesibilidad, i18n, rendimiento |
 | [`11-metricas-y-trazabilidad.md`](11-metricas-y-trazabilidad.md) | Analítica, KPIs y matriz de trazabilidad requisito → código → test |
 | [`12-patrocinios.md`](12-patrocinios.md) | Contenido patrocinado: identidad, panel, etiquetado, frecuencia, moderación, métricas, ciclo de vida y administración del patrocinador |
+| [`13-auditoria-arquitectura-responsive.md`](13-auditoria-arquitectura-responsive.md) | Auditoría de arquitectura (MVVM/Repositorios), desbordamientos visuales, diseño adaptativo y blueprint de `pretty_animated_text` y `morphtext` |
+| [`14-interfaz-discord-y-navegacion.md`](14-interfaz-discord-y-navegacion.md) | Distribución Discord (2 columnas + footer card invernal), squircles 48px, avatar 38px/44px, y reubicación de configuración y normas |
 
 ---
 

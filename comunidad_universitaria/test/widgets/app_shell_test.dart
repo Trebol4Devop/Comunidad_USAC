@@ -63,7 +63,8 @@ void main() {
         );
         expect(logo, findsOneWidget);
         expect(tester.getSize(logo), const Size(48, 48));
-        expect(find.byTooltip('Ajustes'), findsOneWidget);
+        // El icono de configuración se removió de la barra superior donde está Zanate
+        expect(find.byTooltip('Ajustes'), findsNothing);
         expect(find.text('Comunidad Universitaria'), findsNothing);
         expect(find.text('No Oficial'), findsNothing);
         expect(find.text('Red Estudiantil Autónoma'), findsNothing);
@@ -101,8 +102,9 @@ void main() {
           );
         }
 
-        // En el tab inicial (Foro), no hay FloatingActionButton
-        expect(find.byType(FloatingActionButton), findsNothing);
+        // En el tab inicial (Foro), se muestra el FloatingActionButton '+' en la esquina inferior derecha
+        expect(find.byType(FloatingActionButton), findsOneWidget);
+        expect(find.byTooltip('Crear publicación'), findsOneWidget);
       },
     );
 
@@ -273,6 +275,17 @@ void main() {
 
         // Tab 0: ForumScreen activo por defecto
         expect(find.byType(ForumScreen), findsOneWidget);
+        expect(find.byTooltip('Crear publicación'), findsOneWidget);
+
+        // Al abrir la barra lateral de canales/servidores, el FAB se oculta
+        await tester.tap(find.byIcon(Icons.menu));
+        await tester.pumpAndSettle();
+        expect(find.byType(FloatingActionButton), findsNothing);
+
+        // Al cerrar la barra lateral, el FAB reaparece
+        await tester.tap(find.byTooltip('Cerrar menú'));
+        await tester.pumpAndSettle();
+        expect(find.byTooltip('Crear publicación'), findsOneWidget);
 
         // El cuarto icono visual abre Marketplace (pantalla interna 1).
         final marketTab = find.descendant(
@@ -301,7 +314,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(NavigationBar), findsOneWidget);
       expect(find.text('Zanate'), findsOneWidget);
-      expect(find.byTooltip('Ajustes'), findsOneWidget);
+      expect(find.byTooltip('Ajustes'), findsNothing);
 
       tester.view.physicalSize = const Size(700, 800);
       await tester.pumpAndSettle();

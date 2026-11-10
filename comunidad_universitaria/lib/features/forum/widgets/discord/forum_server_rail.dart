@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import '../../../rules/screens/rules_screen.dart';
 import '../../models/discord_forum_models.dart';
 import 'forum_carrera_picker_dialog.dart';
 
+/// Barra lateral de servidores (Discord Server Rail) con ancho fijo (76px),
+/// íconos en formato squircle (48x48px), píldoras de estado reactivas,
+/// botón de agregar servidores y acceso directo a normas y descargo legal.
 class ForumServerRail extends StatelessWidget {
   final List<ForumServer> servers;
   final ForumServer activeServer;
-
   final Function(ForumServer) onSelectServer;
   final Function(ForumServer) onAddServer;
 
@@ -13,7 +16,6 @@ class ForumServerRail extends StatelessWidget {
     super.key,
     required this.servers,
     required this.activeServer,
-
     required this.onSelectServer,
     required this.onAddServer,
   });
@@ -30,15 +32,22 @@ class ForumServerRail extends StatelessWidget {
     if (selectedServer != null) onSelectServer(selectedServer!);
   }
 
+  void _openRules(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const RulesScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final railBackground = isDark
-        ? const Color(0xFF171717)
-        : const Color(0xFFF7F7F7);
+        ? const Color(0xFF1E1F22)
+        : const Color(0xFFE3E5E8);
     final borderColor = isDark
-        ? const Color(0xFF303030)
-        : const Color(0xFFE5E5E5);
+        ? const Color(0xFF2B2D31)
+        : const Color(0xFFD1D5DB);
+
     final visibleServers = <ForumServer>[];
     for (final server in servers) {
       if (!server.isGroups &&
@@ -48,7 +57,7 @@ class ForumServerRail extends StatelessWidget {
     }
 
     return Container(
-      width: 64,
+      width: 76,
       decoration: BoxDecoration(
         color: railBackground,
         border: Border(right: BorderSide(color: borderColor)),
@@ -58,6 +67,7 @@ class ForumServerRail extends StatelessWidget {
         child: Column(
           children: [
             const SizedBox(height: 12),
+            // Contenedor scrolleable vertical con íconos de servidor
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: 4),
@@ -71,26 +81,69 @@ class ForumServerRail extends StatelessWidget {
                 ],
               ),
             ),
+
+            // Separador discreto antes de las acciones del riel
+            Container(
+              width: 36,
+              height: 2,
+              margin: const EdgeInsets.symmetric(vertical: 6),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF35363C) : const Color(0xFFCBD5E1),
+                borderRadius: BorderRadius.circular(1),
+              ),
+            ),
+
+            // 1. Botón de Agregar Servidor (+)
             Padding(
-              padding: const EdgeInsets.only(bottom: 12, top: 8),
+              padding: const EdgeInsets.symmetric(vertical: 4),
               child: Tooltip(
                 message: 'Agregar servidor',
                 child: SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: OutlinedButton(
-                    onPressed: () => _addServer(context),
-                    style: OutlinedButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      foregroundColor: isDark
-                          ? Colors.white
-                          : const Color(0xFF202020),
-                      side: BorderSide(color: borderColor),
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.zero,
+                  width: 48,
+                  height: 48,
+                  child: Material(
+                    color: isDark ? const Color(0xFF313338) : Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    clipBehavior: Clip.antiAlias,
+                    child: InkWell(
+                      onTap: () => _addServer(context),
+                      borderRadius: BorderRadius.circular(16),
+                      child: Center(
+                        child: Icon(
+                          Icons.add,
+                          size: 24,
+                          color: isDark ? const Color(0xFF23A55A) : const Color(0xFF16A34A),
+                        ),
                       ),
                     ),
-                    child: const Icon(Icons.add, size: 21),
+                  ),
+                ),
+              ),
+            ),
+
+            // 2. Botón de Normas y Descargo Legal (abajo del botón de agregar servidores)
+            Padding(
+              padding: const EdgeInsets.only(top: 4, bottom: 12),
+              child: Tooltip(
+                message: 'Normas y descargo legal',
+                child: SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: Material(
+                    color: isDark ? const Color(0xFF313338) : Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    clipBehavior: Clip.antiAlias,
+                    child: InkWell(
+                      onTap: () => _openRules(context),
+                      borderRadius: BorderRadius.circular(16),
+                      child: Center(
+                        child: Icon(
+                          Icons.shield_outlined,
+                          size: 22,
+                          color: isDark ? const Color(0xFF5865F2) : const Color(0xFF004B87),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -116,11 +169,13 @@ class _ServerButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final foreground = isDark ? Colors.white : const Color(0xFF202020);
-    final muted = isDark ? const Color(0xFFB3B3B3) : const Color(0xFF555555);
+    final activeBg = const Color(0xFF004B87); // Azul oficial USAC
+    final inactiveBg = isDark ? const Color(0xFF313338) : Colors.white;
+    final activeFg = Colors.white;
+    final inactiveFg = isDark ? const Color(0xFFDBDEE1) : const Color(0xFF313338);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Tooltip(
         message: server.name.replaceAll(RegExp(r'\s*\([^)]*\)'), '').trim(),
         preferBelow: false,
@@ -129,29 +184,58 @@ class _ServerButton extends StatelessWidget {
           child: Stack(
             alignment: Alignment.centerLeft,
             children: [
-              if (isSelected)
-                Container(width: 3, height: 28, color: foreground),
-              Center(
-                child: InkWell(
-                  onTap: onTap,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 140),
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? (isDark
-                                ? const Color(0xFF333333)
-                                : const Color(0xFFE8E8E8))
-                          : Colors.transparent,
-                      border: Border.all(
-                        color: isSelected ? foreground : Colors.transparent,
-                      ),
+              // Píldora indicadora vertical estilo Discord a la izquierda
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOutCubic,
+                left: 0,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOutCubic,
+                  width: isSelected ? 4 : 0,
+                  height: isSelected ? 36 : 0,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.horizontal(
+                      right: Radius.circular(4),
                     ),
-                    child: Icon(
-                      server.icon,
-                      size: 19,
-                      color: isSelected ? foreground : muted,
+                  ),
+                ),
+              ),
+
+              // Ícono de servidor en formato squircle 48x48px
+              Center(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOutCubic,
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: isSelected ? activeBg : inactiveBg,
+                    // Activo se expande a forma ligeramente más cuadrada (14px), inactivo más redondeado (20px)
+                    borderRadius: BorderRadius.circular(isSelected ? 14 : 20),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: activeBg.withValues(alpha: 0.35),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: onTap,
+                      borderRadius: BorderRadius.circular(isSelected ? 14 : 20),
+                      child: Center(
+                        child: Icon(
+                          server.icon,
+                          size: 22,
+                          color: isSelected ? activeFg : inactiveFg,
+                        ),
+                      ),
                     ),
                   ),
                 ),
