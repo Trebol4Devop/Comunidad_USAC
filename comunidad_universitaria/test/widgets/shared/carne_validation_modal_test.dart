@@ -17,7 +17,8 @@ void main() {
     UserProfile? currentProfile,
     Function(UserProfile)? onProfileUpdated,
   }) {
-    final profile = currentProfile ??
+    final profile =
+        currentProfile ??
         UserProfile(
           userId: 'user-123',
           alias: 'Estudiante #101',
@@ -38,25 +39,47 @@ void main() {
   }
 
   group('CarneValidationModal Widget Tests', () {
-    testWidgets('Renderiza en vista móvil (400x800) con campos y caja de privacidad', (tester) async {
-      tester.view.physicalSize = const Size(400, 800);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
+    testWidgets(
+      'Renderiza en vista móvil (400x800) con campos y caja de privacidad',
+      (tester) async {
+        tester.view.physicalSize = const Size(400, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
 
-      await tester.pumpWidget(buildTestModal());
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(buildTestModal());
+        await tester.pumpAndSettle();
 
-      expect(find.text('Validación Estudiantil con Carné'), findsOneWidget);
-      expect(find.text('Verificación institucional de confianza'), findsOneWidget);
-      expect(find.text('Consentimiento de Privacidad'), findsOneWidget);
+        expect(find.text('Validación Estudiantil con Carné'), findsOneWidget);
+        expect(
+          find.text('Verificación institucional de confianza'),
+          findsOneWidget,
+        );
+        expect(find.text('Consentimiento de Privacidad'), findsOneWidget);
+        expect(
+          find.textContaining('Tu CUI y tu carné NO se guardan en texto plano'),
+          findsOneWidget,
+        );
+        expect(find.textContaining('HMAC-SHA256'), findsOneWidget);
+        expect(find.textContaining('cui_hash / carne_hash'), findsOneWidget);
+        expect(
+          find.textContaining('Esto evita cuentas clonadas y filtraciones'),
+          findsOneWidget,
+        );
 
-      expect(find.widgetWithText(TextFormField, 'Número de Carné Universitario'), findsOneWidget);
-      expect(find.widgetWithText(TextFormField, 'Nombre Completo Oficial'), findsOneWidget);
+        expect(
+          find.widgetWithText(TextFormField, 'Número de Carné Universitario'),
+          findsOneWidget,
+        );
+        expect(
+          find.widgetWithText(TextFormField, 'Nombre Completo Oficial'),
+          findsOneWidget,
+        );
 
-      expect(find.byType(Checkbox), findsOneWidget);
-      expect(find.text('Cancelar'), findsOneWidget);
-      expect(find.text('Validar con Registro'), findsOneWidget);
-    });
+        expect(find.byType(Checkbox), findsOneWidget);
+        expect(find.text('Cancelar'), findsOneWidget);
+        expect(find.text('Validar con Registro'), findsOneWidget);
+      },
+    );
 
     testWidgets('Valida carné obligatorio y longitud mínima', (tester) async {
       tester.view.physicalSize = const Size(600, 800);
@@ -74,15 +97,23 @@ void main() {
       expect(find.text('Ingresa tu nombre completo oficial.'), findsOneWidget);
 
       // Carné menor a 6 dígitos
-      final carneField = find.widgetWithText(TextFormField, 'Número de Carné Universitario');
+      final carneField = find.widgetWithText(
+        TextFormField,
+        'Número de Carné Universitario',
+      );
       await tester.enterText(carneField, '1234');
       await tester.tap(validateBtn);
       await tester.pumpAndSettle();
 
-      expect(find.text('El carné debe tener al menos 6 dígitos.'), findsOneWidget);
+      expect(
+        find.text('El carné debe tener al menos 6 dígitos.'),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('Exige consentimiento activo para proceder con la validación', (tester) async {
+    testWidgets('Exige consentimiento activo para proceder con la validación', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(600, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -91,10 +122,16 @@ void main() {
       await tester.pumpAndSettle();
 
       // Llenamos campos válidos
-      final carneField = find.widgetWithText(TextFormField, 'Número de Carné Universitario');
+      final carneField = find.widgetWithText(
+        TextFormField,
+        'Número de Carné Universitario',
+      );
       await tester.enterText(carneField, '202100123');
 
-      final nameField = find.widgetWithText(TextFormField, 'Nombre Completo Oficial');
+      final nameField = find.widgetWithText(
+        TextFormField,
+        'Nombre Completo Oficial',
+      );
       await tester.enterText(nameField, 'Carlos Estudiante');
 
       // Desmarcamos el consentimiento
@@ -107,7 +144,10 @@ void main() {
       await tester.tap(validateBtn);
       await tester.pumpAndSettle();
 
-      expect(find.text('Debes aceptar los términos de verificación informada.'), findsOneWidget);
+      expect(
+        find.text('Debes aceptar los términos de verificación informada.'),
+        findsOneWidget,
+      );
     });
   });
 }

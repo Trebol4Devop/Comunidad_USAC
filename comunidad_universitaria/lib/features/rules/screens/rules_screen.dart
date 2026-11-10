@@ -215,6 +215,74 @@ class RulesScreen extends StatelessWidget {
 
               const SizedBox(height: 24),
 
+              // Sección de Cumplimiento Legal y Privacidad
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF1E293B)
+                      : const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isDark
+                        ? const Color(0xFF3B82F6).withValues(alpha: 0.3)
+                        : const Color(0xFFBFDBFE),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.gavel_rounded,
+                          color: isDark
+                              ? const Color(0xFF60A5FA)
+                              : const Color(0xFF1D4ED8),
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Cumplimiento legal y privacidad',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: isDark
+                                  ? const Color(0xFF93C5FD)
+                                  : const Color(0xFF1E40AF),
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _buildLegalBullet(
+                      isDark: isDark,
+                      boldPrefix: 'Art. 3:',
+                      text:
+                          ' el proveedor no edita transmisiones ajenas; solo aprueba u oculta.',
+                    ),
+                    const SizedBox(height: 8),
+                    _buildLegalBullet(
+                      isDark: isDark,
+                      boldPrefix: 'Art. 12/13/14/16:',
+                      text:
+                          ' suplantación, acceso ilícito, fraude y amenazas están prohibidos.',
+                    ),
+                    const SizedBox(height: 8),
+                    _buildLegalBullet(
+                      isDark: isDark,
+                      boldPrefix: 'Art. 20/21:',
+                      text:
+                          ' retención de evidencia hasta 90 días y congelamiento legal.',
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
               // Portales Oficiales de la USAC
               Text(
                 'Portales Oficiales de Unidades Académicas',
@@ -323,6 +391,45 @@ class RulesScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildLegalBullet({
+    required bool isDark,
+    required String boldPrefix,
+    required String text,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Icon(
+            Icons.circle,
+            size: 6,
+            color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text.rich(
+            TextSpan(
+              style: TextStyle(
+                fontSize: 12.5,
+                height: 1.4,
+                color: isDark ? Colors.grey.shade300 : const Color(0xFF1E293B),
+              ),
+              children: [
+                TextSpan(
+                  text: boldPrefix,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                TextSpan(text: text),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

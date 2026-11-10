@@ -3,11 +3,13 @@ import '../../../core/config/supabase_config.dart';
 import '../../../core/constants/categories.dart';
 import '../../../core/models/post.dart';
 import '../../../core/services/forum_service.dart';
+import '../../../core/services/profile_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/utils/time_utils.dart';
 import '../widgets/comment_item.dart';
 import '../widgets/create_post_dialog.dart';
+import '../../legal/widgets/terms_consent_modal.dart';
 import '../../shared/widgets/alias_dice_button.dart';
 import '../../shared/widgets/anonymous_author_header.dart';
 import '../../shared/widgets/auth_modal.dart';
@@ -290,15 +292,24 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     final text = _commentController.text.trim();
     if (text.isEmpty && _commentGifUrl == null) return;
 
-    if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
-      AuthModal.show(
-        context,
-        title: 'Inicia Sesión para Responder',
-        subtitle:
-            'Para participar y responder en este tema, debes iniciar sesión.',
-        onAuthenticated: () => _sendComment(),
-      );
-      return;
+    if (SupabaseConfig.isConfigured) {
+      if (!SupabaseService.isAuthenticated) {
+        AuthModal.show(
+          context,
+          title: 'Inicia Sesión para Responder',
+          subtitle:
+              'Para participar y responder en este tema, debes iniciar sesión.',
+          onAuthenticated: () => _sendComment(),
+        );
+        return;
+      }
+
+      final hasAccepted = await ProfileService.hasAcceptedTerms();
+      if (!hasAccepted) {
+        if (!mounted) return;
+        final accepted = await TermsConsentModal.show(context);
+        if (!accepted) return;
+      }
     }
 
     setState(() => _isSendingComment = true);

@@ -19,7 +19,9 @@ void main() {
   }
 
   group('RulesScreen Widget Tests', () {
-    testWidgets('Renderiza en pantalla móvil (400x800) sin desbordamientos', (tester) async {
+    testWidgets('Renderiza en pantalla móvil (400x800) sin desbordamientos', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(400, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -36,22 +38,37 @@ void main() {
 
       // Títulos de secciones
       expect(find.text('Reglas de Convivencia Estudiantil'), findsOneWidget);
-      expect(find.text('Normas del Marketplace & Servicios Estudiantiles'), findsOneWidget);
-      expect(find.text('Descargo de Responsabilidad Legal e Independencia'), findsOneWidget);
-      expect(find.text('Portales Oficiales de Unidades Académicas'), findsOneWidget);
+      expect(
+        find.text('Normas del Marketplace & Servicios Estudiantiles'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Descargo de Responsabilidad Legal e Independencia'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Portales Oficiales de Unidades Académicas'),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('Renderiza en pantalla de escritorio (1200x800) en modo oscuro', (tester) async {
-      tester.view.physicalSize = const Size(1200, 800);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
+    testWidgets(
+      'Renderiza en pantalla de escritorio (1200x800) en modo oscuro',
+      (tester) async {
+        tester.view.physicalSize = const Size(1200, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
 
-      await tester.pumpWidget(buildTestRules(isDarkMode: true));
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(buildTestRules(isDarkMode: true));
+        await tester.pumpAndSettle();
 
-      expect(find.text('Normas Comunitarias & Descargo Legal'), findsOneWidget);
-      expect(find.byIcon(Icons.shield_outlined), findsWidgets);
-    });
+        expect(
+          find.text('Normas Comunitarias & Descargo Legal'),
+          findsOneWidget,
+        );
+        expect(find.byIcon(Icons.shield_outlined), findsWidgets);
+      },
+    );
 
     testWidgets('Muestra las 7 reglas comunitarias numeradas', (tester) async {
       tester.view.physicalSize = const Size(1200, 1200);
@@ -67,27 +84,82 @@ void main() {
       }
 
       // Verificar títulos de reglas
-      expect(find.text('Respeto mutuo y fraternidad universitaria'), findsOneWidget);
+      expect(
+        find.text('Respeto mutuo y fraternidad universitaria'),
+        findsOneWidget,
+      );
       expect(find.text('Veracidad y enlaces limpios'), findsOneWidget);
-      expect(find.text('Prohibición de venta de exámenes o fraude académico'), findsOneWidget);
-      expect(find.text('Protección de Privacidad y Seudónimos'), findsOneWidget);
-      expect(find.text('Trato directo y sin intermediación financiera'), findsOneWidget);
-      expect(find.text('Prohibición estricta de sustancias y productos ilegales'), findsOneWidget);
+      expect(
+        find.text('Prohibición de venta de exámenes o fraude académico'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Protección de Privacidad y Seudónimos'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Trato directo y sin intermediación financiera'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Prohibición estricta de sustancias y productos ilegales'),
+        findsOneWidget,
+      );
       expect(find.text('Seguridad en puntos de encuentro'), findsOneWidget);
     });
 
-    testWidgets('Muestra los chips de las unidades académicas / facultades oficiales', (tester) async {
-      tester.view.physicalSize = const Size(1200, 1400);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
+    testWidgets(
+      'Muestra los chips de las unidades académicas / facultades oficiales',
+      (tester) async {
+        tester.view.physicalSize = const Size(1200, 1400);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
 
-      await tester.pumpWidget(buildTestRules());
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(buildTestRules());
+        await tester.pumpAndSettle();
 
-      // Action chips de facultades
-      expect(find.byType(ActionChip), findsWidgets);
-      expect(find.widgetWithText(ActionChip, 'Facultad de Ingeniería'), findsOneWidget);
-      expect(find.widgetWithText(ActionChip, 'Facultad de Ciencias Económicas'), findsOneWidget);
-    });
+        // Action chips de facultades
+        expect(find.byType(ActionChip), findsWidgets);
+        expect(
+          find.widgetWithText(ActionChip, 'Facultad de Ingeniería'),
+          findsOneWidget,
+        );
+        expect(
+          find.widgetWithText(ActionChip, 'Facultad de Ciencias Económicas'),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'Muestra la sección de Cumplimiento legal y privacidad con sus 3 artículos',
+      (tester) async {
+        tester.view.physicalSize = const Size(1200, 1000);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
+
+        await tester.pumpWidget(buildTestRules());
+        await tester.pumpAndSettle();
+
+        expect(find.text('Cumplimiento legal y privacidad'), findsOneWidget);
+        expect(find.textContaining('Art. 3:'), findsOneWidget);
+        expect(
+          find.textContaining('el proveedor no edita transmisiones ajenas'),
+          findsOneWidget,
+        );
+        expect(find.textContaining('Art. 12/13/14/16:'), findsOneWidget);
+        expect(
+          find.textContaining(
+            'suplantación, acceso ilícito, fraude y amenazas',
+          ),
+          findsOneWidget,
+        );
+        expect(find.textContaining('Art. 20/21:'), findsOneWidget);
+        expect(
+          find.textContaining('retención de evidencia hasta 90 días'),
+          findsOneWidget,
+        );
+      },
+    );
   });
 }

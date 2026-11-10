@@ -43,182 +43,264 @@ void main() {
   }
 
   group('CreatePostDialog Widget Tests', () {
-    testWidgets('Renderiza en vista móvil (400x800) con campos y badge de identidad anónima', (tester) async {
-      tester.view.physicalSize = const Size(400, 800);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
+    testWidgets(
+      'Renderiza en vista móvil (400x800) con campos y badge de identidad anónima',
+      (tester) async {
+        tester.view.physicalSize = const Size(400, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
 
-      await tester.pumpWidget(buildTestDialog());
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(buildTestDialog());
+        await tester.pumpAndSettle();
 
-      expect(find.text('Nueva Consulta en el Foro'), findsOneWidget);
-      expect(find.text('Foro Estudiantil USAC · Espacio Libre'), findsOneWidget);
+        expect(find.text('Nueva Consulta en el Foro'), findsOneWidget);
+        expect(
+          find.text('Foro Estudiantil USAC · Espacio Libre'),
+          findsOneWidget,
+        );
 
-      // Campos de texto
-      expect(find.widgetWithText(TextFormField, 'Título de la consulta o aporte'), findsOneWidget);
-      expect(find.widgetWithText(TextFormField, 'Detalle o descripción'), findsOneWidget);
+        // Campos de texto
+        expect(
+          find.widgetWithText(TextFormField, 'Título de la consulta o aporte'),
+          findsOneWidget,
+        );
+        expect(
+          find.widgetWithText(TextFormField, 'Detalle o descripción'),
+          findsOneWidget,
+        );
 
-      // Botones de medios y encuesta
-      expect(find.text('Foto'), findsOneWidget);
-      expect(find.text('GIF'), findsOneWidget);
-      expect(find.text('Encuesta'), findsOneWidget);
+        // Botones de medios y encuesta
+        expect(find.text('Foto'), findsOneWidget);
+        expect(find.text('GIF'), findsOneWidget);
+        expect(find.text('Encuesta'), findsOneWidget);
 
-      // Botones de acción
-      expect(find.text('Cancelar'), findsOneWidget);
-      expect(find.text('Publicar'), findsOneWidget);
-    });
+        // Botones de acción
+        expect(find.text('Cancelar'), findsOneWidget);
+        expect(find.text('Publicar'), findsOneWidget);
+      },
+    );
 
-    testWidgets('Renderiza en vista escritorio (1200x800) en modo cita con post previo', (tester) async {
-      tester.view.physicalSize = const Size(1200, 800);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
+    testWidgets(
+      'Renderiza en vista escritorio (1200x800) en modo cita con post previo',
+      (tester) async {
+        tester.view.physicalSize = const Size(1200, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
 
-      final quote = Post(
-        id: 'post-1',
-        title: 'Recomendaciones Física 1',
-        content: '¿Quién es mejor catedrático para el curso?',
-        authorAlias: 'Sancarlista #99',
-        category: 'general',
-        carrera: 'sistemas',
-        createdAt: DateTime.now(),
-        likes: 3,
-        commentCount: 2,
-      );
+        final quote = Post(
+          id: 'post-1',
+          title: 'Recomendaciones Física 1',
+          content: '¿Quién es mejor catedrático para el curso?',
+          authorAlias: 'Sancarlista #99',
+          category: 'general',
+          carrera: 'sistemas',
+          createdAt: DateTime.now(),
+          likes: 3,
+          commentCount: 2,
+        );
 
-      await tester.pumpWidget(
-        buildTestDialog(
-          quotedPost: quote,
-          serverName: 'Facultad de Ingeniería',
-          channelName: 'primer-ingreso',
-        ),
-      );
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          buildTestDialog(
+            quotedPost: quote,
+            serverName: 'Facultad de Ingeniería',
+            channelName: 'primer-ingreso',
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.text('Citar Publicación'), findsOneWidget);
-      expect(find.text('Citando a Sancarlista #99'), findsOneWidget);
-      expect(find.text('Recomendaciones Física 1'), findsWidgets);
-      expect(find.text('#primer-ingreso'), findsOneWidget);
-      expect(find.text('Servidor: Facultad de Ingeniería'), findsOneWidget);
-    });
+        expect(find.text('Citar Publicación'), findsOneWidget);
+        expect(find.text('Citando a Sancarlista #99'), findsOneWidget);
+        expect(find.text('Recomendaciones Física 1'), findsWidgets);
+        expect(find.text('#primer-ingreso'), findsOneWidget);
+        expect(find.text('Servidor: Facultad de Ingeniería'), findsOneWidget);
+      },
+    );
 
-    testWidgets('Valida campos requeridos y longitudes mínimas al intentar publicar', (tester) async {
-      tester.view.physicalSize = const Size(600, 900);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
+    testWidgets(
+      'Valida campos requeridos y longitudes mínimas al intentar publicar',
+      (tester) async {
+        tester.view.physicalSize = const Size(600, 900);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
 
-      await tester.pumpWidget(buildTestDialog());
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(buildTestDialog());
+        await tester.pumpAndSettle();
 
-      // Tap publicar sin llenar campos
-      await tester.tap(find.text('Publicar'));
-      await tester.pumpAndSettle();
+        // Tap publicar sin llenar campos
+        await tester.tap(find.text('Publicar'));
+        await tester.pumpAndSettle();
 
-      // Debe mostrar mensajes de validación
-      expect(find.text('El título debe tener al menos 5 caracteres.'), findsOneWidget);
-      expect(find.text('El contenido debe tener al menos 10 caracteres.'), findsOneWidget);
+        // Debe mostrar mensajes de validación
+        expect(
+          find.text('El título debe tener al menos 5 caracteres.'),
+          findsOneWidget,
+        );
+        expect(
+          find.text('El contenido debe tener al menos 10 caracteres.'),
+          findsOneWidget,
+        );
 
-      // Llenamos el título con < 5 caracteres
-      final titleField = find.widgetWithText(TextFormField, 'Título de la consulta o aporte');
-      await tester.enterText(titleField, 'Hola');
-      await tester.tap(find.text('Publicar'));
-      await tester.pumpAndSettle();
+        // Llenamos el título con < 5 caracteres
+        final titleField = find.widgetWithText(
+          TextFormField,
+          'Título de la consulta o aporte',
+        );
+        await tester.enterText(titleField, 'Hola');
+        await tester.tap(find.text('Publicar'));
+        await tester.pumpAndSettle();
 
-      expect(find.text('El título debe tener al menos 5 caracteres.'), findsOneWidget);
+        expect(
+          find.text('El título debe tener al menos 5 caracteres.'),
+          findsOneWidget,
+        );
 
-      // Llenamos con título válido
-      await tester.enterText(titleField, '¿Horarios de Cálculo 1?');
-      await tester.tap(find.text('Publicar'));
-      await tester.pumpAndSettle();
+        // Llenamos con título válido
+        await tester.enterText(titleField, '¿Horarios de Cálculo 1?');
+        await tester.tap(find.text('Publicar'));
+        await tester.pumpAndSettle();
 
-      expect(find.text('El título debe tener al menos 5 caracteres.'), findsNothing);
-      expect(find.text('El contenido debe tener al menos 10 caracteres.'), findsOneWidget);
-    });
+        expect(
+          find.text('El título debe tener al menos 5 caracteres.'),
+          findsNothing,
+        );
+        expect(
+          find.text('El contenido debe tener al menos 10 caracteres.'),
+          findsOneWidget,
+        );
+      },
+    );
 
-    testWidgets('Muestra y gestiona el formulario de encuestas (agregar y remover opciones)', (tester) async {
-      tester.view.physicalSize = const Size(600, 1000);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
+    testWidgets(
+      'Muestra y gestiona el formulario de encuestas (agregar y remover opciones)',
+      (tester) async {
+        tester.view.physicalSize = const Size(600, 1000);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
 
-      await tester.pumpWidget(buildTestDialog());
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(buildTestDialog());
+        await tester.pumpAndSettle();
 
-      // Inicialmente la encuesta no es visible
-      expect(find.text('Crear Encuesta Estudiantil'), findsNothing);
+        // Inicialmente la encuesta no es visible
+        expect(find.text('Crear Encuesta Estudiantil'), findsNothing);
 
-      // Hacemos tap en el botón Encuesta
-      await tester.tap(find.text('Encuesta'));
-      await tester.pumpAndSettle();
+        // Hacemos tap en el botón Encuesta
+        await tester.tap(find.text('Encuesta'));
+        await tester.pumpAndSettle();
 
-      expect(find.text('Crear Encuesta Estudiantil'), findsOneWidget);
-      expect(find.widgetWithText(TextFormField, 'Pregunta de la encuesta'), findsOneWidget);
-      expect(find.text('Opción 1'), findsWidgets);
-      expect(find.text('Opción 2'), findsWidgets);
+        expect(find.text('Crear Encuesta Estudiantil'), findsOneWidget);
+        expect(
+          find.widgetWithText(TextFormField, 'Pregunta de la encuesta'),
+          findsOneWidget,
+        );
+        expect(find.text('Opción 1'), findsWidgets);
+        expect(find.text('Opción 2'), findsWidgets);
 
-      // Con 2 opciones no debe haber botón de borrar (el mínimo es 2)
-      expect(find.byIcon(Icons.delete_outline), findsNothing);
+        // Con 2 opciones no debe haber botón de borrar (el mínimo es 2)
+        expect(find.byIcon(Icons.delete_outline), findsNothing);
 
-      // Añadimos una opción más
-      final addOptionBtn = find.text('Añadir opción');
-      expect(addOptionBtn, findsOneWidget);
-      await tester.tap(addOptionBtn);
-      await tester.pumpAndSettle();
+        // Añadimos una opción más
+        final addOptionBtn = find.text('Añadir opción');
+        expect(addOptionBtn, findsOneWidget);
+        await tester.tap(addOptionBtn);
+        await tester.pumpAndSettle();
 
-      // Ahora hay 3 opciones y deben aparecer botones de eliminar
-      expect(find.byIcon(Icons.delete_outline), findsNWidgets(3));
+        // Ahora hay 3 opciones y deben aparecer botones de eliminar
+        expect(find.byIcon(Icons.delete_outline), findsNWidgets(3));
 
-      // Eliminamos la última opción
-      await tester.tap(find.byIcon(Icons.delete_outline).last);
-      await tester.pumpAndSettle();
+        // Eliminamos la última opción
+        await tester.tap(find.byIcon(Icons.delete_outline).last);
+        await tester.pumpAndSettle();
 
-      // Volvemos a tener 2 opciones
-      expect(find.byIcon(Icons.delete_outline), findsNothing);
-    });
+        // Volvemos a tener 2 opciones
+        expect(find.byIcon(Icons.delete_outline), findsNothing);
+      },
+    );
 
-    testWidgets('Al abrir desde todos-los-temas permite seleccionar canal de destino incluyendo todos-los-temas y excluyendo charla-general', (tester) async {
-      tester.view.physicalSize = const Size(600, 900);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
+    testWidgets(
+      'Al abrir desde todos-los-temas permite seleccionar canal de destino incluyendo todos-los-temas y excluyendo charla-general',
+      (tester) async {
+        tester.view.physicalSize = const Size(600, 900);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
 
-      await tester.pumpWidget(
-        buildTestDialog(
-          channelName: 'todos-los-temas',
-          initialCategory: 'todos',
-          initialFacultad: '08',
-          initialCarrera: 'sistemas',
-          serverName: 'Ingeniería en Sistemas',
-        ),
-      );
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          buildTestDialog(
+            channelName: 'todos-los-temas',
+            initialCategory: 'todos',
+            initialFacultad: '08',
+            initialCarrera: 'sistemas',
+            serverName: 'Ingeniería en Sistemas',
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      // Debe mostrar el selector de canal de publicación
-      expect(find.byType(DropdownButtonFormField<String>), findsOneWidget);
-      expect(find.text('Canal de publicación'), findsOneWidget);
-      expect(find.textContaining('todos-los-temas'), findsOneWidget);
+        // Debe mostrar el selector de canal de publicación
+        expect(find.byType(DropdownButtonFormField<String>), findsOneWidget);
+        expect(find.text('Canal de publicación'), findsOneWidget);
+        expect(find.textContaining('todos-los-temas'), findsOneWidget);
 
-      // Verificamos que charla-general no exista en el formulario
-      expect(find.textContaining('charla-general'), findsNothing);
-    });
+        // Verificamos que charla-general no exista en el formulario
+        expect(find.textContaining('charla-general'), findsNothing);
+      },
+    );
 
-    testWidgets('Al abrir desde el servidor general de facultad permite seleccionar carrera o área de la facultad', (tester) async {
-      tester.view.physicalSize = const Size(600, 900);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
+    testWidgets(
+      'Al abrir desde el servidor general de facultad permite seleccionar carrera o área de la facultad',
+      (tester) async {
+        tester.view.physicalSize = const Size(600, 900);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
 
-      await tester.pumpWidget(
-        buildTestDialog(
-          channelName: 'todos-los-temas',
-          initialCategory: 'todos',
-          initialFacultad: '08',
-          initialCarrera: 'todas',
-          serverName: 'Facultad de Ingeniería',
-        ),
-      );
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          buildTestDialog(
+            channelName: 'todos-los-temas',
+            initialCategory: 'todos',
+            initialFacultad: '08',
+            initialCarrera: 'todas',
+            serverName: 'Facultad de Ingeniería',
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      // Debe mostrar 2 dropdowns: Canal de publicación y Carrera o Especialidad
-      expect(find.byType(DropdownButtonFormField<String>), findsNWidgets(2));
-      expect(find.text('Canal de publicación'), findsOneWidget);
-      expect(find.text('Carrera o Especialidad'), findsOneWidget);
-    });
+        // Debe mostrar 2 dropdowns: Canal de publicación y Carrera o Especialidad
+        expect(find.byType(DropdownButtonFormField<String>), findsNWidgets(2));
+        expect(find.text('Canal de publicación'), findsOneWidget);
+        expect(find.text('Carrera o Especialidad'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Switch de post efímero (La Pizarra Nocturna) muestra aviso de expira en 24h al activarse',
+      (tester) async {
+        tester.view.physicalSize = const Size(600, 900);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
+
+        await tester.pumpWidget(buildTestDialog());
+        await tester.pumpAndSettle();
+
+        // Inicialmente el switch existe y el aviso "Expira en 24 h" no está visible
+        expect(find.text('Desaparece en 24h'), findsOneWidget);
+        expect(
+          find.text('La Pizarra Nocturna: el post se ocultará al amanecer.'),
+          findsOneWidget,
+        );
+        expect(find.text('Expira en 24 h'), findsNothing);
+
+        // Activamos el switch efímero
+        final switchFinder = find.byType(SwitchListTile);
+        expect(switchFinder, findsOneWidget);
+        await tester.tap(switchFinder);
+        await tester.pumpAndSettle();
+
+        // Debe reflejar el aviso "Expira en 24 h"
+        expect(find.text('Expira en 24 h'), findsOneWidget);
+
+        // Si lo desactivamos, el aviso desaparece
+        await tester.tap(switchFinder);
+        await tester.pumpAndSettle();
+        expect(find.text('Expira en 24 h'), findsNothing);
+      },
+    );
   });
 }
