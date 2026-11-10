@@ -239,7 +239,7 @@ class _CampusMapScreenState extends State<CampusMapScreen> {
       return;
     }
 
-    final model = Building3DModel.fromBuilding(building);
+    final model = UsacBuilding3DModel.fromBuilding(building);
     showDialog(
       context: context,
       builder: (ctx) => Dialog(

@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:usac_campus_map/usac_campus_map.dart';
 
 /// Modelo de datos para la representación tridimensional e isométrica de un edificio universitario.
-class Building3DModel {
+class UsacBuilding3DModel {
   final String id;
   final String name;
   final int floorsCount;
   final String category;
   final List<List<double>> polygonCoordinates;
 
-  const Building3DModel({
+  const UsacBuilding3DModel({
     required this.id,
     required this.name,
     required this.floorsCount,
@@ -18,8 +18,8 @@ class Building3DModel {
     this.polygonCoordinates = const [],
   });
 
-  factory Building3DModel.fromBuilding(CampusBuilding building) {
-    return Building3DModel(
+  factory UsacBuilding3DModel.fromBuilding(CampusBuilding building) {
+    return UsacBuilding3DModel(
       id: building.id,
       name: building.name,
       floorsCount: building.floorsCount > 0 ? building.floorsCount : 1,
@@ -33,7 +33,7 @@ class Building3DModel {
 
 /// Visor volumétrico 3D / isométrico interactivo con soporte de rotación y zoom táctil.
 class Building3DViewer extends StatefulWidget {
-  final Building3DModel model;
+  final UsacBuilding3DModel model;
   final UsacMapTheme theme;
 
   const Building3DViewer({
@@ -93,7 +93,7 @@ class _Building3DViewerState extends State<Building3DViewer> {
 }
 
 class _IsometricBuildingPainter extends CustomPainter {
-  final Building3DModel model;
+  final UsacBuilding3DModel model;
   final UsacMapTheme theme;
   final double rotationAngle;
   final double tiltAngle;
