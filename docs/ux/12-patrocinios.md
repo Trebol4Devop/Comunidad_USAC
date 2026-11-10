@@ -6,6 +6,9 @@
 > ([`03-foro.md`](03-foro.md), prefijo `UX-FORO`) y por Grupos
 > ([`05-grupos.md`](05-grupos.md), prefijo `UX-GRP`), y se apoya en el
 > Marketplace ([`04-marketplace.md`](04-marketplace.md), prefijo `UX-MKT`).
+> La visibilidad pagada del Marketplace se origina en sus **planes de
+> suscripción** (`UX-MKT-017`/`UX-MKT-018`); este documento define cómo se
+> etiqueta, se modera y se controla ese contenido promovido.
 > Convenciones y plantilla en [`README.md`](README.md).
 
 ---
@@ -18,11 +21,40 @@
 2. **La experiencia primero.** El usuario no debe sentir el feed "invadido": la
    frecuencia está acotada y el contenido orgánico mantiene prioridad.
 3. **Una sola fuente de verdad.** Los datos del negocio (catálogo, contacto,
-   identidad) provienen del Marketplace/Perfil; el patrocinio solo los *promueve*.
+   identidad, plan) provienen del Marketplace/Perfil; el patrocinio solo los
+   *promueve*. El plan del vendedor (`marketplace_plans`) determina la insignia,
+   el posicionamiento y si la publicación entra al carrusel destacado.
 4. **Moderado como todo lo demás.** Ningún patrocinio se publica sin pasar por
    moderación ni puede auto-aprobarse.
 5. **Transparencia y control.** Siempre se puede saber por qué se ve un anuncio,
    ocultarlo y reportarlo.
+
+---
+
+### 1.1 Planes del Marketplace y visibilidad patrocinada
+
+La fuente de verdad de la visibilidad pagada es `public.marketplace_plans`
+([`UX-MKT-017`/`UX-MKT-018`](04-marketplace.md)). Los planes no eximen de
+moderación ni de verificación de identidad.
+
+| Plan | `is_sponsored` | Insignia (`default_badge_text`) | Ubicación | Protección de escaparate |
+|---|:--:|---|---|:--:|
+| `free` | No (salvo patrocinio aprobado) | Estudiante Verificado | Orgánico | No |
+| `pro_student` | Sí, automático (`auto_sponsor_items`) | Emprendedor Verificado | Prioridad media en feed y recomendados; carrusel solo con cupo | No |
+| `business_local` | Sí, automático | Tienda / Local Oficial | Carrusel superior (prioridad alta) | Sí (`hide_competitor_related`) |
+
+- Un patrocinio aprobado por `sponsor_requests` puede dar visibilidad sin plan,
+  pero **no** otorga los límites de catálogo ni la protección de escaparate.
+- La insignia visible se toma de `marketplace_items.sponsor_badge_text` y debe
+  coincidir con la del plan activo; si no coincide, prevalece la del plan.
+- La etiqueta "Patrocinado" (UX-SPN-003 / UX-DSN-008) es obligatoria en toda
+  unidad con `is_sponsored = true`, incluida la del carrusel del Marketplace.
+- Al vencer el plan, el contenido deja de ser patrocinado y vuelve a orgánico
+  sin perder sus datos.
+- El **carrusel superior del Marketplace** es un estante explícito, rotulado y
+  separado del listado orgánico; no se considera una inserción intercalada y por
+  ello no consume el ritmo 1:6 de `UX-SPN-004`. Ese ritmo aplica a unidades
+  patrocinadas intercaladas dentro del feed orgánico y a Foro/Grupos.
 
 ---
 
@@ -34,7 +66,10 @@
 - **Estado objetivo:** todo patrocinador tiene un **perfil público** con: logotipo,
   nombre comercial, descripción corta, categoría, sede/facultades donde opera,
   canales de contacto y su catálogo de anuncios patrocinados. Es el destino de los
-  enlaces que aparecen en Foro y Grupos.
+  enlaces que aparecen en Foro y Grupos. Cuando el patrocinador además vende en el
+  Marketplace, este perfil reutiliza `seller_profiles` (logo, banner, horario y
+  estado de tienda) y el catálogo de `get_seller_catalog`
+  ([`UX-MKT-016`](04-marketplace.md)); no se duplican datos comerciales.
 - **Precondiciones:** cuenta con rol/atributo de patrocinador aprobado (requiere estar previamente verificado mediante carné o admisión externa).
 - **UI / contenido:** encabezado con logo, nombre, distintivo **"Patrocinador"**
   verificado; bio; chips de categoría y sede; grid del catálogo; botones de
@@ -57,11 +92,14 @@
 - **Actor / rol:** Patrocinador
 - **Prioridad:** Must
 - **Estado objetivo:** desde su perfil, el patrocinador accede a un panel para
-  (1) editar su perfil público, (2) crear/editar promociones, (3) ver métricas y
-  (4) pausar/reanudar una promoción.
-- **UI / contenido:** pestañas "Perfil", "Promociones", "Métricas"; formulario de
-  promoción con título, texto corto, 1–3 imágenes (o 1 video), llamado a la
-  acción, sede/facultad objetivo y vigencia (fecha inicio/fin).
+  (1) editar su perfil público y comercial (`seller_profiles`), (2) gestionar su
+  plan de Marketplace (`marketplace_plans`), (3) crear/editar promociones,
+  (4) ver métricas y (5) pausar/reanudar una promoción.
+- **UI / contenido:** pestañas "Perfil", "Plan", "Promociones", "Métricas";
+  formulario de promoción con título, texto corto, 1–3 imágenes (o 1 video),
+  llamado a la acción, sede/facultad objetivo y vigencia (fecha inicio/fin). La
+  pestaña "Plan" muestra el plan actual, límites, vigencia y CTA de mejora
+  (UX-MKT-018).
 - **Estados:** vacío ("Aún no tienes promociones") | borrador | en revisión |
   activa | pausada | finalizada | rechazada (con motivo).
 - **Validaciones y reglas de negocio:** reutiliza el filtro de términos prohibidos
@@ -80,8 +118,9 @@
 - **Prioridad:** Must
 - **Estado objetivo:** toda unidad patrocinada se distingue sin ambigüedad
   mediante: etiqueta textual **"Patrocinado"** (o "Publicidad"), logotipo y nombre
-  del patrocinador, distintivo verificado y un acento cromático propio sobre el
-  lenguaje visual de la sección.
+  del patrocinador, distintivo verificado, insignia del plan activo
+  (`sponsor_badge_text`) y un acento cromático propio sobre el lenguaje visual de
+  la sección.
 - **Problema actual [Mejora]:** hoy el carrusel de patrocinadores del Marketplace
   ([`sponsor_carousel.dart`](../../comunidad_universitaria/lib/features/marketplace/widgets/sponsor_carousel.dart))
   no tiene un modelo de etiquetado reutilizable para insertarse en Foro/Grupos;
@@ -228,7 +267,8 @@
   Marketplace; diálogo `sponsor_request_dialog.dart` (existente) con los campos
   que hoy persiste `sponsor_requests`: nombre comercial (`brand_name`), nombre y
   teléfono de contacto (`contact_name`, `contact_phone`), correo (`email`),
-  descripción de la propuesta (`proposal_details`) y colocación esperada
+  descripción de la propuesta (`proposal_details`), plan deseado (nuevo:
+  `pro_student`, `business_local` o "solo patrocinio") y colocación esperada
   (`expected_placement`). Botón "Enviar solicitud". Si ya existe solicitud activa,
   muestra su estado en lugar del formulario: "Tu solicitud está en revisión".
   Nota [Mejora]: la categoría y la sede/facultad objetivo que menciona UX-SPN-010
@@ -536,8 +576,8 @@
 
 | Requisito | Implementación / anclaje | Estado |
 |---|---|---|
-| UX-SPN-001 Perfil de patrocinador | perfil público de patrocinador (nuevo) | Pendiente |
-| UX-SPN-002 Panel del patrocinador | panel `Sponsor Studio` (nuevo) | Pendiente |
+| UX-SPN-001 Perfil de patrocinador | perfil público de patrocinador reutiliza `seller_profiles` (nuevo) | Pendiente |
+| UX-SPN-002 Panel del patrocinador | panel `Sponsor Studio` con pestaña "Plan" (nuevo) | Pendiente |
 | UX-SPN-003 Etiquetado de patrocinios | `UX-DSN-008`; `sponsor_carousel.dart` | Pendiente |
 | UX-SPN-004 Frecuencia y rotación | servicio de inserción (nuevo) | Pendiente |
 | UX-SPN-005 Transparencia y control | `report_dialog.dart`; preferencias locales | Parcial |
@@ -552,4 +592,6 @@
 | UX-SPN-014 Suspensión y baja | campo `suspended` en `profiles` (nuevo Pendiente) | Pendiente |
 | UX-SPN-015 Notificaciones de ciclo de vida | tabla de notificaciones (nuevo Pendiente) | Pendiente |
 | UX-SPN-016 Panel admin de solicitudes | `idx_sponsor_requests_status`; `admin_panels_rls_policies` (BD Cubierto); pantalla Flutter (nuevo Pendiente) | Pendiente |
+| UX-MKT-017/018 Planes del Marketplace | `marketplace_plans`; `seller_profiles`; `sponsor_requests`; UI de planes (nuevo) | Pendiente |
+| UX-MKT-020 Feed ponderado | RPC `get_marketplace_feed`; índice de feed (nuevo) | Pendiente |
 

@@ -1042,10 +1042,10 @@ flowchart TD
 - **Prioridad:** Must
 - **Estado objetivo:** una persona no estudiante que vende en la comunidad USAC solicita admisión identificándose con documentos personales; un administrador revisa y aprueba; al aprobarse queda catalogada como "Vendedor externo verificado" y puede vender en el Marketplace y postularse a patrocinador.
 - **Precondiciones:** El aspirante no posee carné universitario ni correo institucional y cuenta con documentos de identidad vigentes. La solicitud se abre desde el perfil o desde el flujo de publicación del Marketplace.
-- **UI / contenido:** formulario de solicitud con carga de documentos y consentimiento informado de tratamiento de datos; estados de la solicitud (pendiente, en revisión, aprobado, rechazado con motivo); insignia "Vendedor externo verificado". Panel de revisión para el administrador (`ExternalSellerReviewPanel` (nuevo)) con los documentos y los botones "Aprobar" y "Rechazar".
+- **UI / contenido:** formulario de solicitud con carga de documentos y consentimiento informado de tratamiento de datos; estados de la solicitud (pendiente, en revisión, aprobado, rechazado con motivo); insignia "Vendedor externo verificado". Al aprobarse se crea o actualiza `seller_profiles` con `seller_type = 'local_business'`, datos comerciales (nombre, logo, banner, horario) y plan inicial `free`. Panel de revisión para el administrador (`ExternalSellerReviewPanel` (nuevo)) con los documentos y los botones "Aprobar" y "Rechazar".
 - **Interacciones:** al enviar la solicitud, esta queda pendiente; el administrador la revisa y decide; al aprobar, el solicitante recibe la insignia y se habilitan sus permisos de venta; ante rechazo puede ver el motivo y volver a solicitar.
 - **Estados:** sin solicitud | pendiente | en revisión | aprobado | rechazado con motivo.
-- **Validaciones y reglas de negocio:** solo un administrador aprueba; los documentos no se publican ni se muestran en la carta de presentación; el rechazo incluye motivo; la insignia "Vendedor externo verificado" es distinta de la del estudiante verificado por carné.
+- **Validaciones y reglas de negocio:** solo un administrador aprueba; los documentos no se publican ni se muestran en la carta de presentación; el rechazo incluye motivo; la insignia "Vendedor externo verificado" es distinta de la del estudiante verificado por carné. La aprobación habilita publicar, pero los límites y la visibilidad dependen de `seller_profiles.plan_id` (`free` por defecto, UX-MKT-017).
 - **Accesibilidad:** formulario con etiquetas explícitas; carga de documentos accesible por teclado y lector de pantalla; errores anunciados.
 - **Responsive:** en móvil el formulario ocupa el ancho completo; en desktop se presenta como diálogo centrado con el panel de documentos al lado.
 - **Criterios de aceptación (Gherkin):**
@@ -1107,7 +1107,8 @@ presentación por perfil al tocar el avatar, consentimiento por campo con
 visibilidad anónima por defecto, campos revelables con límites por contexto,
 control/previsualización de mi tarjeta y admisión de vendedor externo) también son nuevos y se encuentran en
 estado **Pendiente**. Las tablas de base de datos requeridas (`user_interests`,
-`content_mutes`, `notification_preferences` y `profile_card_visibility`) y los
+`content_mutes`, `notification_preferences`, `profile_card_visibility` y
+`seller_profiles` para la admisión comercial) y los
 componentes Flutter (`PreferencesScreen`, `StepProgressIndicator`, el selector
 de categorías, `ProfileCardSheet` y las categorías por defecto "Destacados" y
 "Mi facultad") son componentes nuevos marcados como `(nuevo)` en los requisitos

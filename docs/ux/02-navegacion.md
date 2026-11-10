@@ -25,6 +25,10 @@ flowchart TD
         Tabs --> GruposScreen["Grupos de estudio"]
         Shell --> Perfil["Perfil y cuenta"]
         Shell --> Reglas["Normas y descargos"]
+        Perfil --> MisVentas["Mis ventas"]
+        Perfil --> MiTienda["Mi tienda / perfil comercial"]
+        MisVentas --> Planes["Planes del Marketplace"]
+        MiTienda --> Planes
     end
 
     subgraph Foro_Sub ["Foro"]
@@ -38,10 +42,16 @@ flowchart TD
     end
 
     subgraph Market_Sub ["Marketplace"]
-        MarketScreen --> Patrocinios["Carrusel de patrocinadores"]
+        MarketScreen --> Patrocinios["Carrusel destacado"]
         MarketScreen --> Grid["Grid de anuncios"]
         MarketScreen --> CrearAnuncio["Crear anuncio"]
-        Patrocinios --> SolicitudPatrocinio["Solicitar patrocinio"]
+        MarketScreen --> Planes
+        Grid --> Producto["Ficha de producto"]
+        Patrocinios --> Producto
+        Producto --> Tienda["Perfil público de tienda"]
+        Producto --> Relacionados["Productos relacionados"]
+        Tienda --> CatalogoVendedor["Catálogo del vendedor"]
+        CrearAnuncio --> Gate["Gate de verificación y límites de plan"]
     end
 
     subgraph Global_Modals ["Modales globales"]
@@ -63,6 +73,13 @@ flowchart TD
 | Marketplace | Navegación principal | raíz |
 | Grupos de estudio | Navegación principal | raíz |
 | Detalle de publicación | Tarjeta del feed / actividad del perfil | push |
+| Ficha de producto | Tarjeta del catálogo o destacados / guardados / enlace compartido | push |
+| Perfil público de tienda | "Ver tienda completa" en la ficha / autor de una tarjeta | push |
+| Productos relacionados | Bloque 6 de la ficha de producto | inline |
+| Mis ventas | Perfil / menú de acciones del vendedor | push |
+| Mi tienda (perfil comercial) | Mis ventas / perfil | push |
+| Planes del Marketplace | Banner / límite de publicación / Mis ventas / Mi tienda | modal o push |
+| Guardados | Perfil / filtro "Guardados" del Marketplace | push |
 | Crear tema | Botón del feed | modal |
 | Perfil y cuenta | Barra de usuario / badge de alias | push |
 | Normas y descargos | AppBar / modal de aviso / perfil | push |
