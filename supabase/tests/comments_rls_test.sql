@@ -7,6 +7,8 @@ select plan(11);
 
 create extension if not exists pgtap;
 
+set role postgres;
+
 -- -----------------------------------------------------------------------------
 -- Fixtures
 -- -----------------------------------------------------------------------------
@@ -23,17 +25,17 @@ begin
     insert into public.posts (
         id, user_id, title, content, category, carrera, author_alias, moderation_status
     ) values (
-        v_post_id, v_user_a, 'Post para comentarios', 'Discusion principal', 'general', 'sistemas', 'Alias A', 0
+        v_post_id, v_user_a, 'Post para comentarios', 'Discusion principal', 'general', 'sistemas', 'Compilador Desvelado', 0
     ) on conflict (id) do nothing;
 
     -- Comentarios con diferentes estados
     insert into public.comments (
         id, post_id, user_id, content, author_alias, moderation_status
     ) values
-        ('cccccccc-cccc-cccc-cccc-cccccccc0001', v_post_id, v_user_a, 'Comentario Activo', 'Alias A', 0),
-        ('cccccccc-cccc-cccc-cccc-cccccccc0002', v_post_id, v_user_a, 'Comentario En Revision', 'Alias A', 1),
-        ('cccccccc-cccc-cccc-cccc-cccccccc0003', v_post_id, v_user_a, 'Comentario Censurado', 'Alias A', 2),
-        ('cccccccc-cccc-cccc-cccc-cccccccc0004', v_post_id, v_user_b, 'Comentario de Usuario B', 'Alias B', 0)
+        ('cccccccc-cccc-cccc-cccc-cccccccc0001', v_post_id, v_user_a, 'Comentario Activo', 'Compilador Desvelado', 0),
+        ('cccccccc-cccc-cccc-cccc-cccccccc0002', v_post_id, v_user_a, 'Comentario En Revision', 'Compilador Desvelado', 1),
+        ('cccccccc-cccc-cccc-cccc-cccccccc0003', v_post_id, v_user_a, 'Comentario Censurado', 'Compilador Desvelado', 2),
+        ('cccccccc-cccc-cccc-cccc-cccccccc0004', v_post_id, v_user_b, 'Comentario de Usuario B', 'Puntero Nocturno', 0)
     on conflict (id) do nothing;
 end $$;
 
@@ -104,7 +106,7 @@ select lives_ok(
         'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0001',
         '11111111-1111-1111-1111-111111111111',
         'Nuevo Comentario Propio',
-        'Alias A'
+        'Compilador Desvelado'
       )$$,
     'Usuario autenticado puede insertar un comentario enlazado a su user_id'
 );
@@ -118,7 +120,7 @@ select throws_ok(
         'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0001',
         '22222222-2222-2222-2222-222222222222',
         'Comentario Falso',
-        'Fake B'
+        'Compilador Desvelado'
       )$$,
     null,
     'Usuario no puede crear comentarios a nombre de un user_id ajeno'
@@ -153,11 +155,20 @@ select is(
     'Usuario A no tiene permiso RLS para alterar comentarios ajenos'
 );
 
--- Test 11: Usuario A puede eliminar su propio comentario
-select lives_ok(
+-- Test 11: DELETE físico falla por privilegios (42501) y el comentario sigue existiendo
+select throws_ok(
     $$delete from public.comments where id = 'cccccccc-cccc-cccc-cccc-cccccccc0099'$$,
-    'Usuario autor puede eliminar su propio comentario'
+    '42501',
+    null,
+    'Usuario autor no puede eliminar físicamente su comentario (DELETE revocado)'
 );
+
+do $$
+begin
+    if not exists (select 1 from public.comments where id = 'cccccccc-cccc-cccc-cccc-cccccccc0099') then
+        raise exception 'El comentario debió permanecer en base de datos tras el intento de DELETE físico!';
+    end if;
+end $$;
 
 select * from finish();
 rollback;

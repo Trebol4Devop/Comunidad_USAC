@@ -3,7 +3,7 @@
 -- =============================================================================
 begin;
 
-select plan(8);
+select plan(9);
 
 create extension if not exists pgtap;
 
@@ -24,7 +24,7 @@ begin
         'Contenido de prueba',
         'general',
         'sistemas',
-        'Visitante',
+        'Compilador Desvelado',
         0
     ) on conflict (id) do nothing;
 end $$;
@@ -56,7 +56,7 @@ select throws_ok(
         'No debe guardarse',
         'general',
         'sistemas',
-        'Visitante'
+        'Compilador Desvelado'
       )$$,
     '42501',
     null,
@@ -73,14 +73,19 @@ select is(
     'La sesión anónima no puede modificar publicaciones'
 );
 
-delete from public.posts
- where id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0044';
+select throws_ok(
+    $$delete from public.posts
+       where id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0044'$$,
+    '42501',
+    null,
+    'La sesión anónima no puede eliminar publicaciones'
+);
 
 select is(
     (select count(*)::integer from public.posts
       where id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0044'),
     1,
-    'La sesión anónima no puede eliminar publicaciones'
+    'La publicación sigue existiendo tras el intento de eliminación física'
 );
 
 select throws_ok(
@@ -116,7 +121,7 @@ select lives_ok(
         'Contenido permitido',
         'general',
         'sistemas',
-        'Usuario registrado'
+        'Puntero Nocturno'
       )$$,
     'Una cuenta registrada conserva permiso para crear publicaciones'
 );
