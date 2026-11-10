@@ -6,7 +6,9 @@ import 'package:comunidad_universitaria/features/forum/widgets/comment_item.dart
 import 'package:comunidad_universitaria/features/forum/widgets/post_card.dart';
 
 void main() {
-  testWidgets('Abrir PostDetailScreen desde ForumScreen o PostCard', (tester) async {
+  testWidgets('Abrir PostDetailScreen desde ForumScreen o PostCard', (
+    tester,
+  ) async {
     final testPost = Post(
       id: 'test-1',
       title: 'Duda sobre Matemática',
@@ -21,11 +23,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: PostCard(
-            post: testPost,
-            onTap: () {},
-            onLike: () {},
-          ),
+          body: PostCard(post: testPost, onTap: () {}, onLike: () {}),
         ),
       ),
     );
@@ -34,7 +32,9 @@ void main() {
     expect(find.text('2'), findsOneWidget);
   });
 
-  testWidgets('Renderizar CommentItemWidget con respuestas anidadas', (tester) async {
+  testWidgets('Renderizar CommentItemWidget con respuestas anidadas', (
+    tester,
+  ) async {
     final parent = PostComment(
       id: 'c-1',
       postId: 'post-1',
@@ -74,7 +74,9 @@ void main() {
     expect(find.text('Responder'), findsNWidgets(2));
   });
 
-  testWidgets('Renderizar PostDetailScreen con comentarios anidados', (tester) async {
+  testWidgets('Renderizar PostDetailScreen con comentarios anidados', (
+    tester,
+  ) async {
     final testPost = Post(
       id: 'test-1',
       title: 'Duda sobre Matemática',
@@ -88,10 +90,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: PostDetailScreen(
-          initialPost: testPost,
-          activeAlias: 'Tester',
-        ),
+        home: PostDetailScreen(initialPost: testPost, activeAlias: 'Tester'),
       ),
     );
 
@@ -103,4 +102,3 @@ void main() {
     expect(find.text('Duda sobre Matemática'), findsOneWidget);
   });
 }
-

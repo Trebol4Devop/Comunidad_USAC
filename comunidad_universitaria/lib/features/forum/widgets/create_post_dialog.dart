@@ -7,6 +7,7 @@ import '../../../core/services/forum_service.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
+import '../../shared/widgets/alias_dice_button.dart';
 import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/gif_picker_modal.dart';
 import '../models/discord_forum_models.dart';
@@ -95,6 +96,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
   final _titleController = TextEditingController();
   final _contentController = TextEditingController();
 
+  late String _authorAlias;
   String? _uploadedImageUrl;
   String? _selectedGifUrl;
   bool _isUploadingImage = false;
@@ -124,7 +126,9 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
   @override
   void initState() {
     super.initState();
-    _selectedCategory = (widget.initialCategory != null &&
+    _authorAlias = widget.activeAlias;
+    _selectedCategory =
+        (widget.initialCategory != null &&
             widget.initialCategory != 'general' &&
             widget.initialCategory != 'bookmarks')
         ? widget.initialCategory!
@@ -217,9 +221,9 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al subir imagen: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error al subir imagen: $e')));
       }
     } finally {
       if (mounted) setState(() => _isUploadingImage = false);
@@ -249,7 +253,8 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
       AuthModal.show(
         context,
         title: 'Inicia Sesión para Publicar',
-        subtitle: 'Para crear consultas o citar posts en el foro universitario, debes iniciar sesión.',
+        subtitle:
+            'Para crear consultas o citar posts en el foro universitario, debes iniciar sesión.',
         onAuthenticated: () => _submit(),
       );
       return;
@@ -276,7 +281,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
         content: _contentController.text.trim(),
         category: _selectedCategory,
         carrera: _selectedCarrera,
-        authorAlias: widget.activeAlias,
+        authorAlias: _authorAlias,
         imageUrl: _uploadedImageUrl,
         gifUrl: _selectedGifUrl,
         quotedPostId: widget.quotedPost?.id,
@@ -292,8 +297,12 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
           final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Publicación creada exitosamente en el foro.'),
-              backgroundColor: isDarkTheme ? const Color(0xFF2563EB) : const Color(0xFF004B87),
+              content: const Text(
+                'Publicación creada exitosamente en el foro.',
+              ),
+              backgroundColor: isDarkTheme
+                  ? const Color(0xFF2563EB)
+                  : const Color(0xFF004B87),
             ),
           );
         }
@@ -303,7 +312,12 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
         setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString().replaceAll('Exception: ', '').replaceAll('AuthException: ', '')),
+            content: Text(
+              e
+                  .toString()
+                  .replaceAll('Exception: ', '')
+                  .replaceAll('AuthException: ', ''),
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -316,7 +330,8 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isMobile = Responsive.isMobile(context);
-    final maxHeight = MediaQuery.of(context).size.height * (isMobile ? 0.90 : 0.85);
+    final maxHeight =
+        MediaQuery.of(context).size.height * (isMobile ? 0.90 : 0.85);
 
     Widget content = Form(
       key: _formKey,
@@ -338,7 +353,9 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
-                      widget.quotedPost != null ? Icons.format_quote : Icons.add_comment_outlined,
+                      widget.quotedPost != null
+                          ? Icons.format_quote
+                          : Icons.add_comment_outlined,
                       color: theme.colorScheme.primary,
                       size: 22,
                     ),
@@ -349,15 +366,48 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          widget.quotedPost != null ? 'Citar Publicación' : 'Nueva Consulta en el Foro',
-                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                          widget.quotedPost != null
+                              ? 'Citar Publicación'
+                              : 'Nueva Consulta en el Foro',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         Text(
                           'Foro Estudiantil USAC · Espacio Libre',
-                          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.primary),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.primary,
+                          ),
                         ),
                       ],
                     ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              // Selector de identidad anónima con dados
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  Text(
+                    'Publicando como:',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: isDark
+                          ? Colors.grey.shade400
+                          : Colors.grey.shade600,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  AliasDiceButton(
+                    alias: _authorAlias,
+                    onAliasChanged: (newAlias) {
+                      setState(() => _authorAlias = newAlias);
+                      widget.onAliasChanged(newAlias);
+                    },
+                    compact: true,
                   ),
                 ],
               ),
@@ -371,7 +421,9 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
+                    border: Border.all(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -387,7 +439,10 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                           children: [
                             Text(
                               'Citando a ${widget.quotedPost!.authorAlias}',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11,
+                              ),
                             ),
                             Text(
                               widget.quotedPost!.title,
@@ -407,33 +462,56 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
               if (_canSelectChannel) ...[
                 DropdownButtonFormField<String>(
                   isExpanded: true,
-                  value: _selectedCategory,
+                  initialValue: _selectedCategory,
                   decoration: InputDecoration(
                     labelText: 'Canal de publicación',
-                    prefixIcon: Icon(Icons.tag, size: 20, color: theme.colorScheme.primary),
-                    helperText: 'Publica tu consulta en el canal correspondiente dentro de $_serverLabel.',
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    prefixIcon: Icon(
+                      Icons.tag,
+                      size: 20,
+                      color: theme.colorScheme.primary,
+                    ),
+                    helperText:
+                        'Publica tu consulta en el canal correspondiente dentro de $_serverLabel.',
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
                   ),
                   items: const [
                     DropdownMenuItem(
                       value: 'todos',
-                      child: Text('#todos-los-temas · Todas las áreas / General', overflow: TextOverflow.ellipsis),
+                      child: Text(
+                        '#todos-los-temas · Todas las áreas / General',
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                     DropdownMenuItem(
                       value: 'prerrequisitos',
-                      child: Text('#dudas-y-pensum · Dudas & Pensum', overflow: TextOverflow.ellipsis),
+                      child: Text(
+                        '#dudas-y-pensum · Dudas & Pensum',
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                     DropdownMenuItem(
                       value: 'catedraticos',
-                      child: Text('#catedraticos-opiniones · Catedráticos', overflow: TextOverflow.ellipsis),
+                      child: Text(
+                        '#catedraticos-opiniones · Catedráticos',
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                     DropdownMenuItem(
                       value: 'apuntes',
-                      child: Text('#apuntes-y-recursos · Apuntes & Exámenes', overflow: TextOverflow.ellipsis),
+                      child: Text(
+                        '#apuntes-y-recursos · Apuntes & Exámenes',
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                     DropdownMenuItem(
                       value: 'horarios',
-                      child: Text('#horarios-y-secciones · Horarios & Secciones', overflow: TextOverflow.ellipsis),
+                      child: Text(
+                        '#horarios-y-secciones · Horarios & Secciones',
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ],
                   onChanged: (val) {
@@ -444,15 +522,24 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                 ),
               ] else ...[
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 11,
+                  ),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
+                    border: Border.all(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.tag, size: 22, color: theme.colorScheme.primary),
+                      Icon(
+                        Icons.tag,
+                        size: 22,
+                        color: theme.colorScheme.primary,
+                      ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(
@@ -463,20 +550,31 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                                 Flexible(
                                   child: Text(
                                     '#$_channelLabel',
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                                 const SizedBox(width: 8),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 1.5,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                                    color: theme.colorScheme.primary.withValues(
+                                      alpha: 0.15,
+                                    ),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: const Text(
                                     'Canal asignado',
-                                    style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -486,13 +584,19 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                               'Servidor: $_serverLabel',
                               style: TextStyle(
                                 fontSize: 11,
-                                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                                color: isDark
+                                    ? Colors.grey.shade400
+                                    : Colors.grey.shade600,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      Icon(Icons.lock_outline, size: 16, color: Colors.grey.shade400),
+                      Icon(
+                        Icons.lock_outline,
+                        size: 16,
+                        color: Colors.grey.shade400,
+                      ),
                     ],
                   ),
                 ),
@@ -503,12 +607,20 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   isExpanded: true,
-                  value: _selectedCarrera,
+                  initialValue: _selectedCarrera,
                   decoration: InputDecoration(
                     labelText: 'Carrera o Especialidad',
-                    prefixIcon: Icon(Icons.school_outlined, size: 20, color: theme.colorScheme.primary),
-                    helperText: 'Selecciona la carrera correspondiente dentro de $_serverLabel.',
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    prefixIcon: Icon(
+                      Icons.school_outlined,
+                      size: 20,
+                      color: theme.colorScheme.primary,
+                    ),
+                    helperText:
+                        'Selecciona la carrera correspondiente dentro de $_serverLabel.',
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
                   ),
                   items: _availableCareers.map((c) {
                     return DropdownMenuItem<String>(
@@ -532,7 +644,10 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                 decoration: const InputDecoration(
                   labelText: 'Título de la consulta o aporte',
                   hintText: 'Ej. ¿Qué catedrático recomiendan para Física 1?',
-                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
                 ),
                 validator: (val) {
                   if (val == null || val.trim().length < 5) {
@@ -550,7 +665,8 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                 maxLines: 4,
                 decoration: const InputDecoration(
                   labelText: 'Detalle o descripción',
-                  hintText: 'Explica tu duda o comparte el material de estudio con la comunidad...',
+                  hintText:
+                      'Explica tu duda o comparte el material de estudio con la comunidad...',
                 ),
                 validator: (val) {
                   if (val == null || val.trim().length < 10) {
@@ -567,7 +683,10 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                 children: [
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                     ),
                     onPressed: _isUploadingImage ? null : _pickAndUploadImage,
                     icon: const Icon(Icons.image_outlined, size: 16),
@@ -576,7 +695,10 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                   const SizedBox(width: 8),
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                     ),
                     onPressed: () {
                       GifPickerModal.show(
@@ -596,11 +718,21 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
                       backgroundColor: _showPollForm
-                          ? (isDark ? const Color(0xFF3B82F6).withValues(alpha: 0.25) : const Color(0xFF004B87).withValues(alpha: 0.12))
+                          ? (isDark
+                                ? const Color(
+                                    0xFF3B82F6,
+                                  ).withValues(alpha: 0.25)
+                                : const Color(
+                                    0xFF004B87,
+                                  ).withValues(alpha: 0.12))
                           : null,
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                     ),
-                    onPressed: () => setState(() => _showPollForm = !_showPollForm),
+                    onPressed: () =>
+                        setState(() => _showPollForm = !_showPollForm),
                     icon: Icon(
                       Icons.poll_outlined,
                       size: 16,
@@ -611,7 +743,9 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                       style: TextStyle(
                         fontSize: 12,
                         color: _showPollForm ? theme.colorScheme.primary : null,
-                        fontWeight: _showPollForm ? FontWeight.bold : FontWeight.normal,
+                        fontWeight: _showPollForm
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                       ),
                     ),
                   ),
@@ -624,10 +758,14 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFF004B87).withValues(alpha: 0.05),
+                    color: isDark
+                        ? const Color(0xFF1E293B)
+                        : const Color(0xFF004B87).withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: isDark ? const Color(0xFF334155) : const Color(0xFF004B87).withValues(alpha: 0.2),
+                      color: isDark
+                          ? const Color(0xFF334155)
+                          : const Color(0xFF004B87).withValues(alpha: 0.2),
                     ),
                   ),
                   child: Column(
@@ -646,7 +784,8 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                           ),
                           IconButton(
                             icon: const Icon(Icons.close, size: 16),
-                            onPressed: () => setState(() => _showPollForm = false),
+                            onPressed: () =>
+                                setState(() => _showPollForm = false),
                           ),
                         ],
                       ),
@@ -657,7 +796,10 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                           labelText: 'Pregunta de la encuesta',
                           hintText: 'Opcional, por defecto usará el título',
                           isDense: true,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -674,13 +816,20 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                                   decoration: InputDecoration(
                                     labelText: 'Opción ${idx + 1}',
                                     isDense: true,
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 8,
+                                    ),
                                   ),
                                 ),
                               ),
                               if (_pollOptionControllers.length > 2)
                                 IconButton(
-                                  icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                                  icon: const Icon(
+                                    Icons.delete_outline,
+                                    size: 18,
+                                    color: Colors.red,
+                                  ),
                                   onPressed: () => _removePollOption(idx),
                                 ),
                             ],
@@ -691,7 +840,10 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                         TextButton.icon(
                           onPressed: _addPollOption,
                           icon: const Icon(Icons.add, size: 16),
-                          label: const Text('Añadir opción', style: TextStyle(fontSize: 12)),
+                          label: const Text(
+                            'Añadir opción',
+                            style: TextStyle(fontSize: 12),
+                          ),
                         ),
                     ],
                   ),
@@ -719,8 +871,15 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                         onTap: () => setState(() => _selectedGifUrl = null),
                         child: Container(
                           padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                          child: const Icon(Icons.close, size: 16, color: Colors.white),
+                          decoration: const BoxDecoration(
+                            color: Colors.black54,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.close,
+                            size: 16,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -758,7 +917,11 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                             color: Colors.black54,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.close, size: 16, color: Colors.white),
+                          child: const Icon(
+                            Icons.close,
+                            size: 16,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -778,21 +941,29 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                   runSpacing: 8,
                   children: [
                     TextButton(
-                      onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
+                      onPressed: _isSubmitting
+                          ? null
+                          : () => Navigator.of(context).pop(),
                       child: const Text('Cancelar'),
                     ),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: theme.colorScheme.primary,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
                       ),
                       onPressed: _isSubmitting ? null : _submit,
                       icon: _isSubmitting
                           ? const SizedBox(
                               width: 16,
                               height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
                             )
                           : const Icon(Icons.send, size: 16),
                       label: Text(_isSubmitting ? 'Publicando...' : 'Publicar'),
@@ -808,7 +979,9 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
 
     if (isMobile) {
       return Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
         child: content,
       );
     } else {
@@ -822,4 +995,3 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
     }
   }
 }
-
