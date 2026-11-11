@@ -6,7 +6,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase_config.dart';
 import '../../../core/services/supabase_service.dart';
-import '../../profile/screens/totp_enrollment_screen.dart';
 
 class TotpSessionGuard extends StatefulWidget {
   const TotpSessionGuard({super.key, required this.child});
@@ -17,7 +16,7 @@ class TotpSessionGuard extends StatefulWidget {
   State<TotpSessionGuard> createState() => _TotpSessionGuardState();
 }
 
-enum _TotpGateState { none, checking, enrollment, challenge, error }
+enum _TotpGateState { none, checking, challenge, error }
 
 class _TotpSessionGuardState extends State<TotpSessionGuard> {
   StreamSubscription<AuthState>? _authSubscription;
@@ -88,8 +87,10 @@ class _TotpSessionGuardState extends State<TotpSessionGuard> {
 
       setState(() {
         _factorId = verifiedFactor?.id;
+        // El autenticador es opcional: quien no lo tenga configurado entra
+        // directamente a la app y puede activarlo desde su perfil.
         _gateState = verifiedFactor == null
-            ? _TotpGateState.enrollment
+            ? _TotpGateState.none
             : assurance.currentLevel == AuthenticatorAssuranceLevels.aal2
             ? _TotpGateState.none
             : _TotpGateState.challenge;
@@ -126,12 +127,6 @@ class _TotpSessionGuardState extends State<TotpSessionGuard> {
           title: 'Verificando seguridad',
           message: 'Estamos comprobando la protección de tu cuenta.',
           showProgress: true,
-        );
-      case _TotpGateState.enrollment:
-        return TotpEnrollmentScreen(
-          isRequired: true,
-          onEnrollmentComplete: _clearGate,
-          onCancelRequired: _signOut,
         );
       case _TotpGateState.challenge:
         final factorId = _factorId;
