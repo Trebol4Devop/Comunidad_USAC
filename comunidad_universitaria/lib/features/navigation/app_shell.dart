@@ -1,6 +1,8 @@
 import 'dart:ui' show SemanticsRole;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show ScrollDirection;
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
 import '../../core/utils/responsive.dart';
 import '../forum/screens/forum_screen.dart';
@@ -30,12 +32,10 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
+  bool _showMobileTopBar = true;
   final Set<int> _visitedTabs = {0};
-  final GlobalKey<ForumScreenState> _forumScreenKey =
-      GlobalKey<ForumScreenState>();
   final GlobalKey<GroupsScreenState> _groupsScreenKey =
       GlobalKey<GroupsScreenState>();
-  bool _isForumDrawerOpen = false;
   final List<FocusNode> _desktopTabFocusNodes = List.generate(
     4,
     (index) => FocusNode(debugLabel: 'Desktop tab $index'),
@@ -134,32 +134,13 @@ class _AppShellState extends State<AppShell> {
     final isMobile = Responsive.isMobile(context);
 
     return Scaffold(
-      appBar: (isMobile && _currentIndex == 0)
+      appBar: isMobile
           ? null
           : AppBar(
-              toolbarHeight: isMobile ? 64 : kToolbarHeight,
-        centerTitle: isMobile,
-        titleSpacing: isMobile ? 0 : 16,
-        title: isMobile
-            ? InkWell(
-                onTap: _showDisclaimerModal,
-                borderRadius: BorderRadius.circular(8),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildBrandMark(),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Zanate',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            : Row(
+              toolbarHeight: kToolbarHeight,
+              centerTitle: false,
+              titleSpacing: 16,
+              title: Row(
                 children: [
                   _buildBrandMark(),
                   const SizedBox(width: 10),
@@ -174,12 +155,13 @@ class _AppShellState extends State<AppShell> {
                           Wrap(
                             crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
-                              const Text(
+                              Text(
                                 'Zanate',
                                 overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
+                                style: GoogleFonts.croissantOne(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.5,
                                 ),
                               ),
                               const SizedBox(width: 6),
@@ -221,9 +203,7 @@ class _AppShellState extends State<AppShell> {
                   ),
                 ],
               ),
-        actions: isMobile
-            ? null
-            : [
+              actions: [
                 IconButton(
                   icon: const Icon(Icons.shield_outlined, size: 20),
                   tooltip: 'Normas y Descargo',
@@ -242,18 +222,17 @@ class _AppShellState extends State<AppShell> {
                 ),
                 const SizedBox(width: 8),
               ],
-        bottom: !isMobile
-            ? PreferredSize(
+              bottom: PreferredSize(
                 preferredSize: const Size.fromHeight(48),
                 child: Container(
                   decoration: BoxDecoration(
                     color: widget.isDarkMode
-                        ? const Color(0xFF1E1F22)
+                        ? const Color(0xFF1C1C1C)
                         : Colors.white,
                     border: Border(
                       bottom: BorderSide(
                         color: widget.isDarkMode
-                            ? const Color(0xFF2B2D31)
+                            ? const Color(0xFF303030)
                             : const Color(0xFFE2E8F0),
                         width: 1.5,
                       ),
@@ -298,62 +277,67 @@ class _AppShellState extends State<AppShell> {
                     ),
                   ),
                 ),
+              ),
+            ),
+      body: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (!isMobile) return false;
+          if (notification.metrics.axis != Axis.vertical) return false;
+
+          if (notification is ScrollUpdateNotification) {
+            final dy = notification.scrollDelta ?? 0;
+            if (dy > 2 && notification.metrics.pixels > 20) {
+              if (_showMobileTopBar) {
+                setState(() => _showMobileTopBar = false);
+              }
+            } else if (dy < -2) {
+              if (!_showMobileTopBar) {
+                setState(() => _showMobileTopBar = true);
+              }
+            }
+            if (notification.metrics.pixels <= 10 && !_showMobileTopBar) {
+              setState(() => _showMobileTopBar = true);
+            }
+          } else if (notification is UserScrollNotification) {
+            if (notification.direction == ScrollDirection.reverse &&
+                _showMobileTopBar &&
+                notification.metrics.pixels > 20) {
+              setState(() => _showMobileTopBar = false);
+            } else if (notification.direction == ScrollDirection.forward &&
+                !_showMobileTopBar) {
+              setState(() => _showMobileTopBar = true);
+            }
+          }
+          return false;
+        },
+        child: isMobile
+            ? Column(
+                children: [
+                  ColoredBox(
+                    color:
+                        theme.appBarTheme.backgroundColor ??
+                        const Color(0xFF1C1C1C),
+                    child: SafeArea(
+                      bottom: false,
+                      child: AnimatedSize(
+                        duration: const Duration(milliseconds: 200),
+                        curve: Curves.easeInOut,
+                        alignment: Alignment.topCenter,
+                        child: ClipRect(
+                          child: _showMobileTopBar
+                              ? _buildMobileHeader(theme)
+                              : const SizedBox(
+                                  width: double.infinity,
+                                  height: 0,
+                                ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(child: _buildIndexedStack(isMobile)),
+                ],
               )
-            : null,
-      ),
-      // IndexedStack preserves each screen's state while switching destinations.
-      body: IndexedStack(
-        index: _currentIndex,
-        children: [
-          _visitedTabs.contains(0)
-              ? ExcludeSemantics(
-                  excluding: _currentIndex != 0,
-                  child: ForumScreen(
-                    key: _forumScreenKey,
-                    activeAlias: widget.activeAlias,
-                    onAliasChanged: widget.onAliasChanged,
-                    onToggleTheme: widget.onToggleTheme,
-                    isDarkMode: widget.isDarkMode,
-                    showFloatingActionButton: false,
-                    onDrawerChanged: (isOpen) {
-                      if (_isForumDrawerOpen != isOpen) {
-                        setState(() {
-                          _isForumDrawerOpen = isOpen;
-                        });
-                      }
-                    },
-                  ),
-                )
-              : const SizedBox.shrink(),
-          _visitedTabs.contains(1)
-              ? ExcludeSemantics(
-                  excluding: _currentIndex != 1,
-                  child: MarketplaceScreen(
-                    activeAlias: widget.activeAlias,
-                    onAliasChanged: widget.onAliasChanged,
-                    showFloatingActionButton: !isMobile,
-                  ),
-                )
-              : const SizedBox.shrink(),
-          _visitedTabs.contains(2)
-              ? ExcludeSemantics(
-                  excluding: _currentIndex != 2,
-                  child: GroupsScreen(
-                    key: _groupsScreenKey,
-                    activeAlias: widget.activeAlias,
-                    onAliasChanged: widget.onAliasChanged,
-                    showFloatingActionButton: false,
-                    floatingActionButtonHeroTag: 'shell_groups_screen_fab',
-                  ),
-                )
-              : const SizedBox.shrink(),
-          _visitedTabs.contains(3)
-              ? ExcludeSemantics(
-                  excluding: _currentIndex != 3,
-                  child: const CampusMapScreen(),
-                )
-              : const SizedBox.shrink(),
-        ],
+            : _buildIndexedStack(isMobile),
       ),
       floatingActionButton: isMobile
           ? _buildContextualFloatingActionButton()
@@ -368,24 +352,14 @@ class _AppShellState extends State<AppShell> {
               ),
               child: NavigationBarTheme(
                 data: NavigationBarThemeData(
-                  height: 60,
-                  indicatorColor: widget.isDarkMode
-                      ? const Color(0xFF004B87).withValues(alpha: 0.45)
-                      : const Color(0xFF004B87).withValues(alpha: 0.15),
-                  indicatorShape: const StadiumBorder(),
+                  height: 58,
+                  indicatorColor: Colors.transparent,
                   backgroundColor: theme.colorScheme.surface,
                   elevation: 0,
                   iconTheme: WidgetStateProperty.resolveWith((states) {
-                    final isSelected = states.contains(WidgetState.selected);
                     return IconThemeData(
-                      size: isSelected ? 24 : 22,
-                      color: isSelected
-                          ? (widget.isDarkMode
-                              ? const Color(0xFF60A5FA)
-                              : const Color(0xFF004B87))
-                          : (widget.isDarkMode
-                              ? const Color(0xFF94A3B8)
-                              : const Color(0xFF64748B)),
+                      size: 23,
+                      color: theme.colorScheme.onSurface,
                     );
                   }),
                 ),
@@ -397,23 +371,28 @@ class _AppShellState extends State<AppShell> {
                     setState(() {
                       _currentIndex = screenIndex;
                       _visitedTabs.add(screenIndex);
+                      _showMobileTopBar = true;
                     });
                   },
                   destinations: const [
                     NavigationDestination(
                       icon: Icon(Icons.chat_bubble_outline),
+                      selectedIcon: Icon(Icons.chat_bubble_outline),
                       label: 'Foro',
                     ),
                     NavigationDestination(
                       icon: Icon(Icons.groups_outlined),
+                      selectedIcon: Icon(Icons.groups_outlined),
                       label: 'Grupos',
                     ),
                     NavigationDestination(
                       icon: Icon(Icons.map_outlined),
+                      selectedIcon: Icon(Icons.map_outlined),
                       label: 'Mapa',
                     ),
                     NavigationDestination(
                       icon: Icon(Icons.local_mall_outlined),
+                      selectedIcon: Icon(Icons.local_mall_outlined),
                       label: 'Marketplace',
                     ),
                   ],
@@ -435,6 +414,85 @@ class _AppShellState extends State<AppShell> {
       1 => 3,
       _ => 0,
     };
+  }
+
+  Widget _buildMobileHeader(ThemeData theme) {
+    return Container(
+      height: 64,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: theme.appBarTheme.backgroundColor ?? const Color(0xFF1C1C1C),
+        border: Border(
+          bottom: BorderSide(color: theme.colorScheme.outlineVariant, width: 1),
+        ),
+      ),
+      child: InkWell(
+        onTap: _showDisclaimerModal,
+        borderRadius: BorderRadius.circular(8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildBrandMark(),
+            const SizedBox(width: 8),
+            Text(
+              'Zanate',
+              style: GoogleFonts.croissantOne(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIndexedStack(bool isMobile) {
+    return IndexedStack(
+      index: _currentIndex,
+      children: [
+        _visitedTabs.contains(0)
+            ? ExcludeSemantics(
+                excluding: _currentIndex != 0,
+                child: ForumScreen(
+                  activeAlias: widget.activeAlias,
+                  onAliasChanged: widget.onAliasChanged,
+                  onToggleTheme: widget.onToggleTheme,
+                  isDarkMode: widget.isDarkMode,
+                ),
+              )
+            : const SizedBox.shrink(),
+        _visitedTabs.contains(1)
+            ? ExcludeSemantics(
+                excluding: _currentIndex != 1,
+                child: MarketplaceScreen(
+                  activeAlias: widget.activeAlias,
+                  onAliasChanged: widget.onAliasChanged,
+                  showFloatingActionButton: !isMobile,
+                ),
+              )
+            : const SizedBox.shrink(),
+        _visitedTabs.contains(2)
+            ? ExcludeSemantics(
+                excluding: _currentIndex != 2,
+                child: GroupsScreen(
+                  key: _groupsScreenKey,
+                  activeAlias: widget.activeAlias,
+                  onAliasChanged: widget.onAliasChanged,
+                  showFloatingActionButton: false,
+                  floatingActionButtonHeroTag: 'shell_groups_screen_fab',
+                ),
+              )
+            : const SizedBox.shrink(),
+        _visitedTabs.contains(3)
+            ? ExcludeSemantics(
+                excluding: _currentIndex != 3,
+                child: const CampusMapScreen(),
+              )
+            : const SizedBox.shrink(),
+      ],
+    );
   }
 
   Widget _buildBrandMark() {
@@ -460,7 +518,7 @@ class _AppShellState extends State<AppShell> {
         ? Colors.white
         : theme.colorScheme.primary;
     final inactiveColor = widget.isDarkMode
-        ? const Color(0xFF949BA4)
+        ? const Color(0xFFAAAAAA)
         : Colors.grey.shade600;
 
     return Semantics(
@@ -525,14 +583,6 @@ class _AppShellState extends State<AppShell> {
 
   Widget? _buildContextualFloatingActionButton() {
     switch (_currentIndex) {
-      case 0:
-        if (_isForumDrawerOpen) return null;
-        return FloatingActionButton(
-          heroTag: 'shell_forum_fab',
-          onPressed: () => _forumScreenKey.currentState?.openCreateDialog(),
-          tooltip: 'Crear publicación',
-          child: const Icon(Icons.add),
-        );
       case 1:
         // Marketplace: Publica un Artículo
         return FloatingActionButton.extended(

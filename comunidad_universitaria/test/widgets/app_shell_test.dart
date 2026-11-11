@@ -63,7 +63,6 @@ void main() {
         );
         expect(logo, findsOneWidget);
         expect(tester.getSize(logo), const Size(48, 48));
-        // El icono de configuración se removió de la barra superior donde está Zanate
         expect(find.byTooltip('Ajustes'), findsNothing);
         expect(find.text('Comunidad Universitaria'), findsNothing);
         expect(find.text('No Oficial'), findsNothing);
@@ -102,9 +101,8 @@ void main() {
           );
         }
 
-        // En el tab inicial (Foro), se muestra el FloatingActionButton '+' en la esquina inferior derecha
-        expect(find.byType(FloatingActionButton), findsOneWidget);
-        expect(find.byTooltip('Crear publicación'), findsOneWidget);
+        // En el tab inicial (Foro), no hay FloatingActionButton
+        expect(find.byType(FloatingActionButton), findsNothing);
       },
     );
 
@@ -123,38 +121,42 @@ void main() {
         expect(find.byIcon(Icons.menu), findsOneWidget);
         expect(find.byIcon(Icons.add), findsOneWidget);
 
-        // Cambiamos a la pestaña Mapa para tener contenido scrolleable garantizado
-        await tester.tap(
-          find.descendant(
-            of: find.byType(NavigationBar),
-            matching: find.byIcon(Icons.map_outlined),
+        // Despachamos un ScrollUpdateNotification hacia abajo
+        final forumElement = tester.element(find.byType(ForumScreen));
+        ScrollUpdateNotification(
+          metrics: FixedScrollMetrics(
+            minScrollExtent: 0,
+            maxScrollExtent: 1000,
+            pixels: 50,
+            viewportDimension: 600,
+            axisDirection: AxisDirection.down,
+            devicePixelRatio: 1,
           ),
-        );
+          context: forumElement,
+          scrollDelta: 20,
+        ).dispatch(forumElement);
         await tester.pumpAndSettle();
 
-        expect(find.text('Zanate'), findsOneWidget);
-
-        // Hacemos scroll hacia abajo en el mapa
-        await tester.drag(find.byType(CampusMapScreen), const Offset(0, -300));
-        await tester.pumpAndSettle();
-
-        // La barra superior con 'Zanate' se oculta al hacer scroll
+        // La barra superior con 'Zanate' se oculta al hacer scroll hacia abajo
         expect(find.text('Zanate'), findsNothing);
 
-        // Hacemos scroll hacia arriba
-        await tester.drag(find.byType(CampusMapScreen), const Offset(0, 300));
+        // Despachamos un ScrollUpdateNotification hacia arriba
+        ScrollUpdateNotification(
+          metrics: FixedScrollMetrics(
+            minScrollExtent: 0,
+            maxScrollExtent: 1000,
+            pixels: 10,
+            viewportDimension: 600,
+            axisDirection: AxisDirection.down,
+            devicePixelRatio: 1,
+          ),
+          context: forumElement,
+          scrollDelta: -20,
+        ).dispatch(forumElement);
         await tester.pumpAndSettle();
 
         // La barra Zanate vuelve a mostrarse
         expect(find.text('Zanate'), findsOneWidget);
-
-        // Volvemos a Foro y comprobamos que los controles de canal siguen presentes
-        await tester.tap(
-          find.descendant(
-            of: find.byType(NavigationBar),
-            matching: find.byIcon(Icons.chat_bubble_outline),
-          ),
-        );
         await tester.pumpAndSettle();
 
         expect(find.byIcon(Icons.menu), findsOneWidget);
@@ -329,17 +331,6 @@ void main() {
 
         // Tab 0: ForumScreen activo por defecto
         expect(find.byType(ForumScreen), findsOneWidget);
-        expect(find.byTooltip('Crear publicación'), findsOneWidget);
-
-        // Al abrir la barra lateral de canales/servidores, el FAB se oculta
-        await tester.tap(find.byIcon(Icons.menu));
-        await tester.pumpAndSettle();
-        expect(find.byType(FloatingActionButton), findsNothing);
-
-        // Al cerrar la barra lateral, el FAB reaparece
-        await tester.tap(find.byTooltip('Cerrar menú'));
-        await tester.pumpAndSettle();
-        expect(find.byTooltip('Crear publicación'), findsOneWidget);
 
         // El cuarto icono visual abre Marketplace (pantalla interna 1).
         final marketTab = find.descendant(

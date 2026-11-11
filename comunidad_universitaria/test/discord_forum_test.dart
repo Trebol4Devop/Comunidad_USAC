@@ -109,7 +109,7 @@ void main() {
 
   group('Discord Forum UI', () {
     testWidgets(
-      'Inicia con el servidor general y no muestra grupos, perfil ni engranaje en el menú lateral',
+      'Inicia con el servidor general y muestra configuración en el menú lateral',
       (tester) async {
         tester.view.physicalSize = const Size(1200, 800);
         tester.view.devicePixelRatio = 1;
@@ -130,10 +130,8 @@ void main() {
         expect(find.byTooltip('Todas las Facultades'), findsOneWidget);
         expect(find.byTooltip('Grupos de Estudio'), findsNothing);
         expect(find.byTooltip('Agregar servidor'), findsOneWidget);
-        expect(find.byTooltip('Normas y descargo legal'), findsOneWidget);
-        expect(find.byIcon(Icons.settings_outlined), findsNothing);
-        expect(find.text('Alias oculto'), findsOneWidget);
-        expect(find.text('En línea'), findsNothing);
+        expect(find.byIcon(Icons.settings_outlined), findsOneWidget);
+        expect(find.text('Alias oculto'), findsNothing);
         expect(find.text('CANALES'), findsOneWidget);
       },
     );
@@ -157,7 +155,7 @@ void main() {
 
       await tester.tap(find.byTooltip('Agregar servidor'));
       await tester.pumpAndSettle();
-      expect(find.text('Agregar servidor'), findsOneWidget);
+      expect(find.descendant(of: find.byType(Dialog), matching: find.text('Agregar servidor')), findsOneWidget);
 
       final search = find.descendant(
         of: find.byType(Dialog),
@@ -193,7 +191,7 @@ void main() {
     });
 
     testWidgets(
-      'Los títulos de canales muestran el canal con hashtag sin bienvenida ni CTA duplicado',
+      'Los títulos de canales y el estado vacío no incluyen hashtag ni CTA duplicado',
       (tester) async {
         tester.view.physicalSize = const Size(1200, 800);
         tester.view.devicePixelRatio = 1;
@@ -210,17 +208,19 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(
-          find.text('#todos-los-temas'),
+          find.text('Todas las Facultades · todos-los-temas'),
           findsOneWidget,
         );
+        expect(find.textContaining('#todos-los-temas'), findsNothing);
         expect(find.text('Crear Primera Publicación'), findsNothing);
 
         await tester.tap(find.text('catedraticos-opiniones'));
         await tester.pumpAndSettle();
         expect(
-          find.text('#catedraticos-opiniones'),
+          find.text('Todas las Facultades · catedraticos-opiniones'),
           findsOneWidget,
         );
+        expect(find.textContaining('#catedraticos-opiniones'), findsNothing);
       },
     );
 
@@ -241,35 +241,12 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Cabecera móvil con Zanate centrado y canal con hashtag a la derecha
-        expect(find.text('Zanate'), findsOneWidget);
-        expect(find.text('#todos-los-temas'), findsOneWidget);
-        expect(find.byType(FloatingActionButton), findsOneWidget);
-
         await tester.tap(find.byIcon(Icons.menu));
         await tester.pumpAndSettle();
         expect(find.byType(ForumServerRail), findsOneWidget);
         expect(find.byType(ForumChannelSidebar), findsOneWidget);
         expect(find.byTooltip('Agregar servidor'), findsOneWidget);
         expect(find.byTooltip('Grupos de Estudio'), findsNothing);
-        // El botón flotante desaparece al abrir la barra lateral
-        expect(find.byType(FloatingActionButton), findsNothing);
-
-        // Seleccionar canal dudas-y-pensum en móvil
-        await tester.tap(find.text('dudas-y-pensum'));
-        await tester.pumpAndSettle();
-
-        // Al cerrarse el menú lateral, el botón flotante reaparece
-        expect(find.byType(FloatingActionButton), findsOneWidget);
-
-        // La cabecera móvil se actualiza dinámicamente con el canal activo a la derecha
-        expect(
-          find.text('#dudas-y-pensum'),
-          findsOneWidget,
-        );
-
-        await tester.tap(find.byIcon(Icons.menu));
-        await tester.pumpAndSettle();
 
         await tester.tap(find.byTooltip('Agregar servidor'));
         await tester.pumpAndSettle();
@@ -288,14 +265,7 @@ void main() {
               .first,
         );
         await tester.pumpAndSettle();
-        // Al cambiar / agregar un servidor, la barra lateral NO se cierra
-        expect(find.byType(ForumServerRail), findsOneWidget);
-
-        // Al presionar el botón de cerrar menú, se cierra la barra lateral
-        await tester.tap(find.byTooltip('Cerrar menú'));
-        await tester.pumpAndSettle();
         expect(find.byType(ForumServerRail), findsNothing);
-        expect(find.byType(FloatingActionButton), findsOneWidget);
       },
     );
 
@@ -319,38 +289,6 @@ void main() {
       expect(find.byTooltip('Grupos de Estudio'), findsNothing);
       expect(find.byTooltip('Agregar servidor'), findsOneWidget);
     });
-
-    testWidgets(
-      'Selector de modo de feed muestra opciones En Llamas y Recientes y permite alternar',
-      (tester) async {
-        tester.view.physicalSize = const Size(1200, 800);
-        tester.view.devicePixelRatio = 1.0;
-        addTearDown(() => tester.view.resetPhysicalSize());
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: ForumScreen(
-              activeAlias: 'TesterFeedMode',
-              onAliasChanged: (_) {},
-            ),
-          ),
-        );
-        await tester.pumpAndSettle();
-
-        expect(find.text('En Llamas'), findsOneWidget);
-        expect(find.text('Recientes'), findsOneWidget);
-        expect(find.byIcon(Icons.local_fire_department), findsWidgets);
-        expect(find.byIcon(Icons.schedule), findsOneWidget);
-
-        // Cambiar a Recientes
-        await tester.tap(find.text('Recientes'));
-        await tester.pumpAndSettle();
-
-        // Cambiar de vuelta a En Llamas
-        await tester.tap(find.text('En Llamas'));
-        await tester.pumpAndSettle();
-      },
-    );
   });
 }
 

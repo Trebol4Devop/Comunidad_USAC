@@ -12,13 +12,14 @@ import '../../../core/utils/responsive.dart';
 import '../models/discord_forum_models.dart';
 import '../widgets/create_post_dialog.dart';
 import '../widgets/discord/forum_channel_sidebar.dart';
+import '../widgets/discord/forum_carrera_picker_dialog.dart';
 import '../widgets/discord/forum_server_rail.dart';
 import '../widgets/discord/popular_servers_sidebar.dart';
 import '../widgets/post_card.dart';
 import 'post_detail_screen.dart';
 import '../../groups/screens/groups_screen.dart';
-import '../../profile/screens/profile_screen.dart';
 import '../../reviews/screens/seccion_reviews_screen.dart';
+import '../../../core/services/profile_service.dart';
 import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/empty_state_widget.dart';
 
@@ -36,9 +37,6 @@ class ForumScreen extends StatefulWidget {
   final String activeSection;
   final String? activeCommunityId;
   final List<PopularServerItem>? initialPopularServers;
-  final bool showFloatingActionButton;
-  final String floatingActionButtonHeroTag;
-  final ValueChanged<bool>? onDrawerChanged;
 
   const ForumScreen({
     super.key,
@@ -55,22 +53,14 @@ class ForumScreen extends StatefulWidget {
     this.activeSection = 'featured',
     this.activeCommunityId,
     this.initialPopularServers,
-    this.showFloatingActionButton = true,
-    this.floatingActionButtonHeroTag = 'forum_mobile_create_post_fab',
-    this.onDrawerChanged,
   });
 
   @override
-  State<ForumScreen> createState() => ForumScreenState();
+  State<ForumScreen> createState() => _ForumScreenState();
 }
 
-class ForumScreenState extends State<ForumScreen> {
+class _ForumScreenState extends State<ForumScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  bool _isDrawerOpen = false;
-
-  bool get isDrawerOpen => _isDrawerOpen;
-
-  void openCreateDialog() => _openCreateDialog();
 
   // Discord Forum Models State
   late List<ForumServer> _servers;
@@ -262,6 +252,24 @@ class ForumScreenState extends State<ForumScreen> {
           _isLoading = false;
           _isOffline = true;
         });
+      }
+    }
+  }
+
+  Future<void> _addServerFromSidebar() async {
+    ForumServer? selectedServer;
+    await ForumCarreraPickerDialog.show(
+      context,
+      onServerSelected: (server) {
+        selectedServer = server;
+        _onAddServer(server);
+      },
+    );
+    if (!mounted) return;
+    if (selectedServer != null) {
+      _onSelectServer(selectedServer!);
+      if (_scaffoldKey.currentState?.isDrawerOpen == true) {
+        Navigator.of(context).pop();
       }
     }
   }
@@ -592,29 +600,6 @@ class ForumScreenState extends State<ForumScreen> {
     _loadPosts();
   }
 
-  void _openProfile() {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: Colors.transparent,
-      builder: (modalContext) => Container(
-        height: MediaQuery.sizeOf(modalContext).height * 0.94,
-        decoration: BoxDecoration(
-          color: Theme.of(modalContext).scaffoldBackgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: ProfileScreen(
-          activeAlias: widget.activeAlias,
-          onAliasChanged: widget.onAliasChanged,
-          onToggleTheme: widget.onToggleTheme,
-          isDarkMode: widget.isDarkMode,
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -642,17 +627,19 @@ class ForumScreenState extends State<ForumScreen> {
               activeServer: _activeServer,
               onSelectServer: _onSelectServer,
               onAddServer: _onAddServer,
+              showAddButton: false,
             ),
 
-            // 2. Channel Sidebar (más amplio horizontalmente: 280px)
+            // 2. Channel Sidebar (240px)
             ForumChannelSidebar(
-              width: 280,
               activeServer: _activeServer,
               activeChannel: currentChannel,
               channels: currentChannels,
               onSelectChannel: _onSelectChannel,
+              onAddServer: _addServerFromSidebar,
               activeAlias: widget.activeAlias,
-              onOpenProfile: _openProfile,
+              onAliasChanged: widget.onAliasChanged,
+              onToggleTheme: widget.onToggleTheme,
             ),
 
             // 3. Main Content: GroupsScreen if isGroups, otherwise Channel Feed
@@ -692,26 +679,23 @@ class ForumScreenState extends State<ForumScreen> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: feedBg,
-      onDrawerChanged: (isOpen) {
-        if (_isDrawerOpen != isOpen) {
-          setState(() {
-            _isDrawerOpen = isOpen;
-          });
-          widget.onDrawerChanged?.call(isOpen);
-        }
-      },
-      appBar: _buildMobileAppBar(theme, isDark, isGroups),
       drawer: Drawer(
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-        width: MediaQuery.sizeOf(context).width,
+        width: 312,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             ForumServerRail(
               servers: _servers,
               activeServer: _activeServer,
-              onSelectServer: _onSelectServer,
+              onSelectServer: (srv) {
+                _onSelectServer(srv);
+                if (_scaffoldKey.currentState?.isDrawerOpen == true) {
+                  Navigator.of(context).pop();
+                }
+              },
               onAddServer: _onAddServer,
+              showAddButton: false,
             ),
             Expanded(
               child: Column(
@@ -734,17 +718,6 @@ class ForumScreenState extends State<ForumScreen> {
                           tooltip: 'Comunidades populares',
                           onPressed: _openPopularServersFromDrawer,
                         ),
-                        const Spacer(),
-                        IconButton(
-                          icon: const Icon(Icons.close_rounded, size: 20),
-                          tooltip: 'Cerrar menú',
-                          onPressed: () {
-                            if (_scaffoldKey.currentState?.isDrawerOpen == true) {
-                              Navigator.of(context).pop();
-                            }
-                          },
-                        ),
-                        const SizedBox(width: 4),
                       ],
                     ),
                   ),
@@ -753,14 +726,11 @@ class ForumScreenState extends State<ForumScreen> {
                       activeServer: _activeServer,
                       activeChannel: currentChannel,
                       channels: currentChannels,
-                      onSelectChannel: (ch) {
-                        _onSelectChannel(ch);
-                        if (_scaffoldKey.currentState?.isDrawerOpen == true) {
-                          Navigator.of(context).pop();
-                        }
-                      },
+                      onSelectChannel: _onSelectChannel,
+                      onAddServer: _addServerFromSidebar,
                       activeAlias: widget.activeAlias,
-                      onOpenProfile: _openProfile,
+                      onAliasChanged: widget.onAliasChanged,
+                      onToggleTheme: widget.onToggleTheme,
                     ),
                   ),
                 ],
@@ -769,108 +739,139 @@ class ForumScreenState extends State<ForumScreen> {
           ],
         ),
       ),
-      floatingActionButton: (widget.showFloatingActionButton &&
-              !_isDrawerOpen &&
-              !isGroups &&
-              !_activeChannel.isSpecial)
-          ? FloatingActionButton(
-              heroTag: widget.floatingActionButtonHeroTag,
-              onPressed: _openCreateDialog,
-              tooltip: 'Crear publicación',
-              child: const Icon(Icons.add),
-            )
-          : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      body: isGroups
-          ? GroupsScreen(
-              activeAlias: widget.activeAlias,
-              onAliasChanged: widget.onAliasChanged,
-              activeFacultadId: _activeServer.facultadId,
-              activeCarreraId: _groupsActiveChannel.categoryId,
-              activeChannelName: _groupsActiveChannel.name,
-              activeChannelDescription:
-                  _groupsActiveChannel.description,
-              activeChannelIcon: _groupsActiveChannel.icon,
-            )
-          : _buildFeedContainer(theme, isDark),
-    );
-  }
-
-  PreferredSizeWidget _buildMobileAppBar(
-    ThemeData theme,
-    bool isDark,
-    bool isGroups,
-  ) {
-    final channelName =
-        isGroups ? _groupsActiveChannel.name : _activeChannel.name;
-
-    return PreferredSize(
-      preferredSize: const Size.fromHeight(64),
-      child: AppBar(
-        toolbarHeight: 64,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        backgroundColor: theme.colorScheme.surface,
-        shape: Border(
-          bottom: BorderSide(
-            color: theme.colorScheme.outlineVariant,
-          ),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.menu, size: 24),
-          tooltip: 'Canales y servidores',
-          onPressed: () {
-            setState(() => _isDrawerOpen = true);
-            widget.onDrawerChanged?.call(true);
-            _scaffoldKey.currentState?.openDrawer();
-          },
-        ),
-        centerTitle: true,
-        titleSpacing: 0,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
+      body: SafeArea(
+        top: false,
+        child: Column(
           children: [
-            SizedBox(
-              width: 48,
-              height: 48,
-              child: Image.asset(
-                'assets/images/zanate_logo.png',
-                fit: BoxFit.contain,
-                semanticLabel: 'Logo de Zanate',
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'Zanate',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
+            if (isGroups)
+              _buildMobileGroupsHeader(theme, isDark)
+            else
+              _buildMobileChannelHeader(theme),
+            Expanded(
+              child: isGroups
+                  ? GroupsScreen(
+                      activeAlias: widget.activeAlias,
+                      onAliasChanged: widget.onAliasChanged,
+                      activeServerName: _activeServer.name,
+                      activeFacultadId: _activeServer.facultadId,
+                      activeCarreraId: _groupsActiveChannel.categoryId,
+                      activeChannelName: _groupsActiveChannel.name,
+                      activeChannelDescription:
+                          _groupsActiveChannel.description,
+                      activeChannelIcon: _groupsActiveChannel.icon,
+                    )
+                  : _buildFeedContainer(theme, isDark),
             ),
           ],
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 14),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 130),
-                child: Text(
-                  '#$channelName',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.end,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: isDark
-                        ? const Color(0xFFDBDEE1)
-                        : const Color(0xFF475569),
-                  ),
-                ),
+      ),
+    );
+  }
+
+  Widget _buildMobileGroupsHeader(ThemeData theme, bool isDark) {
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1C1C1C) : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? const Color(0xFF303030) : const Color(0xFFE2E8F0),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.menu, size: 22),
+            tooltip: 'Canales y Servidores',
+            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+          ),
+          const SizedBox(width: 4),
+          const Icon(Icons.chat, size: 18, color: Color(0xFF25D366)),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              _groupsActiveChannel.name,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: const Color(0xFF25D366).withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: const Text(
+              'WAPP',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF25D366),
               ),
             ),
           ),
+          const SizedBox(width: 4),
+          IconButton(
+            icon: const Icon(
+              Icons.local_fire_department_rounded,
+              size: 20,
+              color: Color(0xFFF59E0B),
+            ),
+            tooltip: 'Comunidades Populares',
+            onPressed: () => _showPopularServersModal(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _welcomeChannelTitle() {
+    final serverName = _activeServer.name
+        .replaceAll(RegExp(r'\s*\([^)]*\)'), '')
+        .trim();
+    return '$serverName · ${_activeChannel.name}';
+  }
+
+  Widget _buildMobileChannelHeader(ThemeData theme) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 52),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border(
+          bottom: BorderSide(color: theme.colorScheme.outlineVariant),
+        ),
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.menu, size: 22),
+            tooltip: 'Canales y servidores',
+            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+          ),
+          Expanded(
+            child: Text(
+              _welcomeChannelTitle(),
+              textAlign: TextAlign.center,
+              maxLines: 3,
+              softWrap: true,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                fontSize: 12.5,
+              ),
+            ),
+          ),
+          if (!_activeChannel.isSpecial)
+            IconButton(
+              icon: const Icon(Icons.add, size: 22),
+              tooltip: 'Crear publicación',
+              onPressed: _openCreateDialog,
+            )
+          else
+            const SizedBox(width: 48),
         ],
       ),
     );
@@ -966,8 +967,8 @@ class ForumScreenState extends State<ForumScreen> {
         // Barra superior fija para todos los canales con bienvenida, buscador y botón de publicar
         _buildDiscordWelcomeHero(theme, isDark),
 
-        // Selector compacto de modo de feed: "En Llamas" vs "Recientes"
-        _buildFeedModeSelector(theme, isDark),
+        // Filtro de muro (En Llamas / Recientes) y acceso a Reseñas de Secciones
+        _buildFeedFilterBar(theme, isDark),
 
         if (_isOffline) ...[
           Container(
@@ -1014,96 +1015,9 @@ class ForumScreenState extends State<ForumScreen> {
     );
   }
 
-  Widget _buildPostsFeed(ThemeData theme, bool isDark) {
-    if (_isLoading) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(40),
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
+  Widget _buildFeedFilterBar(ThemeData theme, bool isDark) {
+    if (_activeChannel.isSpecial) return const SizedBox.shrink();
 
-    if (_posts.isEmpty) {
-      return ListView(
-        controller: _feedScrollController,
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        children: [
-          EmptyStateWidget(
-            icon: _activeChannel.icon,
-            title: _activeChannel.isSpecial
-                ? 'No tienes publicaciones guardadas'
-                : 'No hay mensajes en ${_activeChannel.name}',
-            description: _activeChannel.isSpecial
-                ? 'Guarda consultas importantes del foro tocando el icono de marcador.'
-                : 'Sé el primero en iniciar una conversación o formular una duda en este canal.',
-          ),
-        ],
-      );
-    }
-
-    return Scrollbar(
-      controller: _feedScrollController,
-      child: ListView.builder(
-        controller: _feedScrollController,
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.zero,
-        itemCount: _posts.length,
-        itemBuilder: (ctx, index) {
-          final post = _posts[index];
-          return PostCard(
-            key: ValueKey(post.id),
-            post: post,
-            isModerator: _currentUserProfile?.isModerator == true,
-            onTap: () => _openPostDetail(post),
-            onLike: () => _handleToggleLike(post),
-            onBookmark: () => _handleToggleBookmark(post),
-            onRepost: () => _handleQuotePost(post),
-            onShare: () => _sharePost(post),
-            onVotePoll: (pollId, optionId) => _handleVotePoll(pollId, optionId),
-            onDelete: post.isMine
-                ? () async {
-                    final ok = await ForumService.softDeletePost(post.id);
-                    if (!mounted) return;
-                    if (ok) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Publicación eliminada')),
-                      );
-                      _loadPosts();
-                    } else {
-                      final msg = post.isLegalHold
-                          ? 'No se puede eliminar: contenido bajo retención legal.'
-                          : 'No se pudo eliminar la publicación.';
-                      ScaffoldMessenger.of(
-                        context,
-                      ).showSnackBar(SnackBar(content: Text(msg)));
-                    }
-                  }
-                : null,
-            onReport: (reason) async {
-              final success = await ForumService.reportPost(
-                postId: post.id,
-                reason: reason,
-              );
-              if (!mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    success
-                        ? 'Gracias por tu reporte. Se ha enviado al equipo de moderación.'
-                        : 'No se pudo enviar el reporte. Inténtalo de nuevo.',
-                  ),
-                ),
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildFeedModeSelector(ThemeData theme, bool isDark) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
@@ -1191,13 +1105,16 @@ class ForumScreenState extends State<ForumScreen> {
                 }
               },
             ),
-            const SizedBox(width: 8),
-            IconButton(
-              icon: const Icon(Icons.rate_review_outlined, size: 20),
-              tooltip: 'Reseñas de secciones',
+            const SizedBox(width: 10),
+            ActionChip(
+              avatar: const Icon(Icons.rate_review_outlined, size: 16),
+              label: const Text(
+                'Reseñas de Secciones',
+                style: TextStyle(fontSize: 12),
+              ),
               visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.all(6),
-              constraints: const BoxConstraints(),
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               onPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
@@ -1208,6 +1125,85 @@ class ForumScreenState extends State<ForumScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildPostsFeed(ThemeData theme, bool isDark) {
+    if (_isLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(40),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (_posts.isEmpty) {
+      return ListView(
+        controller: _feedScrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        children: [
+          EmptyStateWidget(
+            icon: _activeChannel.icon,
+            title: _activeChannel.isSpecial
+                ? 'No tienes publicaciones guardadas'
+                : 'No hay mensajes en ${_activeChannel.name}',
+            description: _activeChannel.isSpecial
+                ? 'Guarda consultas importantes del foro tocando el icono de marcador.'
+                : 'Sé el primero en iniciar una conversación o formular una duda en este canal.',
+          ),
+        ],
+      );
+    }
+
+    return Scrollbar(
+      controller: _feedScrollController,
+      child: ListView.builder(
+        controller: _feedScrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: EdgeInsets.zero,
+        itemCount: _posts.length,
+        itemBuilder: (ctx, index) {
+          final post = _posts[index];
+          return PostCard(
+            key: ValueKey(post.id),
+            post: post,
+            isModerator: _currentUserProfile?.isModerator == true,
+            onTap: () => _openPostDetail(post),
+            onLike: () => _handleToggleLike(post),
+            onBookmark: () => _handleToggleBookmark(post),
+            onRepost: () => _handleQuotePost(post),
+            onShare: () => _sharePost(post),
+            onVotePoll: (pollId, optionId) => _handleVotePoll(pollId, optionId),
+            onDelete: post.isMine
+                ? () async {
+                    final ok = await ProfileService.deletePost(post.id);
+                    if (!mounted) return;
+                    if (ok) {
+                      _loadPosts();
+                    }
+                  }
+                : null,
+            onReport: (reason) async {
+              final success = await ForumService.reportPost(
+                postId: post.id,
+                reason: reason,
+              );
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    success
+                        ? 'Gracias por tu reporte. Se ha enviado al equipo de moderación.'
+                        : 'No se pudo enviar el reporte. Inténtalo de nuevo.',
+                  ),
+                ),
+              );
+            },
+          );
+        },
       ),
     );
   }
@@ -1254,10 +1250,10 @@ class ForumScreenState extends State<ForumScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '#${_activeChannel.name}',
+                    _welcomeChannelTitle(),
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
-                      fontSize: 14,
+                      fontSize: 13,
                     ),
                     maxLines: 2,
                     softWrap: true,
