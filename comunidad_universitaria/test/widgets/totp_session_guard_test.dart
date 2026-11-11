@@ -100,7 +100,7 @@ void main() {
     },
   );
 
-  testWidgets('requires new accounts to enroll TOTP before accessing the app', (
+  testWidgets('allows new accounts without TOTP to access the app', (
     tester,
   ) async {
     await signIn();
@@ -108,14 +108,13 @@ void main() {
     await tester.pumpWidget(buildGuardedApp());
     await tester.pumpAndSettle();
 
-    expect(find.text('Comenzar configuración'), findsOneWidget);
-    expect(find.text('Configura un autenticador'), findsOneWidget);
-    // It stays mounted, but the full-screen gate prevents interaction.
     expect(find.text('Contenido privado de la app'), findsOneWidget);
     expect(
       find.text('Contenido privado de la app').hitTestable(),
-      findsNothing,
+      findsOneWidget,
     );
+    expect(find.text('Configura un autenticador'), findsNothing);
+    expect(find.text('Verificación de seguridad'), findsNothing);
   });
 }
 
