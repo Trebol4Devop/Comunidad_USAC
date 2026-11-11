@@ -5,13 +5,20 @@ class SsoSecurityValidator {
     '127.0.0.1',
   };
 
-  /// Allowed domain suffixes for PEMTREE in production / preview
+  /// Allowed domain suffixes for PEMTREE in production / preview.
+  /// Se usa el host completo de PEMTREE (no `netlify.app` a secas) para que
+  /// un sitio ajeno como `evil.netlify.app` no pueda recibir tokens de sesión.
+  /// Los previews de Netlify tienen la forma `<deploy>--pemtree.netlify.app`,
+  /// que sí termina en `.pemtree.netlify.app`.
   static const List<String> allowedDomainSuffixes = [
-    'netlify.app',
+    'pemtree.netlify.app',
     'pemtree.com',
     'pemtree.app',
     'pemtree.org',
   ];
+
+  /// Única ruta válida del callback en producción.
+  static const String productionCallbackPath = '/auth/callback';
 
   /// Default exact local redirect URI for PEMTREE in development
   static const String defaultLocalRedirectUri = 'http://localhost:5173/auth/callback';
@@ -38,15 +45,20 @@ class SsoSecurityValidator {
     // 1. Localhost development (PEMTREE on local dev server: http://localhost:5173)
     if (allowedLocalhostHosts.contains(host)) {
       if (scheme != 'http' && scheme != 'https') return false;
-      return true;
+      return uri.path == productionCallbackPath;
     }
 
     // 2. Production / Preview domains (MUST be HTTPS)
     if (scheme != 'https') return false;
 
     for (final domain in allowedDomainSuffixes) {
-      if (host == domain || host.endsWith('.$domain')) {
-        return true;
+      // Netlify publica previews como `<deploy>--pemtree.netlify.app` (guiones,
+      // no punto), así que ese caso necesita su propia comparación.
+      final hostMatches = domain == 'pemtree.netlify.app'
+          ? (host == domain || host.endsWith('--$domain'))
+          : (host == domain || host.endsWith('.$domain'));
+      if (hostMatches) {
+        return uri.path == productionCallbackPath;
       }
     }
 

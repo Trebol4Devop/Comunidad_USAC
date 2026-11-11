@@ -11,19 +11,28 @@ void main() {
         isTrue,
       );
       expect(
-        SsoSecurityValidator.isValidRedirectUri('http://127.0.0.1:5173/callback'),
+        SsoSecurityValidator.isValidRedirectUri('http://127.0.0.1:5173/auth/callback'),
         isTrue,
       );
     });
 
-    test('Permite dominios Netlify (*.netlify.app)', () {
+    test('Permite solo los dominios de PEMTREE en Netlify', () {
       expect(
         SsoSecurityValidator.isValidRedirectUri('https://pemtree.netlify.app/auth/callback'),
         isTrue,
       );
       expect(
-        SsoSecurityValidator.isValidRedirectUri('https://deploy-preview-42--pemtree.netlify.app/callback'),
+        SsoSecurityValidator.isValidRedirectUri('https://deploy-preview-42--pemtree.netlify.app/auth/callback'),
         isTrue,
+      );
+      // Un sitio ajeno en Netlify no debe recibir tokens.
+      expect(
+        SsoSecurityValidator.isValidRedirectUri('https://evil.netlify.app/auth/callback'),
+        isFalse,
+      );
+      expect(
+        SsoSecurityValidator.isValidRedirectUri('https://otro-sitio.netlify.app/auth/callback'),
+        isFalse,
       );
     });
 
@@ -37,8 +46,13 @@ void main() {
         isTrue,
       );
       expect(
-        SsoSecurityValidator.isValidRedirectUri('https://pemtree.app/callback'),
+        SsoSecurityValidator.isValidRedirectUri('https://pemtree.app/auth/callback'),
         isTrue,
+      );
+      // La ruta del callback es obligatoria.
+      expect(
+        SsoSecurityValidator.isValidRedirectUri('https://pemtree.netlify.app/robar'),
+        isFalse,
       );
     });
 
