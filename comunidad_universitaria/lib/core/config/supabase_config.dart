@@ -50,9 +50,10 @@ class SupabaseConfig {
       );
       _isInitialized = true;
     } catch (e) {
-      debugPrint('Aviso: No se pudo conectar con Supabase ($e). Modo local/demostración activado.');
+      debugPrint(
+        'Aviso: No se pudo conectar con Supabase ($e). Modo local/demostración activado.',
+      );
       _isInitialized = false;
     }
   }
 }
-

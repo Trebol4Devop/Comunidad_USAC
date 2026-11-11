@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum IdentityMode {
-  forumAnonymous,
-  marketplaceVerified,
-}
+enum IdentityMode { forumAnonymous, marketplaceVerified }
 
 class IdentityBadgeChip extends StatelessWidget {
   final IdentityMode mode;
@@ -29,7 +26,9 @@ class IdentityBadgeChip extends StatelessWidget {
     if (mode == IdentityMode.forumAnonymous) {
       // FORO ANÓNIMO: Tratamiento visual neutro / privacy-first / dark tones
       final chipBg = isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9);
-      final borderColor = isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1);
+      final borderColor = isDark
+          ? const Color(0xFF475569)
+          : const Color(0xFFCBD5E1);
 
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -43,7 +42,9 @@ class IdentityBadgeChip extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(5),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                color: isDark
+                    ? const Color(0xFF303030)
+                    : const Color(0xFFE2E8F0),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: const Icon(
@@ -64,7 +65,9 @@ class IdentityBadgeChip extends StatelessWidget {
                         'Autor: ',
                         style: TextStyle(
                           fontSize: 11,
-                          color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                          color: isDark
+                              ? Colors.grey.shade400
+                              : Colors.grey.shade600,
                         ),
                       ),
                       Flexible(
@@ -73,7 +76,9 @@ class IdentityBadgeChip extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -98,7 +103,9 @@ class IdentityBadgeChip extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w500,
-                            color: isDark ? Colors.grey.shade400 : const Color(0xFF64748B),
+                            color: isDark
+                                ? Colors.grey.shade400
+                                : const Color(0xFF64748B),
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -113,7 +120,10 @@ class IdentityBadgeChip extends StatelessWidget {
                 onTap: onSwitchIdentity,
                 borderRadius: BorderRadius.circular(6),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 4,
+                  ),
                   child: Row(
                     children: [
                       Icon(
@@ -179,7 +189,9 @@ class IdentityBadgeChip extends StatelessWidget {
                         'Vendedor: ',
                         style: TextStyle(
                           fontSize: 11,
-                          color: isDark ? Colors.grey.shade300 : const Color(0xFF065F46),
+                          color: isDark
+                              ? Colors.grey.shade300
+                              : const Color(0xFF065F46),
                         ),
                       ),
                       Text(
@@ -187,13 +199,18 @@ class IdentityBadgeChip extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: isDark ? const Color(0xFF34D399) : const Color(0xFF065F46),
+                          color: isDark
+                              ? const Color(0xFF34D399)
+                              : const Color(0xFF065F46),
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
                       if (isVerified)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 1,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFF059669),
                             borderRadius: BorderRadius.circular(4),
@@ -220,7 +237,9 @@ class IdentityBadgeChip extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w500,
-                            color: isDark ? Colors.grey.shade400 : const Color(0xFF047857),
+                            color: isDark
+                                ? Colors.grey.shade400
+                                : const Color(0xFF047857),
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),

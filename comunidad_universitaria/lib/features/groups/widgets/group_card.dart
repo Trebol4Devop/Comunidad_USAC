@@ -92,7 +92,7 @@ class GroupCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               side: BorderSide(
                 color: isDark
-                    ? const Color(0xFF383A40)
+                    ? const Color(0xFF303030)
                     : const Color(0xFFD9D9D9),
               ),
             ),

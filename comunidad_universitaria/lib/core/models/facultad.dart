@@ -67,7 +67,8 @@ class SedeUniversitaria {
   final String nombre;
   final String departamento;
   final String municipio;
-  final String tipo; // 'campus_central', 'metropolitana', 'centro_regional', 'extension'
+  final String
+  tipo; // 'campus_central', 'metropolitana', 'centro_regional', 'extension'
 
   const SedeUniversitaria({
     required this.id,
@@ -116,8 +117,12 @@ class CampusLocation {
       nombre: map['nombre'] ?? '',
       sedeId: map['sede_id'] ?? 'central',
       buildingCode: map['building_code'] ?? '',
-      latitude: (map['latitude'] is num) ? (map['latitude'] as num).toDouble() : null,
-      longitude: (map['longitude'] is num) ? (map['longitude'] as num).toDouble() : null,
+      latitude: (map['latitude'] is num)
+          ? (map['latitude'] as num).toDouble()
+          : null,
+      longitude: (map['longitude'] is num)
+          ? (map['longitude'] as num).toDouble()
+          : null,
       description: map['description'],
     );
   }

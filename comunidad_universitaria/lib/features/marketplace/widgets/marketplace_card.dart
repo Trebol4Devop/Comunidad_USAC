@@ -99,7 +99,7 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
               borderRadius: BorderRadius.circular(12),
               side: BorderSide(
                 color: isDark
-                    ? const Color(0xFF383A40)
+                    ? const Color(0xFF303030)
                     : const Color(0xFFD9D9D9),
               ),
             ),
@@ -113,7 +113,7 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                 height: 140,
                 width: double.infinity,
                 color: isDark
-                    ? const Color(0xFF1E293B)
+                    ? const Color(0xFF252525)
                     : const Color(0xFFF1F5F9),
                 child: item.imageUrls.isNotEmpty
                     ? PageView.builder(
@@ -382,7 +382,7 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                   style: theme.textTheme.bodySmall?.copyWith(
                     fontSize: 12,
                     color: isDark
-                        ? const Color(0xFF94A3B8)
+                        ? const Color(0xFFAAAAAA)
                         : const Color(0xFF64748B),
                     height: 1.3,
                   ),

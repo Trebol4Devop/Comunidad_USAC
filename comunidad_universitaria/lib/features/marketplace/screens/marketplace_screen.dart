@@ -328,7 +328,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: theme.brightness == Brightness.dark
-                          ? const Color(0xFF383A40)
+                          ? const Color(0xFF303030)
                           : const Color(0xFFD9D9D9),
                     ),
                   ),

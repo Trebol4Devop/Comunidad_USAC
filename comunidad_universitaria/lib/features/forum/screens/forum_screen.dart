@@ -661,6 +661,7 @@ class ForumScreenState extends State<ForumScreen> {
                 child: GroupsScreen(
                   activeAlias: widget.activeAlias,
                   onAliasChanged: widget.onAliasChanged,
+                  activeServerName: _activeServer.name,
                   activeFacultadId: _activeServer.facultadId,
                   activeCarreraId: _groupsActiveChannel.categoryId,
                   activeChannelName: _groupsActiveChannel.name,
@@ -1220,10 +1221,10 @@ class ForumScreenState extends State<ForumScreen> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF2B2D31) : const Color(0xFFF8FAFC),
+          color: isDark ? const Color(0xFF1C1C1C) : const Color(0xFFF8FAFC),
           border: Border(
             bottom: BorderSide(
-              color: isDark ? const Color(0xFF202225) : const Color(0xFFE2E8F0),
+              color: isDark ? const Color(0xFF303030) : const Color(0xFFE2E8F0),
               width: 1,
             ),
           ),
@@ -1236,7 +1237,7 @@ class ForumScreenState extends State<ForumScreen> {
               height: 30,
               decoration: BoxDecoration(
                 color: isDark
-                    ? const Color(0xFF383A40)
+                    ? const Color(0xFF252525)
                     : const Color(0xFFEEF2FF),
                 borderRadius: BorderRadius.circular(6),
               ),
@@ -1258,8 +1259,8 @@ class ForumScreenState extends State<ForumScreen> {
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
+                    softWrap: true,
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -1267,7 +1268,7 @@ class ForumScreenState extends State<ForumScreen> {
                     style: TextStyle(
                       fontSize: 10.5,
                       color: isDark
-                          ? const Color(0xFF949BA4)
+                          ? const Color(0xFFAAAAAA)
                           : const Color(0xFF64748B),
                     ),
                     maxLines: 1,
@@ -1291,14 +1292,14 @@ class ForumScreenState extends State<ForumScreen> {
                   hintStyle: TextStyle(
                     fontSize: 11,
                     color: isDark
-                        ? const Color(0xFF949BA4)
+                        ? const Color(0xFFAAAAAA)
                         : Colors.grey.shade500,
                   ),
                   prefixIcon: Icon(
                     Icons.search,
                     size: 15,
                     color: isDark
-                        ? const Color(0xFF949BA4)
+                        ? const Color(0xFFAAAAAA)
                         : Colors.grey.shade500,
                   ),
                   suffixIcon: _searchQuery.isNotEmpty
@@ -1308,7 +1309,7 @@ class ForumScreenState extends State<ForumScreen> {
                             Icons.clear,
                             size: 13,
                             color: isDark
-                                ? const Color(0xFF949BA4)
+                                ? const Color(0xFFAAAAAA)
                                 : Colors.grey.shade500,
                           ),
                           onPressed: () {
@@ -1323,12 +1324,12 @@ class ForumScreenState extends State<ForumScreen> {
                     horizontal: 8,
                   ),
                   filled: true,
-                  fillColor: isDark ? const Color(0xFF1E1F22) : Colors.white,
+                  fillColor: isDark ? const Color(0xFF252525) : Colors.white,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(6),
                     borderSide: BorderSide(
                       color: isDark
-                          ? const Color(0xFF383A40)
+                          ? const Color(0xFF303030)
                           : const Color(0xFFCBD5E1),
                       width: 1,
                     ),
@@ -1337,7 +1338,7 @@ class ForumScreenState extends State<ForumScreen> {
                     borderRadius: BorderRadius.circular(6),
                     borderSide: BorderSide(
                       color: isDark
-                          ? const Color(0xFF383A40)
+                          ? const Color(0xFF303030)
                           : const Color(0xFFCBD5E1),
                       width: 1,
                     ),

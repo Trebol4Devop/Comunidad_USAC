@@ -4,13 +4,13 @@ class ImageViewerDialog extends StatelessWidget {
   final String imageUrl;
   final String? title;
 
-  const ImageViewerDialog({
-    super.key,
-    required this.imageUrl,
-    this.title,
-  });
+  const ImageViewerDialog({super.key, required this.imageUrl, this.title});
 
-  static void show(BuildContext context, {required String imageUrl, String? title}) {
+  static void show(
+    BuildContext context, {
+    required String imageUrl,
+    String? title,
+  }) {
     if (imageUrl.trim().isEmpty) return;
     showDialog(
       context: context,
@@ -43,7 +43,8 @@ class ImageViewerDialog extends StatelessWidget {
                       padding: const EdgeInsets.all(40),
                       child: CircularProgressIndicator(
                         value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                            ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
                             : null,
                         color: Colors.white,
                       ),
@@ -58,11 +59,18 @@ class ImageViewerDialog extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: const [
-                        Icon(Icons.broken_image_outlined, color: Colors.amber, size: 48),
+                        Icon(
+                          Icons.broken_image_outlined,
+                          color: Colors.amber,
+                          size: 48,
+                        ),
                         SizedBox(height: 12),
                         Text(
                           'No se pudo cargar la imagen',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         SizedBox(height: 4),
                         Text(
@@ -98,14 +106,21 @@ class ImageViewerDialog extends StatelessWidget {
               top: 8,
               left: 8,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   title!,
-                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ),

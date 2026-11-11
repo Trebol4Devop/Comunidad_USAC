@@ -335,10 +335,10 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
     final isDark = theme.brightness == Brightness.dark;
     final accentColor = isDark ? Colors.white : const Color(0xFF111827);
     final panelColor = isDark
-        ? const Color(0xFF1E293B)
+        ? const Color(0xFF222222)
         : const Color(0xFFF1F5F9);
     final panelBorder = isDark
-        ? const Color(0xFF334155)
+        ? const Color(0xFF303030)
         : const Color(0xFFE2E8F0);
     final isMobile = Responsive.isMobile(context);
     final maxHeight =

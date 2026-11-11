@@ -380,12 +380,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final accentColor = isDark ? Colors.white : const Color(0xFF111827);
-    final panelColor = isDark ? const Color(0xFF1F2937) : Colors.white;
+    final panelColor = isDark ? const Color(0xFF1C1C1C) : Colors.white;
     final panelSurface = isDark
-        ? const Color(0xFF111827)
+        ? const Color(0xFF222222)
         : const Color(0xFFF1F5F9);
     final panelBorder = isDark
-        ? const Color(0xFF374151)
+        ? const Color(0xFF303030)
         : const Color(0xFFE2E8F0);
 
     return Scaffold(
@@ -1051,7 +1051,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               border: Border(
                 top: BorderSide(
                   color: isDark
-                      ? const Color(0xFF334155)
+                      ? const Color(0xFF303030)
                       : const Color(0xFFE2E8F0),
                 ),
               ),

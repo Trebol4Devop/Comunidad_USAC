@@ -35,7 +35,8 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderStateMixin {
+class _ProfileScreenState extends State<ProfileScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   bool _isLoading = true;
@@ -131,8 +132,14 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         _selectedFacultadId = profile.facultadId;
         _selectedCarreraId = profile.carreraId;
         _selectedSedeId = profile.sedeId;
-        _selectedAvatarColor = profile.avatarColorIndex.clamp(0, _avatarColors.length - 1);
-        _selectedAvatarIcon = profile.avatarIconIndex.clamp(0, _avatarIcons.length - 1);
+        _selectedAvatarColor = profile.avatarColorIndex.clamp(
+          0,
+          _avatarColors.length - 1,
+        );
+        _selectedAvatarIcon = profile.avatarIconIndex.clamp(
+          0,
+          _avatarIcons.length - 1,
+        );
         _whatsappController.text = profile.contactWhatsapp ?? '';
         _telegramController.text = profile.contactTelegram ?? '';
         _instagramController.text = profile.contactInstagram ?? '';
@@ -207,9 +214,15 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         sedeId: _selectedSedeId,
         avatarColorIndex: _selectedAvatarColor,
         avatarIconIndex: _selectedAvatarIcon,
-        contactWhatsapp: _whatsappController.text.trim().isEmpty ? null : _whatsappController.text.trim(),
-        contactTelegram: _telegramController.text.trim().isEmpty ? null : _telegramController.text.trim(),
-        contactInstagram: _instagramController.text.trim().isEmpty ? null : _instagramController.text.trim(),
+        contactWhatsapp: _whatsappController.text.trim().isEmpty
+            ? null
+            : _whatsappController.text.trim(),
+        contactTelegram: _telegramController.text.trim().isEmpty
+            ? null
+            : _telegramController.text.trim(),
+        contactInstagram: _instagramController.text.trim().isEmpty
+            ? null
+            : _instagramController.text.trim(),
       );
 
       await ProfileService.saveProfile(updatedProfile);
@@ -231,9 +244,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     } catch (e) {
       setState(() => _isSaving = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al guardar perfil: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error al guardar perfil: $e')));
       }
     }
   }
@@ -241,7 +254,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   Future<void> _deletePost(Post post) async {
     final confirm = await _showConfirmDialog(
       title: 'Eliminar Publicación',
-      message: '¿Estás seguro de que deseas eliminar este tema del foro? Esta acción no se puede deshacer.',
+      message:
+          '¿Estás seguro de que deseas eliminar este tema del foro? Esta acción no se puede deshacer.',
     );
     if (confirm != true) return;
 
@@ -250,16 +264,17 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       setState(() {
         _myPosts.removeWhere((p) => p.id == post.id);
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Publicación eliminada.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Publicación eliminada.')));
     }
   }
 
   Future<void> _deleteGroup(WhatsAppGroup group) async {
     final confirm = await _showConfirmDialog(
       title: 'Eliminar Grupo',
-      message: '¿Estás seguro de que deseas retirar este grupo de estudio compartido?',
+      message:
+          '¿Estás seguro de que deseas retirar este grupo de estudio compartido?',
     );
     if (confirm != true) return;
 
@@ -268,16 +283,17 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       setState(() {
         _myGroups.removeWhere((g) => g.id == group.id);
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Grupo eliminado.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Grupo eliminado.')));
     }
   }
 
   Future<void> _deleteMarketplaceItem(MarketplaceItem item) async {
     final confirm = await _showConfirmDialog(
       title: 'Eliminar Anuncio',
-      message: '¿Estás seguro de que deseas retirar este artículo o servicio del Marketplace?',
+      message:
+          '¿Estás seguro de que deseas retirar este artículo o servicio del Marketplace?',
     );
     if (confirm != true) return;
 
@@ -292,12 +308,18 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     }
   }
 
-  Future<bool?> _showConfirmDialog({required String title, required String message}) {
+  Future<bool?> _showConfirmDialog({
+    required String title,
+    required String message,
+  }) {
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        title: Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
         content: Text(message, style: const TextStyle(fontSize: 13)),
         actions: [
           TextButton(
@@ -305,7 +327,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626), foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+              foregroundColor: Colors.white,
+            ),
             onPressed: () => Navigator.of(ctx).pop(true),
             child: const Text('Eliminar'),
           ),
@@ -320,7 +345,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       orElse: () => USACConstants.facultades.first,
     );
     final rawList = facultadMap['carreras'] as List<dynamic>? ?? [];
-    return rawList.map((c) => Carrera.fromMap(Map<String, dynamic>.from(c))).toList();
+    return rawList
+        .map((c) => Carrera.fromMap(Map<String, dynamic>.from(c)))
+        .toList();
   }
 
   @override
@@ -403,82 +430,95 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 1000),
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: isDesktop ? 32 : 16,
-                vertical: 20,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Profile Header Card
-                  _buildHeaderCard(theme, isDesktop),
-                  const SizedBox(height: 20),
-
-                  // Academic & Contact Settings (Two columns on desktop, stacked on mobile)
-                  if (isDesktop)
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isDesktop ? 32 : 16,
+                      vertical: 20,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Expanded(child: _buildAcademicCard(theme)),
-                        const SizedBox(width: 20),
-                        Expanded(child: _buildContactCard(theme)),
+                        // Profile Header Card
+                        _buildHeaderCard(theme, isDesktop),
+                        const SizedBox(height: 20),
+
+                        // Academic & Contact Settings (Two columns on desktop, stacked on mobile)
+                        if (isDesktop)
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(child: _buildAcademicCard(theme)),
+                              const SizedBox(width: 20),
+                              Expanded(child: _buildContactCard(theme)),
+                            ],
+                          )
+                        else ...[
+                          _buildAcademicCard(theme),
+                          const SizedBox(height: 16),
+                          _buildContactCard(theme),
+                        ],
+
+                        const SizedBox(height: 24),
+
+                        // Save Profile Button
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF004B87),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 14,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: _isSaving ? null : _saveProfile,
+                            icon: _isSaving
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Icon(Icons.save_outlined, size: 18),
+                            label: Text(
+                              _isSaving
+                                  ? 'Guardando...'
+                                  : 'Guardar Cambios de Perfil',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 28),
+
+                        // User Activity Section (Tabs)
+                        _buildActivitySection(theme),
+
+                        const SizedBox(height: 28),
+
+                        // Data Usage & Privacy Transparency Section
+                        _buildDataUsageCard(theme),
+
+                        const SizedBox(height: 28),
+
+                        // Account & Preferences Section
+                        _buildAccountSection(theme),
+                        const SizedBox(height: 40),
                       ],
-                    )
-                  else ...[
-                    _buildAcademicCard(theme),
-                    const SizedBox(height: 16),
-                    _buildContactCard(theme),
-                  ],
-
-                  const SizedBox(height: 24),
-
-                  // Save Profile Button
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF004B87),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      onPressed: _isSaving ? null : _saveProfile,
-                      icon: _isSaving
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                            )
-                          : const Icon(Icons.save_outlined, size: 18),
-                      label: Text(
-                        _isSaving ? 'Guardando...' : 'Guardar Cambios de Perfil',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                      ),
                     ),
                   ),
-
-                  const SizedBox(height: 28),
-
-                  // User Activity Section (Tabs)
-                  _buildActivitySection(theme),
-
-                  const SizedBox(height: 28),
-
-                  // Data Usage & Privacy Transparency Section
-                  _buildDataUsageCard(theme),
-
-                  const SizedBox(height: 28),
-
-                  // Account & Preferences Section
-                  _buildAccountSection(theme),
-                  const SizedBox(height: 40),
-                ],
+                ),
               ),
             ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -496,7 +536,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF303030) : const Color(0xFFE2E8F0),
         ),
         boxShadow: [
           BoxShadow(
@@ -533,7 +573,11 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 1.5),
                         ),
-                        child: const Icon(Icons.edit, size: 12, color: Colors.white),
+                        child: const Icon(
+                          Icons.edit,
+                          size: 12,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
@@ -550,8 +594,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                       children: [
                         Flexible(
                           child: Text(
-                            _aliasController.text.isEmpty ? 'Estudiante USAC' : _aliasController.text,
-                            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                            _aliasController.text.isEmpty
+                                ? 'Estudiante USAC'
+                                : _aliasController.text,
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -565,9 +613,13 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     Row(
                       children: [
                         Icon(
-                          isAuthenticated ? Icons.cloud_done_outlined : Icons.lock_open_outlined,
+                          isAuthenticated
+                              ? Icons.cloud_done_outlined
+                              : Icons.lock_open_outlined,
                           size: 14,
-                          color: isAuthenticated ? const Color(0xFF059669) : Colors.grey.shade600,
+                          color: isAuthenticated
+                              ? const Color(0xFF059669)
+                              : Colors.grey.shade600,
                         ),
                         const SizedBox(width: 4),
                         Expanded(
@@ -578,7 +630,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: 11,
-                              color: isAuthenticated ? const Color(0xFF059669) : Colors.grey.shade600,
+                              color: isAuthenticated
+                                  ? const Color(0xFF059669)
+                                  : Colors.grey.shade600,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -597,10 +651,16 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                             decoration: InputDecoration(
                               labelText: 'Seudónimo Visible en la Comunidad',
                               hintText: 'Ej. Estudiante USAC #402',
-                              prefixIcon: const Icon(Icons.badge_outlined, size: 18),
+                              prefixIcon: const Icon(
+                                Icons.badge_outlined,
+                                size: 18,
+                              ),
                               isDense: true,
                               counterText: '',
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
                               suffixIcon: IconButton(
                                 icon: const Icon(Icons.shuffle, size: 18),
                                 tooltip: 'Generar seudónimo aleatorio',
@@ -627,10 +687,14 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             maxLength: 140,
             decoration: const InputDecoration(
               labelText: 'Presentación o Bio Estudiantil',
-              hintText: 'Ej. Estudiante de 6to semestre apasionado por desarrollo y proyectos comunitarios...',
+              hintText:
+                  'Ej. Estudiante de 6to semestre apasionado por desarrollo y proyectos comunitarios...',
               prefixIcon: Icon(Icons.edit_note_outlined, size: 18),
               isDense: true,
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
             ),
           ),
 
@@ -653,8 +717,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             child: Row(
               children: [
                 Icon(
-                  (_profile?.isCarneVerified ?? false) ? Icons.verified : Icons.verified_user_outlined,
-                  color: (_profile?.isCarneVerified ?? false) ? const Color(0xFF059669) : const Color(0xFF0284C7),
+                  (_profile?.isCarneVerified ?? false)
+                      ? Icons.verified
+                      : Icons.verified_user_outlined,
+                  color: (_profile?.isCarneVerified ?? false)
+                      ? const Color(0xFF059669)
+                      : const Color(0xFF0284C7),
                   size: 24,
                 ),
                 const SizedBox(width: 10),
@@ -669,7 +737,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: (_profile?.isCarneVerified ?? false) ? const Color(0xFF059669) : const Color(0xFF0284C7),
+                          color: (_profile?.isCarneVerified ?? false)
+                              ? const Color(0xFF059669)
+                              : const Color(0xFF0284C7),
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -680,7 +750,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                         style: TextStyle(
                           fontSize: 10.5,
                           height: 1.3,
-                          color: isDark ? Colors.grey.shade300 : const Color(0xFF334155),
+                          color: isDark
+                              ? Colors.grey.shade300
+                              : const Color(0xFF334155),
                         ),
                       ),
                     ],
@@ -702,15 +774,27 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: (_profile?.isCarneVerified ?? false) ? const Color(0xFF059669) : const Color(0xFF0284C7),
+                    backgroundColor: (_profile?.isCarneVerified ?? false)
+                        ? const Color(0xFF059669)
+                        : const Color(0xFF0284C7),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
                     minimumSize: const Size(60, 34),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   child: Text(
-                    (_profile?.isCarneVerified ?? false) ? 'Verificar' : 'Validar',
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                    (_profile?.isCarneVerified ?? false)
+                        ? 'Verificar'
+                        : 'Validar',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
@@ -751,7 +835,11 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           const SizedBox(width: 4),
           Text(
             label,
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: color),
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
           ),
         ],
       ),
@@ -774,7 +862,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF303030) : const Color(0xFFE2E8F0),
         ),
       ),
       child: Column(
@@ -788,13 +876,19 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   color: const Color(0xFF004B87).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.school_outlined, color: Color(0xFF004B87), size: 18),
+                child: const Icon(
+                  Icons.school_outlined,
+                  color: Color(0xFF004B87),
+                  size: 18,
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   'Información Académica',
-                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -825,8 +919,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               if (newFacultadId != null) {
                 setState(() {
                   _selectedFacultadId = newFacultadId;
-                  final availableCarreras = _getCarrerasForFacultad(newFacultadId);
-                  _selectedCarreraId = availableCarreras.isNotEmpty ? availableCarreras.first.id : 'todas';
+                  final availableCarreras = _getCarrerasForFacultad(
+                    newFacultadId,
+                  );
+                  _selectedCarreraId = availableCarreras.isNotEmpty
+                      ? availableCarreras.first.id
+                      : 'todas';
                 });
               }
             },
@@ -901,7 +999,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF303030) : const Color(0xFFE2E8F0),
         ),
       ),
       child: Column(
@@ -915,7 +1013,11 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   color: const Color(0xFF0D9488).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.contact_phone_outlined, color: Color(0xFF0D9488), size: 18),
+                child: const Icon(
+                  Icons.contact_phone_outlined,
+                  color: Color(0xFF0D9488),
+                  size: 18,
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -924,11 +1026,16 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   children: [
                     Text(
                       'Canales de Contacto',
-                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     Text(
                       'Se autocompletarán al publicar en Marketplace o coordinar tutorías',
-                      style: theme.textTheme.bodySmall?.copyWith(fontSize: 10, color: Colors.grey.shade600),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontSize: 10,
+                        color: Colors.grey.shade600,
+                      ),
                     ),
                   ],
                 ),
@@ -985,7 +1092,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF303030) : const Color(0xFFE2E8F0),
         ),
       ),
       clipBehavior: Clip.antiAlias,
@@ -1002,13 +1109,19 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     color: const Color(0xFF004B87).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.history_edu_outlined, color: Color(0xFF004B87), size: 18),
+                  child: const Icon(
+                    Icons.history_edu_outlined,
+                    color: Color(0xFF004B87),
+                    size: 18,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     'Mi Actividad y Contenidos',
-                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 IconButton(
@@ -1059,7 +1172,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       return const EmptyStateWidget(
         icon: Icons.forum_outlined,
         title: 'Sin publicaciones en el foro',
-        description: 'Las consultas o aportes que crees en el Foro Estudiantil aparecerán aquí para que puedas gestionarlos.',
+        description:
+            'Las consultas o aportes que crees en el Foro Estudiantil aparecerán aquí para que puedas gestionarlos.',
       );
     }
 
@@ -1099,7 +1213,11 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 },
               ),
               IconButton(
-                icon: const Icon(Icons.delete_outline, size: 18, color: Color(0xFFDC2626)),
+                icon: const Icon(
+                  Icons.delete_outline,
+                  size: 18,
+                  color: Color(0xFFDC2626),
+                ),
                 tooltip: 'Eliminar tema',
                 onPressed: () => _deletePost(post),
               ),
@@ -1115,7 +1233,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       return const EmptyStateWidget(
         icon: Icons.groups_outlined,
         title: 'Sin grupos de estudio compartidos',
-        description: 'Los enlaces de grupos de WhatsApp o Discord que compartas se listarán aquí.',
+        description:
+            'Los enlaces de grupos de WhatsApp o Discord que compartas se listarán aquí.',
       );
     }
 
@@ -1138,7 +1257,11 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
           ),
           trailing: IconButton(
-            icon: const Icon(Icons.delete_outline, size: 18, color: Color(0xFFDC2626)),
+            icon: const Icon(
+              Icons.delete_outline,
+              size: 18,
+              color: Color(0xFFDC2626),
+            ),
             tooltip: 'Eliminar grupo',
             onPressed: () => _deleteGroup(group),
           ),
@@ -1152,7 +1275,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       return const EmptyStateWidget(
         icon: Icons.storefront_outlined,
         title: 'Sin anuncios en el Marketplace',
-        description: 'Tus publicaciones de productos, comidas, libros o tutorías aparecerán aquí.',
+        description:
+            'Tus publicaciones de productos, comidas, libros o tutorías aparecerán aquí.',
       );
     }
 
@@ -1162,7 +1286,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (context, index) {
         final item = _myMarketplaceItems[index];
-        final priceText = item.isFree ? 'Gratuito' : 'Q${item.price.toStringAsFixed(2)}';
+        final priceText = item.isFree
+            ? 'Gratuito'
+            : 'Q${item.price.toStringAsFixed(2)}';
 
         return ListTile(
           dense: true,
@@ -1177,7 +1303,11 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
           ),
           trailing: IconButton(
-            icon: const Icon(Icons.delete_outline, size: 18, color: Color(0xFFDC2626)),
+            icon: const Icon(
+              Icons.delete_outline,
+              size: 18,
+              color: Color(0xFFDC2626),
+            ),
             tooltip: 'Eliminar anuncio',
             onPressed: () => _deleteMarketplaceItem(item),
           ),
@@ -1195,7 +1325,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF303030) : const Color(0xFFE2E8F0),
         ),
       ),
       child: Column(
@@ -1209,7 +1339,11 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   color: const Color(0xFF0284C7).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.privacy_tip_outlined, color: Color(0xFF0284C7), size: 18),
+                child: const Icon(
+                  Icons.privacy_tip_outlined,
+                  color: Color(0xFF0284C7),
+                  size: 18,
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -1218,11 +1352,16 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   children: [
                     Text(
                       'Uso de Datos y Privacidad',
-                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     Text(
                       '¿Cómo y por qué se utiliza tu información en la plataforma?',
-                      style: theme.textTheme.bodySmall?.copyWith(fontSize: 11, color: Colors.grey.shade600),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontSize: 11,
+                        color: Colors.grey.shade600,
+                      ),
                     ),
                   ],
                 ),
@@ -1283,19 +1422,27 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                color: isDark
+                    ? const Color(0xFF303030)
+                    : const Color(0xFFE2E8F0),
               ),
             ),
             child: Row(
               children: [
-                const Icon(Icons.lock_outline, size: 16, color: Color(0xFF0284C7)),
+                const Icon(
+                  Icons.lock_outline,
+                  size: 16,
+                  color: Color(0xFF0284C7),
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'Tus aportes colaborativos fortalecen la red estudiantil manteniendo la autonomía y privacidad de cada compañero.',
                     style: TextStyle(
                       fontSize: 11,
-                      color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
+                      color: isDark
+                          ? Colors.grey.shade300
+                          : Colors.grey.shade700,
                       height: 1.3,
                     ),
                   ),
@@ -1320,10 +1467,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF151E34) : const Color(0xFFF8FAFC),
+        color: isDark ? const Color(0xFF252525) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF303030) : const Color(0xFFE2E8F0),
         ),
       ),
       child: Row(
@@ -1344,12 +1491,19 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   description,
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600, height: 1.35),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey.shade600,
+                    height: 1.35,
+                  ),
                 ),
               ],
             ),
@@ -1369,7 +1523,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF303030) : const Color(0xFFE2E8F0),
         ),
       ),
       clipBehavior: Clip.antiAlias,
@@ -1378,185 +1532,237 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF7C3AED).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF7C3AED).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.settings_outlined,
+                    color: Color(0xFF7C3AED),
+                    size: 18,
+                  ),
                 ),
-                child: const Icon(Icons.settings_outlined, color: Color(0xFF7C3AED), size: 18),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Cuenta y Preferencias',
-                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Theme Switch
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: Icon(
-              widget.isDarkMode ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
-              size: 22,
-            ),
-            title: const Text('Tema de la Aplicación', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-            subtitle: Text(
-              widget.isDarkMode ? 'Modo Oscuro activado' : 'Modo Claro activado',
-              style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-            ),
-            trailing: Switch(
-              value: widget.isDarkMode,
-              onChanged: (_) => widget.onToggleTheme?.call(),
-            ),
-          ),
-
-          const Divider(),
-
-          // Community Rules Link
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.shield_outlined, size: 22),
-            title: const Text('Normas de Convivencia y Descargo', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-            subtitle: const Text('Conoce los lineamientos de respeto y privacidad', style: TextStyle(fontSize: 11)),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (ctx) => const RulesScreen()),
-              );
-            },
-          ),
-
-          const Divider(),
-
-          // Login or Logout
-          if (!isAuthenticated) ...[
-            isDesktop
-                ? ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.login, size: 22, color: Color(0xFF004B87)),
-                    title: const Text('Iniciar Sesión o Registrarse', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                    subtitle: const Text(
-                      'Vincular con Google o Correo para sincronizar tus publicaciones en otros dispositivos',
-                      style: TextStyle(fontSize: 11),
-                    ),
-                    trailing: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF004B87),
-                        foregroundColor: Colors.white,
-                      ),
-                      onPressed: () {
-                        AuthModal.show(
-                          context,
-                          title: 'Acceso a Cuenta Estudiantil',
-                          subtitle: 'Inicia sesión para sincronizar tus aportes y publicaciones.',
-                          onAuthenticated: () {
-                            _loadFullProfile();
-                          },
-                        );
-                      },
-                      child: const Text('Acceder'),
-                    ),
-                  )
-                : Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: const [
-                            Icon(Icons.login, size: 20, color: Color(0xFF004B87)),
-                            SizedBox(width: 8),
-                            Expanded(
-                              child: Text('Iniciar Sesión o Registrarse', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Vincular con Google o Correo para sincronizar tus publicaciones en otros dispositivos',
-                          style: TextStyle(fontSize: 11),
-                        ),
-                        const SizedBox(height: 10),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF004B87),
-                            foregroundColor: Colors.white,
-                          ),
-                          onPressed: () {
-                            AuthModal.show(
-                              context,
-                              title: 'Acceso a Cuenta Estudiantil',
-                              subtitle: 'Inicia sesión para sincronizar tus aportes y publicaciones.',
-                              onAuthenticated: () {
-                                _loadFullProfile();
-                              },
-                            );
-                          },
-                          child: const Text('Acceder'),
-                        ),
-                      ],
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Cuenta y Preferencias',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-          ] else ...[
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Theme Switch
             ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.security_outlined, size: 22, color: Color(0xFF004B87)),
+              leading: Icon(
+                widget.isDarkMode
+                    ? Icons.dark_mode_outlined
+                    : Icons.light_mode_outlined,
+                size: 22,
+              ),
               title: const Text(
-                'Autenticación en dos pasos',
+                'Tema de la Aplicación',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text(
+                widget.isDarkMode
+                    ? 'Modo Oscuro activado'
+                    : 'Modo Claro activado',
+                style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+              ),
+              trailing: Switch(
+                value: widget.isDarkMode,
+                onChanged: (_) => widget.onToggleTheme?.call(),
+              ),
+            ),
+
+            const Divider(),
+
+            // Community Rules Link
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.shield_outlined, size: 22),
+              title: const Text(
+                'Normas de Convivencia y Descargo',
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
               ),
               subtitle: const Text(
-                'Configura un autenticador TOTP para proteger tu cuenta',
+                'Conoce los lineamientos de respeto y privacidad',
                 style: TextStyle(fontSize: 11),
               ),
               trailing: const Icon(Icons.chevron_right),
               onTap: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const TotpEnrollmentScreen(),
-                  ),
+                  MaterialPageRoute(builder: (ctx) => const RulesScreen()),
                 );
               },
             ),
+
             const Divider(),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.logout, size: 22, color: Color(0xFFDC2626)),
-              title: const Text('Cerrar Sesión', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-              subtitle: Text(
-                'Sesión iniciada como ${SupabaseService.currentUser?.email ?? 'Usuario'}',
-                style: const TextStyle(fontSize: 11),
-              ),
-              trailing: OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFFDC2626),
-                  side: const BorderSide(color: Color(0xFFDC2626)),
+
+            // Login or Logout
+            if (!isAuthenticated) ...[
+              isDesktop
+                  ? ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(
+                        Icons.login,
+                        size: 22,
+                        color: Color(0xFF004B87),
+                      ),
+                      title: const Text(
+                        'Iniciar Sesión o Registrarse',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: const Text(
+                        'Vincular con Google o Correo para sincronizar tus publicaciones en otros dispositivos',
+                        style: TextStyle(fontSize: 11),
+                      ),
+                      trailing: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF004B87),
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () {
+                          AuthModal.show(
+                            context,
+                            title: 'Acceso a Cuenta Estudiantil',
+                            subtitle:
+                                'Inicia sesión para sincronizar tus aportes y publicaciones.',
+                            onAuthenticated: () {
+                              _loadFullProfile();
+                            },
+                          );
+                        },
+                        child: const Text('Acceder'),
+                      ),
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: const [
+                              Icon(
+                                Icons.login,
+                                size: 20,
+                                color: Color(0xFF004B87),
+                              ),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Iniciar Sesión o Registrarse',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Vincular con Google o Correo para sincronizar tus publicaciones en otros dispositivos',
+                            style: TextStyle(fontSize: 11),
+                          ),
+                          const SizedBox(height: 10),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF004B87),
+                              foregroundColor: Colors.white,
+                            ),
+                            onPressed: () {
+                              AuthModal.show(
+                                context,
+                                title: 'Acceso a Cuenta Estudiantil',
+                                subtitle:
+                                    'Inicia sesión para sincronizar tus aportes y publicaciones.',
+                                onAuthenticated: () {
+                                  _loadFullProfile();
+                                },
+                              );
+                            },
+                            child: const Text('Acceder'),
+                          ),
+                        ],
+                      ),
+                    ),
+            ] else ...[
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(
+                  Icons.security_outlined,
+                  size: 22,
+                  color: Color(0xFF004B87),
                 ),
-                onPressed: () async {
-                  await SupabaseService.signOut();
-                  await _loadFullProfile();
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Sesión cerrada.')),
-                    );
-                  }
+                title: const Text(
+                  'Autenticación en dos pasos',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                ),
+                subtitle: const Text(
+                  'Configura un autenticador TOTP para proteger tu cuenta',
+                  style: TextStyle(fontSize: 11),
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const TotpEnrollmentScreen(),
+                    ),
+                  );
                 },
-                child: const Text('Cerrar Sesión'),
               ),
-            ),
+              const Divider(),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(
+                  Icons.logout,
+                  size: 22,
+                  color: Color(0xFFDC2626),
+                ),
+                title: const Text(
+                  'Cerrar Sesión',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  'Sesión iniciada como ${SupabaseService.currentUser?.email ?? 'Usuario'}',
+                  style: const TextStyle(fontSize: 11),
+                ),
+                trailing: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFDC2626),
+                    side: const BorderSide(color: Color(0xFFDC2626)),
+                  ),
+                  onPressed: () async {
+                    await SupabaseService.signOut();
+                    await _loadFullProfile();
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Sesión cerrada.')),
+                      );
+                    }
+                  },
+                  child: const Text('Cerrar Sesión'),
+                ),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   void _showAvatarPickerModal() {
     showModalBottomSheet(
@@ -1580,7 +1786,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   const SizedBox(height: 16),
 
                   // Color Picker
-                  const Text('Color de Fondo', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
+                  const Text(
+                    'Color de Fondo',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+                  ),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 10,
@@ -1600,14 +1809,27 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                             color: _avatarColors[idx],
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: isSelected ? Colors.white : Colors.transparent,
+                              color: isSelected
+                                  ? Colors.white
+                                  : Colors.transparent,
                               width: 2.5,
                             ),
                             boxShadow: isSelected
-                                ? [const BoxShadow(color: Colors.black26, blurRadius: 6)]
+                                ? [
+                                    const BoxShadow(
+                                      color: Colors.black26,
+                                      blurRadius: 6,
+                                    ),
+                                  ]
                                 : null,
                           ),
-                          child: isSelected ? const Icon(Icons.check, size: 18, color: Colors.white) : null,
+                          child: isSelected
+                              ? const Icon(
+                                  Icons.check,
+                                  size: 18,
+                                  color: Colors.white,
+                                )
+                              : null,
                         ),
                       );
                     }),
@@ -1616,7 +1838,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   const SizedBox(height: 18),
 
                   // Icon Picker
-                  const Text('Icono Representativo', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
+                  const Text(
+                    'Icono Representativo',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+                  ),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 10,
@@ -1634,18 +1859,24 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                           height: 40,
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.15)
+                                ? Theme.of(
+                                    context,
+                                  ).colorScheme.primary.withValues(alpha: 0.15)
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey.shade300,
+                              color: isSelected
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Colors.grey.shade300,
                               width: 1.5,
                             ),
                           ),
                           child: Icon(
                             _avatarIcons[idx],
                             size: 20,
-                            color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey.shade700,
+                            color: isSelected
+                                ? Theme.of(context).colorScheme.primary
+                                : Colors.grey.shade700,
                           ),
                         ),
                       );

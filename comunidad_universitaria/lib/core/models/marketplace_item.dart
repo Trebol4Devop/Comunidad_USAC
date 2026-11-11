@@ -293,7 +293,10 @@ class MarketplaceItem {
       isSponsored: map['is_sponsored'] == true,
       sponsorBadgeText: map['sponsor_badge_text'],
       sponsorBrandName:
-          (map['sponsor_brand_name'] ?? map['sponsor_name'] ?? map['brand_name'])?.toString(),
+          (map['sponsor_brand_name'] ??
+                  map['sponsor_name'] ??
+                  map['brand_name'])
+              ?.toString(),
       authorAlias: map['author_alias'] ?? 'Estudiante Emprendedor',
       userId: null,
       createdAt: map['created_at'] != null

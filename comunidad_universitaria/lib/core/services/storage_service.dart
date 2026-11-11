@@ -13,7 +13,8 @@ class StorageService {
   /// Replace with your deployed Worker URL.
   static const String _workerUrl = String.fromEnvironment(
     'R2_WORKER_URL',
-    defaultValue: 'https://comunidad-usac-storage.carlosdelcidramirez.workers.dev',
+    defaultValue:
+        'https://comunidad-usac-storage.carlosdelcidramirez.workers.dev',
   );
 
   static Future<XFile?> pickSingleImage() async {
@@ -50,8 +51,13 @@ class StorageService {
   /// Uploads an image file to Cloudflare R2 via the Worker.
   ///
   /// Returns the public URL of the uploaded image.
-  static Future<String?> uploadImageFile(XFile file, {String folder = 'listings'}) async {
-    if (!SupabaseConfig.isConfigured || !SupabaseService.isAuthenticated) return null;
+  static Future<String?> uploadImageFile(
+    XFile file, {
+    String folder = 'listings',
+  }) async {
+    if (!SupabaseConfig.isConfigured || !SupabaseService.isAuthenticated) {
+      return null;
+    }
 
     try {
       final bytes = await file.readAsBytes();
@@ -118,7 +124,8 @@ class StorageService {
     if (supabaseUrl == null || supabaseUrl.isEmpty) return null;
 
     // If already an R2 URL, return as-is
-    if (supabaseUrl.contains('.workers.dev') || supabaseUrl.contains('r2.cloudflarestorage.com')) {
+    if (supabaseUrl.contains('.workers.dev') ||
+        supabaseUrl.contains('r2.cloudflarestorage.com')) {
       return supabaseUrl;
     }
 

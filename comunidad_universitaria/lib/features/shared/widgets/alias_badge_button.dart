@@ -28,7 +28,7 @@ class AliasBadgeButton extends StatelessWidget {
           color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+            color: isDark ? const Color(0xFF303030) : const Color(0xFFE2E8F0),
           ),
         ),
         child: Row(
@@ -63,4 +63,3 @@ class AliasBadgeButton extends StatelessWidget {
     );
   }
 }
-

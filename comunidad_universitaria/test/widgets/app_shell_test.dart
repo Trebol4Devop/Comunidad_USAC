@@ -108,6 +108,60 @@ void main() {
       },
     );
 
+    testWidgets(
+      'En móvil, scroll hacia abajo oculta barra Zanate y scroll hacia arriba la restaura',
+      (tester) async {
+        tester.view.physicalSize = const Size(400, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
+
+        await tester.pumpWidget(buildTestShell(activeAlias: 'ScrollTester'));
+        await tester.pumpAndSettle();
+
+        // Inicialmente la barra Zanate y la barra de canal están visibles en Foro
+        expect(find.text('Zanate'), findsOneWidget);
+        expect(find.byIcon(Icons.menu), findsOneWidget);
+        expect(find.byIcon(Icons.add), findsOneWidget);
+
+        // Cambiamos a la pestaña Mapa para tener contenido scrolleable garantizado
+        await tester.tap(
+          find.descendant(
+            of: find.byType(NavigationBar),
+            matching: find.byIcon(Icons.map_outlined),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Zanate'), findsOneWidget);
+
+        // Hacemos scroll hacia abajo en el mapa
+        await tester.drag(find.byType(CampusMapScreen), const Offset(0, -300));
+        await tester.pumpAndSettle();
+
+        // La barra superior con 'Zanate' se oculta al hacer scroll
+        expect(find.text('Zanate'), findsNothing);
+
+        // Hacemos scroll hacia arriba
+        await tester.drag(find.byType(CampusMapScreen), const Offset(0, 300));
+        await tester.pumpAndSettle();
+
+        // La barra Zanate vuelve a mostrarse
+        expect(find.text('Zanate'), findsOneWidget);
+
+        // Volvemos a Foro y comprobamos que los controles de canal siguen presentes
+        await tester.tap(
+          find.descendant(
+            of: find.byType(NavigationBar),
+            matching: find.byIcon(Icons.chat_bubble_outline),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byIcon(Icons.menu), findsOneWidget);
+        expect(find.byIcon(Icons.add), findsOneWidget);
+      },
+    );
+
     testWidgets('El destino Mapa abre el directorio de ubicaciones USAC', (
       tester,
     ) async {

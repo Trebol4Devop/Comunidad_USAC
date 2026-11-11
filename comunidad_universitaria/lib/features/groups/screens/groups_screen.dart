@@ -15,6 +15,7 @@ import '../../shared/widgets/empty_state_widget.dart';
 class GroupsScreen extends StatefulWidget {
   final String activeAlias;
   final Function(String newAlias) onAliasChanged;
+  final String? activeServerName;
   final String? activeFacultadId;
   final String? activeCarreraId;
   final String? activeChannelName;
@@ -27,6 +28,7 @@ class GroupsScreen extends StatefulWidget {
     super.key,
     required this.activeAlias,
     required this.onAliasChanged,
+    this.activeServerName,
     this.activeFacultadId,
     this.activeCarreraId,
     this.activeChannelName,
@@ -381,7 +383,7 @@ class GroupsScreenState extends State<GroupsScreen> {
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? const Color(0xFF383A40) : const Color(0xFFD9D9D9),
+          color: isDark ? const Color(0xFF303030) : const Color(0xFFD9D9D9),
         ),
       ),
       child: Row(
@@ -410,7 +412,7 @@ class GroupsScreenState extends State<GroupsScreen> {
                   style: TextStyle(
                     fontSize: 12,
                     color: isDark
-                        ? const Color(0xFF949BA4)
+                        ? const Color(0xFFAAAAAA)
                         : const Color(0xFF64748B),
                   ),
                   maxLines: 2,
@@ -460,32 +462,44 @@ class GroupsScreenState extends State<GroupsScreen> {
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFF3CD),
+                      color: isDark
+                          ? const Color(0xFF262015)
+                          : const Color(0xFFFFF3CD),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFFFEEBA)),
+                      border: Border.all(
+                        color: isDark
+                            ? const Color(0xFF4A3B20)
+                            : const Color(0xFFFFEEBA),
+                      ),
                     ),
                     child: Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.info_outline,
-                          color: Color(0xFF856404),
+                          color: isDark
+                              ? const Color(0xFFFDE68A)
+                              : const Color(0xFF856404),
                           size: 20,
                         ),
                         const SizedBox(width: 10),
-                        const Expanded(
+                        Expanded(
                           child: Text(
                             'Para evitar enlaces caídos, los grupos se depuran automáticamente al iniciar cada nuevo semestre académico.',
                             style: TextStyle(
-                              color: Color(0xFF856404),
+                              color: isDark
+                                  ? const Color(0xFFFDE68A)
+                                  : const Color(0xFF856404),
                               fontSize: 12,
                             ),
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.close,
                             size: 16,
-                            color: Color(0xFF856404),
+                            color: isDark
+                                ? const Color(0xFFFDE68A)
+                                : const Color(0xFF856404),
                           ),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),

@@ -27,9 +27,11 @@ class SponsorCarousel extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFFFFBEB),
+          color: isDark ? const Color(0xFF222222) : const Color(0xFFFFFBEB),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFFDE68A)),
+          border: Border.all(
+            color: isDark ? const Color(0xFF303030) : const Color(0xFFFDE68A),
+          ),
         ),
         child: Row(
           children: [
@@ -39,7 +41,11 @@ class SponsorCarousel extends StatelessWidget {
                 color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.campaign_outlined, color: Color(0xFFD97706), size: 24),
+              child: const Icon(
+                Icons.campaign_outlined,
+                color: Color(0xFFD97706),
+                size: 24,
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -53,7 +59,12 @@ class SponsorCarousel extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     'Llega a miles de estudiantes en primera plana con video y fotos ampliadas.',
-                    style: TextStyle(fontSize: 11, color: isDark ? Colors.grey.shade400 : Colors.grey.shade700),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDark
+                          ? Colors.grey.shade400
+                          : Colors.grey.shade700,
+                    ),
                   ),
                 ],
               ),
@@ -63,10 +74,16 @@ class SponsorCarousel extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFD97706),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
               ),
               onPressed: onRequestSponsor,
-              child: const Text('Anunciarme', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Anunciarme',
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         ),
@@ -80,7 +97,7 @@ class SponsorCarousel extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: isDark
-              ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+              ? [const Color(0xFF252525), const Color(0xFF1C1C1C)]
               : [const Color(0xFFFFFDF5), const Color(0xFFFEF3C7)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -112,14 +129,25 @@ class SponsorCarousel extends StatelessWidget {
                   alignment: Alignment.centerRight,
                   child: TextButton.icon(
                     onPressed: onRequestSponsor,
-                    icon: const Icon(Icons.add_circle_outline, size: 16, color: Color(0xFFD97706)),
+                    icon: const Icon(
+                      Icons.add_circle_outline,
+                      size: 16,
+                      color: Color(0xFFD97706),
+                    ),
                     label: const Text(
                       'Anunciarme aquí',
-                      style: TextStyle(fontSize: 12, color: Color(0xFFD97706), fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFFD97706),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     style: TextButton.styleFrom(
                       minimumSize: const Size(48, 48),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                     ),
                   ),
                 ),
@@ -145,7 +173,11 @@ class SponsorCarousel extends StatelessWidget {
                         item.imageUrls.first,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) =>
-                            const Icon(Icons.storefront, size: 36, color: Colors.grey),
+                            const Icon(
+                              Icons.storefront,
+                              size: 36,
+                              color: Colors.grey,
+                            ),
                       ),
                     ),
                   ),
@@ -183,39 +215,78 @@ class SponsorCarousel extends StatelessWidget {
                         children: [
                           if (item.buildingCode.isNotEmpty)
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                                color: theme.colorScheme.primary.withValues(
+                                  alpha: 0.1,
+                                ),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
                                 'Ubicación: ${item.buildingCode}',
-                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: theme.colorScheme.primary),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.colorScheme.primary,
+                                ),
                               ),
                             ),
 
-                          if (item.videoUrl != null && item.videoUrl!.isNotEmpty)
+                          if (item.videoUrl != null &&
+                              item.videoUrl!.isNotEmpty)
                             ActionChip(
-                              avatar: const Icon(Icons.play_circle_fill, size: 14, color: Colors.red),
-                              label: const Text('Ver Video', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                              onPressed: () => UrlUtils.openUrl(context, item.videoUrl!),
+                              avatar: const Icon(
+                                Icons.play_circle_fill,
+                                size: 14,
+                                color: Colors.red,
+                              ),
+                              label: const Text(
+                                'Ver Video',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              onPressed: () =>
+                                  UrlUtils.openUrl(context, item.videoUrl!),
                               padding: EdgeInsets.zero,
-                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
                             ),
 
                           ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF25D366),
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
                               minimumSize: const Size(0, 30),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6),
+                              ),
                               elevation: 0,
                             ),
                             icon: const Icon(Icons.chat, size: 13),
-                            label: const Text('Contactar por WhatsApp', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                            label: const Text(
+                              'Contactar por WhatsApp',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             onPressed: () {
-                              final contact = item.whatsappUrl ?? item.instagramUrl ?? item.messengerUrl ?? item.telegramUrl ?? item.videoUrl ?? '';
+                              final contact =
+                                  item.whatsappUrl ??
+                                  item.instagramUrl ??
+                                  item.messengerUrl ??
+                                  item.telegramUrl ??
+                                  item.videoUrl ??
+                                  '';
                               UrlUtils.openUrl(context, contact);
                             },
                           ),

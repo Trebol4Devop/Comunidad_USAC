@@ -27,8 +27,10 @@ class PopularServersSidebar extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     // Discord right sidebar background: #2B2D31 dark, #F8FAFC light
-    final bgColor = isDark ? const Color(0xFF2B2D31) : const Color(0xFFF8FAFC);
-    final borderColor = isDark ? const Color(0xFF202225) : const Color(0xFFE2E8F0);
+    final bgColor = isDark ? const Color(0xFF1C1C1C) : const Color(0xFFF8FAFC);
+    final borderColor = isDark
+        ? const Color(0xFF303030)
+        : const Color(0xFFE2E8F0);
 
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,16 +40,16 @@ class PopularServersSidebar extends StatelessWidget {
           height: 56,
           padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(color: borderColor, width: 1),
-            ),
+            border: Border(bottom: BorderSide(color: borderColor, width: 1)),
           ),
           child: Row(
             children: [
               Icon(
                 Icons.trending_up_rounded,
                 size: 15,
-                color: isDark ? const Color(0xFF949BA4) : const Color(0xFF64748B),
+                color: isDark
+                    ? const Color(0xFFAAAAAA)
+                    : const Color(0xFF64748B),
               ),
               const SizedBox(width: 6),
               Expanded(
@@ -59,7 +61,9 @@ class PopularServersSidebar extends StatelessWidget {
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.8,
-                    color: isDark ? const Color(0xFF949BA4) : const Color(0xFF475569),
+                    color: isDark
+                        ? const Color(0xFFAAAAAA)
+                        : const Color(0xFF475569),
                   ),
                 ),
               ),
@@ -79,7 +83,9 @@ class PopularServersSidebar extends StatelessWidget {
                         : Icon(
                             Icons.refresh,
                             size: 13,
-                            color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
+                            color: isDark
+                                ? const Color(0xFF949BA4)
+                                : Colors.grey.shade500,
                           ),
                   ),
                 ),
@@ -93,14 +99,19 @@ class PopularServersSidebar extends StatelessWidget {
           child: popularServers.isEmpty
               ? Center(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 32,
+                    ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           Icons.bar_chart_outlined,
                           size: 24,
-                          color: isDark ? const Color(0xFF4E5058) : const Color(0xFFCBD5E1),
+                          color: isDark
+                              ? const Color(0xFF4E5058)
+                              : const Color(0xFFCBD5E1),
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -109,7 +120,9 @@ class PopularServersSidebar extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
-                            color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
+                            color: isDark
+                                ? const Color(0xFF949BA4)
+                                : Colors.grey.shade500,
                           ),
                         ),
                       ],
@@ -119,7 +132,10 @@ class PopularServersSidebar extends StatelessWidget {
               : ListView.separated(
                   primary: false,
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 10,
+                  ),
                   itemCount: popularServers.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 6),
                   itemBuilder: (context, index) {
@@ -133,19 +149,14 @@ class PopularServersSidebar extends StatelessWidget {
     );
 
     if (isModal) {
-      return Container(
-        color: bgColor,
-        child: content,
-      );
+      return Container(color: bgColor, child: content);
     }
 
     return Container(
       width: 250,
       decoration: BoxDecoration(
         color: bgColor,
-        border: Border(
-          left: BorderSide(color: borderColor, width: 1),
-        ),
+        border: Border(left: BorderSide(color: borderColor, width: 1)),
       ),
       child: content,
     );
@@ -158,17 +169,24 @@ class PopularServersSidebar extends StatelessWidget {
     bool isDark,
     ThemeData theme,
   ) {
-    final isSelected = activeServer.id == item.server.id ||
+    final isSelected =
+        activeServer.id == item.server.id ||
         (activeServer.carreraId == item.server.carreraId &&
             activeServer.facultadId == item.server.facultadId);
 
     final cardBg = isSelected
         ? theme.colorScheme.primary.withValues(alpha: isDark ? 0.14 : 0.06)
-        : (isDark ? const Color(0xFF2E3035) : Colors.white);
+        : (isDark ? const Color(0xFF222222) : Colors.white);
 
     final cardBorder = isSelected
-        ? Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.4), width: 1)
-        : Border.all(color: isDark ? const Color(0xFF383A40) : const Color(0xFFE2E8F0), width: 1);
+        ? Border.all(
+            color: theme.colorScheme.primary.withValues(alpha: 0.4),
+            width: 1,
+          )
+        : Border.all(
+            color: isDark ? const Color(0xFF303030) : const Color(0xFFE2E8F0),
+            width: 1,
+          );
 
     return Material(
       color: Colors.transparent,
@@ -195,7 +213,9 @@ class PopularServersSidebar extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                     color: rank == 1
                         ? theme.colorScheme.primary
-                        : (isDark ? const Color(0xFF949BA4) : const Color(0xFF64748B)),
+                        : (isDark
+                              ? const Color(0xFF949BA4)
+                              : const Color(0xFF64748B)),
                   ),
                 ),
               ),
@@ -227,10 +247,14 @@ class PopularServersSidebar extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      item.server.name.replaceAll(RegExp(r'\s*\([^)]*\)'), '').trim(),
+                      item.server.name
+                          .replaceAll(RegExp(r'\s*\([^)]*\)'), '')
+                          .trim(),
                       style: TextStyle(
                         fontSize: 11.5,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w600,
                         color: isSelected
                             ? theme.colorScheme.primary
                             : (isDark ? Colors.white : const Color(0xFF0F172A)),
@@ -240,10 +264,14 @@ class PopularServersSidebar extends StatelessWidget {
                     ),
                     const SizedBox(height: 1),
                     Text(
-                      item.facultyName.replaceAll(RegExp(r'\s*\([^)]*\)'), '').trim(),
+                      item.facultyName
+                          .replaceAll(RegExp(r'\s*\([^)]*\)'), '')
+                          .trim(),
                       style: TextStyle(
                         fontSize: 9.5,
-                        color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
+                        color: isDark
+                            ? const Color(0xFF949BA4)
+                            : Colors.grey.shade500,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -256,7 +284,9 @@ class PopularServersSidebar extends StatelessWidget {
                         Icon(
                           Icons.forum_outlined,
                           size: 10,
-                          color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
+                          color: isDark
+                              ? const Color(0xFF949BA4)
+                              : Colors.grey.shade500,
                         ),
                         const SizedBox(width: 3),
                         Text(
@@ -264,14 +294,18 @@ class PopularServersSidebar extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 9.5,
                             fontWeight: FontWeight.w600,
-                            color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade600,
+                            color: isDark
+                                ? const Color(0xFF949BA4)
+                                : Colors.grey.shade600,
                           ),
                         ),
                         const SizedBox(width: 8),
                         Icon(
                           Icons.thumb_up_alt_outlined,
                           size: 10,
-                          color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade500,
+                          color: isDark
+                              ? const Color(0xFF949BA4)
+                              : Colors.grey.shade500,
                         ),
                         const SizedBox(width: 3),
                         Text(
@@ -279,7 +313,9 @@ class PopularServersSidebar extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 9.5,
                             fontWeight: FontWeight.w600,
-                            color: isDark ? const Color(0xFF949BA4) : Colors.grey.shade600,
+                            color: isDark
+                                ? const Color(0xFF949BA4)
+                                : Colors.grey.shade600,
                           ),
                         ),
                       ],

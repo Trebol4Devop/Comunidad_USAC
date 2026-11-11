@@ -15,10 +15,7 @@ class GifItem {
 class GifPickerModal extends StatefulWidget {
   final Function(String gifUrl) onGifSelected;
 
-  const GifPickerModal({
-    super.key,
-    required this.onGifSelected,
-  });
+  const GifPickerModal({super.key, required this.onGifSelected});
 
   static Future<void> show(
     BuildContext context, {
@@ -168,8 +165,12 @@ class _GifPickerModalState extends State<GifPickerModal> {
   List<GifItem> get _filteredGifs {
     final q = _searchController.text.trim().toLowerCase();
     return _curatedGifs.where((gif) {
-      final matchesCategory = _selectedCategory == 'todas' || gif.category == _selectedCategory;
-      final matchesQuery = q.isEmpty || gif.title.toLowerCase().contains(q) || gif.category.toLowerCase().contains(q);
+      final matchesCategory =
+          _selectedCategory == 'todas' || gif.category == _selectedCategory;
+      final matchesQuery =
+          q.isEmpty ||
+          gif.title.toLowerCase().contains(q) ||
+          gif.category.toLowerCase().contains(q);
       return matchesCategory && matchesQuery;
     }).toList();
   }
@@ -216,7 +217,9 @@ class _GifPickerModalState extends State<GifPickerModal> {
                     const SizedBox(width: 8),
                     Text(
                       'Insertar GIF o Sticker',
-                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const Spacer(),
                     IconButton(
@@ -243,8 +246,13 @@ class _GifPickerModalState extends State<GifPickerModal> {
                           )
                         : null,
                     isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ],
@@ -267,10 +275,16 @@ class _GifPickerModalState extends State<GifPickerModal> {
                     cat['name']!,
                     style: TextStyle(
                       fontSize: 12,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                       color: isSelected
-                          ? (isDark ? const Color(0xFF93C5FD) : const Color(0xFF004B87))
-                          : (isDark ? Colors.grey.shade300 : Colors.grey.shade800),
+                          ? (isDark
+                                ? const Color(0xFF93C5FD)
+                                : const Color(0xFF004B87))
+                          : (isDark
+                                ? Colors.grey.shade300
+                                : Colors.grey.shade800),
                     ),
                   ),
                   selected: isSelected,
@@ -293,20 +307,33 @@ class _GifPickerModalState extends State<GifPickerModal> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.sentiment_dissatisfied, size: 48, color: Colors.grey),
+                        const Icon(
+                          Icons.sentiment_dissatisfied,
+                          size: 48,
+                          color: Colors.grey,
+                        ),
                         const SizedBox(height: 8),
-                        Text('No se encontraron GIFs', style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey)),
+                        Text(
+                          'No se encontraron GIFs',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: Colors.grey,
+                          ),
+                        ),
                       ],
                     ),
                   )
                 : GridView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 10,
-                      mainAxisSpacing: 10,
-                      childAspectRatio: 1.3,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
                     ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                          childAspectRatio: 1.3,
+                        ),
                     itemCount: _filteredGifs.length,
                     itemBuilder: (ctx, i) {
                       final gif = _filteredGifs[i];
@@ -328,12 +355,21 @@ class _GifPickerModalState extends State<GifPickerModal> {
                                   if (progress == null) return child;
                                   return Container(
                                     color: Colors.grey.shade200,
-                                    child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                                    child: const Center(
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
                                   );
                                 },
                                 errorBuilder: (ctx, err, stack) => Container(
                                   color: Colors.grey.shade300,
-                                  child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
+                                  child: const Center(
+                                    child: Icon(
+                                      Icons.broken_image,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
                                 ),
                               ),
                               Positioned(
@@ -341,11 +377,18 @@ class _GifPickerModalState extends State<GifPickerModal> {
                                 left: 0,
                                 right: 0,
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 4,
+                                  ),
                                   color: Colors.black54,
                                   child: Text(
                                     gif.title,
-                                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),

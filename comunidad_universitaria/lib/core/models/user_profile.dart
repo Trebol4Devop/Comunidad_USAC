@@ -14,7 +14,8 @@ class UserProfile {
   final String? email;
   final String? carne; // Carné aportado por el usuario, puede ser un borrador
   final String? studentName; // Nombre aportado, no necesariamente verificado
-  final bool isCarneVerified; // Solo true tras una comprobación institucional auténtica
+  final bool
+  isCarneVerified; // Solo true tras una comprobación institucional auténtica
 
   const UserProfile({
     required this.userId,
@@ -106,15 +107,20 @@ class UserProfile {
       carreraId: map['carrera_id']?.toString() ?? 'sistemas',
       sedeId: map['sede_id']?.toString() ?? 'central',
       bio: map['bio']?.toString() ?? '',
-      avatarColorIndex: map['avatar_color_index'] is int ? map['avatar_color_index'] as int : 0,
-      avatarIconIndex: map['avatar_icon_index'] is int ? map['avatar_icon_index'] as int : 0,
+      avatarColorIndex: map['avatar_color_index'] is int
+          ? map['avatar_color_index'] as int
+          : 0,
+      avatarIconIndex: map['avatar_icon_index'] is int
+          ? map['avatar_icon_index'] as int
+          : 0,
       contactWhatsapp: map['contact_whatsapp']?.toString(),
       contactTelegram: map['contact_telegram']?.toString(),
       contactInstagram: map['contact_instagram']?.toString(),
       email: map['email']?.toString(),
       carne: map['carne']?.toString(),
       studentName: map['student_name']?.toString(),
-      isCarneVerified: map['is_carne_verified'] == true || map['is_verified'] == true,
+      isCarneVerified:
+          map['is_carne_verified'] == true || map['is_verified'] == true,
     );
   }
 }
