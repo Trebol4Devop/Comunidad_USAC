@@ -37,6 +37,7 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
   StreamSubscription<AuthState>? _googleAuthSubscription;
   String? _redirectingUrl;
   String? _authErrorMessage;
+  String? _infoMessage;
 
   // Email/Password login controllers
   final _emailController = TextEditingController();
@@ -116,6 +117,7 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
       _waitingForGoogle = false;
       _googleAuthCompleted = false;
       _authErrorMessage = null;
+      _infoMessage = null;
     });
 
     await _googleAuthSubscription?.cancel();
@@ -123,7 +125,7 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
         .listen(_handleGoogleAuthState);
 
     try {
-      final currentUrl = kIsWeb ? Uri.base.toString() : null;
+      final currentUrl = SupabaseService.oauthRedirectUrl;
       final launched = await SupabaseService.signInWithGoogle(redirectTo: currentUrl);
       if (!launched) {
         throw StateError('No se pudo iniciar el acceso con Google.');
@@ -153,6 +155,7 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
     setState(() {
       _isLoading = true;
       _authErrorMessage = null;
+      _infoMessage = null;
     });
 
     try {
@@ -160,7 +163,15 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
       final password = _passwordController.text.trim();
 
       if (_isSignUp) {
-        await SupabaseService.signUp(email: email, password: password);
+        final res = await SupabaseService.signUp(email: email, password: password);
+        if (mounted && res?.session == null) {
+          setState(() {
+            _isLoading = false;
+            _infoMessage =
+                'Cuenta creada. Revisa tu correo para confirmarla y después vuelve a iniciar sesión.';
+          });
+          return;
+        }
       } else {
         await SupabaseService.signInWithPassword(email: email, password: password);
       }
@@ -219,6 +230,24 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
 
     // Fallback for local mock testing
     if (accessToken.isEmpty) {
+      if (SupabaseConfig.isConfigured) {
+        setState(() {
+          _isLoading = false;
+          _authErrorMessage =
+              'Tu sesión no está activa. Inicia sesión de nuevo para autorizar el acceso.';
+        });
+        return;
+      }
+
+      // Sin Supabase configurado solo se permite el mock en depuración local.
+      if (!kDebugMode) {
+        setState(() {
+          _isLoading = false;
+          _authErrorMessage = 'Supabase no está configurado en esta compilación.';
+        });
+        return;
+      }
+
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       accessToken = 'mock_sso_access_token_$timestamp';
       refreshToken = 'mock_sso_refresh_token_$timestamp';
@@ -740,6 +769,22 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
               const SizedBox(height: 14),
             ],
 
+            if (_infoMessage != null) ...[
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE0F2FE),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFF7DD3FC)),
+                ),
+                child: Text(
+                  _infoMessage!,
+                  style: const TextStyle(color: Color(0xFF075985), fontSize: 12),
+                ),
+              ),
+              const SizedBox(height: 14),
+            ],
+
             // Google Sign In
             OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
@@ -844,6 +889,7 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
                       setState(() {
                         _isSignUp = !_isSignUp;
                         _authErrorMessage = null;
+                        _infoMessage = null;
                       });
                     },
               child: Text(
