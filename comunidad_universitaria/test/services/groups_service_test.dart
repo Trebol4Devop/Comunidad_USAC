@@ -1,0 +1,207 @@
+import 'dart:convert';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:comunidad_universitaria/core/config/supabase_config.dart';
+import 'package:comunidad_universitaria/core/models/whatsapp_group.dart';
+import 'package:comunidad_universitaria/core/services/groups_service.dart';
+import 'package:comunidad_universitaria/core/services/supabase_service.dart';
+import '../helpers/fake_postgrest.dart';
+import '../helpers/fixtures.dart';
+import '../helpers/test_setup.dart';
+
+void main() {
+  late FakePostgrestServer fakeServer;
+
+  setUp(() async {
+    await resetTestState();
+    fakeServer = FakePostgrestServer();
+    SupabaseConfig.debugOverrideConfigured = true;
+    SupabaseService.debugClient = fakeServer.buildClient();
+    SupabaseService.debugUserId = 'group-creator-id';
+  });
+
+  tearDown(() async {
+    await resetTestState();
+  });
+
+  group('GroupsService.createGroup', () {
+    test(
+      'crea grupo con sección default "Sección Única", plataforma por link, upvotes=1 y auto-upvote',
+      () async {
+        Map<String, dynamic>? insertedGroup;
+        Map<String, dynamic>? insertedUpvote;
+
+        fakeServer.onPost('/rest/v1/student_groups', (req) {
+          insertedGroup = jsonDecode(req.body) as Map<String, dynamic>;
+          return {
+            ...insertedGroup!,
+            'id': 'new-group-10',
+            'created_at': DateTime.now().toIso8601String(),
+          };
+        });
+
+        fakeServer.onPost('/rest/v1/student_group_upvotes', (req) {
+          insertedUpvote = jsonDecode(req.body) as Map<String, dynamic>;
+          return [];
+        });
+
+        final created = await GroupsService.createGroup(
+          title: '  Matemática Intermedia 1  ',
+          carrera: 'sistemas',
+          curso: '  Matemática Intermedia 1  ',
+          section: '   ', // Vacía -> debe asignar 'Sección Única'
+          link: 'https://t.me/mate_intermedia1',
+          description: 'Grupo de estudio',
+          authorAlias: 'Auxiliar',
+        );
+
+        expect(created, isNotNull);
+        expect(created!.id, 'new-group-10');
+        expect(created.section, 'Sección Única');
+        expect(created.platform, GroupPlatform.telegram);
+        expect(created.upvotes, 1);
+        expect(created.isUpvotedByMe, isTrue);
+
+        expect(insertedGroup, isNotNull);
+        expect(insertedGroup!['section'], 'Sección Única');
+        expect(insertedGroup!['platform'], 'telegram');
+        expect(insertedGroup!['upvotes'], 1);
+
+        expect(insertedUpvote, isNotNull);
+        expect(insertedUpvote!['group_id'], 'new-group-10');
+        expect(insertedUpvote!['user_id'], 'group-creator-id');
+      },
+    );
+  });
+
+  group('GroupsService.toggleUpvote', () {
+    test('sin sesión devuelve el estado previo sin llamar a la red', () async {
+      SupabaseService.debugUserId = null;
+      final group = TestFixtures.whatsAppGroup(id: 'g-1', isUpvotedByMe: true);
+      final res = await GroupsService.toggleUpvote(group);
+      expect(res, isTrue);
+    });
+
+    test('agrega upvote si no estaba upvoteado', () async {
+      bool inserted = false;
+      fakeServer.onPost('/rest/v1/student_group_upvotes', (req) {
+        inserted = true;
+        return [];
+      });
+
+      final group = TestFixtures.whatsAppGroup(id: 'g-1', isUpvotedByMe: false);
+      final res = await GroupsService.toggleUpvote(group);
+
+      expect(res, isTrue);
+      expect(inserted, isTrue);
+    });
+
+    test('remueve upvote si ya estaba upvoteado', () async {
+      bool deleted = false;
+      fakeServer.onDelete('/rest/v1/student_group_upvotes', (req) {
+        deleted = true;
+        return [];
+      });
+
+      final group = TestFixtures.whatsAppGroup(id: 'g-1', isUpvotedByMe: true);
+      final res = await GroupsService.toggleUpvote(group);
+
+      expect(res, isFalse);
+      expect(deleted, isTrue);
+    });
+  });
+
+  group('GroupsService.reportGroup', () {
+    test('inserta reporte en entity_reports con entity_type "group"', () async {
+      Map<String, dynamic>? reportData;
+      fakeServer.onPost('/rest/v1/entity_reports', (req) {
+        reportData = jsonDecode(req.body) as Map<String, dynamic>;
+        return [];
+      });
+
+      final res = await GroupsService.reportGroup(
+        groupId: 'g-bad',
+        reason: 'Enlace roto o fraudulento',
+      );
+
+      expect(res, isTrue);
+      expect(reportData, isNotNull);
+      expect(reportData!['entity_type'], 'group');
+      expect(reportData!['entity_id'], 'g-bad');
+      expect(reportData!['reason'], 'Enlace roto o fraudulento');
+      expect(reportData!['reporter_id'], 'group-creator-id');
+    });
+  });
+
+  group('GroupsService.fetchGroups', () {
+    test(
+      'en un subservidor de facultad específico solo devuelve los grupos de esa facultad y no los de todo',
+      () async {
+        final mockGroups = [
+          TestFixtures.whatsAppGroupMap(
+            id: 'g-ing-1',
+            title: 'Física 1',
+            carrera: 'sistemas',
+            curso: 'Física 1',
+          ),
+          TestFixtures.whatsAppGroupMap(
+            id: 'g-ing-2',
+            title: 'Cálculo 1',
+            carrera: '08_todas',
+            curso: 'Cálculo 1',
+          ),
+          TestFixtures.whatsAppGroupMap(
+            id: 'g-med-1',
+            title: 'Anatomía Humana 1',
+            carrera: 'medicina',
+            curso: 'Anatomía',
+          ),
+          TestFixtures.whatsAppGroupMap(
+            id: 'g-der-1',
+            title: 'Derecho Romano',
+            carrera: 'derecho',
+            curso: 'Derecho Romano',
+          ),
+          TestFixtures.whatsAppGroupMap(
+            id: 'g-gen-1',
+            title: 'Avisos Generales USAC',
+            carrera: 'todas',
+            curso: 'General',
+          ),
+        ];
+
+        fakeServer.onGet('/rest/v1/safe_student_groups', (req) => mockGroups);
+
+        // Consulta canal #todos-los-grupos de Ingeniería (08)
+        final ingGroups = await GroupsService.fetchGroups(
+          facultad: '08',
+          carrera: 'todas',
+        );
+        final ingIds = ingGroups.map((g) => g.id).toList();
+        expect(ingIds, contains('g-ing-1'));
+        expect(ingIds, contains('g-ing-2'));
+        expect(ingIds, isNot(contains('g-med-1')));
+        expect(ingIds, isNot(contains('g-der-1')));
+        expect(ingIds, isNot(contains('g-gen-1')));
+
+        // Consulta canal #todos-los-grupos de Medicina (05)
+        final medGroups = await GroupsService.fetchGroups(
+          facultad: '05',
+          carrera: 'todas',
+        );
+        final medIds = medGroups.map((g) => g.id).toList();
+        expect(medIds, contains('g-med-1'));
+        expect(medIds, isNot(contains('g-ing-1')));
+        expect(medIds, isNot(contains('g-ing-2')));
+        expect(medIds, isNot(contains('g-der-1')));
+        expect(medIds, isNot(contains('g-gen-1')));
+
+        // Consulta canal #todos-los-grupos de Todas las Facultades (todas)
+        final allGroups = await GroupsService.fetchGroups(
+          facultad: 'todas',
+          carrera: 'todas',
+        );
+        expect(allGroups.length, equals(5));
+      },
+    );
+  });
+}

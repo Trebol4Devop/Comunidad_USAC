@@ -1,0 +1,67 @@
+name: Deploy Zanate to Cloudflare Pages
+
+# Publica solo desde main. Los PRs no generan previews: el pipeline de calidad
+# (.github/workflows/flutter-tests.yml) es el que valida los cambios.
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+# Un deploy a la vez y sin cancelar el que ya esta subiendo archivos.
+concurrency:
+  group: cloudflare-pages-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      # Version usada en desarrollo; evita que un cambio de `stable` rompa el build.
+      FLUTTER_VERSION: '3.47.4'
+      # Opcionales: si no existen como Repository variables se usan los valores
+      # por defecto de lib/core/config/supabase_config.dart.
+      SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v6
+
+      - name: Configurar Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Instalar dependencias
+        working-directory: comunidad_universitaria
+        run: flutter pub get
+
+      - name: Compilar web (release)
+        working-directory: comunidad_universitaria
+        run: |
+          defines=()
+          if [[ -n "$SUPABASE_URL" ]]; then
+            defines+=("--dart-define=SUPABASE_URL=$SUPABASE_URL")
+          fi
+          if [[ -n "$SUPABASE_ANON_KEY" ]]; then
+            defines+=("--dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY")
+          fi
+          flutter build web --release "${defines[@]}"
+
+      - name: Desplegar a Cloudflare Pages
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy comunidad_universitaria/build/web --project-name=zanate --branch=main
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}

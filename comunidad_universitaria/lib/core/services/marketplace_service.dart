@@ -1,0 +1,488 @@
+import 'package:flutter/foundation.dart';
+import '../config/supabase_config.dart';
+import '../models/marketplace_item.dart';
+import 'cache_service.dart';
+import 'supabase_service.dart';
+
+class MarketplaceService {
+  static const String _cacheNamespace = 'marketplace_items';
+
+  // Prohibited words and phrases filter according to community rules
+  static final List<String> _prohibitedKeywords = [
+    'hacer examenes',
+    'hago examenes',
+    'vender parcial',
+    'vendo parcial',
+    'suplantacion',
+    'resolucion de examen',
+    'resuelvo examen',
+    'hago tareas completas por parcial',
+    'arma',
+    'armas',
+    'droga',
+    'drogas',
+    'marihuana',
+    'cocaina',
+    'estafa',
+    'piramidal',
+    'alcohol',
+    'cerveza',
+    'licor',
+  ];
+
+  static String? validateContent({
+    required String title,
+    required String description,
+  }) {
+    final combined = '$title $description'.toLowerCase();
+    for (var keyword in _prohibitedKeywords) {
+      if (combined.contains(keyword)) {
+        return 'Tu publicación contiene términos restringidos ("$keyword"). No se permiten productos o servicios contrarios a las normas comunitarias (Regla 5 y 6).';
+      }
+    }
+    return null;
+  }
+
+  static Future<List<MarketplaceItem>> fetchListings({
+    String category = 'todos',
+    String facultad = 'todas',
+    String sede = 'todas',
+    bool onlyFree = false,
+    String searchQuery = '',
+  }) async {
+    final isDefaultQuery =
+        category == 'todos' &&
+        facultad == 'todas' &&
+        sede == 'todas' &&
+        !onlyFree &&
+        searchQuery.trim().isEmpty;
+    final cacheKey = CacheService.buildKey({
+      'user': SupabaseService.currentUserId ?? 'anon',
+      'category': category,
+      'facultad': facultad,
+      'sede': sede,
+      'onlyFree': onlyFree,
+      'search': searchQuery.trim().toLowerCase(),
+    });
+
+    final cached = CacheService.get<List<MarketplaceItem>>(
+      _cacheNamespace,
+      cacheKey,
+    );
+    if (cached != null) return List<MarketplaceItem>.from(cached);
+
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
+
+    if (isDefaultQuery) {
+      final persisted = await _readPersistedListings(cacheKey);
+      if (persisted != null) return persisted;
+    }
+
+    try {
+      var query = SupabaseService.client
+          .from('safe_marketplace_items')
+          .select('*')
+          .lt('moderation_status', 2);
+
+      if (category != 'todos') {
+        query = query.eq('category', category);
+      }
+
+      if (facultad != 'todas') {
+        query = query.eq('facultad', facultad);
+      }
+
+      if (sede != 'todas') {
+        query = query.eq('sede', sede);
+      }
+
+      if (onlyFree) {
+        query = query.or('is_free.eq.true,price.lte.0');
+      }
+
+      if (searchQuery.trim().isNotEmpty) {
+        final q = searchQuery.trim();
+        query = query.or(
+          'title.ilike.%$q%,description.ilike.%$q%,building_code.ilike.%$q%',
+        );
+      }
+
+      final response = await query
+          .order('is_sponsored', ascending: false)
+          .order('created_at', ascending: false)
+          .limit(60);
+
+      final List<dynamic> data = response as List<dynamic>;
+
+      // Get upvotes for current user
+      final currentUserId = SupabaseService.currentUserId;
+      final Set<String> upvotedItemIds = {};
+
+      if (currentUserId != null && data.isNotEmpty) {
+        final itemIds = data.map((item) => item['id'].toString()).toList();
+        final upvotesRes = await SupabaseService.client
+            .from('marketplace_upvotes')
+            .select('item_id')
+            .eq('user_id', currentUserId)
+            .inFilter('item_id', itemIds);
+
+        for (var item in upvotesRes) {
+          upvotedItemIds.add(item['item_id'].toString());
+        }
+      }
+
+      final listings = data.map((item) {
+        final map = Map<String, dynamic>.from(item);
+        final itemId = map['id'].toString();
+        return MarketplaceItem.fromMap(
+          map,
+          isUpvotedByMe: upvotedItemIds.contains(itemId),
+        );
+      }).toList();
+
+      CacheService.set(
+        _cacheNamespace,
+        cacheKey,
+        List<MarketplaceItem>.from(listings),
+      );
+      if (isDefaultQuery) {
+        await CacheService.setPersisted(
+          _cacheNamespace,
+          cacheKey,
+          listings.map(_listingToCacheMap).toList(),
+        );
+      }
+      return listings;
+    } catch (e) {
+      debugPrint('Error al obtener publicaciones del marketplace: $e');
+      if (isDefaultQuery) {
+        final persisted = await _readPersistedListings(cacheKey);
+        if (persisted != null) return persisted;
+      }
+      rethrow;
+    }
+  }
+
+  /// Lee la primera página persistida (solo consultas por defecto).
+  static Future<List<MarketplaceItem>?> _readPersistedListings(
+    String cacheKey,
+  ) {
+    return CacheService.getPersisted<List<MarketplaceItem>>(
+      _cacheNamespace,
+      cacheKey,
+      (data) {
+        if (data is! List) {
+          throw const FormatException('Caché de marketplace inválida');
+        }
+        return data
+            .whereType<Map>()
+            .map(
+              (item) => _listingFromCacheMap(Map<String, dynamic>.from(item)),
+            )
+            .toList();
+      },
+    );
+  }
+
+  static Map<String, dynamic> _listingToCacheMap(MarketplaceItem item) {
+    final map = item.toInsertMap();
+    map.remove('user_id');
+    map['id'] = item.id;
+    map['created_at'] = item.createdAt.toIso8601String();
+    map['cache_upvoted'] = item.isUpvotedByMe;
+    map['is_mine'] = item.isMine;
+    return map;
+  }
+
+  static MarketplaceItem _listingFromCacheMap(Map<String, dynamic> map) {
+    return MarketplaceItem.fromMap(
+      map,
+      isUpvotedByMe: map['cache_upvoted'] == true,
+    );
+  }
+
+  static Future<List<MarketplaceItem>> fetchSponsoredListings() async {
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
+
+    try {
+      final response = await SupabaseService.client
+          .from('safe_marketplace_items')
+          .select('*')
+          .eq('is_sponsored', true)
+          .lt('moderation_status', 2)
+          .order('created_at', ascending: false)
+          .limit(10);
+
+      final List<dynamic> data = response as List<dynamic>;
+      return data
+          .map(
+            (item) => MarketplaceItem.fromMap(Map<String, dynamic>.from(item)),
+          )
+          .toList();
+    } catch (e) {
+      debugPrint('Error obteniendo patrocinadores: $e');
+      return [];
+    }
+  }
+
+  static Future<MarketplaceItem?> createListing({
+    required String title,
+    required String description,
+    required double price,
+    required bool isFree,
+    required String category,
+    required String facultad,
+    required String sede,
+    required String buildingCode,
+    required String locationDetail,
+    String? contactWhatsapp,
+    String? contactInstagram,
+    String? contactMessenger,
+    String? contactTelegram,
+    List<String> socialLinks = const [],
+    List<String> imageUrls = const [],
+    String? videoUrl,
+    bool isSponsored = false,
+    String? sponsorBadgeText,
+    required String authorAlias,
+  }) async {
+    // 1. Validate content with moderation blacklist
+    final violationError = validateContent(
+      title: title,
+      description: description,
+    );
+    if (violationError != null) {
+      throw Exception(violationError);
+    }
+
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
+
+    final userId = SupabaseService.currentUserId;
+    if (userId == null) {
+      throw Exception('Debes iniciar sesión para publicar en el marketplace.');
+    }
+
+    try {
+      final itemMap = {
+        'title': title.trim(),
+        'description': description.trim(),
+        'price': isFree ? 0.0 : price,
+        'is_free': isFree || price <= 0.0,
+        'category': category,
+        'facultad': facultad,
+        'sede': sede,
+        'building_code': buildingCode.trim(),
+        'location_detail': locationDetail.trim(),
+        'contact_whatsapp': contactWhatsapp?.trim().isEmpty == true
+            ? null
+            : contactWhatsapp?.trim(),
+        'contact_instagram': contactInstagram?.trim().isEmpty == true
+            ? null
+            : contactInstagram?.trim(),
+        'contact_messenger': contactMessenger?.trim().isEmpty == true
+            ? null
+            : contactMessenger?.trim(),
+        'contact_telegram': contactTelegram?.trim().isEmpty == true
+            ? null
+            : contactTelegram?.trim(),
+        'social_links': socialLinks,
+        'image_urls': imageUrls,
+        'video_url': videoUrl?.trim().isEmpty == true ? null : videoUrl?.trim(),
+        'is_sponsored': isSponsored,
+        'sponsor_badge_text': sponsorBadgeText,
+        'author_alias': authorAlias.trim(),
+        'user_id': SupabaseService.currentUserId,
+        'moderation_status': 0,
+        'reported_count': 0,
+        'upvotes': 1,
+      };
+
+      const explicitColumns =
+          'id, title, description, price, is_free, category, facultad, sede, '
+          'building_code, location_detail, contact_whatsapp, contact_telegram, '
+          'image_urls, video_url, is_sponsored, sponsor_badge_text, author_alias, '
+          'upvotes, moderation_status, created_at, contact_instagram, '
+          'contact_messenger, social_links, reported_count, status';
+
+      final res = await SupabaseService.client
+          .from('marketplace_items')
+          .insert(itemMap)
+          .select(explicitColumns)
+          .single();
+
+      final created = MarketplaceItem.fromMap(
+        Map<String, dynamic>.from(res),
+        isUpvotedByMe: true,
+      ).copyWith(isMine: true);
+      await CacheService.invalidateAll(_cacheNamespace);
+      return created;
+    } catch (e) {
+      debugPrint('Error al crear publicación de marketplace: $e');
+      rethrow;
+    }
+  }
+
+  static Future<bool> reportListing({
+    required String itemId,
+    required String reason,
+    String? sellerUserId,
+    String? sellerAlias,
+  }) async {
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
+
+    try {
+      // RPC con umbral de auto-moderación; si no existe, inserción directa.
+      // Todo reporte vive en entity_reports (entity_type = marketplace_item).
+      await SupabaseService.client
+          .rpc(
+            'report_marketplace_item',
+            params: {
+              'target_item_id': itemId,
+              'report_reason': reason.trim(),
+              'target_seller_id': sellerUserId,
+              'target_seller_alias': sellerAlias,
+            },
+          )
+          .catchError((_) async {
+            await SupabaseService.client.from('entity_reports').insert({
+              'reporter_id': SupabaseService.currentUserId,
+              'entity_type': 'marketplace_item',
+              'entity_id': itemId,
+              'entity_owner_id':
+                  (sellerUserId != null && sellerUserId.isNotEmpty)
+                  ? sellerUserId
+                  : null,
+              'reason': reason.trim(),
+              'moderation_status': 0,
+              'metadata': {'seller_alias': sellerAlias},
+            });
+          });
+
+      return true;
+    } catch (e) {
+      debugPrint('Error al reportar publicación de marketplace: $e');
+      return true;
+    }
+  }
+
+  static Future<bool> moderateListing({
+    required String itemId,
+    required int newStatus, // 0: Activo, 1: En revisión, 2: Oculto
+  }) async {
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
+
+    try {
+      final res = await SupabaseService.client
+          .rpc(
+            'moderate_marketplace_item',
+            params: {'target_item_id': itemId, 'new_status': newStatus},
+          )
+          .catchError((_) async {
+            await SupabaseService.client
+                .from('marketplace_items')
+                .update({'moderation_status': newStatus})
+                .eq('id', itemId);
+            return true;
+          });
+
+      await CacheService.invalidateAll(_cacheNamespace);
+      return res == true;
+    } catch (e) {
+      debugPrint('Error al moderar publicación: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> updateItemStatus({
+    required String itemId,
+    required String newStatus, // available, reserved, sold, paused
+  }) async {
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
+
+    try {
+      await SupabaseService.client
+          .from('marketplace_items')
+          .update({'status': newStatus})
+          .eq('id', itemId);
+      await CacheService.invalidateAll(_cacheNamespace);
+      return true;
+    } catch (e) {
+      debugPrint('Error actualizando estado del artículo: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> requestSponsorship({
+    required String brandName,
+    required String contactName,
+    required String contactPhone,
+    required String email,
+    required String proposalDetails,
+    required String expectedPlacement,
+  }) async {
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
+
+    try {
+      await SupabaseService.client.from('sponsor_requests').insert({
+        'brand_name': brandName.trim(),
+        'contact_name': contactName.trim(),
+        'contact_phone': contactPhone.trim(),
+        'email': email.trim(),
+        'proposal_details': proposalDetails.trim(),
+        'expected_placement': expectedPlacement.trim(),
+        'user_id': SupabaseService.currentUserId,
+        'status': 'pending',
+      });
+      return true;
+    } catch (e) {
+      debugPrint('Error al enviar solicitud de patrocinio: $e');
+      return true;
+    }
+  }
+
+  static Future<bool> toggleUpvote(MarketplaceItem item) async {
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
+    final currentUserId = SupabaseService.currentUserId;
+    if (currentUserId == null) return item.isUpvotedByMe;
+
+    try {
+      if (item.isUpvotedByMe) {
+        await SupabaseService.client
+            .from('marketplace_upvotes')
+            .delete()
+            .eq('item_id', item.id)
+            .eq('user_id', currentUserId);
+
+        await CacheService.invalidateAll(_cacheNamespace);
+        return false;
+      } else {
+        await SupabaseService.client.from('marketplace_upvotes').insert({
+          'item_id': item.id,
+          'user_id': currentUserId,
+        });
+
+        await CacheService.invalidateAll(_cacheNamespace);
+        return true;
+      }
+    } catch (e) {
+      debugPrint('Error procesando upvote en marketplace: $e');
+      return item.isUpvotedByMe;
+    }
+  }
+}

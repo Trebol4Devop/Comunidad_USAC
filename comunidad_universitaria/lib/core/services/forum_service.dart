@@ -1,0 +1,1342 @@
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../features/forum/models/discord_forum_models.dart';
+import '../config/supabase_config.dart';
+import '../constants/categories.dart';
+import '../models/post.dart';
+import 'cache_service.dart';
+import 'supabase_service.dart';
+
+enum FeedMode { hot, recent }
+
+class LegalHoldException implements Exception {
+  final String message;
+  const LegalHoldException([
+    this.message =
+        'Este contenido está bajo retención legal y no puede eliminarse.',
+  ]);
+
+  @override
+  String toString() => 'LegalHoldException: $message';
+}
+
+class ForumService {
+  static const String _cacheNamespace = 'forum_posts';
+
+  static const String _postFallbackColumns =
+      'id, title, category, content, author_alias, author_hash, likes, carrera, image_url, gif_url, is_pinned, quoted_post_id, reposts_count, moderation_status, created_at, comments_count, hot_score, expires_at, deleted_at, is_legal_hold';
+
+  static const String _commentFallbackColumns =
+      'id, post_id, parent_id, content, author_alias, author_hash, gif_url, created_at, moderation_status, is_op, likes_count, deleted_at';
+
+  static Set<String> _getCareerIdsForFaculty(String facultadId) {
+    if (facultadId == 'todas') return <String>{'todas'};
+    final careerIds = <String>{};
+    final fac = USACConstants.facultades.firstWhere(
+      (f) => f['id'] == facultadId,
+      orElse: () => <String, dynamic>{},
+    );
+    final rawCarreras = fac['carreras'] as List<dynamic>? ?? [];
+    for (final c in rawCarreras) {
+      final cid = c['id']?.toString();
+      if (cid != null && cid.isNotEmpty && cid != 'todas') {
+        careerIds.add(cid);
+      }
+    }
+    final defaultFac = ForumFaculty.findByFacultadId(facultadId);
+    if (defaultFac != null) {
+      for (final c in defaultFac.careers) {
+        if (c.id != 'todas') {
+          careerIds.add(c.id);
+        }
+      }
+    }
+    if (facultadId == '08') {
+      careerIds.add('area_comun');
+    }
+    return careerIds;
+  }
+
+  static Future<List<Post>> fetchPosts({
+    String category = 'todos',
+    String facultad = 'todas',
+    String carrera = 'todas',
+    String searchQuery = '',
+    bool showOnlyBookmarks = false,
+    FeedMode feedMode = FeedMode.hot,
+  }) async {
+    final isDefaultQuery =
+        category == 'todos' &&
+        facultad == 'todas' &&
+        carrera == 'todas' &&
+        searchQuery.trim().isEmpty &&
+        !showOnlyBookmarks &&
+        feedMode == FeedMode.hot;
+
+    final cacheKey = CacheService.buildKey({
+      'user': SupabaseService.currentUserId ?? 'anon',
+      'category': category,
+      'facultad': facultad,
+      'carrera': carrera,
+      'search': searchQuery.trim().toLowerCase(),
+      'bookmarks': showOnlyBookmarks,
+      'feedMode': feedMode.name,
+    });
+
+    final cached = CacheService.get<List<Post>>(_cacheNamespace, cacheKey);
+    if (cached != null) return List<Post>.from(cached);
+
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
+
+    if (isDefaultQuery) {
+      final persisted = await _readPersistedPosts(cacheKey);
+      if (persisted != null) return persisted;
+    }
+
+    try {
+      final currentUserId = SupabaseService.currentUserId;
+
+      if (showOnlyBookmarks) {
+        if (currentUserId == null) return [];
+        final bookmarksRes = await SupabaseService.client
+            .from('post_bookmarks')
+            .select('post_id')
+            .eq('user_id', currentUserId)
+            .order('created_at', ascending: false)
+            .timeout(const Duration(seconds: 10));
+        final bookmarkedIds = (bookmarksRes as List<dynamic>)
+            .map((e) => e['post_id'].toString())
+            .toList();
+        if (bookmarkedIds.isEmpty) return [];
+
+        var bookmarksQuery = SupabaseService.client
+            .from('safe_posts_feed')
+            .select('*')
+            .inFilter('id', bookmarkedIds);
+
+        if (carrera != 'todas') {
+          bookmarksQuery = bookmarksQuery.eq('carrera', carrera);
+        } else if (facultad != 'todas') {
+          final careerIds = _getCareerIdsForFaculty(facultad);
+          bookmarksQuery = bookmarksQuery.inFilter(
+            'carrera',
+            careerIds.isNotEmpty ? careerIds.toList() : const ['__none__'],
+          );
+        }
+
+        if (searchQuery.trim().isNotEmpty) {
+          final q = searchQuery.trim();
+          bookmarksQuery = bookmarksQuery.or(
+            'title.ilike.%$q%,content.ilike.%$q%',
+          );
+        }
+
+        final PostgrestTransformBuilder<List<Map<String, dynamic>>>
+        orderedBookmarksQuery;
+        if (feedMode == FeedMode.hot) {
+          orderedBookmarksQuery = bookmarksQuery
+              .order('is_pinned', ascending: false)
+              .order('hot_score', ascending: false)
+              .order('created_at', ascending: false);
+        } else {
+          orderedBookmarksQuery = bookmarksQuery
+              .order('is_pinned', ascending: false)
+              .order('created_at', ascending: false);
+        }
+
+        final postsRes = await orderedBookmarksQuery.timeout(
+          const Duration(seconds: 10),
+        );
+        final List<dynamic> data = postsRes as List<dynamic>;
+        final posts = await _hydratePosts(data, currentUserId);
+        CacheService.set(_cacheNamespace, cacheKey, List<Post>.from(posts));
+        return posts;
+      }
+
+      var query = SupabaseService.client.from('safe_posts_feed').select('*');
+
+      if (category != 'todos') {
+        query = query.eq('category', category);
+      }
+
+      if (carrera != 'todas') {
+        query = query.eq('carrera', carrera);
+      } else if (facultad != 'todas') {
+        final careerIds = _getCareerIdsForFaculty(facultad);
+        query = query.inFilter(
+          'carrera',
+          careerIds.isNotEmpty ? careerIds.toList() : const ['__none__'],
+        );
+      }
+
+      if (searchQuery.trim().isNotEmpty) {
+        final q = searchQuery.trim();
+        query = query.or('title.ilike.%$q%,content.ilike.%$q%');
+      }
+
+      final PostgrestTransformBuilder<List<Map<String, dynamic>>> orderedQuery;
+      if (feedMode == FeedMode.hot) {
+        orderedQuery = query
+            .order('is_pinned', ascending: false)
+            .order('hot_score', ascending: false)
+            .order('created_at', ascending: false);
+      } else {
+        orderedQuery = query
+            .order('is_pinned', ascending: false)
+            .order('created_at', ascending: false);
+      }
+
+      final response = await orderedQuery
+          .limit(50)
+          .timeout(const Duration(seconds: 10));
+      final List<dynamic> data = response as List<dynamic>;
+      final posts = await _hydratePosts(data, currentUserId);
+
+      CacheService.set(_cacheNamespace, cacheKey, List<Post>.from(posts));
+      if (isDefaultQuery) {
+        await CacheService.setPersisted(
+          _cacheNamespace,
+          cacheKey,
+          posts.map(_postToCacheMap).toList(),
+        );
+      }
+      return posts;
+    } catch (e) {
+      if (e is PostgrestException &&
+          (e.code == '42501' ||
+              e.message.contains('generate_author_hash') ||
+              e.code == '42P01')) {
+        try {
+          var fallbackQuery = SupabaseService.client
+              .from('posts')
+              .select(_postFallbackColumns)
+              .isFilter('deleted_at', null)
+              .neq('moderation_status', 2);
+
+          if (showOnlyBookmarks) {
+            final currentUserId = SupabaseService.currentUserId;
+            if (currentUserId == null) return [];
+            final bookmarksRes = await SupabaseService.client
+                .from('post_bookmarks')
+                .select('post_id')
+                .eq('user_id', currentUserId)
+                .order('created_at', ascending: false)
+                .timeout(const Duration(seconds: 10));
+            final bookmarkedIds = (bookmarksRes as List<dynamic>)
+                .map((e) => e['post_id'].toString())
+                .toList();
+            if (bookmarkedIds.isEmpty) return [];
+            fallbackQuery = fallbackQuery.inFilter('id', bookmarkedIds);
+          } else if (category != 'todos') {
+            fallbackQuery = fallbackQuery.eq('category', category);
+          }
+
+          if (carrera != 'todas') {
+            fallbackQuery = fallbackQuery.eq('carrera', carrera);
+          } else if (facultad != 'todas') {
+            final careerIds = _getCareerIdsForFaculty(facultad);
+            fallbackQuery = fallbackQuery.inFilter(
+              'carrera',
+              careerIds.isNotEmpty ? careerIds.toList() : const ['__none__'],
+            );
+          }
+
+          if (searchQuery.trim().isNotEmpty) {
+            final q = searchQuery.trim();
+            fallbackQuery = fallbackQuery.or(
+              'title.ilike.%$q%,content.ilike.%$q%',
+            );
+          }
+
+          final PostgrestTransformBuilder<List<Map<String, dynamic>>>
+          orderedFallbackQuery;
+          if (feedMode == FeedMode.hot) {
+            orderedFallbackQuery = fallbackQuery
+                .order('is_pinned', ascending: false)
+                .order('hot_score', ascending: false)
+                .order('created_at', ascending: false);
+          } else {
+            orderedFallbackQuery = fallbackQuery
+                .order('is_pinned', ascending: false)
+                .order('created_at', ascending: false);
+          }
+
+          final response = await orderedFallbackQuery
+              .limit(50)
+              .timeout(const Duration(seconds: 10));
+          final List<dynamic> data = response as List<dynamic>;
+          final posts = await _hydratePosts(
+            data,
+            SupabaseService.currentUserId,
+          );
+
+          CacheService.set(_cacheNamespace, cacheKey, List<Post>.from(posts));
+          return posts;
+        } catch (innerError) {
+          debugPrint('Error en fallback directo a tabla posts: $innerError');
+        }
+      }
+      debugPrint('Error al obtener posts del foro: $e');
+      if (isDefaultQuery) {
+        final persisted = await _readPersistedPosts(cacheKey);
+        if (persisted != null) return persisted;
+      }
+      rethrow;
+    }
+  }
+
+  /// Lee la primera página persistida (solo consultas por defecto).
+  static Future<List<Post>?> _readPersistedPosts(String cacheKey) {
+    return CacheService.getPersisted<List<Post>>(_cacheNamespace, cacheKey, (
+      data,
+    ) {
+      if (data is! List) throw const FormatException('Caché de posts inválida');
+      return data
+          .whereType<Map>()
+          .map((item) => _postFromCacheMap(Map<String, dynamic>.from(item)))
+          .toList();
+    });
+  }
+
+  static Map<String, dynamic> _postToCacheMap(Post post) {
+    return {
+      'id': post.id,
+      'title': post.title,
+      'category': post.category,
+      'content': post.content,
+      'author_alias': post.authorAlias,
+      'likes': post.likes,
+      'author_hash': post.authorHash,
+      'created_at': post.createdAt.toIso8601String(),
+      'carrera': post.carrera,
+      'image_url': post.imageUrl,
+      'gif_url': post.gifUrl,
+      'quoted_post_id': post.quotedPostId,
+      'reposts_count': post.repostsCount,
+      'is_pinned': post.isPinned,
+      'moderation_status': post.moderationStatus,
+      'is_mine': post.isMine,
+      'is_my_post': post.isMyPost,
+      'comments_count': post.commentsCount,
+      'comment_count': post.commentCount,
+      'hot_score': post.hotScore,
+      'expires_at': post.expiresAt?.toIso8601String(),
+      'deleted_at': post.deletedAt?.toIso8601String(),
+      'is_legal_hold': post.isLegalHold,
+      'cache_liked': post.isLikedByMe,
+      'cache_bookmarked': post.isBookmarkedByMe,
+      'cache_poll': post.poll == null ? null : _pollToCacheMap(post.poll!),
+      'cache_quoted_post': post.quotedPost == null
+          ? null
+          : _postToCacheMap(post.quotedPost!),
+    };
+  }
+
+  static Post _postFromCacheMap(Map<String, dynamic> map) {
+    final rawPoll = map['cache_poll'];
+    final rawQuoted = map['cache_quoted_post'];
+    return Post.fromMap(
+      map,
+      isLikedByMe: map['cache_liked'] == true,
+      isBookmarkedByMe: map['cache_bookmarked'] == true,
+      poll: rawPoll is Map
+          ? _pollFromCacheMap(Map<String, dynamic>.from(rawPoll))
+          : null,
+      quotedPost: rawQuoted is Map
+          ? _postFromCacheMap(Map<String, dynamic>.from(rawQuoted))
+          : null,
+    );
+  }
+
+  static Map<String, dynamic> _pollToCacheMap(PostPoll poll) {
+    return {
+      'id': poll.id,
+      'post_id': poll.postId,
+      'question': poll.question,
+      'my_voted_option_id': poll.myVotedOptionId,
+      'options': poll.options.map((option) => option.toMap()).toList(),
+    };
+  }
+
+  static PostPoll _pollFromCacheMap(Map<String, dynamic> map) {
+    return PostPoll.fromMap({
+      ...map,
+      'options': map['options'] ?? const [],
+    }, myVotedOptionId: map['my_voted_option_id']?.toString());
+  }
+
+  static Future<List<Post>> _hydratePosts(
+    List<dynamic> data,
+    String? currentUserId,
+  ) async {
+    if (data.isEmpty) return [];
+
+    final postIds = data.map((item) => item['id'].toString()).toList();
+    final Set<String> likedPostIds = {};
+    final Set<String> bookmarkedPostIds = {};
+    final Map<String, String> userVotesByPollId = {};
+    final Map<String, PostPoll> pollsByPostId = {};
+    final Map<String, Post> quotedPostsMap = {};
+
+    // 1. Liked and Bookmarked sets (sin proyectar user_id)
+    if (currentUserId != null) {
+      final likesRes = await SupabaseService.client
+          .from('post_likes')
+          .select('post_id')
+          .eq('user_id', currentUserId)
+          .inFilter('post_id', postIds);
+
+      for (var item in likesRes) {
+        likedPostIds.add(item['post_id'].toString());
+      }
+
+      final bookmarksRes = await SupabaseService.client
+          .from('post_bookmarks')
+          .select('post_id')
+          .eq('user_id', currentUserId)
+          .inFilter('post_id', postIds);
+
+      for (var item in bookmarksRes) {
+        bookmarkedPostIds.add(item['post_id'].toString());
+      }
+    }
+
+    // 2. Polls for posts
+    try {
+      final pollsRes = await SupabaseService.client
+          .from('post_polls')
+          .select('*, post_poll_options(*)')
+          .inFilter('post_id', postIds);
+
+      final pollIds = (pollsRes as List<dynamic>)
+          .map((p) => p['id'].toString())
+          .toList();
+
+      if (currentUserId != null && pollIds.isNotEmpty) {
+        final votesRes = await SupabaseService.client
+            .from('post_poll_votes')
+            .select('poll_id, option_id')
+            .eq('user_id', currentUserId)
+            .inFilter('poll_id', pollIds);
+
+        for (var v in votesRes) {
+          userVotesByPollId[v['poll_id'].toString()] = v['option_id']
+              .toString();
+        }
+      }
+
+      for (var p in pollsRes) {
+        final pollId = p['id'].toString();
+        final postId = p['post_id'].toString();
+        final rawOptions = p['post_poll_options'] as List<dynamic>? ?? [];
+        final options = rawOptions
+            .map((o) => PollOption.fromMap(Map<String, dynamic>.from(o)))
+            .toList();
+        options.sort((a, b) => a.id.compareTo(b.id));
+
+        pollsByPostId[postId] = PostPoll(
+          id: pollId,
+          postId: postId,
+          question: p['question'] ?? '',
+          options: options,
+          myVotedOptionId: userVotesByPollId[pollId],
+        );
+      }
+    } catch (e) {
+      debugPrint('Error cargando encuestas: $e');
+    }
+
+    // 3. Quoted posts (usando safe_posts_feed)
+    final quotedIds = data
+        .map((item) => item['quoted_post_id']?.toString())
+        .where((id) => id != null && id.isNotEmpty)
+        .cast<String>()
+        .toSet()
+        .toList();
+
+    if (quotedIds.isNotEmpty) {
+      try {
+        final quotedRes = await SupabaseService.client
+            .from('safe_posts_feed')
+            .select('*')
+            .inFilter('id', quotedIds);
+
+        for (var q in quotedRes) {
+          final qPost = Post.fromMap(Map<String, dynamic>.from(q));
+          quotedPostsMap[qPost.id] = qPost;
+        }
+      } catch (e) {
+        debugPrint('Error cargando posts citados: $e');
+      }
+    }
+
+    return data.map((item) {
+      final map = Map<String, dynamic>.from(item);
+      final postId = map['id'].toString();
+      int commentCount = 0;
+      if (map['comments'] is List && (map['comments'] as List).isNotEmpty) {
+        final countObj = (map['comments'] as List).first;
+        commentCount = countObj['count'] ?? 0;
+      }
+
+      final qId = map['quoted_post_id']?.toString();
+      final quoted = (qId != null) ? quotedPostsMap[qId] : null;
+
+      return Post.fromMap(
+        map,
+        isLikedByMe: likedPostIds.contains(postId),
+        isBookmarkedByMe: bookmarkedPostIds.contains(postId),
+        commentCount: commentCount,
+        poll: pollsByPostId[postId],
+        quotedPost: quoted,
+      );
+    }).toList();
+  }
+
+  static Future<bool> toggleLike(Post post) async {
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
+    final currentUserId = SupabaseService.currentUserId;
+    if (currentUserId == null) return post.isLikedByMe;
+
+    try {
+      if (post.isLikedByMe) {
+        await SupabaseService.client
+            .from('post_likes')
+            .delete()
+            .eq('post_id', post.id)
+            .eq('user_id', currentUserId);
+        await CacheService.invalidateAll(_cacheNamespace);
+        return false;
+      } else {
+        await SupabaseService.client.from('post_likes').insert({
+          'post_id': post.id,
+          'user_id': currentUserId,
+        });
+        await CacheService.invalidateAll(_cacheNamespace);
+        return true;
+      }
+    } catch (e) {
+      debugPrint('Error al procesar like: $e');
+      return post.isLikedByMe;
+    }
+  }
+
+  static Future<bool> toggleBookmark(Post post) async {
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
+    final currentUserId = SupabaseService.currentUserId;
+    if (currentUserId == null) return post.isBookmarkedByMe;
+
+    try {
+      if (post.isBookmarkedByMe) {
+        await SupabaseService.client
+            .from('post_bookmarks')
+            .delete()
+            .eq('post_id', post.id)
+            .eq('user_id', currentUserId);
+        await CacheService.invalidateAll(_cacheNamespace);
+        return false;
+      } else {
+        await SupabaseService.client.from('post_bookmarks').insert({
+          'post_id': post.id,
+          'user_id': currentUserId,
+        });
+        await CacheService.invalidateAll(_cacheNamespace);
+        return true;
+      }
+    } catch (e) {
+      debugPrint('Error al procesar marcador guardado: $e');
+      return post.isBookmarkedByMe;
+    }
+  }
+
+  static Future<bool> votePoll({
+    required String pollId,
+    required String optionId,
+  }) async {
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
+    final currentUserId = SupabaseService.currentUserId;
+    if (currentUserId == null) return false;
+
+    try {
+      await SupabaseService.client
+          .from('post_poll_votes')
+          .delete()
+          .eq('poll_id', pollId)
+          .eq('user_id', currentUserId);
+
+      await SupabaseService.client.from('post_poll_votes').insert({
+        'poll_id': pollId,
+        'option_id': optionId,
+        'user_id': currentUserId,
+      });
+
+      await CacheService.invalidateAll(_cacheNamespace);
+      return true;
+    } catch (e) {
+      debugPrint('Error al votar en encuesta: $e');
+      return false;
+    }
+  }
+
+  static Future<Post?> createPost({
+    required String title,
+    required String content,
+    required String category,
+    required String carrera,
+    required String authorAlias,
+    String? imageUrl,
+    String? gifUrl,
+    String? quotedPostId,
+    String? pollQuestion,
+    List<String>? pollOptions,
+    bool ephemeral = false,
+    DateTime? expiresAt,
+  }) async {
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
+
+    final userId = SupabaseService.currentUserId;
+    if (userId == null) {
+      throw Exception(
+        'Debes iniciar sesión para publicar en el foro estudiantil.',
+      );
+    }
+
+    try {
+      DateTime? effectiveExpiresAt = expiresAt;
+      if (effectiveExpiresAt == null && ephemeral) {
+        effectiveExpiresAt = DateTime.now().toUtc().add(
+          const Duration(hours: 24),
+        );
+      }
+
+      final postMap = {
+        'title': title.trim(),
+        'content': content.trim(),
+        'category': category,
+        'carrera': carrera,
+        'author_alias': authorAlias.trim(),
+        'user_id': userId,
+        'image_url': imageUrl?.trim().isEmpty == true ? null : imageUrl?.trim(),
+        'gif_url': gifUrl?.trim().isEmpty == true ? null : gifUrl?.trim(),
+        'quoted_post_id': quotedPostId,
+        'likes': 0,
+        'reposts_count': 0,
+        'moderation_status': 0,
+        if (effectiveExpiresAt != null)
+          'expires_at': effectiveExpiresAt.toUtc().toIso8601String(),
+      };
+
+      const selectColumns =
+          'id, title, category, content, author_alias, author_hash, likes, carrera, image_url, gif_url, is_pinned, quoted_post_id, reposts_count, moderation_status, created_at, comments_count, hot_score, expires_at, deleted_at, is_legal_hold';
+
+      final res = await SupabaseService.client
+          .from('posts')
+          .insert(postMap)
+          .select(selectColumns)
+          .single();
+
+      final createdPost = Post.fromMap(
+        Map<String, dynamic>.from(res),
+      ).copyWith(isMine: true);
+
+      // Create poll if provided
+      if (pollQuestion != null &&
+          pollQuestion.trim().isNotEmpty &&
+          pollOptions != null &&
+          pollOptions.length >= 2) {
+        final pollRes = await SupabaseService.client
+            .from('post_polls')
+            .insert({
+              'post_id': createdPost.id,
+              'question': pollQuestion.trim(),
+            })
+            .select()
+            .single();
+
+        final pollId = pollRes['id'].toString();
+        final optionsInserts = pollOptions
+            .where((opt) => opt.trim().isNotEmpty)
+            .map((opt) => {'poll_id': pollId, 'option_text': opt.trim()})
+            .toList();
+
+        if (optionsInserts.isNotEmpty) {
+          await SupabaseService.client
+              .from('post_poll_options')
+              .insert(optionsInserts);
+        }
+      }
+
+      await CacheService.invalidateAll(_cacheNamespace);
+      return createdPost;
+    } catch (e) {
+      debugPrint('Error al crear post: $e');
+      rethrow;
+    }
+  }
+
+  static Future<List<PostComment>> fetchCommentsTree(String postId) async {
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
+
+    try {
+      final response = await SupabaseService.client
+          .from('safe_comments')
+          .select('*')
+          .eq('post_id', postId)
+          .order('created_at', ascending: true)
+          .timeout(const Duration(seconds: 10));
+
+      final List<dynamic> data = response as List<dynamic>;
+      final List<PostComment> allComments = data
+          .map((item) => PostComment.fromMap(Map<String, dynamic>.from(item)))
+          .toList();
+
+      for (var c in allComments) {
+        c.children = [];
+      }
+
+      final Map<String, PostComment> map = {};
+      final List<PostComment> rootComments = [];
+
+      for (var c in allComments) {
+        map[c.id] = c;
+      }
+
+      bool hasCycle(String currentId, String targetParentId) {
+        String? next = targetParentId;
+        int hops = 0;
+        final Set<String> visited = {currentId};
+        while (next != null && hops < 15) {
+          if (visited.contains(next)) return true;
+          visited.add(next);
+          next = map[next]?.parentId;
+          hops++;
+        }
+        return false;
+      }
+
+      for (var c in allComments) {
+        final pId = c.parentId;
+        if (pId != null &&
+            pId.trim().isNotEmpty &&
+            map.containsKey(pId) &&
+            pId != c.id &&
+            !hasCycle(c.id, pId)) {
+          map[pId]!.children.add(c);
+        } else {
+          rootComments.add(c);
+        }
+      }
+
+      return rootComments;
+    } catch (e) {
+      if (e is PostgrestException &&
+          (e.code == '42501' ||
+              e.message.contains('generate_author_hash') ||
+              e.code == '42P01')) {
+        try {
+          final fallbackRes = await SupabaseService.client
+              .from('comments')
+              .select(_commentFallbackColumns)
+              .eq('post_id', postId)
+              .isFilter('deleted_at', null)
+              .neq('moderation_status', 2)
+              .order('created_at', ascending: true)
+              .timeout(const Duration(seconds: 10));
+          final List<dynamic> data = fallbackRes as List<dynamic>;
+          final List<PostComment> allComments = data
+              .map(
+                (item) => PostComment.fromMap(Map<String, dynamic>.from(item)),
+              )
+              .toList();
+          for (var c in allComments) {
+            c.children = [];
+          }
+          final Map<String, PostComment> map = {};
+          final List<PostComment> rootComments = [];
+          for (var c in allComments) {
+            map[c.id] = c;
+          }
+          for (var c in allComments) {
+            final pId = c.parentId;
+            if (pId != null &&
+                pId.trim().isNotEmpty &&
+                map.containsKey(pId) &&
+                pId != c.id) {
+              map[pId]!.children.add(c);
+            } else {
+              rootComments.add(c);
+            }
+          }
+          return rootComments;
+        } catch (inner) {
+          debugPrint('Error en fallback directo a tabla comments: $inner');
+        }
+      }
+      debugPrint('Error al obtener comentarios: $e');
+      rethrow;
+    }
+  }
+
+  static Future<PostComment?> addComment({
+    required String postId,
+    required String content,
+    required String authorAlias,
+    String? parentId,
+    String? gifUrl,
+  }) async {
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
+
+    final userId = SupabaseService.currentUserId;
+    if (userId == null) {
+      throw Exception('Debes iniciar sesión para responder en el foro.');
+    }
+
+    try {
+      final commentMap = {
+        'post_id': postId,
+        'content': content.trim(),
+        'author_alias': authorAlias.trim(),
+        'user_id': userId,
+        'parent_id': (parentId != null && parentId.trim().isNotEmpty)
+            ? parentId.trim()
+            : null,
+        'gif_url': gifUrl?.trim().isEmpty == true ? null : gifUrl?.trim(),
+        'moderation_status': 0,
+      };
+
+      const selectColumns =
+          'id, post_id, parent_id, content, author_alias, author_hash, gif_url, created_at, moderation_status, is_op, likes_count, deleted_at';
+
+      final res = await SupabaseService.client
+          .from('comments')
+          .insert(commentMap)
+          .select(selectColumns)
+          .single()
+          .timeout(const Duration(seconds: 12));
+
+      final comment = PostComment.fromMap(
+        Map<String, dynamic>.from(res),
+      ).copyWith(isMine: true);
+      await CacheService.invalidateAll(_cacheNamespace);
+      return comment;
+    } catch (e) {
+      debugPrint('Error al agregar comentario: $e');
+      rethrow;
+    }
+  }
+
+  /// Soft delete de un post previa verificación de retención legal (is_legal_hold).
+  /// Retorna false si existe legal hold o si ocurre un fallo.
+  static Future<bool> softDeletePost(String postId) async {
+    if (!SupabaseConfig.isConfigured) return true;
+    try {
+      final check = await SupabaseService.client
+          .from('posts')
+          .select('is_legal_hold')
+          .eq('id', postId)
+          .maybeSingle();
+
+      if (check != null && check['is_legal_hold'] == true) {
+        debugPrint(
+          'Post $postId está bajo retención legal y no puede eliminarse.',
+        );
+        return false;
+      }
+
+      await SupabaseService.client
+          .from('posts')
+          .update({'deleted_at': DateTime.now().toUtc().toIso8601String()})
+          .eq('id', postId);
+
+      await CacheService.invalidateAll(_cacheNamespace);
+      return true;
+    } on PostgrestException catch (e) {
+      debugPrint('Error Postgrest al soft delete post: $e');
+      return false;
+    } catch (e) {
+      debugPrint('Error al soft delete post: $e');
+      return false;
+    }
+  }
+
+  /// Soft delete de un comentario previa verificación de retención legal (is_legal_hold).
+  /// Retorna false si existe legal hold o si ocurre un fallo.
+  static Future<bool> softDeleteComment(String commentId) async {
+    if (!SupabaseConfig.isConfigured) return true;
+    try {
+      final check = await SupabaseService.client
+          .from('comments')
+          .select('is_legal_hold')
+          .eq('id', commentId)
+          .maybeSingle();
+
+      if (check != null && check['is_legal_hold'] == true) {
+        debugPrint(
+          'Comentario $commentId está bajo retención legal y no puede eliminarse.',
+        );
+        return false;
+      }
+
+      await SupabaseService.client
+          .from('comments')
+          .update({'deleted_at': DateTime.now().toUtc().toIso8601String()})
+          .eq('id', commentId);
+
+      await CacheService.invalidateAll(_cacheNamespace);
+      return true;
+    } on PostgrestException catch (e) {
+      debugPrint('Error Postgrest al soft delete comment: $e');
+      return false;
+    } catch (e) {
+      debugPrint('Error al soft delete comment: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> reportPost({
+    required String postId,
+    required String reason,
+    String? details,
+  }) async {
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
+    try {
+      final res = await SupabaseService.client.rpc(
+        'report_forum_post',
+        params: {
+          'p_post_id': postId,
+          'p_reason': reason.trim(),
+          'p_details': details?.trim(),
+        },
+      );
+      return res == true;
+    } catch (e) {
+      debugPrint('Error reportando post: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> reportComment({
+    required String commentId,
+    required String reason,
+    String? details,
+  }) async {
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
+    try {
+      final res = await SupabaseService.client.rpc(
+        'report_forum_comment',
+        params: {
+          'p_comment_id': commentId,
+          'p_reason': reason.trim(),
+          'p_details': details?.trim(),
+        },
+      );
+      return res == true;
+    } catch (e) {
+      debugPrint('Error reportando comentario: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> reportUser({
+    required String reportedUserId,
+    required String reportedAlias,
+    required String reason,
+  }) async {
+    if (!SupabaseConfig.isConfigured) {
+      throw Exception('La aplicación no está conectada a la base de datos.');
+    }
+    try {
+      await SupabaseService.client.from('entity_reports').insert({
+        'reporter_id': SupabaseService.currentUserId,
+        'entity_type': 'user',
+        'entity_id': reportedUserId,
+        'reported_user_id': reportedUserId,
+        'reason': reason.trim(),
+        'moderation_status': 0,
+        'metadata': {'reported_user_alias': reportedAlias},
+      });
+      return true;
+    } catch (e) {
+      debugPrint('Error reportando usuario: $e');
+      return false;
+    }
+  }
+
+  /// Obtiene los canales del foro consultando la tabla `categorias_foro` en Supabase
+  static Future<List<ForumChannel>> fetchForumChannels() async {
+    if (!SupabaseConfig.isConfigured) {
+      return List<ForumChannel>.from(ForumChannel.defaultChannels);
+    }
+
+    try {
+      final response = await SupabaseService.client
+          .from('categorias_foro')
+          .select('id, nombre')
+          .order('id')
+          .timeout(const Duration(seconds: 8));
+
+      final List<dynamic> data = response as List<dynamic>;
+      if (data.isEmpty) {
+        return List<ForumChannel>.from(ForumChannel.defaultChannels);
+      }
+
+      const canonicalOrder = [
+        'todos',
+        'prerrequisitos',
+        'catedraticos',
+        'apuntes',
+        'horarios',
+      ];
+      final List<dynamic> sortedData = List.from(data);
+      sortedData.sort((a, b) {
+        final idA = a['id']?.toString() ?? '';
+        final idB = b['id']?.toString() ?? '';
+        final idxA = canonicalOrder.indexOf(idA);
+        final idxB = canonicalOrder.indexOf(idB);
+        if (idxA != -1 && idxB != -1) return idxA.compareTo(idxB);
+        if (idxA != -1) return -1;
+        if (idxB != -1) return 1;
+        return idA.compareTo(idB);
+      });
+
+      final List<ForumChannel> channels = [];
+      for (final row in sortedData) {
+        final id = row['id']?.toString() ?? '';
+        if (id == 'general') continue;
+        final nombre = row['nombre']?.toString() ?? id;
+        channels.add(ForumChannel.fromDbCategory(id: id, nombre: nombre));
+      }
+
+      return channels;
+    } catch (e) {
+      debugPrint('Error al obtener canales desde categorias_foro: $e');
+      return List<ForumChannel>.from(ForumChannel.defaultChannels);
+    }
+  }
+
+  /// Obtiene la estructura de servidores de facultades y carreras oficiales desde la DB
+  static Future<List<ForumFaculty>> fetchForumFaculties() async {
+    if (!SupabaseConfig.isConfigured) {
+      return ForumFaculty.defaultFaculties;
+    }
+
+    try {
+      final facsRes = await SupabaseService.client
+          .from('facultades')
+          .select('id, codigo, nombre')
+          .order('codigo')
+          .timeout(const Duration(seconds: 8));
+      final carsRes = await SupabaseService.client
+          .from('carreras')
+          .select('id, facultad_id, codigo, nombre')
+          .order('codigo')
+          .timeout(const Duration(seconds: 8));
+
+      final List<dynamic> facsData = facsRes as List<dynamic>;
+      final List<dynamic> carsData = carsRes as List<dynamic>;
+
+      if (facsData.isEmpty || carsData.isEmpty) {
+        return ForumFaculty.defaultFaculties;
+      }
+
+      final Map<String, ForumCareerItem> careerMeta = {};
+      final Map<String, ForumFaculty> facultyMeta = {};
+      for (final f in ForumFaculty.defaultFaculties) {
+        facultyMeta[f.id] = f;
+        for (final c in f.careers) {
+          careerMeta[c.id] = c;
+        }
+      }
+
+      final Map<String, List<ForumCareerItem>> careersByFacultad = {};
+      for (final row in carsData) {
+        final carId = row['id']?.toString() ?? '';
+        var facId = row['facultad_id']?.toString() ?? '';
+        var nombre = row['nombre']?.toString() ?? '';
+        final codigo = row['codigo']?.toString() ?? '';
+
+        nombre = nombre
+            .replaceAll('(Campus Central)', '')
+            .replaceAll('(Extensión)', ' - Extensión')
+            .replaceAll(RegExp(r'\s*\([^)]*\)'), '')
+            .replaceAll(
+              RegExp(
+                r'\s*[/|-]\s*(Cursos Básicos|General).*',
+                caseSensitive: false,
+              ),
+              '',
+            )
+            .replaceAll(RegExp(r'\s+'), ' ')
+            .trim();
+
+        if (carId == 'area_comun' ||
+            nombre.toLowerCase().contains('área común') ||
+            nombre.toLowerCase().contains('area comun')) {
+          facId = '08';
+          nombre = 'Área Común';
+        }
+
+        final existing = careerMeta[carId];
+        final shortCode =
+            existing?.shortCode ??
+            (codigo.isNotEmpty && codigo.length <= 6
+                ? codigo
+                : (carId.length > 4
+                      ? carId.substring(0, 4).toUpperCase()
+                      : carId.toUpperCase()));
+
+        careersByFacultad
+            .putIfAbsent(facId, () => [])
+            .add(
+              ForumCareerItem(
+                id: carId,
+                name: nombre,
+                shortCode: shortCode,
+                icon: existing?.icon ?? Icons.school_outlined,
+                facultadId: facId,
+                codigo: codigo,
+              ),
+            );
+      }
+
+      careersByFacultad.remove('todas');
+
+      final ingCareers = careersByFacultad.putIfAbsent('08', () => []);
+      final areaComunIndex = ingCareers.indexWhere((c) => c.id == 'area_comun');
+      final ForumCareerItem defaultAreaComun =
+          careerMeta['area_comun'] ??
+          const ForumCareerItem(
+            id: 'area_comun',
+            name: 'Área Común',
+            shortCode: 'BAS',
+            icon: Icons.auto_stories,
+            facultadId: '08',
+          );
+      if (areaComunIndex == -1) {
+        ingCareers.insert(0, defaultAreaComun);
+      } else {
+        final existingItem = ingCareers.removeAt(areaComunIndex);
+        ingCareers.insert(
+          0,
+          existingItem.copyWith(
+            name: 'Área Común',
+            shortCode: 'BAS',
+            icon: Icons.auto_stories,
+            facultadId: '08',
+          ),
+        );
+      }
+
+      final List<ForumFaculty> faculties = [];
+      for (final facRow in facsData) {
+        final facId = facRow['id']?.toString() ?? '';
+        var nombre = facRow['nombre']?.toString() ?? '';
+        final codigo = facRow['codigo']?.toString() ?? '';
+
+        nombre = nombre
+            .replaceAll(RegExp(r'\s*\([^)]*\)'), '')
+            .replaceAll(
+              RegExp(r'\s*[/|-]\s*General.*', caseSensitive: false),
+              '',
+            )
+            .replaceAll(RegExp(r'\s+'), ' ')
+            .trim();
+
+        final existing = facultyMeta[facId];
+        final careers = careersByFacultad[facId] ?? existing?.careers ?? [];
+
+        faculties.add(
+          ForumFaculty(
+            id: facId,
+            name: nombre,
+            shortCode:
+                existing?.shortCode ??
+                (codigo.isNotEmpty ? codigo : facId.toUpperCase()),
+            icon: existing?.icon ?? Icons.school,
+            color: existing?.color ?? const Color(0xFF004B87),
+            careers: careers,
+          ),
+        );
+      }
+
+      final defaultRoot = ForumFaculty.defaultFaculties.first;
+      final todasIndex = faculties.indexWhere((f) => f.id == 'todas');
+      ForumFaculty todasFaculty;
+      if (todasIndex != -1) {
+        final existingTodas = faculties.removeAt(todasIndex);
+        todasFaculty = existingTodas.copyWith(
+          name: 'Todas las Facultades',
+          shortCode: 'USAC',
+          icon: Icons.school,
+          careers: defaultRoot.careers,
+        );
+      } else {
+        todasFaculty = defaultRoot;
+      }
+      faculties.insert(0, todasFaculty);
+
+      return faculties;
+    } catch (e) {
+      debugPrint('Error al obtener facultades y carreras de la DB: $e');
+      return ForumFaculty.defaultFaculties;
+    }
+  }
+
+  /// Obtiene los 5 servidores o subservidores más populares del foro,
+  /// basado en cantidad de publicaciones, volumen de reacciones y frescura/recencia temporal.
+  static Future<List<PopularServerItem>> fetchPopularServers({
+    List<ForumFaculty>? faculties,
+  }) async {
+    const cacheKey = 'popular_servers_top5';
+    final cached = CacheService.get<List<PopularServerItem>>(
+      _cacheNamespace,
+      cacheKey,
+    );
+    if (cached != null) return List<PopularServerItem>.from(cached);
+
+    if (!SupabaseConfig.isConfigured) {
+      return const [];
+    }
+
+    try {
+      final res = await SupabaseService.client
+          .from('posts')
+          .select('id, carrera, likes, created_at')
+          .isFilter('deleted_at', null)
+          .neq('moderation_status', 2)
+          .order('created_at', ascending: false)
+          .limit(300)
+          .timeout(const Duration(seconds: 8));
+
+      final data = res as List<dynamic>;
+      if (data.isEmpty) {
+        return const [];
+      }
+
+      final allFaculties = faculties ?? ForumFaculty.defaultFaculties;
+
+      final Map<String, int> postsCountByCarrera = {};
+      final Map<String, int> likesCountByCarrera = {};
+      final Map<String, double> scoreByCarrera = {};
+      final Map<String, DateTime> latestDateByCarrera = {};
+      final now = DateTime.now();
+
+      for (final row in data) {
+        final carrera = row['carrera']?.toString() ?? 'todas';
+        final likes = (row['likes'] is int)
+            ? row['likes'] as int
+            : int.tryParse(row['likes']?.toString() ?? '0') ?? 0;
+        final createdAtStr = row['created_at']?.toString();
+        final createdAt = createdAtStr != null
+            ? DateTime.tryParse(createdAtStr)
+            : null;
+
+        postsCountByCarrera[carrera] = (postsCountByCarrera[carrera] ?? 0) + 1;
+        likesCountByCarrera[carrera] =
+            (likesCountByCarrera[carrera] ?? 0) + likes;
+
+        double recencyBonus = 0.5;
+        if (createdAt != null) {
+          final diff = now.difference(createdAt);
+          if (diff.inHours <= 24) {
+            recencyBonus = 5.0;
+          } else if (diff.inDays <= 3) {
+            recencyBonus = 3.0;
+          } else if (diff.inDays <= 7) {
+            recencyBonus = 2.0;
+          } else if (diff.inDays <= 30) {
+            recencyBonus = 1.0;
+          }
+
+          if (latestDateByCarrera[carrera] == null ||
+              createdAt.isAfter(latestDateByCarrera[carrera]!)) {
+            latestDateByCarrera[carrera] = createdAt;
+          }
+        }
+
+        final postScore = 2.0 + (likes * 1.0) + recencyBonus;
+        scoreByCarrera[carrera] = (scoreByCarrera[carrera] ?? 0.0) + postScore;
+      }
+
+      final List<PopularServerItem> results = [];
+
+      for (final entry in scoreByCarrera.entries) {
+        final carreraId = entry.key;
+        final score = entry.value;
+        final pCount = postsCountByCarrera[carreraId] ?? 0;
+        final lCount = likesCountByCarrera[carreraId] ?? 0;
+        final lDate = latestDateByCarrera[carreraId];
+
+        ForumFaculty? foundFac;
+        ForumCareerItem? foundCareer;
+
+        for (final f in allFaculties) {
+          for (final c in f.careers) {
+            if (c.id == carreraId) {
+              foundFac = f;
+              foundCareer = c;
+              break;
+            }
+          }
+          if (foundCareer != null) break;
+        }
+
+        if (foundCareer != null && foundFac != null) {
+          final server = ForumServer(
+            id: 'server_${foundCareer.id}',
+            name: foundCareer.name,
+            shortCode: foundCareer.shortCode,
+            icon: foundCareer.icon,
+            facultadId: foundFac.id,
+            carreraId: foundCareer.id,
+            description: 'Espacio de discusión para ${foundCareer.name}.',
+            color: foundFac.color,
+          );
+
+          results.add(
+            PopularServerItem(
+              server: server,
+              facultyName: foundFac.name,
+              postCount: pCount,
+              likesCount: lCount,
+              score: score,
+              latestPostDate: lDate,
+            ),
+          );
+        }
+      }
+
+      results.sort((a, b) => b.score.compareTo(a.score));
+
+      final top5 = results.take(5).toList();
+
+      CacheService.set(
+        _cacheNamespace,
+        cacheKey,
+        List<PopularServerItem>.from(top5),
+      );
+      return top5;
+    } catch (e) {
+      debugPrint('Error obteniendo servidores populares: $e');
+      return const [];
+    }
+  }
+}
