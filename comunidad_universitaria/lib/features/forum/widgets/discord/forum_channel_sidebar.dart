@@ -4,8 +4,6 @@ import '../../../profile/screens/profile_screen.dart';
 
 import '../../../rules/screens/rules_screen.dart';
 
-import '../../../reviews/screens/seccion_reviews_screen.dart';
-
 import '../../models/discord_forum_models.dart';
 
 class ForumChannelSidebar extends StatelessWidget {
@@ -165,21 +163,6 @@ class ForumChannelSidebar extends StatelessWidget {
                     theme,
 
                     isDark,
-                  ),
-
-                  const SizedBox(height: 2),
-
-                  _actionChannelTile(
-                    name: 'Reseñas de secciones',
-                    icon: Icons.rate_review_outlined,
-                    isDark: isDark,
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const SeccionReviewsScreen(),
-                        ),
-                      );
-                    },
                   ),
                 ],
               ],
@@ -411,28 +394,6 @@ class ForumChannelSidebar extends StatelessWidget {
                 ),
 
               ListTile(
-                leading: const Icon(Icons.rate_review_outlined),
-
-                title: const Text('Reseñas de secciones'),
-
-                subtitle: const Text('Calificaciones comunitarias'),
-
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-
-                onTap: () {
-                  Navigator.of(ctx).pop();
-
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const SeccionReviewsScreen(),
-                    ),
-                  );
-                },
-              ),
-
-              ListTile(
                 leading: const Icon(Icons.shield_outlined),
 
                 title: const Text('Normas y descargo'),
@@ -536,55 +497,6 @@ class ForumChannelSidebar extends StatelessWidget {
                             : FontWeight.w500,
 
                         color: isActive ? activeColor : mutedColor,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _actionChannelTile({
-    required String name,
-    required IconData icon,
-    required bool isDark,
-    required VoidCallback onTap,
-  }) {
-    final mutedColor = isDark
-        ? const Color(0xFFAAAAAA)
-        : const Color(0xFF666666);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 1),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          child: SizedBox(
-            height: 38,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: Row(
-                children: [
-                  Icon(
-                    icon,
-                    size: 17,
-                    color: mutedColor,
-                  ),
-                  const SizedBox(width: 9),
-                  Expanded(
-                    child: Text(
-                      name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: mutedColor,
                       ),
                     ),
                   ),

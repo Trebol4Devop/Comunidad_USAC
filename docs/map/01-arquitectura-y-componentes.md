@@ -20,7 +20,7 @@ graph TD
     CMS --> DirPanel["Directorio de Puntos de Encuentro"]
     Canvas --> Sheet["PoiDetailSheet (Ficha Todo-en-Uno)"]
     Sheet --> Tab1["Pestaña Detalles"]
-    Sheet --> Tab2["Pestaña Reseñas (BathroomTierBadge)"]
+    Sheet --> Tab2["Pestaña Calificaciones (BathroomTierBadge)"]
     Sheet --> Tab3["Pestaña Foro (Comentarios en Vivo)"]
 ```
 
@@ -33,7 +33,7 @@ Componente de renderizado de capas vectoriales construido sobre `flutter_map`:
 ### 1.2 `PoiDetailSheet` (Ficha Inferior Todo-en-Uno)
 Ficha modal interactiva estructurada en 3 pestañas:
 1. **Pestaña Detalles**: Identificador, nombre formal, alias reconocidos, niveles construidos, accesos peatonales mapeados, botón para iniciar navegación y botón para abrir el modelo 3D.
-2. **Pestaña Reseñas**: Badge de clasificación semántica, promedio de puntuación, desglose de etiquetas observadas (agua, papel, jabón, WiFi, tomas) y botón modal para calificar.
+2. **Pestaña Calificaciones**: Badge de clasificación semántica, promedio de puntuación y desglose de etiquetas observadas (agua, papel, jabón, WiFi, tomas).
 3. **Pestaña Foro**: Hilo de discusión en vivo del lugar específico, con soporte para respuestas anidadas y actualización reactiva.
 
 ### 1.3 `TurnByTurnBanner` (Banner Direccional)

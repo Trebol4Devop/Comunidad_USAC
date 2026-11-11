@@ -339,64 +339,81 @@ class _AppShellState extends State<AppShell> {
               )
             : _buildIndexedStack(isMobile),
       ),
-      floatingActionButton: isMobile
+      floatingActionButton: (isMobile && _showMobileTopBar)
           ? _buildContextualFloatingActionButton()
           : null,
       bottomNavigationBar: !isMobile
           ? null
-          : Container(
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(color: theme.colorScheme.outlineVariant),
-                ),
-              ),
-              child: NavigationBarTheme(
-                data: NavigationBarThemeData(
-                  height: 58,
-                  indicatorColor: Colors.transparent,
-                  backgroundColor: theme.colorScheme.surface,
-                  elevation: 0,
-                  iconTheme: WidgetStateProperty.resolveWith((states) {
-                    return IconThemeData(
-                      size: 23,
-                      color: theme.colorScheme.onSurface,
-                    );
-                  }),
-                ),
-                child: NavigationBar(
-                  labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
-                  selectedIndex: _navigationIndexForScreen(_currentIndex),
-                  onDestinationSelected: (index) {
-                    final screenIndex = _screenIndexForNavigation(index);
-                    setState(() {
-                      _currentIndex = screenIndex;
-                      _visitedTabs.add(screenIndex);
-                      _showMobileTopBar = true;
-                    });
-                  },
-                  destinations: const [
-                    NavigationDestination(
-                      icon: Icon(Icons.chat_bubble_outline),
-                      selectedIcon: Icon(Icons.chat_bubble_outline),
-                      label: 'Foro',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(Icons.groups_outlined),
-                      selectedIcon: Icon(Icons.groups_outlined),
-                      label: 'Grupos',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(Icons.map_outlined),
-                      selectedIcon: Icon(Icons.map_outlined),
-                      label: 'Mapa',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(Icons.local_mall_outlined),
-                      selectedIcon: Icon(Icons.local_mall_outlined),
-                      label: 'Marketplace',
-                    ),
-                  ],
-                ),
+          : AnimatedSize(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              alignment: Alignment.topCenter,
+              child: ClipRect(
+                child: _showMobileTopBar
+                    ? Container(
+                        decoration: BoxDecoration(
+                          border: Border(
+                            top: BorderSide(
+                              color: theme.colorScheme.outlineVariant,
+                            ),
+                          ),
+                        ),
+                        child: NavigationBarTheme(
+                          data: NavigationBarThemeData(
+                            height: 58,
+                            indicatorColor: Colors.transparent,
+                            backgroundColor: theme.colorScheme.surface,
+                            elevation: 0,
+                            iconTheme: WidgetStateProperty.resolveWith((states) {
+                              return IconThemeData(
+                                size: 23,
+                                color: theme.colorScheme.onSurface,
+                              );
+                            }),
+                          ),
+                          child: NavigationBar(
+                            labelBehavior:
+                                NavigationDestinationLabelBehavior.alwaysHide,
+                            selectedIndex:
+                                _navigationIndexForScreen(_currentIndex),
+                            onDestinationSelected: (index) {
+                              final screenIndex =
+                                  _screenIndexForNavigation(index);
+                              setState(() {
+                                _currentIndex = screenIndex;
+                                _visitedTabs.add(screenIndex);
+                                _showMobileTopBar = true;
+                              });
+                            },
+                            destinations: const [
+                              NavigationDestination(
+                                icon: Icon(Icons.chat_bubble_outline),
+                                selectedIcon: Icon(Icons.chat_bubble_outline),
+                                label: 'Foro',
+                              ),
+                              NavigationDestination(
+                                icon: Icon(Icons.groups_outlined),
+                                selectedIcon: Icon(Icons.groups_outlined),
+                                label: 'Grupos',
+                              ),
+                              NavigationDestination(
+                                icon: Icon(Icons.map_outlined),
+                                selectedIcon: Icon(Icons.map_outlined),
+                                label: 'Mapa',
+                              ),
+                              NavigationDestination(
+                                icon: Icon(Icons.local_mall_outlined),
+                                selectedIcon: Icon(Icons.local_mall_outlined),
+                                label: 'Marketplace',
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : const SizedBox(
+                        width: double.infinity,
+                        height: 0,
+                      ),
               ),
             ),
     );

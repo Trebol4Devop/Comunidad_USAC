@@ -18,7 +18,6 @@ import '../widgets/discord/popular_servers_sidebar.dart';
 import '../widgets/post_card.dart';
 import 'post_detail_screen.dart';
 import '../../groups/screens/groups_screen.dart';
-import '../../reviews/screens/seccion_reviews_screen.dart';
 import '../../../core/services/profile_service.dart';
 import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/empty_state_widget.dart';
@@ -967,7 +966,7 @@ class _ForumScreenState extends State<ForumScreen> {
         // Barra superior fija para todos los canales con bienvenida, buscador y botón de publicar
         _buildDiscordWelcomeHero(theme, isDark),
 
-        // Filtro de muro (En Llamas / Recientes) y acceso a Reseñas de Secciones
+        // Filtro de muro (En Llamas / Recientes)
         _buildFeedFilterBar(theme, isDark),
 
         if (_isOffline) ...[
@@ -1103,24 +1102,6 @@ class _ForumScreenState extends State<ForumScreen> {
                   setState(() => _feedMode = FeedMode.recent);
                   _loadPosts();
                 }
-              },
-            ),
-            const SizedBox(width: 10),
-            ActionChip(
-              avatar: const Icon(Icons.rate_review_outlined, size: 16),
-              label: const Text(
-                'Reseñas de Secciones',
-                style: TextStyle(fontSize: 12),
-              ),
-              visualDensity: VisualDensity.compact,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const SeccionReviewsScreen(),
-                  ),
-                );
               },
             ),
           ],

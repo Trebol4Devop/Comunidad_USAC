@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:comunidad_universitaria/core/constants/anonymous_aliases.dart';
 import 'package:comunidad_universitaria/core/models/post.dart';
-import 'package:comunidad_universitaria/core/models/seccion_review.dart';
 import 'package:comunidad_universitaria/features/shared/widgets/anonymous_author_header.dart';
 
 void main() {
@@ -76,39 +75,6 @@ void main() {
       expect(comment.isMine, isTrue);
       expect(comment.isMyComment, isTrue); // Compatibility getter
       expect(comment.deletedAt, DateTime.parse('2026-11-10T14:30:00.000Z'));
-    });
-
-    test('SeccionReview.fromMap deserializa campos de reseña e ignora user_id', () {
-      final payload = {
-        'id': 'review-safe-003',
-        'curso_codigo': '0772',
-        'seccion': 'A',
-        'recomienda': true,
-        'catedratico_nombre': 'Ing. Morales',
-        'dificultad': 4,
-        'carga_tareas': 3,
-        'comentario': 'Catedrático exigente pero con contenido de alto valor.',
-        'semestre': '1S-2026',
-        'upvotes': 19,
-        'is_mine': true,
-        'user_id': '00000000-0000-0000-0000-000000000003', // No debe persistir
-        'created_at': '2026-11-05T16:00:00.000Z',
-      };
-
-      final review = SeccionReview.fromMap(payload);
-
-      expect(review.userId, isNull);
-      expect(review.id, 'review-safe-003');
-      expect(review.cursoCodigo, '0772');
-      expect(review.seccion, 'A');
-      expect(review.recomienda, isTrue);
-      expect(review.catedraticoNombre, 'Ing. Morales');
-      expect(review.dificultad, 4);
-      expect(review.cargaTareas, 3);
-      expect(review.comentario, 'Catedrático exigente pero con contenido de alto valor.');
-      expect(review.semestre, '1S-2026');
-      expect(review.upvotes, 19);
-      expect(review.isMine, isTrue);
     });
   });
 

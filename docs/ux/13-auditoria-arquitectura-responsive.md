@@ -175,8 +175,8 @@ class UsacAnimatedText extends StatelessWidget {
 #### Propósito y Casos de Uso en Comunidad USAC
 1. **Indicador de Conectividad (`OfflineBanner` / Status Pills):**
    - Transición morfológica entre `"Modo En Línea"` $\leftrightarrow$ `"Modo sin conexión"`, impidiendo parpadeos bruscos en la barra superior.
-2. **Contadores Dinámicos de Sanitarios y Reseñas (`BathroomTierBadge`):**
-   - Morfismo numérico continuo al actualizar el promedio de calificaciones (ej. de `3.85` a `4.20`) o el total de reseñas (`12` a `13`).
+2. **Contadores Dinámicos de Sanitarios (`BathroomTierBadge`):**
+   - Morfismo numérico continuo al actualizar el promedio de calificaciones higiénicas (ej. de `3.85` a `4.20`).
 3. **Precios y Filtros en Marketplace (`MarketplaceCard`):**
    - Interpolación tipográfica elegante al alternar entre filtros (`"Q 25.00"` $\leftrightarrow$ `"GRATIS"`).
 

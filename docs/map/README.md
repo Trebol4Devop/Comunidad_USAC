@@ -16,12 +16,11 @@ El módulo de Mapa ofrece a la comunidad estudiantil de la Universidad de San Ca
 1. **Motor Cartográfico Vectorial Autónomo**: Renderizado con `flutter_map` y `latlong2`, huellas edilicias del Campus Central, grafos de andadores peatonales y puntos de interés (POIs).
 2. **Sincronización Inteligente Zero-Egress (Cloudflare R2)**: `MapSyncService` comprueba las versiones de edificios, grafos y POIs mediante un manifiesto ultraligero (`map_version.json` de ~150 B) y descarga únicamente los datos actualizados.
 3. **Escala Oficial de 5 Clases para Sanitarios USAC**: Clasificación semántica contextual (*Templo de los dioses*, *Disfrutable*, *Cacada limpia*, *Cacada tolerable* y *Cacada*) sustituyendo las estrellas tradicionales por indicadores reales del estado higiénico.
-4. **Reseñas y Calificaciones Protegidas por Seudónimo**: Consulta mediante la RPC PostgreSQL `get_target_reviews_with_authors` para salvaguardar el carné y nombre real de los estudiantes.
-5. **Foro Comunitario en Vivo**: Discusión en tiempo real por edificio con suscripción a WebSockets de Supabase Realtime, soporte para respuestas anidadas, filtro antipalabrotas preventivo y marcadores *tombstone*.
-6. **Ruteo Multi-modal A\***: Cálculo de trayectorias peatonales óptimas con perfiles específicos: *Peatonal Estándar*, *Sin Gradas (Accesible)* y *Techada (Temporada de Lluvia)*.
-7. **Visor Volumétrico 3D**: Inspección volumétrica tridimensional e isométrica de los edificios universitarios (`Building3DViewer`).
-8. **UI/UX Adaptativa**: Conforme a los requisitos de `/docs/ux`, respetando los tokens de color (`AppTheme.usacBlue`, `AppTheme.usacGold`), modo claro/oscuro y diseño responsivo (vista dividida en escritorio, panel inferior arrastrable en móvil).
-9. **Detección Reactiva de Red (`connectivity_plus`)**: Monitoreo continuo mediante `ConnectivityService`, supresión de llamadas HTTP hacia R2/Supabase si no hay conexión y visualización del `OfflineBanner` canónico según la especificación `UX-X-006`.
+4. **Foro Comunitario en Vivo**: Discusión en tiempo real por edificio con suscripción a WebSockets de Supabase Realtime, soporte para respuestas anidadas, filtro antipalabrotas preventivo y marcadores *tombstone*.
+5. **Ruteo Multi-modal A\***: Cálculo de trayectorias peatonales óptimas con perfiles específicos: *Peatonal Estándar*, *Sin Gradas (Accesible)* y *Techada (Temporada de Lluvia)*.
+6. **Visor Volumétrico 3D**: Inspección volumétrica tridimensional e isométrica de los edificios universitarios (`Building3DViewer`).
+7. **UI/UX Adaptativa**: Conforme a los requisitos de `/docs/ux`, respetando los tokens de color (`AppTheme.usacBlue`, `AppTheme.usacGold`), modo claro/oscuro y diseño responsivo (vista dividida en escritorio, panel inferior arrastrable en móvil).
+8. **Detección Reactiva de Red (`connectivity_plus`)**: Monitoreo continuo mediante `ConnectivityService`, supresión de llamadas HTTP hacia R2/Supabase si no hay conexión y visualización del `OfflineBanner` canónico según la especificación `UX-X-006`.
 
 ---
 
@@ -32,7 +31,7 @@ flowchart TD
     subgraph UI["Capa de Presentación (Flutter UI)"]
         CMS["CampusMapScreen (Pantalla Principal)"]
         MapView["UsacCampusMap (Canvas Vectorial)"]
-        Sheet["PoiDetailSheet (Detalles, Reseñas, Foro)"]
+        Sheet["PoiDetailSheet (Detalles, Calificaciones, Foro)"]
         Badge["BathroomTierBadge & RatingBadge"]
         Banner["TurnByTurnBanner (Guía de Ruta)"]
         FloorSel["FloorSelector (Niveles Interiores)"]
@@ -51,7 +50,7 @@ flowchart TD
 
     subgraph Storage["Infraestructura y Persistencia"]
         R2["Cloudflare R2 CDN (Zero Egress)"]
-        SupaDB[("Supabase PostgreSQL: Reviews, Aggregates, Comments")]
+        SupaDB[("Supabase PostgreSQL: Aggregates & Comments")]
         LocalStore["Caché Local: SharedPreferences + Documentos"]
         Assets["Assets Offline Empaquetados (usac_campus_map)"]
     end
