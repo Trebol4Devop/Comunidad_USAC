@@ -10,6 +10,8 @@ select plan(11);
 -- -----------------------------------------------------------------------------
 create extension if not exists pgtap;
 
+set role postgres;
+
 do $$
 declare
     v_user_a uuid := '11111111-1111-1111-1111-111111111111';
@@ -22,11 +24,11 @@ begin
     insert into public.posts (
         id, user_id, title, content, category, carrera, author_alias, moderation_status
     ) values
-        ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0001', v_user_a, 'Post Activo', 'Contenido normal', 'general', 'sistemas', 'Alias A', 0),
-        ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0002', v_user_a, 'Post En Revision', 'En analisis', 'general', 'sistemas', 'Alias A', 1),
-        ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0003', v_user_a, 'Post Bloqueado', 'Contenido censurado', 'general', 'sistemas', 'Alias A', 2),
-        ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0004', v_user_a, 'Post Error', 'Falla de clasificador', 'general', 'sistemas', 'Alias A', 3),
-        ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbb0001', v_user_b, 'Post de Usuario B', 'Contenido de B', 'general', 'sistemas', 'Alias B', 0)
+        ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0001', v_user_a, 'Post Activo', 'Contenido normal', 'general', 'sistemas', 'Compilador Desvelado', 0),
+        ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0002', v_user_a, 'Post En Revision', 'En analisis', 'general', 'sistemas', 'Compilador Desvelado', 1),
+        ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0003', v_user_a, 'Post Bloqueado', 'Contenido censurado', 'general', 'sistemas', 'Compilador Desvelado', 2),
+        ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0004', v_user_a, 'Post Error', 'Falla de clasificador', 'general', 'sistemas', 'Compilador Desvelado', 3),
+        ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbb0001', v_user_b, 'Post de Usuario B', 'Contenido de B', 'general', 'sistemas', 'Puntero Nocturno', 0)
     on conflict (id) do nothing;
 end $$;
 
@@ -94,7 +96,7 @@ select lives_ok(
         'Contenido propio',
         'general',
         'sistemas',
-        'Alias A'
+        'Compilador Desvelado'
       )$$,
     'Usuario autenticado puede insertar publicaciones asignadas a su propio user_id'
 );
@@ -110,7 +112,7 @@ select throws_ok(
         'Contenido ajeno',
         'general',
         'sistemas',
-        'Fake Alias'
+        'Compilador Desvelado'
       )$$,
     null,
     'Usuario autenticado no puede crear una publicacion suplantando el user_id de otro usuario'
@@ -145,11 +147,20 @@ select is(
     'Usuario A no puede alterar el contenido ni titulo de publicaciones de Usuario B'
 );
 
--- Test 11: Usuario A puede eliminar su propia publicación
-select lives_ok(
+-- Test 11: DELETE físico falla por privilegios (42501) y el post sigue existiendo
+select throws_ok(
     $$delete from public.posts where id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0099'$$,
-    'Usuario autenticado puede eliminar su propia publicacion'
+    '42501',
+    null,
+    'Usuario autenticado no puede eliminar físicamente su publicación (DELETE revocado)'
 );
+
+do $$
+begin
+    if not exists (select 1 from public.posts where id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0099') then
+        raise exception 'El post debió permanecer en base de datos tras el intento de DELETE físico!';
+    end if;
+end $$;
 
 select * from finish();
 rollback;

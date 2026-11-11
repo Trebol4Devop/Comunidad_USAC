@@ -551,10 +551,12 @@ identificados en el levantamiento de código:
   patrocinado; (2) explica **"¿Por qué veo esto?"** sin exponer datos sensibles;
   (3) puede **ocultarse** y **reportarse**; (4) es accesible con lectores de
   pantalla (la etiqueta se anuncia antes del cuerpo); (5) respeta la preferencia de
-  _reducir movimiento_ y no reproduce audio automáticamente.
+  _reducir movimiento_ y no reproduce audio automáticamente; (6) muestra la
+  insignia del plan del vendedor sin usar el plan para segmentar al comprador.
 - **Problema actual [Mejora]:** no existía un requisito transversal de transparencia
   publicitaria; se formaliza aquí para [`UX-SPN-005`](12-patrocinios.md) y
-  [`UX-SPN-008`](12-patrocinios.md).
+  [`UX-SPN-008`](12-patrocinios.md). La visibilidad pagada del Marketplace se
+  origina en `marketplace_plans` ([`UX-MKT-017`](04-marketplace.md)).
 - **Precondiciones:** cualquier unidad patrocinada visible.
 - **UI / contenido:** chip "Patrocinado"; menú con "¿Por qué veo esto?", "Ocultar",
   "Reportar"; hoja/diálogo explicativo en español.

@@ -155,15 +155,16 @@ actual ya no incluye la plantilla de recuperación ni un servidor SMTP local.
 ### 5.1 Inscripción TOTP
 
 `TotpEnrollmentScreen` permite iniciar la inscripción, mostrar el QR/datos del
-autenticador y verificar el primer código de seis dígitos. El acceso a la
-pantalla está disponible desde el perfil.
+autenticador y verificar el primer código de seis dígitos. La inscripción es
+opcional y el acceso a la pantalla está disponible desde el perfil.
 
-### 5.2 Desafío requerido en la sesión
+### 5.2 Desafío opcional en la sesión
 
 `TotpSessionGuard`, instalado como envoltura de la app en `main.dart`, revisa el
 estado Auth de cada cuenta registrada:
 
-- Si no existe un TOTP verificado, solicita inscribirlo.
+- Si no existe un TOTP verificado, permite el acceso normal a la app: el
+  autenticador es opcional y puede configurarse después desde el perfil.
 - Si existe un factor verificado pero la sesión está en AAL1, solicita el
   desafío TOTP antes de mostrar el contenido de la app.
 - Si la verificación falla o no se puede consultar Auth, muestra una pantalla

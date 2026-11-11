@@ -78,7 +78,7 @@ class GroupsService {
 
     try {
       var query = SupabaseService.client
-          .from('student_groups')
+          .from('safe_student_groups')
           .select('*')
           .lt('moderation_status', 2);
 
@@ -208,9 +208,11 @@ class GroupsService {
 
   static Map<String, dynamic> _groupToCacheMap(WhatsAppGroup group) {
     final map = group.toInsertMap();
+    map.remove('user_id');
     map['id'] = group.id;
     map['created_at'] = group.createdAt.toIso8601String();
     map['cache_upvoted'] = group.isUpvotedByMe;
+    map['is_mine'] = group.isMine;
     return map;
   }
 
@@ -294,16 +296,20 @@ class GroupsService {
         'moderation_status': 0,
       };
 
+      const explicitColumns =
+          'id, title, carrera, curso, section, link, description, author_alias, '
+          'upvotes, reported_count, created_at, image_url, moderation_status, platform';
+
       final res = await SupabaseService.client
           .from('student_groups')
           .insert(groupMap)
-          .select()
+          .select(explicitColumns)
           .single();
 
       final created = WhatsAppGroup.fromMap(
         Map<String, dynamic>.from(res),
         isUpvotedByMe: true,
-      );
+      ).copyWith(isMine: true);
 
       // Auto-upvote for creator
       await SupabaseService.client.from('student_group_upvotes').insert({

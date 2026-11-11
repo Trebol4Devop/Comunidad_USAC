@@ -20,7 +20,9 @@ representa ni cuenta con afiliación oficial de las autoridades universitarias.
 ### 1.1 Pilares de valor
 1. **Foro académico estructurado** por facultad y carrera, con canales temáticos.
 2. **Directorio de grupos de estudio** con reputación comunitaria.
-3. **Marketplace y tutorías peer-to-peer** sin comisiones ni custodia de fondos.
+3. **Marketplace y tutorías peer-to-peer** sin comisiones ni custodia de fondos,
+   con planes de visibilidad opcionales para vendedores recurrentes y comercios
+   locales.
 4. **Dualidad de identidad**: privacidad por seudónimo en el foro; verificación
    opcional de carné para generar confianza en las transacciones.
 5. **Proveedor de identidad académica (SSO)** para apps satélite como PEMTREE.
@@ -33,6 +35,7 @@ representa ni cuenta con afiliación oficial de las autoridades universitarias.
 |---|---|---|
 | Incorporación sin fricción | % que completa registro + MFA TOTP sin abandonar | UX-AUTH |
 | Confianza en las transacciones | % de vendedores con identidad verificada; reportes de fraude | UX-MKT, UX-PRF |
+| Sostenibilidad del Marketplace | adopción de planes (`pro_student`, `business_local`) y retención de vendedores | UX-MKT-017, UX-MKT-018 |
 | Descubrimiento de funcionalidades | % de usuarios que acceden a Grupos y Marketplace | UX-NAV, UX-GRP |
 | Comunidad sana | tiempo de resolución de reportes | UX-FORO, UX-MKT, UX-GRP |
 | Accesibilidad | cumplimiento WCAG 2.2 AA verificable | UX-X |
@@ -44,7 +47,8 @@ representa ni cuenta con afiliación oficial de las autoridades universitarias.
 ### 3.1 Incluido
 - Foro estudiantil con canales, publicaciones, comentarios anidados, encuestas,
   reacciones, guardado, citado y reporte.
-- Marketplace de productos, servicios y tutorías, con patrocinios.
+- Marketplace de productos, servicios y tutorías, con perfiles de tienda y
+  planes de suscripción (freemium).
 - Directorio de grupos de estudio (WhatsApp, Telegram, Discord, Drive).
 - Perfil, alias, avatar, verificación de carné y actividad propia.
 - Autenticación por correo/contraseña sin OTP por correo, Google OAuth y MFA
@@ -95,6 +99,7 @@ representa ni cuenta con afiliación oficial de las autoridades universitarias.
 
 - **UX-PRD-012 — Estudiante verificado.**
   - **Estado objetivo:** estudiante con carné validado (obligatorio para vender y para acceder cuando el correo es personal). En el Marketplace puede publicar con su nombre validado y distintivo de verificación; en el Foro conserva su seudónimo.
+  - **Regla:** al publicar opera con el plan `free` de `marketplace_plans` (3 publicaciones activas, 2 imágenes, 14 días de vigencia) salvo que tenga un plan superior aprobado [UX-MKT-017 en `04-marketplace.md`].
 
 - **UX-PRD-013 — Moderador.**
   - **Estado objetivo:** dispone de herramientas para revisar contenido en
@@ -112,12 +117,20 @@ representa ni cuenta con afiliación oficial de las autoridades universitarias.
     [`12-patrocinios.md`](12-patrocinios.md) (`UX-SPN`).
 
 - **UX-PRD-016 — Vendedor externo verificado (nuevo).**
-  - **Estado objetivo:** persona no estudiante que vende productos o servicios en la comunidad USAC. Ingresa identificándose con documentos personales y es admitida por un administrador; queda catalogada como verificada.
-  - **Regla:** requiere admisión explícita de un administrador; al aprobarse obtiene el distintivo "Vendedor externo verificado", puede publicar y vender en el Marketplace y postularse a patrocinador. No accede al foro como estudiante ni a canales académicos.
+  - **Estado objetivo:** persona no estudiante que vende productos o servicios en la comunidad USAC. Ingresa identificándose con documentos personales y es admitida por un administrador; queda catalogada como verificada y se refleja en `seller_profiles` (`seller_type = 'local_business'`).
+  - **Regla:** requiere admisión explícita de un administrador; al aprobarse obtiene el distintivo "Vendedor externo verificado", puede publicar y vender en el Marketplace y postularse a patrocinador o a un plan comercial. No accede al foro como estudiante ni a canales académicos.
   - **Detalle:** ver UX-PRF-035 en 06-perfil-y-cuenta.md y UX-MKT-014/016 en 04-marketplace.md.
   - **Criterios de aceptación:**
     - **Given** un no estudiante con documentos, **When** es admitido por un admin, **Then** obtiene el distintivo verificable.
     - **Given** un no estudiante, **When** no ha sido admitido, **Then** no puede publicar.
+
+- **UX-PRD-017 — Vendedor con plan de visibilidad (nuevo).**
+  - **Estado objetivo:** todo vendedor habilitado opera bajo un plan de `marketplace_plans`: `free` (Estudiante), `pro_student` (Emprendedor) o `business_local` (Comercio). El plan define cupo de publicaciones activas, multimedia permitida, vigencia, insignia, posicionamiento en el feed, presencia en campus y nivel de analíticas.
+  - **Regla:** el plan se activa por aprobación de administración a través de `sponsor_requests`; la app no procesa pagos ni cobra comisiones por venta. Los planes de pago no eximen de la verificación de identidad ni de la moderación comunitaria.
+  - **Detalle:** ver UX-MKT-017 y UX-MKT-018 en [`04-marketplace.md`](04-marketplace.md).
+  - **Criterios de aceptación:**
+    - **Given** un estudiante verificado sin plan de pago, **When** publica, **Then** opera con los límites de `free`.
+    - **Given** un comercio aprobado, **When** se le activa `business_local`, **Then** obtiene publicaciones ilimitadas, insignia oficial y carrusel destacado.
 
 ### 4.2 Matriz de capacidades
 La matriz resumida vive en [`README.md`](README.md#4-roles-y-matriz-de-capacidades-resumen);
@@ -143,12 +156,14 @@ el detalle de cada capacidad se especifica en el documento de su área.
 - **UX-PRD-025 — Publicidad honesta y no intrusiva.** El contenido patrocinado
   siempre se etiqueta, respeta límites de frecuencia y puede ocultarse/reportarse;
   nunca se disfraza de contenido orgánico. [ver `12-patrocinios.md`](12-patrocinios.md)
-- **UX-PRD-026 — Sin fines de lucro, financiamiento transparente y protección de
+- **UX-PRD-026 — Sostenibilidad, financiamiento transparente y protección de
   datos.** Comunidad Universitaria USAC es un proyecto **sin fines de lucro** que
-  se financia mediante **patrocinios y donaciones**. **No vende datos**, **no
-  utiliza rastreadores publicitarios** y **no reporta información a las
-  autoridades de la USAC**, salvo cuando lo exija una **obligación legal**. Esta
-  declaración es canónica y se refleja en la tarjeta de privacidad
+  se financia mediante **planes de suscripción de visibilidad del Marketplace**
+  (modelo SaaS/freemium definido en [`04-marketplace.md`](04-marketplace.md)),
+  **patrocinios y donaciones**; **no cobra comisiones por venta**. **No vende
+  datos**, **no utiliza rastreadores publicitarios** y **no reporta información a
+  las autoridades de la USAC**, salvo cuando lo exija una **obligación legal**.
+  Esta declaración es canónica y se refleja en la tarjeta de privacidad
   ([`06-perfil-y-cuenta.md`](06-perfil-y-cuenta.md), `UX-PRF-011`) y en el descargo
   legal ([`08-navegacion-shell-y-reglas.md`](08-navegacion-shell-y-reglas.md),
   `UX-REG-003`).

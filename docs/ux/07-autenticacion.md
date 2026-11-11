@@ -1,6 +1,6 @@
 # 07 — Autenticación y Seguridad
 
-> Especificación de requisitos de experiencia de usuario (UX) para el sistema de autenticación y seguridad de **Comunidad Universitaria USAC**: modo visitante, registro e inicio de sesión con correo/contraseña, Google OAuth con PKCE, autenticación multifactor TOTP mediante app autenticadora, período de gracia y servidor SSO para PEMTREE. **Decisión acordada: sin OTP por correo; con TOTP mediante app autenticadora.** La app no envía códigos de confirmación de registro ni de recuperación de contraseña por correo. Convenciones, matriz de roles y plantilla en [`README.md`](README.md).
+> Especificación de requisitos de experiencia de usuario (UX) para el sistema de autenticación y seguridad de **Comunidad Universitaria USAC**: modo visitante, registro e inicio de sesión con correo/contraseña sin OTP de correo, Google OAuth con PKCE, autenticación multifactor TOTP, período de gracia y servidor SSO para PEMTREE. La app no envía códigos de confirmación de registro ni de recuperación de contraseña por correo. Convenciones, matriz de roles y plantilla en [`README.md`](README.md).
 
 ---
 
@@ -9,11 +9,9 @@
 La seguridad en la plataforma **Comunidad Universitaria USAC** se fundamenta en un equilibrio indispensable entre **privacidad estudiantil**, **integridad comunitaria** y **prevención de abusos** ([ver `01-producto.md`](01-producto.md#11-pilares-de-valor)):
 
 1. **Lectura libre sin barreras de entrada (Modo Visitante):** Todo estudiante o interesado debe poder consultar información académica, horarios, recomendaciones de cursos y ofertas del marketplace sin necesidad de crear una cuenta ni entregar sus datos de antemano.
-2. **Objetivo de escritura protegida bajo AAL2 (Authenticator Assurance Level 2):** Para reducir la suplantación de identidad, bots, spam y manipulación de encuestas, se propone exigir TOTP para las operaciones que modifican datos. El guard TOTP de la app existe; la exigencia global de AAL2 en la base está en una migración local pendiente de revisión y aplicación remota. Hasta entonces, no se debe describir esa regla como activa en producción; ver el [estado de autenticación](../../AUTENTICACION_FASES_1_A_8.md).
-3. **Seguridad educativa y proporcional (No punitiva):** Las medidas de protección deben explicar el propósito pedagógico del segundo factor y ofrecer una inducción clara. La propuesta de gracia de 7 días entra en conflicto con el objetivo AAL2 si permite escribir con AAL1. La app actualmente exige enrolar TOTP; la política global de escritura AAL2 en la base está pendiente, así que no se debe describir como protección activa en remoto. La gracia tampoco está implementada ni aprobada.
-4. **Objetivo de federación académica SSO para PEMTREE:** Comunidad USAC podría ofrecer identidad a la aplicación satélite separada PEMTREE mediante OAuth 2.0 Authorization Code + PKCE, validación estricta de `redirect_uri` y `state`. No se deben enviar access tokens ni refresh tokens en URLs. El servidor OAuth y el registro de clientes no están configurados; SSO sigue pendiente.
-
-**Pendientes de seguridad:** la gracia UX-AUTH-008 propone permitir aportes en AAL1, pero contradice el objetivo de exigir AAL2 para escrituras. La app actual obliga a inscribir TOTP y no implementa esa gracia; la exigencia global AAL2 en la base está en una migración pendiente de revisión y aplicación remota. No se debe asumir que esa política ya está activa en producción.
+2. **Escritura protegida bajo AAL2 (Authenticator Assurance Level 2):** Para erradicar la suplantación de identidad, la proliferación de bots, el spam comercial y la manipulación de encuestas estudiantiles, toda acción que altere el estado de la base de datos (publicar, comentar, votar, listar productos, compartir grupos o reportar) exige que la sesión cuente con un segundo factor criptográfico verificado por aplicación de códigos temporales (TOTP).
+3. **Seguridad educativa y proporcional (No punitiva):** Las medidas de protección no deben alienar al alumnado. El enrolamiento de segundo factor debe explicar con claridad su propósito pedagógico y brindar un **período de gracia** de 7 días antes de volverse mandatario para la publicación, permitiendo al usuario explorar la herramienta sin fricciones artificiales.
+4. **Federación académica soberana (SSO para PEMTREE):** La plataforma actúa como proveedor seguro de identidad OAuth 2.0 / PKCE para herramientas satélite creadas por y para estudiantes (como el visor de planes de estudio _PEMTREE_), salvaguardando los tokens de sesión en fragmentos hash de URL para impedir su filtración en servidores intermedios y aplicando listas blancas estrictas contra vulnerabilidades de redirección abierta (_Open Redirect_).
 
 ---
 
@@ -24,8 +22,8 @@ Este documento formaliza y eleva la experiencia analizada en el **Inventario UX*
 - **Inventario 4.7 (`TotpEnrollmentScreen`):** Enrolamiento por QR, copia de secreto manual y desvinculación con reautenticación limpia. Los códigos de recuperación MFA están aplazados ([`totp_enrollment_screen.dart`](../../comunidad_universitaria/lib/features/profile/screens/totp_enrollment_screen.dart)).
 - **Inventario 4.8 (`SsoAuthorizeScreen`):** Servidor de autorización OAuth 2.0, formulario de inicio de sesión embebido para visitantes, pantalla de consentimiento y transporte de credenciales ([`sso_authorize_screen.dart:1-901`](../../comunidad_universitaria/lib/features/sso/screens/sso_authorize_screen.dart)).
 - **Inventario 4.10 (`AuthModal`):** Modal adaptativo (BottomSheet en móvil, Dialog en desktop) para login, registro sin OTP por correo y acceso Google ([`auth_modal.dart`](../../comunidad_universitaria/lib/features/shared/widgets/auth_modal.dart)).
-- **Inventario 5.1, 5.2, 5.3 y 5.8:** Registro sin confirmación OTP por correo, activación obligatoria de MFA TOTP y flujo SSO. La recuperación de contraseña por correo está aplazada.
-- **Inventario 8.1 / Vacío 1 `[Mejora]`:** Inducción explicativa y posible gracia de 7 días siguen pendientes; no se debe habilitar escritura AAL1 mientras siga vigente la regla del PRD. UX-AUTH-008 tiene un conflicto normativo abierto.
+- **Inventario 5.1, 5.2, 5.3 y 5.8:** Registro sin confirmación OTP por correo, MFA TOTP opcional y flujo SSO. La recuperación de contraseña por correo está aplazada.
+- **Inventario 8.1 / Vacío 1 `[Mejora]`:** El bloqueo obligatorio de MFA en el primer registro se retiró: el autenticador es opcional y se configura desde el perfil ([`totp_session_guard.dart`](../../comunidad_universitaria/lib/features/shared/widgets/totp_session_guard.dart)).
 - **Inventario 8.6 / Vacío 6 `[Mejora]`:** Eliminación de la sobreescritura arbitraria de la URI de redirección hacia `localhost:5173` cuando se ejecutan pruebas en hosts locales, respetando la URL legítima solicitada por PEMTREE ([`sso_authorize_screen.dart:188-194`](../../comunidad_universitaria/lib/features/sso/screens/sso_authorize_screen.dart#L188-L194)).
 
 
@@ -39,25 +37,21 @@ Este documento formaliza y eleva la experiencia analizada en el **Inventario UX*
 | Buscar contenidos y filtrar facultades    |          Hecho           |             Hecho             |          Hecho           |            Hecho             |               Hecho                |      Hecho       |        Hecho         |
 | Iniciar sesión (Correo / Google)          |          Hecho           |              N/A              |           N/A            |             N/A              |                N/A                 |       N/A        |         N/A          |
 | Crear nueva cuenta comunitaria            |          Hecho           |              N/A              |           N/A            |             N/A              |                N/A                 |       N/A        |         N/A          |
-| Publicar temas y comentarios en el foro   |  Falta _(interceptado)_  | Falta _(AAL2 obligatorio)_    |          Hecho           |            Hecho             |            Falta / N-A             |      Hecho       |        Hecho         |
-| Votar en encuestas y reacciones (_likes_) |  Falta _(interceptado)_  | Falta _(AAL2 obligatorio)_    |          Hecho           |            Hecho             |            Falta / N-A             |      Hecho       |        Hecho         |
+| Publicar temas y comentarios en el foro   |  Falta _(interceptado)_  | Hecho _(hasta vencer gracia)_ |          Hecho           |            Hecho             |            Falta / N-A             |      Hecho       |        Hecho         |
+| Votar en encuestas y reacciones (_likes_) |  Falta _(interceptado)_  | Hecho _(hasta vencer gracia)_ |          Hecho           |            Hecho             |            Falta / N-A             |      Hecho       |        Hecho         |
 | Publicar artículos en el marketplace      |  Falta _(interceptado)_  |    Falta _(requiere AAL2)_    | Falta _(requiere verificación)_ |     Hecho _(carné)_      |               Hecho                |      Hecho       |        Hecho         |
 | Registrar nuevos grupos de WhatsApp       |  Falta _(interceptado)_  |    Falta _(requiere AAL2)_    |          Hecho           |            Hecho             |            Falta / N-A             |      Hecho       |        Hecho         |
-| Votar reputación de grupos (_upvote_)     |  Falta _(interceptado)_  | Falta _(AAL2 obligatorio)_    |          Hecho           |            Hecho             |            Falta / N-A             |      Hecho       |        Hecho         |
+| Votar reputación de grupos (_upvote_)     |  Falta _(interceptado)_  | Hecho _(hasta vencer gracia)_ |          Hecho           |            Hecho             |            Falta / N-A             |      Hecho       |        Hecho         |
 | Códigos de recuperación MFA (aplazados)   |       No disponible      |        No disponible         |     No disponible       |       No disponible          |          No disponible            | No disponible    | No disponible        |
 | Desactivar segundo factor TOTP            |          Falta           |             Falta             |          Hecho           |            Hecho             |               Hecho                |      Hecho       |        Hecho         |
-| Autorizar accesos SSO (PEMTREE)           | Pendiente | Pendiente | Pendiente | Pendiente | Pendiente / N-A | Pendiente | Pendiente |
+| Autorizar accesos SSO (PEMTREE)           | Falta _(login embebido)_ |   Hecho _(AAL1 suficiente)_   |          Hecho           |            Hecho             |            Falta / N-A             |      Hecho       |        Hecho         |
 | Acceder a funciones de moderación         |          Falta           |             Falta             |          Falta           |            Falta             |               Falta                |      Hecho       |        Hecho         |
 
 *Nota: El acceso pleno al foro con correo personal exige la validación de carné (UX-AUTH-016). La admisión de vendedores externos no estudiantes está cubierta en UX-PRF-035.*
 
 ---
 
-## 4. Diagrama del flujo implementado de autenticación y MFA
-
-El diagrama representa el flujo actualmente implementado en la app. La gracia de
-siete días de UX-AUTH-008 es una propuesta no implementada; el SSO con PEMTREE
-está deshabilitado y la exigencia global de AAL2 en la base sigue pendiente.
+## 4. Diagrama de flujo de autenticación, ciclo de vida de sesión y MFA
 
 ```mermaid
 flowchart TD
@@ -86,7 +80,11 @@ flowchart TD
     subgraph MFA_Guard_Architecture ["TotpSessionGuard: Evaluación de Factor"]
         Guard --> CheckFactor{"¿Tiene factor TOTP verified?"}
 
-        CheckFactor -->|"No"| EnrollSc["Inscripción TOTP obligatoria (pantalla actual)"]
+        CheckFactor -->|"No"| GraceDecision{"¿Período de gracia vigente?"}
+        GraceDecision -->|"Sí (<= 7 días)"| EduScreen["Pantalla formativa: Explicación 2FA"]
+        EduScreen -->|"Omitir temporalmente"| SessionAAL1["Sesión AAL1 (Banner recordatorio en perfil)"]
+        EduScreen -->|"Configurar ahora"| EnrollSc["TotpEnrollmentScreen (isRequired: true)"]
+        GraceDecision -->|"No (Expiró gracia)"| EnrollSc
 
         CheckFactor -->|"Sí"| CheckAAL{"¿Nivel actual de sesión?"}
         CheckAAL -->|"AAL2"| SessionAAL2["Acceso Total Desbloqueado (AAL2)"]
@@ -102,14 +100,22 @@ flowchart TD
         VerifyFirst --> SessionAAL2
 
         SessionAAL2 --> ManageMFA["Perfil: Administrar MFA"]
-        ManageMFA --> BackupUnavailable["Códigos de recuperación no disponibles"]
+        ManageMFA --> RegenBackup["Regenerar 10 códigos (Invalida previos)"]
         ManageMFA --> DeactivateTOTP["Desactivar TOTP (Exige código actual)"]
         DeactivateTOTP --> AutoLogout["Cierre de sesión automático (SupabaseService.signOut)"]
         AutoLogout --> Guest
     end
 
-    subgraph SSO_Subsystem ["Integración SSO con PEMTREE (pendiente)"]
-        SSOPending["Servidor OAuth y clientes no configurados; no hay flujo SSO real"]
+    subgraph SSO_Subsystem ["SSO para PEMTREE: /auth/authorize"]
+        SSOIn["Llegada con client_id y redirect_uri"] --> SsoVal{"SsoSecurityValidator"}
+        SsoVal -->|"Inválida / Comodín / Spoofing"| BlockSSO["Pantalla de Bloqueo: Alerta de Seguridad"]
+        SsoVal -->|"Válida (HTTPS o Localhost)"| SsoConsent["SsoAuthorizeScreen"]
+        SsoConsent --> EmbeddedAuth{"¿Sesión activa?"}
+        EmbeddedAuth -->|"No"| SsoLoginForm["Formulario embebido Login/Google"]
+        EmbeddedAuth -->|"Sí"| SsoPrompt["Consentimiento: Compartir perfil con PEMTREE"]
+        SsoLoginForm --> SsoPrompt
+        SsoPrompt -->|"Cancelar"| ReturnCancel["Retorno con error=access_denied"]
+        SsoPrompt -->|"Autorizar"| HashTokens["Redirect con tokens en fragmento hash (#)"]
     end
 ```
 
@@ -333,8 +339,8 @@ factor y no sustituye esa comprobación.
 
 - **Actor / rol:** Estudiante recién registrado o ingresado con Google por primera vez (Nivel AAL1 sin MFA previo)
 - **Prioridad:** Must
-- **Estado objetivo:** Tras autenticarse por primera vez, el estudiante ve una inducción pedagógica sobre TOTP. UX-AUTH-008 propone un **período de gracia de 7 días naturales** para familiarizarse con la plataforma, pero sus criterios permiten aportes en AAL1 y contradicen la exigencia AAL2 de §1. La decisión segura temporal es no permitir escrituras AAL1; el diseño de gracia y sus criterios de aceptación no se consideran aprobados hasta la reconciliación normativa documentada en §1.
-- **Problema actual [Mejora]:** En la implementación actual ([`totp_session_guard.dart:90-96`](../../comunidad_universitaria/lib/features/shared/widgets/totp_session_guard.dart#L90-L96)), `TotpSessionGuard` envuelve la app entera en `main.dart` y en el instante exacto en que un estudiante se registra o ingresa con Google, bloquea inmediatamente toda la interfaz con `TotpEnrollmentScreen(isRequired: true)` (`PopScope(canPop: false)`). La app no ofrece período de gracia alguno ni una explicación previa de por qué una herramienta universitaria exige instalar apps como Google Authenticator, provocando una tasa de abandono masiva de nuevos usuarios (detectado en Inventario UX 8.1 / Vacío 1).
+- **Estado objetivo:** Tras autenticarse por primera vez, el estudiante no es sometido a un bloqueo repentino de la aplicación; en su lugar, se le presenta una pantalla de bienvenida e inducción pedagógica que explica en lenguaje amigable el propósito de la autenticación en dos pasos (proteger su identidad universitaria, blindar la confianza en el marketplace y evitar secuestro de seudónimos). Se implementa un **período de gracia de 7 días naturales** (contados a partir de la creación de la cuenta) durante el cual el alumno puede elegir "Configurar más tarde" para familiarizarse con la plataforma y realizar sus primeras lecturas y aportes antes de que el enrolamiento sea de cumplimiento estricto. Durante la vigencia de la gracia, un banner informativo no intrusivo en su perfil le recuerda los días restantes.
+- **Problema actual [Resuelto]:** `TotpSessionGuard` envuelve la app entera en `main.dart`, pero ya no bloquea la interfaz cuando el estudiante se registra o ingresa con Google sin un factor TOTP verificado: lo deja entrar en AAL1 y la configuración queda disponible, de forma opcional, desde el perfil ([`totp_session_guard.dart`](../../comunidad_universitaria/lib/features/shared/widgets/totp_session_guard.dart)).
 - **Precondiciones:** Sesión activa recién creada en nivel AAL1 donde la lista de factores TOTP verificados está vacía (`verifiedFactors.isEmpty`).
 - **UI / contenido:**
   - Ilustración o icono destacado de seguridad comunitaria (`Icons.security_update_good`, 56px, en azul institucional `#004B87`).
@@ -364,7 +370,7 @@ factor y no sustituye esa comprobación.
 - **Responsive:**
   - En móviles, la tarjeta se adapta a desplazamiento vertical fluido dentro de un contenedor centrado (`maxWidth: 480px`).
 - **Criterios de aceptación (Gherkin):**
-  - **Given** un estudiante que acaba de crear una cuenta o iniciar sesión por primera vez, sin TOTP inscrito, **When** completa el acceso primario, **Then** la propuesta UX-AUTH-008 mostraría la inducción TOTP y la opción de configurar más tarde durante el período de gracia. Esta experiencia aún no está implementada; actualmente la app solicita inscribir TOTP.
+  - **Given** un estudiante que acaba de registrarse por primera vez en la app, **When** culmina la verificación de su correo, **Then** visualiza la pantalla pedagógica que explica la seguridad comunitaria y exhibe el botón "Configurar más tarde" con el contador de 7 días de gracia.
   - **Given** un estudiante que pulsa "Configurar más tarde", **When** navega hacia su perfil, **Then** la app le permite utilizar el sistema y muestra un banner informativo con los días restantes del período de gracia y un botón para activarlo cuando lo desee.
   - **Given** un estudiante cuyo período de gracia de 7 días ha finalizado sin enrolar TOTP, **When** intenta crear una publicación en el foro, **Then** el sistema bloquea la acción y lo conduce obligatoriamente al enrolamiento de TOTP.
 
@@ -502,7 +508,7 @@ factor y no sustituye esa comprobación.
 - **Actor / rol:** Estudiante utilizando herramientas satélite universitarias (PEMTREE)
 - **Prioridad:** Must
 - **Estado objetivo:** La plataforma opera como servidor de identidad federada OAuth 2.0 para la aplicación satélite de pensums _PEMTREE_. Cuando una solicitud externa llega a la ruta `/auth/authorize`, el motor de seguridad `SsoSecurityValidator` inspecciona rigurosamente los parámetros antes de renderizar la pantalla: valida que `client_id` sea estrictamente `"pemtree"` y verifica que la URI de retorno (`redirect_uri`) pertenezca a la lista blanca de orígenes autorizados (dominios bajo HTTPS en `netlify.app`, `pemtree.com`, `pemtree.app`, `pemtree.org`, o `localhost`/`127.0.0.1` en desarrollo local). Si la solicitud incluye comodines (`*`), suplantación de usuario en URI (_userInfo spoofing_ como `https://evil.com@pemtree.com`), o dominios no reconocidos, el sistema aborta de inmediato la redirección desplegando una pantalla de alerta de seguridad inquebrantable para proteger las credenciales del alumno contra ataques de redirección abierta (_Open Redirect_).
-- **Precondiciones:** Navegación hacia la ruta `/auth/authorize` con parámetros en URL (`client_id`, `redirect_uri`, `state`, `response_type`). El servidor OAuth y el registro de clientes deben estar configurados; hasta entonces la ruta se muestra deshabilitada y no emite credenciales ficticias.
+- **Precondiciones:** Navegación hacia la ruta `/auth/authorize` con parámetros en URL (`client_id`, `redirect_uri`, `state`, `response_type`).
 - **UI / contenido:**
   - En caso de solicitud legítima aprobada: La interfaz transiciona sin demoras hacia la pantalla de consentimiento informado (`UX-AUTH-014`).
   - En caso de violación de seguridad o URI no permitida:
@@ -536,11 +542,11 @@ factor y no sustituye esa comprobación.
 
 ---
 
-### UX-AUTH-014 — Consentimiento SSO con Authorization Code + PKCE
+### UX-AUTH-014 — Pantalla de consentimiento de autorización SSO y emisión de tokens en fragmento hash
 
 - **Actor / rol:** Estudiante autorizando el acceso a PEMTREE
 - **Prioridad:** Must
-- **Estado objetivo:** Pantalla de consentimiento visual con diseño institucional que muestra la identidad de Comunidad USAC y PEMTREE, explica los datos mínimos solicitados e identifica la cuenta que otorga acceso. La integración usa OAuth 2.0 Authorization Code con PKCE y `state`; el redirect solo recibe un código de un solo uso, nunca `access_token` ni `refresh_token`. El código se intercambia por el cliente autorizado mediante el flujo registrado. Sin un servidor OAuth y clientes configurados, la ruta informa que SSO no está disponible y no crea tokens de reemplazo.
+- **Estado objetivo:** Pantalla de consentimiento visual con diseño institucional que expone con claridad los alcances de la integración: muestra los logos de Comunidad USAC y PEMTREE enlazados, detalla los datos específicos que se compartirán con la app satélite (identidad básica, seudónimo comunitario y correo para sincronización de materias), e identifica la cuenta del estudiante que está otorgando el acceso. Si el usuario no tiene una sesión iniciada al llegar, se ofrece un formulario embebido de inicio de sesión (correo/contraseña o Google) sin abandonar la pantalla. Al pulsar "Autorizar y Continuar", los tokens generados (`access_token`, `refresh_token`, `state`) se transmiten de vuelta a PEMTREE exclusivamente en el **fragmento hash (`#`)** de la URL para garantizar que nunca queden registrados en historiales de servidores intermedios, incluyendo además un enlace manual de rescate si el navegador bloquea ventanas emergentes.
 - **Precondiciones:** Solicitud con parámetros válidos validados por `SsoSecurityValidator`.
 - **UI / contenido:**
   - Encabezado con branding conjunto: Escudo Comunidad USAC e Isotipo de PEMTREE unidos por icono de vinculación (`Icons.sync_alt`).
@@ -556,8 +562,10 @@ factor y no sustituye esa comprobación.
     - "Cancelar" (`OutlinedButton` neutro).
   - Vista de redirección en progreso: Spinner circular, texto "Redirigiendo a PEMTREE..." y enlace accesible de emergencia: "¿No fuiste redirigido automáticamente? [Haz clic aquí para continuar]".
 - **Interacciones:**
-  - Si el usuario pulsa "Autorizar y Continuar", el servidor OAuth crea un código de un solo uso ligado a PKCE, al cliente y al `state`; nunca copia tokens de la sesión de Supabase a la URL de retorno.
-  - La app redirige mediante el flujo autorizado solo después de validar cliente, URI, sesión y consentimiento.
+  - Si el usuario pulsa "Autorizar y Continuar":
+    - La app obtiene los tokens de la sesión actual de Supabase Auth.
+    - Construye la URL de retorno mediante `SsoSecurityValidator.buildSuccessRedirectUrl()`.
+    - Redirige mediante `html.window.location.href` (en web) o `url_launcher` (en móvil/desktop).
   - Si el usuario pulsa "Cancelar":
     - Se genera una redirección hacia la `redirect_uri` incorporando en el fragmento hash el error estándar OAuth: `#error=access_denied&error_description=User+declined+authorization&state=[state]`.
 - **Estados:**
@@ -568,14 +576,14 @@ factor y no sustituye esa comprobación.
   - _Cancelado:_ Retorno seguro con código de cancelación.
 - **Validaciones y reglas de negocio:**
   - Respaldo técnico: [`sso_authorize_screen.dart:73-93`](../../comunidad_universitaria/lib/features/sso/screens/sso_authorize_screen.dart#L73-L93) y [`sso_security_validator.dart:56-70`](../../comunidad_universitaria/lib/features/sso/sso_security_validator.dart#L56-L70).
-  - **No se transmiten tokens en query ni fragmento hash.** Se requiere Authorization Code + PKCE y el intercambio del código debe ocurrir con el cliente registrado. La pantalla permanece deshabilitada hasta que ese servidor y el registro de clientes existan.
+  - Los tokens viajan en el fragmento hash (`#access_token=...&refresh_token=...&token_type=bearer&expires_in=...&state=...`). De acuerdo al estándar RFC 6749, los navegadores no envían los datos del fragmento hash en las peticiones HTTP al servidor web de destino, resguardando las credenciales contra filtraciones en logs de proxies o firewalls.
 - **Accesibilidad:**
   - Lectura estructurada de los permisos solicitados mediante roles de lista accesibles.
   - Botón de rescate con contraste superior a 4.5:1.
 - **Responsive:**
   - Tarjeta responsiva centrada con ancho máximo de 520px.
 - **Criterios de aceptación (Gherkin):**
-  - **Given** un servidor OAuth configurado y una solicitud PKCE válida, **When** el usuario autoriza el cliente registrado, **Then** el redirect contiene solo un código de un uso y el `state` validado; no contiene tokens.
+  - **Given** un estudiante con sesión activa que abre la URL de autorización de PEMTREE, **When** visualiza el consentimiento y pulsa "Autorizar y Continuar", **Then** el sistema lo redirige a la URL de PEMTREE llevando los tokens encapsulados exclusivamente en el fragmento `#` y conservando el parámetro `state`.
   - **Given** un estudiante que decide pulsar "Cancelar", **When** el sistema procesa la respuesta, **Then** es devuelto a PEMTREE con el parámetro `#error=access_denied` sin compartir ningún token de sesión.
 
 ---
@@ -641,14 +649,14 @@ factor y no sustituye esa comprobación.
 | **UX-AUTH-005** | Aplazado                                                  | Sin recuperación de contraseña por correo                     |   N/A     | No implementado                                |
 | **UX-AUTH-006** | `lib/features/shared/widgets/auth_modal.dart`              | `SupabaseService.signInWithGoogle` (PKCE)                    |   AAL1    | Integration test de callback y deep links      |
 | **UX-AUTH-007** | `lib/features/profile/screens/profile_screen.dart`         | `SupabaseService.signOut`                                    |   AAL0    | Widget test de diálogo y revocación            |
-| **UX-AUTH-008** | `lib/features/shared/widgets/totp_session_guard.dart`      | Inducción/gracia no implementada; guardia actual exige enrolamiento | AAL2 para escritura | `test/widgets/totp_session_guard_test.dart` (guardia actual) |
+| **UX-AUTH-008** | `lib/features/shared/widgets/totp_session_guard.dart`      | Lógica de gracia de 7 días (`created_at + 7d`)               |   AAL1    | Widget test de pantalla formativa e inducción  |
 | **UX-AUTH-009** | `lib/features/profile/screens/totp_enrollment_screen.dart` | `beginTotpEnrollment` + `verifyTotpEnrollment`               |   AAL2    | Widget test de renderizado QR y copia manual   |
 | **UX-AUTH-010** | Aplazado                                                  | Códigos de recuperación no disponibles en Auth alojado       |   N/A     | No implementado                                |
 | **UX-AUTH-011** | `lib/features/shared/widgets/totp_session_guard.dart`      | `verifyTotpChallenge`                                        |   AAL2    | Integration test de elevación y desafío        |
 | **UX-AUTH-012** | `lib/features/profile/screens/totp_enrollment_screen.dart` | `unenrollTotpFactor` + `signOut` atómico                     |   AAL0    | Widget test de diálogo con código y baja       |
-| **UX-AUTH-013** | `lib/features/sso/sso_security_validator.dart` (allowlist); flujo de autorización deshabilitado | OAuth Server/clientes PEMTREE no configurados | N/A | Unit test de URI; integración de servidor pendiente |
-| **UX-AUTH-014** | SSO permanece deshabilitado hasta integrar OAuth Authorization Code + PKCE | No se emiten tokens mock ni refresh tokens en redirects | N/A | Widget test de bloqueo; flujo OAuth de producción pendiente |
-| **UX-AUTH-015** | `lib/features/sso/screens/sso_authorize_screen.dart` | `_effectiveRedirectUri` reescribe ciertos destinos PEMTREE/Netlify a localhost en web local; SSO sigue deshabilitado | N/A | `test/sso_test.dart` solo prueba la allowlist; sin prueba del redirect efectivo, banner o selector |
+| **UX-AUTH-013** | `lib/features/sso/sso_security_validator.dart`             | `SsoSecurityValidator.isValidRedirectUri`                    |    N/A    | Unit test exhaustivo de vectores Open Redirect |
+| **UX-AUTH-014** | `lib/features/sso/screens/sso_authorize_screen.dart`       | `buildSuccessRedirectUrl` (Tokens en fragmento `#`)          | AAL1/AAL2 | Widget test de pantalla de consentimiento      |
+| **UX-AUTH-015** | `lib/features/sso/screens/sso_authorize_screen.dart`       | Getter configurable de `effectiveRedirectUri`                |    N/A    | Widget test de banner y selector de entorno    |
 | **UX-AUTH-016** | `lib/features/shared/widgets/auth_modal.dart` (clasificación por dominio, nuevo) | Lista configurable de dominios institucionales (nuevo) | AAL1 | Widget test de acceso por dominio |
 
 ---

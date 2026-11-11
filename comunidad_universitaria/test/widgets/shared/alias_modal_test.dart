@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:comunidad_universitaria/core/config/app_theme.dart';
+import 'package:comunidad_universitaria/core/constants/anonymous_aliases.dart';
 import 'package:comunidad_universitaria/features/profile/widgets/alias_modal.dart';
 import '../../helpers/test_setup.dart';
 
@@ -13,7 +14,7 @@ void main() {
   setupTestLifecycle();
 
   Widget buildTestModal({
-    String currentAlias = 'Usuario Original #100',
+    String currentAlias = 'Compilador Desvelado',
     Function(String)? onAliasSaved,
   }) {
     return MaterialApp(
@@ -28,7 +29,9 @@ void main() {
   }
 
   group('AliasModal Widget Tests', () {
-    testWidgets('Renderiza en vista móvil (400x800) con alias actual', (tester) async {
+    testWidgets('Renderiza en vista móvil (400x800) sin TextField editable', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(400, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -37,31 +40,53 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Tu Seudónimo Estudiantil'), findsOneWidget);
-      expect(find.text('Aparece al publicar en el foro y compartir grupos'), findsOneWidget);
-      expect(find.widgetWithText(TextField, 'Alias visible'), findsOneWidget);
-      expect(find.text('Usuario Original #100'), findsOneWidget);
+      expect(
+        find.text('Aparece al publicar en el foro y compartir grupos'),
+        findsOneWidget,
+      );
+      // Ya NO debe existir un TextField editable de alias
+      expect(find.byType(TextField), findsNothing);
+      expect(find.text('Compilador Desvelado'), findsOneWidget);
       expect(find.text('Cancelar'), findsOneWidget);
       expect(find.text('Guardar Alias'), findsOneWidget);
+      expect(find.textContaining('Art. 12'), findsOneWidget);
     });
 
-    testWidgets('Genera un seudónimo aleatorio al presionar el botón shuffle', (tester) async {
-      tester.view.physicalSize = const Size(1200, 800);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
+    testWidgets(
+      'Al pulsar el botón de dados, el alias cambia y sigue el patrón del catálogo',
+      (tester) async {
+        tester.view.physicalSize = const Size(1200, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
 
-      await tester.pumpWidget(buildTestModal());
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          buildTestModal(currentAlias: 'Compilador Desvelado'),
+        );
+        await tester.pumpAndSettle();
 
-      final shuffleBtn = find.byTooltip('Generar aleatorio');
-      expect(shuffleBtn, findsOneWidget);
+        final diceBtn = find.byTooltip('Generar alias anónimo');
+        expect(diceBtn, findsOneWidget);
 
-      await tester.tap(shuffleBtn);
-      await tester.pumpAndSettle();
+        await tester.tap(diceBtn);
+        await tester.pumpAndSettle();
 
-      expect(find.textContaining('Estudiante USAC #'), findsOneWidget);
-    });
+        // El alias anterior no debe estar visible si se generó uno nuevo
+        // Buscamos cualquier Text widget que sea un alias válido del catálogo
+        final textWidgets = tester.widgetList<Text>(find.byType(Text));
+        final generatedAliases = textWidgets
+            .map((w) => w.data ?? '')
+            .where((txt) => AnonymousAliasGenerator.isValid(txt))
+            .toList();
 
-    testWidgets('Guardar alias dispara callback con el nuevo valor ingresado', (tester) async {
+        expect(generatedAliases.isNotEmpty, isTrue);
+        final newAlias = generatedAliases.first;
+        expect(AnonymousAliasGenerator.isValid(newAlias), isTrue);
+      },
+    );
+
+    testWidgets('Guardar dispara callback con un alias válido generado', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(600, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -70,6 +95,7 @@ void main() {
 
       await tester.pumpWidget(
         buildTestModal(
+          currentAlias: 'Compilador Desvelado',
           onAliasSaved: (val) {
             savedAlias = val;
           },
@@ -77,15 +103,16 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final field = find.widgetWithText(TextField, 'Alias visible');
-      await tester.enterText(field, 'Arquitecto Sancarlista #999');
+      final diceBtn = find.byTooltip('Generar alias anónimo');
+      await tester.tap(diceBtn);
       await tester.pumpAndSettle();
 
       final saveBtn = find.text('Guardar Alias');
       await tester.tap(saveBtn);
       await tester.pumpAndSettle();
 
-      expect(savedAlias, 'Arquitecto Sancarlista #999');
+      expect(savedAlias, isNotNull);
+      expect(AnonymousAliasGenerator.isValid(savedAlias!), isTrue);
     });
   });
 }

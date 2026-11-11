@@ -18,6 +18,7 @@ import '../widgets/post_card.dart';
 import 'post_detail_screen.dart';
 import '../../groups/screens/groups_screen.dart';
 import '../../profile/screens/profile_screen.dart';
+import '../../reviews/screens/seccion_reviews_screen.dart';
 import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/empty_state_widget.dart';
 
@@ -87,6 +88,7 @@ class ForumScreenState extends State<ForumScreen> {
   bool _isOffline = false;
   UserProfile? _currentUserProfile;
   String _searchQuery = '';
+  FeedMode _feedMode = FeedMode.hot;
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _feedScrollController = ScrollController();
 
@@ -244,6 +246,7 @@ class ForumScreenState extends State<ForumScreen> {
         carrera: _activeServer.carreraId,
         searchQuery: _searchQuery,
         showOnlyBookmarks: isBookmarks,
+        feedMode: _feedMode,
       );
 
       if (mounted) {
@@ -962,6 +965,9 @@ class ForumScreenState extends State<ForumScreen> {
         // Barra superior fija para todos los canales con bienvenida, buscador y botón de publicar
         _buildDiscordWelcomeHero(theme, isDark),
 
+        // Selector compacto de modo de feed: "En Llamas" vs "Recientes"
+        _buildFeedModeSelector(theme, isDark),
+
         if (_isOffline) ...[
           Container(
             margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
@@ -1055,6 +1061,25 @@ class ForumScreenState extends State<ForumScreen> {
             onRepost: () => _handleQuotePost(post),
             onShare: () => _sharePost(post),
             onVotePoll: (pollId, optionId) => _handleVotePoll(pollId, optionId),
+            onDelete: post.isMine
+                ? () async {
+                    final ok = await ForumService.softDeletePost(post.id);
+                    if (!mounted) return;
+                    if (ok) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Publicación eliminada')),
+                      );
+                      _loadPosts();
+                    } else {
+                      final msg = post.isLegalHold
+                          ? 'No se puede eliminar: contenido bajo retención legal.'
+                          : 'No se pudo eliminar la publicación.';
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text(msg)));
+                    }
+                  }
+                : null,
             onReport: (reason) async {
               final success = await ForumService.reportPost(
                 postId: post.id,
@@ -1073,6 +1098,115 @@ class ForumScreenState extends State<ForumScreen> {
             },
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildFeedModeSelector(ThemeData theme, bool isDark) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF232428) : const Color(0xFFF1F5F9),
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? const Color(0xFF202225) : const Color(0xFFE2E8F0),
+            width: 1,
+          ),
+        ),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            ChoiceChip(
+              avatar: Icon(
+                Icons.local_fire_department,
+                size: 16,
+                color: _feedMode == FeedMode.hot
+                    ? Colors.white
+                    : (isDark
+                          ? Colors.orange.shade300
+                          : Colors.orange.shade700),
+              ),
+              label: const Text('En Llamas'),
+              labelStyle: TextStyle(
+                fontSize: 12,
+                fontWeight: _feedMode == FeedMode.hot
+                    ? FontWeight.bold
+                    : FontWeight.normal,
+                color: _feedMode == FeedMode.hot
+                    ? Colors.white
+                    : (isDark ? Colors.grey.shade300 : const Color(0xFF334155)),
+              ),
+              selected: _feedMode == FeedMode.hot,
+              selectedColor: isDark
+                  ? const Color(0xFFEA580C)
+                  : const Color(0xFFF97316),
+              backgroundColor: isDark ? const Color(0xFF2B2D31) : Colors.white,
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              onSelected: (selected) {
+                if (selected && _feedMode != FeedMode.hot) {
+                  setState(() => _feedMode = FeedMode.hot);
+                  _loadPosts();
+                }
+              },
+            ),
+            const SizedBox(width: 8),
+            ChoiceChip(
+              avatar: Icon(
+                Icons.schedule,
+                size: 16,
+                color: _feedMode == FeedMode.recent
+                    ? Colors.white
+                    : (isDark
+                          ? Colors.blue.shade300
+                          : Colors.blue.shade700),
+              ),
+              label: const Text('Recientes'),
+              labelStyle: TextStyle(
+                fontSize: 12,
+                fontWeight: _feedMode == FeedMode.recent
+                    ? FontWeight.bold
+                    : FontWeight.normal,
+                color: _feedMode == FeedMode.recent
+                    ? Colors.white
+                    : (isDark ? Colors.grey.shade300 : const Color(0xFF334155)),
+              ),
+              selected: _feedMode == FeedMode.recent,
+              selectedColor: isDark
+                  ? const Color(0xFF2563EB)
+                  : const Color(0xFF3B82F6),
+              backgroundColor: isDark ? const Color(0xFF2B2D31) : Colors.white,
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              onSelected: (selected) {
+                if (selected && _feedMode != FeedMode.recent) {
+                  setState(() => _feedMode = FeedMode.recent);
+                  _loadPosts();
+                }
+              },
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(Icons.rate_review_outlined, size: 20),
+              tooltip: 'Reseñas de secciones',
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.all(6),
+              constraints: const BoxConstraints(),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const SeccionReviewsScreen(),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

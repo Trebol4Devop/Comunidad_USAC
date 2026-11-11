@@ -1,0 +1,6 @@
+# Configuracion de Cloudflare Pages para Zanate.
+# El deploy lo hace .github/workflows/deploy-cloudflare-pages.yml con
+# `wrangler pages deploy` (Direct Upload, sin build en Cloudflare).
+name = "zanate"
+pages_build_output_dir = "comunidad_universitaria/build/web"
+compatibility_date = "2026-11-10"

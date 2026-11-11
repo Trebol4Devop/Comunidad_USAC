@@ -712,8 +712,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                         return MarketplaceCard(
                           item: item,
                           isOwner:
-                              item.userId != null &&
-                              item.userId == SupabaseService.currentUserId,
+                              item.isMine ||
+                              (item.userId != null &&
+                                  item.userId == SupabaseService.currentUserId),
                           onUpvote: () => _handleToggleUpvote(item),
                           onStatusChanged: (newStatus) =>
                               _handleUpdateItemStatus(item, newStatus),
@@ -738,8 +739,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                         return MarketplaceCard(
                           item: item,
                           isOwner:
-                              item.userId != null &&
-                              item.userId == SupabaseService.currentUserId,
+                              item.isMine ||
+                              (item.userId != null &&
+                                  item.userId == SupabaseService.currentUserId),
                           onUpvote: () => _handleToggleUpvote(item),
                           onStatusChanged: (newStatus) =>
                               _handleUpdateItemStatus(item, newStatus),

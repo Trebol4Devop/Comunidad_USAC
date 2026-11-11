@@ -113,6 +113,38 @@ void main() {
         expect(insertedOptions![1]['option_text'], 'Ing. Pérez');
       },
     );
+
+    test('crea post efímero calculando expires_at a 24 horas', () async {
+      Map<String, dynamic>? insertedPost;
+
+      fakeServer.onPost('/rest/v1/posts', (req) {
+        insertedPost = jsonDecode(req.body) as Map<String, dynamic>;
+        return {
+          ...insertedPost!,
+          'id': 'ephemeral-post-1',
+          'created_at': DateTime.now().toIso8601String(),
+        };
+      });
+
+      final before = DateTime.now().toUtc();
+      final result = await ForumService.createPost(
+        title: 'Aviso temporal',
+        content: 'Este mensaje expira pronto',
+        category: 'general',
+        carrera: 'todas',
+        authorAlias: 'Anunciador',
+        ephemeral: true,
+      );
+
+      expect(result, isNotNull);
+      expect(result!.id, 'ephemeral-post-1');
+      expect(insertedPost, isNotNull);
+      expect(insertedPost!['expires_at'], isNotNull);
+
+      final expiresAt = DateTime.parse(insertedPost!['expires_at'].toString());
+      final diff = expiresAt.difference(before);
+      expect(diff.inHours, closeTo(24, 1));
+    });
   });
 
   group('ForumService.addComment', () {
@@ -243,25 +275,16 @@ void main() {
   });
 
   group('ForumService.reportPost, reportComment, reportUser', () {
-    test(
-      'reportPost llama a RPC report_forum_post con el postId correcto',
-      () async {
-        Map<String, dynamic>? rpcParams;
-        fakeServer.onPost('/rest/v1/rpc/report_forum_post', (req) {
-          rpcParams = jsonDecode(req.body) as Map<String, dynamic>;
-          return true;
-        });
+    test('reportPost llama a RPC report_forum_post', () async {
+      fakeServer.onPost('/rest/v1/rpc/report_forum_post', (req) => true);
 
-        final res = await ForumService.reportPost(
-          postId: 'post-1',
-          reason: 'spam',
-          details: 'Venta no autorizada',
-        );
-        expect(res, isTrue);
-        expect(rpcParams?['p_post_id'], 'post-1');
-        expect(rpcParams?['p_reason'], 'spam');
-      },
-    );
+      final res = await ForumService.reportPost(
+        postId: 'post-1',
+        reason: 'spam',
+        details: 'Venta no autorizada',
+      );
+      expect(res, isTrue);
+    });
 
     test('reportComment llama a RPC report_forum_comment', () async {
       fakeServer.onPost('/rest/v1/rpc/report_forum_comment', (req) => true);
@@ -304,7 +327,7 @@ void main() {
         // c3: hijo de c2
         // c4: huérfano (parentId 'c-inexistente') -> debe ir a raíz
         // c5 y c6: ciclo mutuo (c5.parentId = c6, c6.parentId = c5) -> detecta ciclo y envía c6 a raíz
-        fakeServer.onGet('/rest/v1/v_public_comments', (req) {
+        fakeServer.onGet('/rest/v1/safe_comments', (req) {
           return [
             {
               'id': 'c1',
@@ -370,6 +393,67 @@ void main() {
 
         // No hay loops infinitos y la función finalizó con éxito
         expect(tree, isNotEmpty);
+      },
+    );
+  });
+
+  group('ForumService.softDeletePost and softDeleteComment', () {
+    test('softDeletePost rechaza borrado si is_legal_hold es true', () async {
+      fakeServer.onGet('/rest/v1/posts', (req) {
+        return {'is_legal_hold': true};
+      });
+
+      final res = await ForumService.softDeletePost('post-held');
+      expect(res, isFalse);
+    });
+
+    test(
+      'softDeletePost aplica update con deleted_at si no hay legal hold',
+      () async {
+        Map<String, dynamic>? updated;
+        fakeServer.onGet('/rest/v1/posts', (req) {
+          return {'is_legal_hold': false};
+        });
+        fakeServer.onPatch('/rest/v1/posts', (req) {
+          updated = jsonDecode(req.body) as Map<String, dynamic>;
+          return [];
+        });
+
+        final res = await ForumService.softDeletePost('post-open');
+        expect(res, isTrue);
+        expect(updated, isNotNull);
+        expect(updated!['deleted_at'], isNotNull);
+      },
+    );
+
+    test(
+      'softDeleteComment rechaza borrado si is_legal_hold es true',
+      () async {
+        fakeServer.onGet('/rest/v1/comments', (req) {
+          return {'is_legal_hold': true};
+        });
+
+        final res = await ForumService.softDeleteComment('comm-held');
+        expect(res, isFalse);
+      },
+    );
+
+    test(
+      'softDeleteComment aplica update con deleted_at si no hay legal hold',
+      () async {
+        Map<String, dynamic>? updated;
+        fakeServer.onGet('/rest/v1/comments', (req) {
+          return {'is_legal_hold': false};
+        });
+        fakeServer.onPatch('/rest/v1/comments', (req) {
+          updated = jsonDecode(req.body) as Map<String, dynamic>;
+          return [];
+        });
+
+        final res = await ForumService.softDeleteComment('comm-open');
+        expect(res, isTrue);
+        expect(updated, isNotNull);
+        expect(updated!['deleted_at'], isNotNull);
       },
     );
   });

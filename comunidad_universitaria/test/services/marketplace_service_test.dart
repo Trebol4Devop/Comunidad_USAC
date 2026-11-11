@@ -109,7 +109,7 @@ void main() {
   });
 
   group('MarketplaceService.moderateListing & updateItemStatus', () {
-    test('moderateListing solo usa el RPC autorizado', () async {
+    test('moderateListing ejecuta RPC o fallback a update', () async {
       fakeServer.onPost(
         '/rest/v1/rpc/moderate_marketplace_item',
         (req) => true,
@@ -156,7 +156,7 @@ void main() {
 
   group('MarketplaceService.fetchSponsoredListings', () {
     test('obtiene anuncios patrocinados activos', () async {
-      fakeServer.onGet('/rest/v1/marketplace_items', (req) {
+      fakeServer.onGet('/rest/v1/safe_marketplace_items', (req) {
         return [
           TestFixtures.marketplaceItemMap(
             id: 'sponsor-1',

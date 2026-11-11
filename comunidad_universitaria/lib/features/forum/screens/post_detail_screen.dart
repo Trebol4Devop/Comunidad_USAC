@@ -8,6 +8,9 @@ import '../../../core/utils/responsive.dart';
 import '../../../core/utils/time_utils.dart';
 import '../widgets/comment_item.dart';
 import '../widgets/create_post_dialog.dart';
+import '../../legal/widgets/terms_consent_modal.dart';
+import '../../shared/widgets/alias_dice_button.dart';
+import '../../../core/services/profile_service.dart';
 import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/gif_picker_modal.dart';
 import '../../shared/widgets/report_dialog.dart';
@@ -29,6 +32,7 @@ class PostDetailScreen extends StatefulWidget {
 
 class _PostDetailScreenState extends State<PostDetailScreen> {
   late Post _post;
+  late String _commentAlias;
   List<PostComment> _comments = [];
   bool _isLoadingComments = true;
   bool _commentsLoadError = false;
@@ -43,6 +47,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   void initState() {
     super.initState();
     _post = widget.initialPost;
+    _commentAlias = widget.activeAlias;
     _loadComments();
   }
 
@@ -249,19 +254,87 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     });
   }
 
+  Future<void> _handleDeletePost() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eliminar Publicación'),
+        content: const Text(
+          '¿Estás seguro de que deseas eliminar esta publicación?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text(
+              'Eliminar',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    final ok = await ForumService.softDeletePost(_post.id);
+    if (!mounted) return;
+    if (ok) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Publicación eliminada')));
+      Navigator.of(context).pop(true);
+    } else {
+      final msg = _post.isLegalHold
+          ? 'No se puede eliminar: contenido bajo retención legal.'
+          : 'No se pudo eliminar la publicación.';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    }
+  }
+
+  Future<void> _handleDeleteComment(PostComment comment) async {
+    final ok = await ForumService.softDeleteComment(comment.id);
+    if (!mounted) return;
+    if (ok) {
+      await _loadComments();
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Comentario eliminado')));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo eliminar el comentario.'),
+        ),
+      );
+    }
+  }
+
   Future<void> _sendComment() async {
     final text = _commentController.text.trim();
     if (text.isEmpty && _commentGifUrl == null) return;
 
-    if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
-      AuthModal.show(
-        context,
-        title: 'Inicia Sesión para Responder',
-        subtitle:
-            'Para participar y responder en este tema, debes iniciar sesión.',
-        onAuthenticated: () => _sendComment(),
-      );
-      return;
+    if (SupabaseConfig.isConfigured) {
+      if (!SupabaseService.isAuthenticated) {
+        AuthModal.show(
+          context,
+          title: 'Inicia Sesión para Responder',
+          subtitle:
+              'Para participar y responder en este tema, debes iniciar sesión.',
+          onAuthenticated: () => _sendComment(),
+        );
+        return;
+      }
+
+      final hasAccepted = await ProfileService.hasAcceptedTerms();
+      if (!hasAccepted) {
+        if (!mounted) return;
+        final accepted = await TermsConsentModal.show(context);
+        if (!accepted) return;
+      }
     }
 
     setState(() => _isSendingComment = true);
@@ -270,7 +343,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       final newComment = await ForumService.addComment(
         postId: _post.id,
         content: text.isNotEmpty ? text : 'GIF adjunto',
-        authorAlias: widget.activeAlias,
+        authorAlias: _commentAlias,
         parentId: _replyTarget?.id,
         gifUrl: _commentGifUrl,
       );
@@ -319,6 +392,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       appBar: AppBar(
         title: const Text('Discusión en el Foro'),
         actions: [
+          if (_post.isMine)
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.red),
+              tooltip: 'Eliminar publicación',
+              onPressed: _handleDeletePost,
+            ),
           IconButton(
             style: IconButton.styleFrom(
               shape: const RoundedRectangleBorder(
@@ -942,6 +1021,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             comment: c,
                             postAuthorUserId: _post.userId ?? '',
                             onReply: _startReplyTo,
+                            onDelete: _handleDeleteComment,
                             onReport: (comment, reason) {
                               ForumService.reportComment(
                                 commentId: comment.id,
@@ -1056,6 +1136,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
                     Row(
                       children: [
+                        AliasDiceButton(
+                          alias: _commentAlias,
+                          onAliasChanged: (newAlias) =>
+                              setState(() => _commentAlias = newAlias),
+                          compact: true,
+                        ),
+                        const SizedBox(width: 4),
                         IconButton(
                           style: IconButton.styleFrom(
                             shape: const RoundedRectangleBorder(

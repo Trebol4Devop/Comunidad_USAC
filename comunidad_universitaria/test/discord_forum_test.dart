@@ -319,6 +319,38 @@ void main() {
       expect(find.byTooltip('Grupos de Estudio'), findsNothing);
       expect(find.byTooltip('Agregar servidor'), findsOneWidget);
     });
+
+    testWidgets(
+      'Selector de modo de feed muestra opciones En Llamas y Recientes y permite alternar',
+      (tester) async {
+        tester.view.physicalSize = const Size(1200, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: ForumScreen(
+              activeAlias: 'TesterFeedMode',
+              onAliasChanged: (_) {},
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('En Llamas'), findsOneWidget);
+        expect(find.text('Recientes'), findsOneWidget);
+        expect(find.byIcon(Icons.local_fire_department), findsWidgets);
+        expect(find.byIcon(Icons.schedule), findsOneWidget);
+
+        // Cambiar a Recientes
+        await tester.tap(find.text('Recientes'));
+        await tester.pumpAndSettle();
+
+        // Cambiar de vuelta a En Llamas
+        await tester.tap(find.text('En Llamas'));
+        await tester.pumpAndSettle();
+      },
+    );
   });
 }
 

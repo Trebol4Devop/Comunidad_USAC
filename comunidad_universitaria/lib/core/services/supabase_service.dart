@@ -17,6 +17,17 @@ class SupabaseService {
   static bool get isAuthenticated =>
       currentUser != null && !(currentUser!.isAnonymous);
 
+  /// URL de retorno para OAuth en web.
+  ///
+  /// Descarta el fragmento (`#/...`) porque Supabase y el intercambio PKCE
+  /// esperan una URL sin hash: si se envía, el callback vuelve a una ruta
+  /// distinta y la sesión no se completa.
+  static String? get oauthRedirectUrl {
+    if (!kIsWeb) return null;
+    final base = Uri.base;
+    return base.replace(fragment: '').toString();
+  }
+
   @visibleForTesting
   static void resetForTests() {
     debugClient = null;

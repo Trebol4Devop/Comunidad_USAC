@@ -6,6 +6,9 @@
 > ([`03-foro.md`](03-foro.md), prefijo `UX-FORO`) y por Grupos
 > ([`05-grupos.md`](05-grupos.md), prefijo `UX-GRP`), y se apoya en el
 > Marketplace ([`04-marketplace.md`](04-marketplace.md), prefijo `UX-MKT`).
+> La visibilidad pagada del Marketplace se origina en sus **planes de
+> suscripción** (`UX-MKT-017`/`UX-MKT-018`); este documento define cómo se
+> etiqueta, se modera y se controla ese contenido promovido.
 > Convenciones y plantilla en [`README.md`](README.md).
 
 ---
@@ -18,11 +21,40 @@
 2. **La experiencia primero.** El usuario no debe sentir el feed "invadido": la
    frecuencia está acotada y el contenido orgánico mantiene prioridad.
 3. **Una sola fuente de verdad.** Los datos del negocio (catálogo, contacto,
-   identidad) provienen del Marketplace/Perfil; el patrocinio solo los *promueve*.
+   identidad, plan) provienen del Marketplace/Perfil; el patrocinio solo los
+   *promueve*. El plan del vendedor (`marketplace_plans`) determina la insignia,
+   el posicionamiento y si la publicación entra al carrusel destacado.
 4. **Moderado como todo lo demás.** Ningún patrocinio se publica sin pasar por
    moderación ni puede auto-aprobarse.
 5. **Transparencia y control.** Siempre se puede saber por qué se ve un anuncio,
    ocultarlo y reportarlo.
+
+---
+
+### 1.1 Planes del Marketplace y visibilidad patrocinada
+
+La fuente de verdad de la visibilidad pagada es `public.marketplace_plans`
+([`UX-MKT-017`/`UX-MKT-018`](04-marketplace.md)). Los planes no eximen de
+moderación ni de verificación de identidad.
+
+| Plan | `is_sponsored` | Insignia (`default_badge_text`) | Ubicación | Protección de escaparate |
+|---|:--:|---|---|:--:|
+| `free` | No (salvo patrocinio aprobado) | Estudiante Verificado | Orgánico | No |
+| `pro_student` | Sí, automático (`auto_sponsor_items`) | Emprendedor Verificado | Prioridad media en feed y recomendados; carrusel solo con cupo | No |
+| `business_local` | Sí, automático | Tienda / Local Oficial | Carrusel superior (prioridad alta) | Sí (`hide_competitor_related`) |
+
+- Un patrocinio aprobado por `sponsor_requests` puede dar visibilidad sin plan,
+  pero **no** otorga los límites de catálogo ni la protección de escaparate.
+- La insignia visible se toma de `marketplace_items.sponsor_badge_text` y debe
+  coincidir con la del plan activo; si no coincide, prevalece la del plan.
+- La etiqueta "Patrocinado" (UX-SPN-003 / UX-DSN-008) es obligatoria en toda
+  unidad con `is_sponsored = true`, incluida la del carrusel del Marketplace.
+- Al vencer el plan, el contenido deja de ser patrocinado y vuelve a orgánico
+  sin perder sus datos.
+- El **carrusel superior del Marketplace** es un estante explícito, rotulado y
+  separado del listado orgánico; no se considera una inserción intercalada y por
+  ello no consume el ritmo 1:6 de `UX-SPN-004`. Ese ritmo aplica a unidades
+  patrocinadas intercaladas dentro del feed orgánico y a Foro/Grupos.
 
 ---
 
@@ -34,7 +66,10 @@
 - **Estado objetivo:** todo patrocinador tiene un **perfil público** con: logotipo,
   nombre comercial, descripción corta, categoría, sede/facultades donde opera,
   canales de contacto y su catálogo de anuncios patrocinados. Es el destino de los
-  enlaces que aparecen en Foro y Grupos.
+  enlaces que aparecen en Foro y Grupos. Cuando el patrocinador además vende en el
+  Marketplace, este perfil reutiliza `seller_profiles` (logo, banner, horario y
+  estado de tienda) y el catálogo de `get_seller_catalog`
+  ([`UX-MKT-016`](04-marketplace.md)); no se duplican datos comerciales.
 - **Precondiciones:** cuenta con rol/atributo de patrocinador aprobado (requiere estar previamente verificado mediante carné o admisión externa).
 - **UI / contenido:** encabezado con logo, nombre, distintivo **"Patrocinador"**
   verificado; bio; chips de categoría y sede; grid del catálogo; botones de
@@ -57,11 +92,14 @@
 - **Actor / rol:** Patrocinador
 - **Prioridad:** Must
 - **Estado objetivo:** desde su perfil, el patrocinador accede a un panel para
-  (1) editar su perfil público, (2) crear/editar promociones, (3) ver métricas y
-  (4) pausar/reanudar una promoción.
-- **UI / contenido:** pestañas "Perfil", "Promociones", "Métricas"; formulario de
-  promoción con título, texto corto, 1–3 imágenes (o 1 video), llamado a la
-  acción, sede/facultad objetivo y vigencia (fecha inicio/fin).
+  (1) editar su perfil público y comercial (`seller_profiles`), (2) gestionar su
+  plan de Marketplace (`marketplace_plans`), (3) crear/editar promociones,
+  (4) ver métricas y (5) pausar/reanudar una promoción.
+- **UI / contenido:** pestañas "Perfil", "Plan", "Promociones", "Métricas";
+  formulario de promoción con título, texto corto, 1–3 imágenes (o 1 video),
+  llamado a la acción, sede/facultad objetivo y vigencia (fecha inicio/fin). La
+  pestaña "Plan" muestra el plan actual, límites, vigencia y CTA de mejora
+  (UX-MKT-018).
 - **Estados:** vacío ("Aún no tienes promociones") | borrador | en revisión |
   activa | pausada | finalizada | rechazada (con motivo).
 - **Validaciones y reglas de negocio:** reutiliza el filtro de términos prohibidos
@@ -80,9 +118,13 @@
 - **Prioridad:** Must
 - **Estado objetivo:** toda unidad patrocinada se distingue sin ambigüedad
   mediante: etiqueta textual **"Patrocinado"** (o "Publicidad"), logotipo y nombre
-  del patrocinador, distintivo verificado y un acento cromático propio sobre el
-  lenguaje visual de la sección.
-- **Problema pendiente:** Marketplace ya muestra la etiqueta y controles de transparencia, pero aún no existe un componente reutilizable en Foro/Grupos; el esquema actual tampoco garantiza un nombre de marca para toda unidad patrocinada. Se mantiene pendiente la consistencia transversal y el nombre obligatorio ([ver `UX-DSN-008` en `09-sistema-diseno.md`](09-sistema-diseno.md)).
+  del patrocinador, distintivo verificado, insignia del plan activo
+  (`sponsor_badge_text`) y un acento cromático propio sobre el lenguaje visual de
+  la sección.
+- **Problema actual [Mejora]:** hoy el carrusel de patrocinadores del Marketplace
+  ([`sponsor_carousel.dart`](../../comunidad_universitaria/lib/features/marketplace/widgets/sponsor_carousel.dart))
+  no tiene un modelo de etiquetado reutilizable para insertarse en Foro/Grupos;
+  se define aquí como token de diseño ([ver `UX-DSN-008` en `09-sistema-diseno.md`](09-sistema-diseno.md)).
 - **Validaciones y reglas de negocio:** la etiqueta es **obligatoria e
   ineludible**; ningún tema oscuro (dark pattern) puede ocultarla.
 - **Accesibilidad:** la etiqueta se anuncia explícitamente a lectores de pantalla
@@ -133,15 +175,6 @@
     esto?", **Then** se explica la razón sin exponer datos personales.
   - **Given** que el usuario oculta un anuncio, **When** recarga la sección,
     **Then** ese anuncio no vuelve a mostrarse.
-
-#### Implementación actual en Marketplace
-
-El ocultamiento se guarda localmente en `SharedPreferences`, separado por el ID
-actual de usuario de Supabase; en sesión sin ID usa el ámbito anónimo del
-dispositivo. No existe sincronización entre dispositivos ni restauración tras
-borrar los datos de la aplicación o reinstalarla. La razón visible informa que
-Marketplace actualmente no proporciona una explicación de segmentación más
-específica; no se infiere perfil, marca ni criterios de segmentación.
 
 ### UX-SPN-006 — Moderación y aprobación
 - **Actor / rol:** Moderador, Admin
@@ -234,7 +267,8 @@ específica; no se infiere perfil, marca ni criterios de segmentación.
   Marketplace; diálogo `sponsor_request_dialog.dart` (existente) con los campos
   que hoy persiste `sponsor_requests`: nombre comercial (`brand_name`), nombre y
   teléfono de contacto (`contact_name`, `contact_phone`), correo (`email`),
-  descripción de la propuesta (`proposal_details`) y colocación esperada
+  descripción de la propuesta (`proposal_details`), plan deseado (nuevo:
+  `pro_student`, `business_local` o "solo patrocinio") y colocación esperada
   (`expected_placement`). Botón "Enviar solicitud". Si ya existe solicitud activa,
   muestra su estado en lugar del formulario: "Tu solicitud está en revisión".
   Nota [Mejora]: la categoría y la sede/facultad objetivo que menciona UX-SPN-010
@@ -252,9 +286,8 @@ específica; no se infiere perfil, marca ni criterios de segmentación.
   - El sistema verifica si existe una fila en `sponsor_requests` para el usuario
     con `status IN ('pending','in_review')` antes de permitir el envío; si existe,
     bloquea la duplicación. [Mejora: carencia actual en `sponsor_request_dialog.dart`.]
-  - El esquema adoptado en `20261001000000_adopt_remote_schema.sql` define
-    `idx_sponsor_requests_status` sobre `(status, created_at DESC)`; la consulta
-    para bloquear solicitudes duplicadas aún no está implementada en Flutter.
+  - El índice `idx_sponsor_requests_status` (migration `20260918020004`)
+    respalda la consulta por estado.
   - El nombre comercial es obligatorio (máx. 80 caracteres); la descripción, entre
     10 y 500 caracteres.
 - **Accesibilidad:** formulario con etiquetas explícitas en cada campo; errores de
@@ -275,22 +308,19 @@ específica; no se infiere perfil, marca ni criterios de segmentación.
     `rejected`).
 
 ### UX-SPN-012 — Aprobación/rechazo de solicitud
-- **Actor / rol:** Admin
+- **Actor / rol:** Admin / Moderador
 - **Prioridad:** Must
 - **Estado objetivo:** el panel admin lista las solicitudes de patrocinio por
   estado; el admin puede aprobar (activa el rol de patrocinador) o rechazar con un
   motivo textual obligatorio visible para el solicitante. El solicitante es
   notificado del resultado.
-- **Problema actual [Mejora]:** la tabla `sponsor_requests` y el índice
-  `idx_sponsor_requests_status` están en la migración local que adopta el esquema
-  (`20261001000000_adopt_remote_schema.sql`). La migración local
-  `20261004000000_require_aal2_and_verified_sellers.sql` define políticas RLS
-  para que el solicitante inserte y lea lo propio, y para que solo un admin revise
-  solicitudes. No se ha verificado que esas políticas estén aplicadas en Supabase
-  remoto. Además, **no existe pantalla Flutter** para listar o gestionar estas
-  solicitudes; actualmente la app solo las inserta.
-- **Precondiciones:** admin autenticado con AAL2; existe al menos una solicitud
-  en `sponsor_requests`.
+- **Problema actual [Mejora]:** `sponsor_requests.status` y el índice
+  `idx_sponsor_requests_status` existen en BD, y `20260918020500_admin_panels_rls_policies.sql`
+  establece las políticas RLS para admins. Sin embargo, **no existe ninguna
+  pantalla Flutter** que liste y gestione estas solicitudes; el admin no tiene hoy
+  forma de aprobar o rechazar desde la app.
+- **Precondiciones:** admin o moderador autenticado con AAL2; existe al menos una
+  solicitud en `sponsor_requests`.
 - **UI / contenido:** pantalla de administración (nuevo) con lista de solicitudes
   paginada, filtrable por `status`; cada fila muestra: nombre comercial, usuario
   solicitante (alias), fecha, estado actual y acciones "Aprobar" / "Rechazar". Al
@@ -303,9 +333,8 @@ específica; no se infiere perfil, marca ni criterios de segmentación.
 - **Estados:** lista vacía ("No hay solicitudes en este estado") | cargando
   (skeleton) | solicitud pendiente | en revisión | aprobada | rechazada.
 - **Validaciones y reglas de negocio:**
-  - La política local permite revisar solicitudes únicamente a quien
-    `public.is_pemtree_admin(auth.uid())` reconoce como admin; no incluye
-    moderadores. Su aplicación efectiva en remoto está pendiente de verificación.
+  - Solo roles `admin` y `moderator` pueden modificar `sponsor_requests.status`
+    (garantizado por `admin_panels_rls_policies`).
   - El motivo de rechazo es obligatorio; no se puede confirmar el rechazo sin él.
   - El cambio de `status` es irreversible desde la UI de rechazo; se puede
     reabrir solo mediante una nueva solicitud del usuario.
@@ -378,12 +407,12 @@ específica; no se infiere perfil, marca ni criterios de segmentación.
   casos, todas sus promociones desaparecen de feeds de inmediato y su perfil
   público muestra "No disponible". La reactivación (para suspensiones temporales)
   restaura las promociones con vigencia vigente.
-- **Problema actual [Mejora]:** no existe un estado o marca de suspensión de
-  patrocinadores (`suspended`, `suspended_at` o equivalente) en `profiles` ni en
-  una tabla de patrocinadores. `profiles.is_verified` y los campos de
-  `seller_verification_status` son de verificación de usuario/vendedor; no
-  representan suspensión de una cuenta patrocinadora. Se requiere definir un
-  estado específico para el ciclo de vida del patrocinador.
+- **Problema actual [Mejora]:** no existe una columna `suspended` ni
+  `suspended_at` en la tabla `profiles`; la suspensión de patrocinadores no puede
+  implementarse en la BD actual. `profiles.is_verified` existe
+  (`idx_profiles_unverified`) pero no cubre la suspensión de cuentas de
+  patrocinador. Requiere campo adicional (nuevo) en perfiles o en la tabla de
+  patrocinadores.
 - **Precondiciones:** admin autenticado con AAL2; el patrocinador a suspender/dar
   de baja existe y está en estado activo.
 - **UI / contenido:** en la pantalla de administración (nuevo), opción "Suspender"
@@ -423,24 +452,18 @@ específica; no se infiere perfil, marca ni criterios de segmentación.
 - **Estado objetivo:** el sistema notifica al patrocinador en los eventos clave del
   ciclo de vida: (1) solicitud aprobada o rechazada (con motivo), (2) promoción
   aprobada o rechazada (con motivo), (3) promoción por vencer (aviso con 7 días de
-  antelación), (4) cuenta suspendida o dada de baja. Las notificaciones se
-  consultan dentro de la app; el correo/SMTP queda fuera del alcance actual.
-- **Problema actual [Mejora]:** las migraciones locales incluyen infraestructura
-  general de notificaciones (`user_notifications`, `notification_preferences` y
-  `notification_subscriptions`) y eventos del Foro. Sin embargo, `user_notifications`
-  solo admite los tipos `comment`, `reply`, `like` y `new_post`; no hay eventos ni
-  tipos para el ciclo de vida de patrocinios, ni se encontró integración Flutter
-  para estos avisos. Además, la función SQL de push en
-  `20261001000000_adopt_remote_schema.sql` referencia un endpoint y un secreto
-  etiquetados como PEMTREE; su configuración/destino no se ha verificado para
-  Comunidad_USAC y no debe asumirse disponible para este flujo.
+  antelación), (4) cuenta suspendida o dada de baja. Las notificaciones son
+  accesibles desde la app y/o por correo.
+- **Problema actual [Mejora]:** no existe tabla de notificaciones en el baseline
+  ni en las migrations actuales; la infraestructura de notificaciones es
+  dependencia de implementación (nuevo).
 - **Precondiciones:** el patrocinador tiene una cuenta activa o en proceso de
   solicitud.
-- **UI / contenido:** notificación en la campana de la app (cuando se implemente
-  el módulo Flutter); el mensaje indica el evento y, si procede, el motivo o la
-  acción requerida. Ejemplo: "Tu solicitud de patrocinio fue aprobada. ¡Ya puedes
-  crear tu primera promoción!" / "Tu promoción '[Título]' vence en 7 días.
-  Renuévala desde tu panel."
+- **UI / contenido:** notificación en la campana de la app (si existe el módulo de
+  notificaciones) y/o correo electrónico; el mensaje indica el evento y, si
+  procede, el motivo o la acción requerida. Ejemplo: "Tu solicitud de patrocinio
+  fue aprobada. ¡Ya puedes crear tu primera promoción!" / "Tu promoción
+  '[Título]' vence en 7 días. Renuévala desde tu panel."
 - **Interacciones:** al tocar la notificación, se navega a la pantalla relevante
   (panel de solicitudes, Sponsor Studio o el detalle de la promoción).
 - **Estados:** no leída | leída | acción requerida (p. ej. renovar antes de que
@@ -450,12 +473,12 @@ específica; no se infiere perfil, marca ni criterios de segmentación.
     de `fecha_fin`; no se repiten.
   - Las notificaciones de aprobación/rechazo se envían en el momento del cambio
     de estado.
-  - Dependencia de implementación: ampliar el flujo de notificaciones existente
-    para los eventos de patrocinio y verificar antes el canal push. No agregar
-    SMTP ni envíos por correo dentro del alcance actual.
+  - Dependencia de implementación: requiere tabla de notificaciones (nuevo) o
+    integración con servicio de correo transaccional.
 - **Accesibilidad:** notificaciones con texto descriptivo completo; no dependen
   solo del color para transmitir el estado.
-- **Responsive:** notificaciones in-app adaptativas y legibles en móvil.
+- **Responsive:** notificaciones in-app adaptativas; correo con plantilla legible
+  en móvil.
 - **Criterios de aceptación (Gherkin):**
   - **Given** una solicitud aprobada por el admin, **When** el sistema procesa la
     aprobación, **Then** el solicitante recibe una notificación "Tu solicitud de
@@ -474,15 +497,14 @@ específica; no se infiere perfil, marca ni criterios de segmentación.
   `(status, created_at DESC)`, permite filtrar por estado
   (`pending` / `in_review` / `approved` / `rejected`), revisar los detalles de
   cada solicitud y ejecutar la aprobación o rechazo en una sola vista.
-- **Problema actual [Mejora]:** la tabla `sponsor_requests` y el índice
-  `idx_sponsor_requests_status` están definidos en la migración local de esquema
-  adoptado (`20261001000000_adopt_remote_schema.sql`). Las políticas locales que
-  limitan la revisión a admins están en
-  `20261004000000_require_aal2_and_verified_sellers.sql`; no se ha comprobado su
-  aplicación en Supabase remoto. **No existe pantalla Flutter** para gestionar
-  las solicitudes. La tabla incluye `status`, `user_id` y `created_at`.
-- **Precondiciones objetivo:** admin autenticado con AAL2 y acceso al panel de
-  administración. Actualmente ese panel no está implementado.
+- **Problema actual [Mejora]:** el índice `idx_sponsor_requests_status`
+  (migration `20260918020004`) y las políticas RLS de
+  `20260918020500_admin_panels_rls_policies.sql` ya existen y dan soporte a este
+  panel, pero **no existe ninguna pantalla Flutter** para gestionarlo. La tabla
+  `sponsor_requests` tiene columnas `status`, `user_id` (FK `auth.users`) y
+  `created_at`.
+- **Precondiciones:** admin autenticado con AAL2; acceso al panel de
+  administración.
 - **UI / contenido:** pantalla (nuevo) con:
   - Barra de filtros por `status` (chips o pestañas): "Pendientes",
     "En revisión", "Aprobadas", "Rechazadas".
@@ -497,12 +519,10 @@ específica; no se infiere perfil, marca ni criterios de segmentación.
 - **Estados:** lista vacía ("No hay solicitudes en este estado") | cargando
   (skeleton de filas) | con resultados | error de red (con opción de reintentar).
 - **Validaciones y reglas de negocio:**
-  - La política local de lectura administrativa usa
-    `public.is_pemtree_admin(auth.uid())`; no concede acceso de revisión a
-    moderadores. La política está definida localmente, pero su estado en remoto
-    no está verificado.
-  - El índice local `idx_sponsor_requests_status` cubre el filtro por estado
-    y orden descendente por fecha; no se ha verificado su presencia en remoto.
+  - Solo roles `admin` pueden acceder al panel (garantizado por
+    `admin_panels_rls_policies`).
+  - El ordenamiento por `(status, created_at DESC)` está soportado por
+    `idx_sponsor_requests_status`.
   - El panel no permite editar los datos de la solicitud, solo aprobarla o
     rechazarla.
 - **Accesibilidad:** lista con roles de tabla accesibles; filtros anunciados como
@@ -556,20 +576,22 @@ específica; no se infiere perfil, marca ni criterios de segmentación.
 
 | Requisito | Implementación / anclaje | Estado |
 |---|---|---|
-| UX-SPN-001 Perfil de patrocinador | perfil público de patrocinador (nuevo) | Pendiente |
-| UX-SPN-002 Panel del patrocinador | panel `Sponsor Studio` (nuevo) | Pendiente |
-| UX-SPN-003 Etiquetado de patrocinios | `SponsoredContentControls` en `MarketplaceCard` y `SponsorCarousel`; sin integración en Foro/Grupos ni marca obligatoria en todo registro | Parcial (Marketplace) |
+| UX-SPN-001 Perfil de patrocinador | perfil público de patrocinador reutiliza `seller_profiles` (nuevo) | Pendiente |
+| UX-SPN-002 Panel del patrocinador | panel `Sponsor Studio` con pestaña "Plan" (nuevo) | Pendiente |
+| UX-SPN-003 Etiquetado de patrocinios | `UX-DSN-008`; `sponsor_carousel.dart` | Pendiente |
 | UX-SPN-004 Frecuencia y rotación | servicio de inserción (nuevo) | Pendiente |
-| UX-SPN-005 Transparencia y control | `SponsoredContentControls`; ocultamientos en `SponsoredPreferencesService` (solo almacenamiento local) | Parcial (Marketplace; sin sincronización entre dispositivos) |
+| UX-SPN-005 Transparencia y control | `report_dialog.dart`; preferencias locales | Parcial |
 | UX-SPN-006 Moderación de patrocinios | moderación existente; `rpc_moderation_test.sql` | Parcial |
 | UX-SPN-007 Métricas de patrocinio | analítica nueva; ver `11-metricas-y-trazabilidad.md` | Pendiente |
-| UX-SPN-008 Accesibilidad de patrocinios | Etiqueta semántica y objetivo táctil de 48 dp en `SponsoredContentControls`; falta auditoría integral | Parcial (Marketplace) |
+| UX-SPN-008 Accesibilidad de patrocinios | `UX-X-016`; `UX-DSN-008` | Pendiente |
 | UX-SPN-009 Vínculo con Marketplace | `marketplace_service.dart`; `sponsor_carousel.dart` | Parcial |
 | UX-SPN-010 Segmentación contextual | servicio de targeting (nuevo) | Pendiente |
 | UX-SPN-011 Solicitud de cuenta | `sponsor_requests` (BD Parcial); `sponsor_request_dialog.dart` (Parcial sin validación de duplicados) | Parcial |
-| UX-SPN-012 Aprobación/rechazo | `sponsor_requests.status` en el esquema local adoptado; políticas admin en `20261004000000_require_aal2_and_verified_sellers.sql` (remoto no verificado); pantalla Flutter inexistente | Pendiente |
+| UX-SPN-012 Aprobación/rechazo | `sponsor_requests.status`; `admin_panels_rls_policies` (BD Cubierto); pantalla Flutter (nuevo Pendiente) | Pendiente |
 | UX-SPN-013 Vigencia y renovación | tabla `sponsored_promotions` (nuevo Pendiente) | Pendiente |
-| UX-SPN-014 Suspensión y baja | Sin estado específico de suspensión de patrocinador; `profiles.is_verified` y `seller_verification_status` son verificaciones distintas | Pendiente |
-| UX-SPN-015 Notificaciones de ciclo de vida | Infraestructura local para notificaciones del Foro; sin eventos de patrocinio ni integración Flutter; referencia push PEMTREE no verificada para Comunidad_USAC | Pendiente |
-| UX-SPN-016 Panel admin de solicitudes | Índice en el esquema local adoptado; políticas admin en `20261004000000_require_aal2_and_verified_sellers.sql` (remoto no verificado); pantalla Flutter inexistente | Pendiente |
+| UX-SPN-014 Suspensión y baja | campo `suspended` en `profiles` (nuevo Pendiente) | Pendiente |
+| UX-SPN-015 Notificaciones de ciclo de vida | tabla de notificaciones (nuevo Pendiente) | Pendiente |
+| UX-SPN-016 Panel admin de solicitudes | `idx_sponsor_requests_status`; `admin_panels_rls_policies` (BD Cubierto); pantalla Flutter (nuevo Pendiente) | Pendiente |
+| UX-MKT-017/018 Planes del Marketplace | `marketplace_plans`; `seller_profiles`; `sponsor_requests`; UI de planes (nuevo) | Pendiente |
+| UX-MKT-020 Feed ponderado | RPC `get_marketplace_feed`; índice de feed (nuevo) | Pendiente |
 

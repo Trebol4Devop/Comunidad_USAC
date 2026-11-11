@@ -82,7 +82,7 @@ class MarketplaceService {
 
     try {
       var query = SupabaseService.client
-          .from('marketplace_items')
+          .from('safe_marketplace_items')
           .select('*')
           .lt('moderation_status', 2);
 
@@ -193,10 +193,12 @@ class MarketplaceService {
 
   static Map<String, dynamic> _listingToCacheMap(MarketplaceItem item) {
     final map = item.toInsertMap();
+    map.remove('user_id');
     map['id'] = item.id;
     map['sponsor_brand_name'] = item.sponsorBrandName;
     map['created_at'] = item.createdAt.toIso8601String();
     map['cache_upvoted'] = item.isUpvotedByMe;
+    map['is_mine'] = item.isMine;
     return map;
   }
 
@@ -214,7 +216,7 @@ class MarketplaceService {
 
     try {
       final response = await SupabaseService.client
-          .from('marketplace_items')
+          .from('safe_marketplace_items')
           .select('*')
           .eq('is_sponsored', true)
           .lt('moderation_status', 2)
@@ -336,16 +338,23 @@ class MarketplaceService {
         'upvotes': 1,
       };
 
+      const explicitColumns =
+          'id, title, description, price, is_free, category, facultad, sede, '
+          'building_code, location_detail, contact_whatsapp, contact_telegram, '
+          'image_urls, video_url, is_sponsored, sponsor_badge_text, author_alias, '
+          'upvotes, moderation_status, created_at, contact_instagram, '
+          'contact_messenger, social_links, reported_count, status';
+
       final res = await SupabaseService.client
           .from('marketplace_items')
           .insert(itemMap)
-          .select()
+          .select(explicitColumns)
           .single();
 
       final created = MarketplaceItem.fromMap(
         Map<String, dynamic>.from(res),
         isUpvotedByMe: true,
-      );
+      ).copyWith(isMine: true);
       await CacheService.invalidateAll(_cacheNamespace);
       return created;
     } catch (e) {
@@ -365,15 +374,33 @@ class MarketplaceService {
     }
 
     try {
-      final result = await SupabaseService.client.rpc(
-        'report_marketplace_item',
-        params: {
-          'target_item_id': itemId,
-          'report_reason': reason.trim(),
-          'target_seller_id': sellerUserId,
-          'target_seller_alias': sellerAlias,
-        },
-      );
+      // RPC con umbral de auto-moderación; si no existe, inserción directa.
+      // Todo reporte vive en entity_reports (entity_type = marketplace_item).
+      final result = await SupabaseService.client
+          .rpc(
+            'report_marketplace_item',
+            params: {
+              'target_item_id': itemId,
+              'report_reason': reason.trim(),
+              'target_seller_id': sellerUserId,
+              'target_seller_alias': sellerAlias,
+            },
+          )
+          .catchError((_) async {
+            await SupabaseService.client.from('entity_reports').insert({
+              'reporter_id': SupabaseService.currentUserId,
+              'entity_type': 'marketplace_item',
+              'entity_id': itemId,
+              'entity_owner_id':
+                  (sellerUserId != null && sellerUserId.isNotEmpty)
+                  ? sellerUserId
+                  : null,
+              'reason': reason.trim(),
+              'moderation_status': 0,
+              'metadata': {'seller_alias': sellerAlias},
+            });
+            return true;
+          });
 
       return result == true;
     } catch (e) {
@@ -391,10 +418,18 @@ class MarketplaceService {
     }
 
     try {
-      final res = await SupabaseService.client.rpc(
-        'moderate_marketplace_item',
-        params: {'target_item_id': itemId, 'new_status': newStatus},
-      );
+      final res = await SupabaseService.client
+          .rpc(
+            'moderate_marketplace_item',
+            params: {'target_item_id': itemId, 'new_status': newStatus},
+          )
+          .catchError((_) async {
+            await SupabaseService.client
+                .from('marketplace_items')
+                .update({'moderation_status': newStatus})
+                .eq('id', itemId);
+            return true;
+          });
 
       await CacheService.invalidateAll(_cacheNamespace);
       return res == true;

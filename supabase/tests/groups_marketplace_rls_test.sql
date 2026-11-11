@@ -7,6 +7,8 @@ select plan(11);
 
 create extension if not exists pgtap;
 
+set role postgres;
+
 -- -----------------------------------------------------------------------------
 -- Fixtures
 -- -----------------------------------------------------------------------------
@@ -29,18 +31,18 @@ begin
 
     -- Grupos estudiantiles
     insert into public.student_groups (
-        id, user_id, title, description, carrera, curso, section, link, moderation_status
+        id, user_id, title, description, carrera, curso, section, link, author_alias, moderation_status
     ) values
-        ('11111111-0000-0000-0000-000000000001', v_user_a, 'Grupo Activo Mate', 'Grupo oficial de repaso', 'sistemas', 'Mate 1', 'A', 'https://chat.whatsapp.com/mate1', 0),
-        ('11111111-0000-0000-0000-000000000002', v_user_a, 'Grupo Bloqueado Spam', 'Grupo con enlaces no autorizados', 'sistemas', 'Mate 2', 'B', 'https://chat.whatsapp.com/spam', 2)
+        ('11111111-0000-0000-0000-000000000001', v_user_a, 'Grupo Activo Mate', 'Grupo oficial de repaso', 'sistemas', 'Mate 1', 'A', 'https://chat.whatsapp.com/mate1', 'Compilador Desvelado', 0),
+        ('11111111-0000-0000-0000-000000000002', v_user_a, 'Grupo Bloqueado Spam', 'Grupo con enlaces no autorizados', 'sistemas', 'Mate 2', 'B', 'https://chat.whatsapp.com/spam', 'Compilador Desvelado', 2)
     on conflict (id) do nothing;
 
     -- Marketplace items
     insert into public.marketplace_items (
         id, user_id, title, description, price, is_free, category, facultad, status, moderation_status, author_alias
     ) values
-        ('22222222-0000-0000-0000-000000000001', v_user_a, 'Calculadora Casio fx-991', 'Buen estado', 150.0, false, 'otros_articulos', '08', 'available', 0, 'Vendedor A'),
-        ('22222222-0000-0000-0000-000000000002', v_user_a, 'Articulo Prohibido', 'Copia no permitida', 50.0, false, 'otros_articulos', '08', 'available', 2, 'Vendedor A')
+        ('22222222-0000-0000-0000-000000000001', v_user_a, 'Calculadora Casio fx-991', 'Buen estado', 150.0, false, 'otros_articulos', '08', 'available', 0, 'Compilador Desvelado'),
+        ('22222222-0000-0000-0000-000000000002', v_user_a, 'Articulo Prohibido', 'Copia no permitida', 50.0, false, 'otros_articulos', '08', 'available', 2, 'Compilador Desvelado')
     on conflict (id) do nothing;
 end $$;
 
@@ -95,7 +97,7 @@ select lives_ok(
         'IPC 2',
         'Unica',
         'https://chat.whatsapp.com/ipc2',
-        'Alias A'
+        'Compilador Desvelado'
       )$$,
     'Usuario autenticado puede registrar un nuevo grupo estudiantil'
 );
@@ -150,7 +152,7 @@ select lives_ok(
         85.0,
         'otros_articulos',
         '06',
-        'Alias A',
+        'Compilador Desvelado',
         'available'
       )$$,
     'Usuario autenticado puede publicar un nuevo articulo en marketplace'

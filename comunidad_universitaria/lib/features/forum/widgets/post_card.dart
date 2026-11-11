@@ -14,6 +14,7 @@ class PostCard extends StatelessWidget {
   final VoidCallback? onShare;
   final Function(String pollId, String optionId)? onVotePoll;
   final Function(String reason)? onReport;
+  final VoidCallback? onDelete;
   final bool isModerator;
 
   const PostCard({
@@ -26,6 +27,7 @@ class PostCard extends StatelessWidget {
     this.onShare,
     this.onVotePoll,
     this.onReport,
+    this.onDelete,
     this.isModerator = false,
   });
 
@@ -207,7 +209,7 @@ class PostCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (onReport != null)
+                  if (onReport != null || (post.isMine && onDelete != null))
                     PopupMenuButton<String>(
                     tooltip: 'Más opciones',
                     color: theme.colorScheme.surface,
@@ -230,10 +232,32 @@ class PostCard extends StatelessWidget {
                           subtitle: 'Publicación de ${post.authorAlias}',
                           onSubmitted: onReport!,
                         );
+                      } else if (val == 'delete' && onDelete != null) {
+                        onDelete!();
                       }
                     },
                     itemBuilder: (ctx) => [
-                      PopupMenuItem(
+                      if (post.isMine && onDelete != null)
+                        const PopupMenuItem(
+                          value: 'delete',
+                          height: 44,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.delete_outline,
+                                size: 17,
+                                color: Colors.red,
+                              ),
+                              SizedBox(width: 10),
+                              Text(
+                                'Eliminar publicación',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ],
+                          ),
+                        ),
+                      if (onReport != null)
+                        PopupMenuItem(
                           value: 'report',
                           height: 44,
                           child: Row(

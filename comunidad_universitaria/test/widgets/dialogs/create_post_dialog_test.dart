@@ -268,5 +268,39 @@ void main() {
         expect(find.text('Carrera o Especialidad'), findsOneWidget);
       },
     );
+
+    testWidgets(
+      'Switch de post efímero (La Pizarra Nocturna) muestra aviso de expira en 24h al activarse',
+      (tester) async {
+        tester.view.physicalSize = const Size(600, 900);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
+
+        await tester.pumpWidget(buildTestDialog());
+        await tester.pumpAndSettle();
+
+        // Inicialmente el switch existe y el aviso "Expira en 24 h" no está visible
+        expect(find.text('Desaparece en 24h'), findsOneWidget);
+        expect(
+          find.text('La Pizarra Nocturna: el post se ocultará al amanecer.'),
+          findsOneWidget,
+        );
+        expect(find.text('Expira en 24 h'), findsNothing);
+
+        // Activamos el switch efímero
+        final switchFinder = find.byType(SwitchListTile);
+        expect(switchFinder, findsOneWidget);
+        await tester.tap(switchFinder);
+        await tester.pumpAndSettle();
+
+        // Debe reflejar el aviso "Expira en 24 h"
+        expect(find.text('Expira en 24 h'), findsOneWidget);
+
+        // Si lo desactivamos, el aviso desaparece
+        await tester.tap(switchFinder);
+        await tester.pumpAndSettle();
+        expect(find.text('Expira en 24 h'), findsNothing);
+      },
+    );
   });
 }

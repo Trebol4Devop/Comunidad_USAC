@@ -7,6 +7,9 @@ import '../../../core/services/forum_service.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
+import '../../legal/widgets/terms_consent_modal.dart';
+import '../../shared/widgets/alias_dice_button.dart';
+import '../../../core/services/profile_service.dart';
 import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/gif_picker_modal.dart';
 import '../models/discord_forum_models.dart';
@@ -107,7 +110,9 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
   late String _selectedCategory;
   late String _selectedFacultad;
   late String _selectedCarrera;
+  late String _authorAlias;
   bool _isSubmitting = false;
+  bool _isEphemeral = false;
 
   bool get _canSelectCarrera =>
       widget.initialFacultad != null &&
@@ -122,6 +127,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
   @override
   void initState() {
     super.initState();
+    _authorAlias = widget.activeAlias;
     _selectedCategory =
         (widget.initialCategory != null &&
             widget.initialCategory != 'general' &&
@@ -244,15 +250,24 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
-      AuthModal.show(
-        context,
-        title: 'Inicia Sesión para Publicar',
-        subtitle:
-            'Para crear consultas o citar posts en el foro universitario, debes iniciar sesión.',
-        onAuthenticated: () => _submit(),
-      );
-      return;
+    if (SupabaseConfig.isConfigured) {
+      if (!SupabaseService.isAuthenticated) {
+        AuthModal.show(
+          context,
+          title: 'Inicia Sesión para Publicar',
+          subtitle:
+              'Para crear consultas o citar posts en el foro universitario, debes iniciar sesión.',
+          onAuthenticated: () => _submit(),
+        );
+        return;
+      }
+
+      final hasAccepted = await ProfileService.hasAcceptedTerms();
+      if (!hasAccepted) {
+        if (!mounted) return;
+        final accepted = await TermsConsentModal.show(context);
+        if (!accepted) return;
+      }
     }
 
     setState(() => _isSubmitting = true);
@@ -276,12 +291,13 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
         content: _contentController.text.trim(),
         category: _selectedCategory,
         carrera: _selectedCarrera,
-        authorAlias: widget.activeAlias,
+        authorAlias: _authorAlias,
         imageUrl: _uploadedImageUrl,
         gifUrl: _selectedGifUrl,
         quotedPostId: widget.quotedPost?.id,
         pollQuestion: _showPollForm ? pollQuestion : null,
         pollOptions: _showPollForm ? pollOptions : null,
+        ephemeral: _isEphemeral,
       );
 
       if (mounted) {
@@ -376,6 +392,33 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                         ),
                       ],
                     ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              // Selector de identidad anónima con dados
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  Text(
+                    'Publicando como:',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: isDark
+                          ? Colors.grey.shade400
+                          : Colors.grey.shade600,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  AliasDiceButton(
+                    alias: _authorAlias,
+                    onAliasChanged: (newAlias) {
+                      setState(() => _authorAlias = newAlias);
+                      widget.onAliasChanged(newAlias);
+                    },
+                    compact: true,
                   ),
                 ],
               ),
@@ -879,6 +922,66 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                       ),
                     ),
                   ],
+                ),
+              ],
+
+              const SizedBox(height: 12),
+
+              // SwitchListTile para post efímero (La Pizarra Nocturna)
+              Material(
+                color: panelColor,
+                shape: RoundedRectangleBorder(
+                  side: BorderSide(color: panelBorder),
+                ),
+                child: SwitchListTile(
+                  value: _isEphemeral,
+                  onChanged: (val) => setState(() => _isEphemeral = val),
+                  title: const Text(
+                    'Desaparece en 24h',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: const Text(
+                    'La Pizarra Nocturna: el post se ocultará al amanecer.',
+                    style: TextStyle(fontSize: 11),
+                  ),
+                  secondary: Icon(
+                    Icons.nightlight_round,
+                    color: _isEphemeral
+                        ? Colors.amber.shade600
+                        : (isDark
+                              ? Colors.grey.shade400
+                              : Colors.grey.shade600),
+                    size: 22,
+                  ),
+                  dense: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 0,
+                  ),
+                ),
+              ),
+
+              if (_isEphemeral) ...[
+                const SizedBox(height: 8),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Chip(
+                    avatar: Icon(
+                      Icons.timer,
+                      size: 15,
+                      color: Color(0xFFD97706),
+                    ),
+                    label: Text(
+                      'Expira en 24 h',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFFD97706),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    backgroundColor: Color(0xFFFEF3C7),
+                    padding: EdgeInsets.zero,
+                  ),
                 ),
               ],
 

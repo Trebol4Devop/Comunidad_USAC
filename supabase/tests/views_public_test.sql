@@ -7,6 +7,8 @@ select plan(14);
 
 create extension if not exists pgtap;
 
+set role postgres;
+
 -- -----------------------------------------------------------------------------
 -- Fixtures
 -- -----------------------------------------------------------------------------
@@ -29,14 +31,14 @@ begin
     insert into public.posts (
         id, user_id, title, content, category, carrera, author_alias, author_hash, moderation_status
     ) values (
-        v_post_id, v_user_a, 'Post de Discusion Hash', 'Contenido visible', 'general', 'sistemas', 'Alias A', v_hash_a, 0
+        v_post_id, v_user_a, 'Post de Discusion Hash', 'Contenido visible', 'general', 'sistemas', 'Compilador Desvelado', v_hash_a, 0
     ) on conflict (id) do nothing;
 
     -- Post bloqueado (moderation_status = 2)
     insert into public.posts (
         id, user_id, title, content, category, carrera, author_alias, author_hash, moderation_status
     ) values (
-        v_post_blocked, v_user_a, 'Post Bloqueado Oculto', 'Censurado', 'general', 'sistemas', 'Alias A', v_hash_a, 2
+        v_post_blocked, v_user_a, 'Post Bloqueado Oculto', 'Censurado', 'general', 'sistemas', 'Compilador Desvelado', v_hash_a, 2
     ) on conflict (id) do nothing;
 
     -- Comentarios asociados al Post activo
@@ -44,21 +46,21 @@ begin
     insert into public.comments (
         id, post_id, user_id, content, author_alias, author_hash, moderation_status
     ) values (
-        '90000000-0000-0000-0000-000000000001', v_post_id, v_user_a, 'Respuesta del autor original', 'Alias A', v_hash_a, 0
+        '90000000-0000-0000-0000-000000000001', v_post_id, v_user_a, 'Respuesta del autor original', 'Compilador Desvelado', v_hash_a, 0
     ) on conflict (id) do nothing;
 
     -- C2: Creado por Usuario B (otro usuario)
     insert into public.comments (
         id, post_id, user_id, content, author_alias, author_hash, moderation_status
     ) values (
-        '90000000-0000-0000-0000-000000000002', v_post_id, v_user_b, 'Aporte de companero B', 'Alias B', v_hash_b, 0
+        '90000000-0000-0000-0000-000000000002', v_post_id, v_user_b, 'Aporte de companero B', 'Puntero Nocturno', v_hash_b, 0
     ) on conflict (id) do nothing;
 
     -- C3: Creado por Usuario B pero bloqueado (moderation_status = 2)
     insert into public.comments (
         id, post_id, user_id, content, author_alias, author_hash, moderation_status
     ) values (
-        '90000000-0000-0000-0000-000000000003', v_post_id, v_user_b, 'Comentario con spam bloqueado', 'Alias B', v_hash_b, 2
+        '90000000-0000-0000-0000-000000000003', v_post_id, v_user_b, 'Comentario con spam bloqueado', 'Puntero Nocturno', v_hash_b, 2
     ) on conflict (id) do nothing;
 end $$;
 

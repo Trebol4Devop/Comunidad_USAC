@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -108,7 +107,7 @@ class _AuthModalState extends State<AuthModal> {
         .listen(_handleGoogleAuthState);
 
     try {
-      final currentUrl = kIsWeb ? Uri.base.toString() : null;
+      final currentUrl = SupabaseService.oauthRedirectUrl;
       final launched = await SupabaseService.signInWithGoogle(
         redirectTo: currentUrl,
       );

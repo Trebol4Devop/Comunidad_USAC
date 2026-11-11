@@ -541,7 +541,8 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                 ],
 
                 // 1-Touch Product Lifecycle Buttons (For Seller or Owner)
-                if (widget.onStatusChanged != null && widget.isOwner) ...[
+                if (widget.onStatusChanged != null &&
+                    (widget.isOwner || item.isMine)) ...[
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 6,
