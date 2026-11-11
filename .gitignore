@@ -7,3 +7,4 @@ scripts/*.json
 *.log
 definition/
 .migration_fetch_staging
+.wrangler/
