@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import '../../../core/constants/zanate_colors.dart';
 import '../../../core/models/whatsapp_group.dart';
-import '../../../core/utils/responsive.dart';
 import '../../../core/utils/time_utils.dart';
 import '../../../core/utils/url_utils.dart';
 import '../../shared/widgets/image_viewer_dialog.dart';
@@ -36,15 +37,30 @@ class GroupCard extends StatelessWidget {
   IconData _getPlatformIcon(GroupPlatform platform) {
     switch (platform) {
       case GroupPlatform.whatsApp:
-        return Icons.chat;
+        return PhosphorIconsFill.whatsappLogo;
       case GroupPlatform.telegram:
-        return Icons.send_rounded;
+        return PhosphorIconsFill.telegramLogo;
       case GroupPlatform.discord:
-        return Icons.headset_mic_rounded;
+        return PhosphorIconsFill.discordLogo;
       case GroupPlatform.drive:
-        return Icons.folder_shared_outlined;
+        return PhosphorIconsRegular.folder;
       case GroupPlatform.other:
-        return Icons.link;
+        return PhosphorIconsRegular.link;
+    }
+  }
+
+  Color _getPlatformColor(GroupPlatform platform) {
+    switch (platform) {
+      case GroupPlatform.whatsApp:
+        return const Color(0xFF25D366);
+      case GroupPlatform.telegram:
+        return const Color(0xFF0088CC);
+      case GroupPlatform.discord:
+        return const Color(0xFF5865F2);
+      case GroupPlatform.drive:
+        return const Color(0xFF0F9D58);
+      case GroupPlatform.other:
+        return ZanateColors.zanateAccent;
     }
   }
 
@@ -78,24 +94,27 @@ class GroupCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final isMobile = Responsive.isMobile(context);
     final platform = group.platform;
+    final platformColor = _getPlatformColor(platform);
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      margin: EdgeInsets.zero,
-      elevation: 0,
-      color: theme.colorScheme.surface,
-      shape: isMobile
-          ? const RoundedRectangleBorder()
-          : RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(
-                color: isDark
-                    ? const Color(0xFF303030)
-                    : const Color(0xFFD9D9D9),
-              ),
-            ),
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+          width: 0.8,
+        ),
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -290,8 +309,11 @@ class GroupCard extends StatelessWidget {
               ),
             ],
 
-            const SizedBox(height: 14),
-            const Divider(height: 1),
+            const SizedBox(height: 12),
+            Container(
+              height: 0.8,
+              color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            ),
             const SizedBox(height: 12),
 
             // Actions Row: Upvote, Copy link, Join Button
@@ -300,66 +322,60 @@ class GroupCard extends StatelessWidget {
                 final compactJoinAction = constraints.maxWidth < 360;
                 return Row(
                   children: [
-                    // Upvote button
-                    Semantics(
-                      button: true,
-                      label: group.isUpvotedByMe
-                          ? 'Retirar voto del grupo'
-                          : 'Votar por el grupo',
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(
-                          minWidth: 48,
-                          minHeight: 48,
-                        ),
-                        child: InkWell(
-                          onTap: onUpvote,
+                    // Upvote pill button
+                    InkWell(
+                      onTap: onUpvote,
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: group.isUpvotedByMe
+                              ? ZanateColors.zanateAccent.withValues(alpha: 0.12)
+                              : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC)),
                           borderRadius: BorderRadius.circular(20),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: const BoxDecoration(),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  group.isUpvotedByMe
-                                      ? Icons.thumb_up
-                                      : Icons.thumb_up_alt_outlined,
-                                  size: 15,
-                                  color: group.isUpvotedByMe
-                                      ? (isDark ? Colors.white : Colors.black)
-                                      : (isDark
-                                            ? Colors.grey.shade400
-                                            : Colors.grey.shade700),
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  '${group.upvotes}',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: isDark
-                                        ? Colors.grey.shade200
-                                        : Colors.black87,
-                                  ),
-                                ),
-                              ],
-                            ),
+                          border: Border.all(
+                            color: group.isUpvotedByMe
+                                ? ZanateColors.zanateAccent
+                                : (isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder),
+                            width: 0.8,
                           ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              group.isUpvotedByMe
+                                  ? PhosphorIconsFill.arrowFatUp
+                                  : PhosphorIconsRegular.arrowFatUp,
+                              size: 15,
+                              color: group.isUpvotedByMe
+                                  ? ZanateColors.zanateAccent
+                                  : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              '${group.upvotes}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: group.isUpvotedByMe
+                                    ? ZanateColors.zanateAccent
+                                    : (isDark ? const Color(0xFFE2E8F0) : ZanateColors.zanateDark),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
-                    IconButton.outlined(
-                      icon: const Icon(Icons.copy, size: 16),
-                      tooltip: 'Copiar enlace',
-                      style: IconButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+                    // Minimalist copy button
+                    IconButton(
+                      icon: Icon(
+                        PhosphorIconsRegular.copy,
+                        size: 17,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                       ),
+                      tooltip: 'Copiar enlace',
                       onPressed: () => UrlUtils.copyToClipboard(
                         context,
                         group.link,
@@ -367,34 +383,30 @@ class GroupCard extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
-                    if (compactJoinAction)
-                      IconButton.outlined(
-                        tooltip: 'Unirse al grupo',
-                        onPressed: () => _openGroupLink(context),
-                        icon: Icon(_getPlatformIcon(platform)),
-                      )
-                    else
-                      OutlinedButton.icon(
-                        onPressed: () => _openGroupLink(context),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: theme.colorScheme.onSurface,
-                          side: BorderSide(
-                            color: isDark ? Colors.white54 : Colors.black54,
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 10,
-                          ),
+                    // Join action button
+                    ElevatedButton.icon(
+                      onPressed: () => _openGroupLink(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: platformColor,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        icon: Icon(_getPlatformIcon(platform), size: 16),
-                        label: const Text(
-                          'Unirse al Grupo',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 9,
                         ),
                       ),
+                      icon: Icon(_getPlatformIcon(platform), size: 15),
+                      label: Text(
+                        compactJoinAction ? 'Unirse' : 'Unirse al Grupo',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
                   ],
                 );
               },
