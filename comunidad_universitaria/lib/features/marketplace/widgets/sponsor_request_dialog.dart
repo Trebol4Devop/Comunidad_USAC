@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import '../../../core/constants/zanate_colors.dart';
 import '../../../core/services/marketplace_service.dart';
 import '../../../core/utils/responsive.dart';
 
@@ -119,7 +121,7 @@ class _SponsorRequestDialogState extends State<SponsorRequestDialog> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(
-                      Icons.star_outline,
+                      PhosphorIconsBold.sparkle,
                       color: Color(0xFFD97706),
                       size: 24,
                     ),
@@ -332,7 +334,14 @@ class _SponsorRequestDialogState extends State<SponsorRequestDialog> {
       );
     } else {
       return Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: theme.brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(
+            color: theme.brightness == Brightness.dark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            width: 0.8,
+          ),
+        ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
           child: content,

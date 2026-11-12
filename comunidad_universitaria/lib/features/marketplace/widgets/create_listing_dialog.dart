@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import '../../../core/constants/zanate_colors.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/categories.dart';
 import '../../../core/models/marketplace_item.dart';
@@ -306,14 +308,14 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF059669).withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(10),
+                      color: ZanateColors.zanateAccent.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
-                      Icons.storefront,
-                      color: Color(0xFF059669),
+                      PhosphorIconsBold.storefront,
+                      color: ZanateColors.zanateAccent,
                       size: 22,
                     ),
                   ),
@@ -324,14 +326,19 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                       children: [
                         Text(
                           'Publicar Producto o Servicio',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 17,
+                            letterSpacing: -0.2,
+                            color: theme.brightness == Brightness.dark ? Colors.white : ZanateColors.zanateDark,
                           ),
                         ),
-                        Text(
-                          'Marketplace Universitario · Entorno Seguro',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: const Color(0xFF059669),
+                        const SizedBox(height: 2),
+                        const Text(
+                          'Marketplace Universitario · Comunidad USAC',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: ZanateColors.zanateAccent,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -367,7 +374,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                 },
               ),
 
-              const Divider(height: 20),
+              Container(height: 0.8, color: theme.brightness == Brightness.dark ? const Color(0xFF334155) : ZanateColors.subtleBorder),
 
               // Category & Free Toggle
               Wrap(
@@ -902,11 +909,15 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                     ),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF004B87),
+                        backgroundColor: ZanateColors.zanateAccent,
                         foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
+                          horizontal: 18,
+                          vertical: 11,
                         ),
                       ),
                       onPressed: _isSubmitting ? null : _submit,
@@ -919,9 +930,10 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Icon(Icons.check, size: 16),
+                          : const Icon(PhosphorIconsBold.paperPlaneTilt, size: 16),
                       label: Text(
                         _isSubmitting ? 'Publicando...' : 'Publicar Anuncio',
+                        style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),
                   ],
@@ -942,7 +954,14 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
       );
     } else {
       return Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: theme.brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(
+            color: theme.brightness == Brightness.dark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            width: 0.8,
+          ),
+        ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 640),
           child: content,
