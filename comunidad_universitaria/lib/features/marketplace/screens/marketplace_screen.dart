@@ -6,6 +6,8 @@ import '../../../core/services/marketplace_service.dart';
 import '../../../core/services/sponsored_preferences_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import '../../../core/constants/zanate_colors.dart';
 import '../widgets/create_listing_dialog.dart';
 import '../widgets/marketplace_card.dart';
 import '../widgets/sponsor_carousel.dart';
@@ -309,7 +311,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     final isDesktop = Responsive.isDesktop(context);
     final isMobile = Responsive.isMobile(context);
 
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg,
       body: RefreshIndicator(
         onRefresh: _loadData,
         child: SingleChildScrollView(
@@ -322,54 +327,77 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               children: [
                 // Top Header Banner
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(12),
+                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: theme.brightness == Brightness.dark
-                          ? const Color(0xFF303030)
-                          : const Color(0xFFD9D9D9),
+                      color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+                      width: 0.8,
                     ),
+                    boxShadow: isDark
+                        ? []
+                        : [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.02),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                   ),
                   child: Row(
                     children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: ZanateColors.zanateAccent.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          PhosphorIconsBold.storefront,
+                          size: 22,
+                          color: ZanateColors.zanateAccent,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Marketplace & Tutorías Estudiantiles',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
+                              'Marketplace & Tutorías',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 17,
+                                letterSpacing: -0.2,
+                                color: isDark ? Colors.white : ZanateColors.zanateDark,
                               ),
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 2),
                             Text(
-                              'Espacio libre para emprendimientos sancarlistas: comidas, postres, tutorías de cursos y materiales universitarios.',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
+                              'Emprendimientos estudiantiles, tutorías, almuerzos, postres y útiles.',
+                              style: TextStyle(
                                 fontSize: 12,
+                                color: isDark
+                                    ? const Color(0xFF94A3B8)
+                                    : const Color(0xFF64748B),
                               ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
                       ),
                       if (isDesktop) ...[
-                        const SizedBox(width: 16),
-                        OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: theme.colorScheme.onSurface,
-                            side: BorderSide(
-                              color: theme.brightness == Brightness.dark
-                                  ? Colors.white38
-                                  : Colors.black54,
-                            ),
-                          ),
+                        const SizedBox(width: 12),
+                        IconButton(
+                          tooltip: 'Publicar Anuncio',
                           onPressed: _handleCreateListingClick,
-                          icon: const Icon(Icons.add_shopping_cart, size: 18),
-                          label: const Text('Publicar Anuncio'),
+                          icon: Icon(
+                            PhosphorIconsBold.plus,
+                            size: 20,
+                            color: isDark ? Colors.white : ZanateColors.zanateDark,
+                          ),
                         ),
                       ],
                     ],
@@ -595,69 +623,93 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      // Solo Gratis toggle chip
-                      FilterChip(
-                        avatar: Icon(
-                          _onlyFree
-                              ? Icons.check_circle
-                              : Icons.volunteer_activism_outlined,
-                          size: 16,
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                        label: const Text('Solo Gratuitos'),
-                        selected: _onlyFree,
-                        selectedColor: theme.colorScheme.surface,
-                        showCheckmark: false,
-                        side: BorderSide(
-                          color: _onlyFree
-                              ? theme.colorScheme.onSurface
-                              : theme.dividerColor,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        labelStyle: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                        onSelected: (selected) {
-                          setState(() => _onlyFree = selected);
+                      // Solo Gratis toggle capsule
+                      InkWell(
+                        onTap: () {
+                          setState(() => _onlyFree = !_onlyFree);
                           _loadData();
                         },
+                        borderRadius: BorderRadius.circular(20),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: _onlyFree
+                                ? ZanateColors.zanateAccent
+                                : (isDark ? const Color(0xFF1E293B) : Colors.white),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: _onlyFree
+                                  ? ZanateColors.zanateAccent
+                                  : (isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder),
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _onlyFree
+                                    ? PhosphorIconsFill.checkCircle
+                                    : PhosphorIconsRegular.gift,
+                                size: 14,
+                                color: _onlyFree
+                                    ? Colors.white
+                                    : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                'Solo Gratuitos',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: _onlyFree ? FontWeight.w700 : FontWeight.w500,
+                                  color: _onlyFree
+                                      ? Colors.white
+                                      : (isDark ? const Color(0xFFE2E8F0) : ZanateColors.zanateDark),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                       const SizedBox(width: 8),
 
-                      // Category Chips
+                      // Category Pills
                       ...USACConstants.marketplaceCategories.map((cat) {
                         final isSelected = _selectedCategory == cat.id;
                         return Padding(
                           padding: const EdgeInsets.only(right: 8),
-                          child: FilterChip(
-                            label: Text(cat.label),
-                            selected: isSelected,
-                            onSelected: (selected) {
-                              setState(() {
-                                _selectedCategory = cat.id;
-                              });
+                          child: InkWell(
+                            onTap: () {
+                              setState(() => _selectedCategory = cat.id);
                               _loadData();
                             },
-                            selectedColor: theme.colorScheme.surface,
-                            showCheckmark: false,
-                            side: BorderSide(
-                              color: isSelected
-                                  ? theme.colorScheme.onSurface
-                                  : theme.dividerColor,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            labelStyle: TextStyle(
-                              fontSize: 12,
-                              fontWeight: isSelected
-                                  ? FontWeight.w600
-                                  : FontWeight.normal,
-                              color: theme.colorScheme.onSurface,
+                            borderRadius: BorderRadius.circular(20),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 180),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? (isDark ? Colors.white : ZanateColors.zanateDark)
+                                    : (isDark ? const Color(0xFF1E293B) : Colors.white),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? Colors.transparent
+                                      : (isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder),
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Text(
+                                cat.label,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                  color: isSelected
+                                      ? (isDark ? const Color(0xFF0F172A) : Colors.white)
+                                      : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                                ),
+                              ),
                             ),
                           ),
                         );
@@ -700,13 +752,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: _listings.length,
-                      separatorBuilder: (context, index) => Divider(
-                        height: 1,
-                        thickness: 1,
-                        color: Theme.of(
-                          context,
-                        ).dividerColor.withValues(alpha: 0.6),
-                      ),
+                      separatorBuilder: (context, index) => const SizedBox(height: 12),
                       itemBuilder: (ctx, i) {
                         final item = _listings[i];
                         return MarketplaceCard(
@@ -760,10 +806,17 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
           ? FloatingActionButton.extended(
               heroTag: 'marketplace_fab',
               onPressed: _handleCreateListingClick,
-              backgroundColor: theme.colorScheme.onSurface,
-              foregroundColor: theme.colorScheme.surface,
-              icon: const Icon(Icons.add_business),
-              label: const Text('Publicar Anuncio'),
+              backgroundColor: ZanateColors.zanateAccent,
+              foregroundColor: Colors.white,
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              icon: const Icon(PhosphorIconsBold.plus, size: 18),
+              label: const Text(
+                'Publicar Anuncio',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+              ),
             )
           : null,
     );
