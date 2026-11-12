@@ -10,7 +10,6 @@ import '../../core/utils/responsive.dart';
 import '../forum/screens/forum_screen.dart';
 import '../groups/screens/groups_screen.dart';
 import '../marketplace/screens/marketplace_screen.dart';
-import '../marketplace/widgets/create_listing_dialog.dart';
 import '../map/screens/campus_map_screen.dart';
 import '../rules/screens/rules_screen.dart';
 
@@ -201,15 +200,6 @@ class _AppShellState extends State<AppShell> {
                 ],
               ),
               actions: [
-                IconButton(
-                  icon: const PhosphorIcon(
-                    PhosphorIconsRegular.shieldCheck,
-                    size: 20,
-                  ),
-                  tooltip: 'Normas y Descargo',
-                  onPressed: _navigateToRules,
-                ),
-                const SizedBox(width: 4),
                 IconButton(
                   icon: PhosphorIcon(
                     widget.isDarkMode
@@ -484,25 +474,21 @@ class _AppShellState extends State<AppShell> {
       ),
       child: InkWell(
         onTap: _showDisclaimerModal,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildBrandMark(),
-              const SizedBox(width: 8),
-              Text(
-                'Zanate',
-                style: GoogleFonts.croissantOne(
-                  fontSize: 21,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.5,
-                  color: isDark ? Colors.white : ZanateColors.zanateDark,
-                ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildBrandMark(),
+            const SizedBox(width: 8),
+            Text(
+              'Zanate',
+              style: GoogleFonts.croissantOne(
+                fontSize: 21,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
+                color: isDark ? Colors.white : ZanateColors.zanateDark,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -529,6 +515,7 @@ class _AppShellState extends State<AppShell> {
                 child: MarketplaceScreen(
                   activeAlias: widget.activeAlias,
                   onAliasChanged: widget.onAliasChanged,
+                  onToggleTheme: widget.onToggleTheme,
                   showFloatingActionButton: !isMobile,
                 ),
               )
@@ -540,6 +527,7 @@ class _AppShellState extends State<AppShell> {
                   key: _groupsScreenKey,
                   activeAlias: widget.activeAlias,
                   onAliasChanged: widget.onAliasChanged,
+                  onToggleTheme: widget.onToggleTheme,
                   showFloatingActionButton: false,
                   floatingActionButtonHeroTag: 'shell_groups_screen_fab',
                 ),
@@ -642,42 +630,6 @@ class _AppShellState extends State<AppShell> {
   }
 
   Widget? _buildContextualFloatingActionButton() {
-    switch (_currentIndex) {
-      case 1:
-        // Marketplace: Publica un Artículo
-        return FloatingActionButton.extended(
-          heroTag: 'shell_market_fab',
-          onPressed: () {
-            CreateListingDialog.show(
-              context,
-              activeAlias: widget.activeAlias,
-              onAliasChanged: widget.onAliasChanged,
-              onListingCreated: (_) => setState(() {}),
-            );
-          },
-          backgroundColor: Theme.of(context).colorScheme.onSurface,
-          foregroundColor: Theme.of(context).colorScheme.surface,
-          icon: const Icon(Icons.add_business_outlined, size: 22),
-          label: const Text(
-            'Publicar Artículo',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-        );
-      case 2:
-        return FloatingActionButton.extended(
-          heroTag: 'shell_groups_fab',
-          onPressed: () =>
-              _groupsScreenKey.currentState?.openCreateGroupDialog(),
-          backgroundColor: Theme.of(context).colorScheme.onSurface,
-          foregroundColor: Theme.of(context).colorScheme.surface,
-          icon: const Icon(Icons.group_add, size: 22),
-          label: const Text(
-            'Compartir Grupo',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-        );
-      default:
-        return null;
-    }
+    return null;
   }
 }

@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../core/constants/categories.dart';
+import '../../../core/constants/zanate_colors.dart';
 import '../../../core/models/marketplace_item.dart';
 import '../../../core/services/marketplace_service.dart';
+import '../../../core/services/share_count_service.dart';
 import '../../../core/services/sponsored_preferences_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
-import '../../../core/constants/zanate_colors.dart';
 import '../widgets/create_listing_dialog.dart';
 import '../widgets/marketplace_card.dart';
 import '../widgets/sponsor_carousel.dart';
@@ -15,16 +18,19 @@ import '../widgets/sponsor_request_dialog.dart';
 import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/empty_state_widget.dart';
 import '../../shared/widgets/network_state_widgets.dart';
+import '../../shared/widgets/settings_bottom_sheet.dart';
 
 class MarketplaceScreen extends StatefulWidget {
   final String activeAlias;
   final Function(String newAlias) onAliasChanged;
+  final VoidCallback? onToggleTheme;
   final bool showFloatingActionButton;
 
   const MarketplaceScreen({
     super.key,
     required this.activeAlias,
     required this.onAliasChanged,
+    this.onToggleTheme,
     this.showFloatingActionButton = true,
   });
 
@@ -74,14 +80,22 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
       final hiddenSponsoredIds =
           await SponsoredPreferencesService.hiddenItemIds();
 
+      final allItems = results[0]
+          .where(
+            (item) =>
+                !item.isSponsored || !hiddenSponsoredIds.contains(item.id),
+          )
+          .toList();
+
+      await ShareCountService.preload(allItems.map((i) => i.id).toList());
+      final enrichedItems = allItems.map((i) {
+        final count = ShareCountService.getCachedCount(i.id);
+        return count > i.sharesCount ? i.copyWith(sharesCount: count) : i;
+      }).toList();
+
       if (mounted) {
         setState(() {
-          _listings = results[0]
-              .where(
-                (item) =>
-                    !item.isSponsored || !hiddenSponsoredIds.contains(item.id),
-              )
-              .toList();
+          _listings = enrichedItems;
           _sponsoredListings = results[1]
               .where((item) => !hiddenSponsoredIds.contains(item.id))
               .toList();
@@ -96,6 +110,36 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
           _isOffline = true;
         });
       }
+    }
+  }
+
+  Future<void> _handleShareListing(MarketplaceItem item) async {
+    final newCount = item.sharesCount + 1;
+    setState(() {
+      final idx = _listings.indexWhere((l) => l.id == item.id);
+      if (idx != -1) {
+        _listings[idx] = _listings[idx].copyWith(sharesCount: newCount);
+      }
+    });
+
+    await ShareCountService.incrementShare(item.id, table: 'marketplace_items');
+
+    final shareText =
+        '${item.title} - ${item.isFree ? "GRATIS" : item.formattedPrice}\n\n${item.description}\n\nUbicación: ${item.locationDetail.isNotEmpty ? item.locationDetail : item.sede}\n— Publicado por ${item.authorAlias} en Comunidad USAC';
+    try {
+      await SharePlus.instance.share(
+        ShareParams(text: shareText, subject: item.title),
+      );
+    } catch (_) {
+      await Clipboard.setData(ClipboardData(text: shareText));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Publicación compartida ($newCount veces). El enlace se copió al portapapeles.'),
+          backgroundColor: ZanateColors.zanateAccent,
+        ),
+      );
+      return;
     }
   }
 
@@ -155,7 +199,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     final prevUpvoted = item.isUpvotedByMe;
     final prevUpvotes = item.upvotes;
 
-    // Optimistic UI update
     setState(() {
       final idx = _listings.indexWhere((l) => l.id == item.id);
       if (idx != -1) {
@@ -235,7 +278,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Reporte enviado. La publicación se ocultó para ti.'),
-        backgroundColor: Color(0xFF004B87),
+        backgroundColor: ZanateColors.zanateAccent,
       ),
     );
   }
@@ -278,7 +321,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
         builder: (dialogContext) => AlertDialog(
           title: const Text('Verificación necesaria'),
           content: const Text(
-            'Para publicar anuncios se requiere una verificación institucional real. '
+            'Para publicar anuncios se requiere una verificación estudiantil real. '
             'Esa conexión todavía no está disponible; no se guardará ningún anuncio '
             'ni se marcará tu cuenta como verificada.',
           ),
@@ -305,520 +348,891 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDesktop = Responsive.isDesktop(context);
-    final isMobile = Responsive.isMobile(context);
+  // Uniform Category Visuals - Disciplined Monochromatic Palette (No Rainbow)
+  ({IconData icon, String subtitle}) _getCategoryVisuals(String catId) {
+    switch (catId) {
+      case 'comida_postres':
+        return (
+          icon: PhosphorIconsBold.bowlFood,
+          subtitle: 'Almuerzos & postres',
+        );
+      case 'tutorias_academica':
+        return (
+          icon: PhosphorIconsBold.graduationCap,
+          subtitle: 'Clases & asesorías',
+        );
+      case 'libros_materiales':
+        return (
+          icon: PhosphorIconsBold.books,
+          subtitle: 'Libros, batas y útiles',
+        );
+      case 'servicios_estudiantiles':
+        return (
+          icon: PhosphorIconsBold.briefcase,
+          subtitle: 'Impresiones y software',
+        );
+      case 'otros_articulos':
+        return (
+          icon: PhosphorIconsBold.tag,
+          subtitle: 'Tecnología y varios',
+        );
+      case 'todos':
+      default:
+        return (
+          icon: PhosphorIconsBold.squaresFour,
+          subtitle: 'Ver todo el catálogo',
+        );
+    }
+  }
 
-    final isDark = theme.brightness == Brightness.dark;
+  // 1. Squared Top Header: Clean, Simple, Centered Title without Symbol, Gear for Settings on Left
+  Widget _buildSquaredHeader(bool isDark) {
+    return Container(
+      height: 56,
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            width: 0.8,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Left: Settings Button (Configuración y Perfil)
+          IconButton(
+            tooltip: 'Configuración y Perfil',
+            onPressed: () => SettingsBottomSheet.show(
+              context,
+              activeAlias: widget.activeAlias,
+              onAliasChanged: widget.onAliasChanged,
+              onToggleTheme: widget.onToggleTheme,
+            ),
+            icon: Icon(
+              PhosphorIconsRegular.gear,
+              size: 21,
+              color: isDark ? Colors.white : ZanateColors.zanateDark,
+            ),
+            splashRadius: 22,
+          ),
 
-    return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg,
-      body: RefreshIndicator(
-        onRefresh: _loadData,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: MaxWidthContainer(
-            maxWidth: 1100,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          // Center: Clean, simple, centered title (Matching Forum layout, no symbol box)
+          Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Top Header Banner
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                Text(
+                  'ZANATE STORE',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8,
+                    color: isDark
+                        ? const Color(0xFF94A3B8)
+                        : Colors.blueGrey.shade400,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Marketplace & Tutorías',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.3,
+                    color: isDark ? Colors.white : ZanateColors.zanateDark,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+
+          // Right: Minimalist + button to publish listing
+          IconButton(
+            tooltip: 'Publicar Anuncio',
+            onPressed: _handleCreateListingClick,
+            icon: Icon(
+              PhosphorIconsBold.plus,
+              size: 22,
+              color: isDark ? Colors.white : ZanateColors.zanateDark,
+            ),
+            splashRadius: 22,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 2. Search & Filters Bar (Search Query + Ubicación por Sede + Facultad)
+  Widget _buildSearchAndFilters(bool isDark, bool isDesktop) {
+    final containerBg = isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg;
+    final borderColor = isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
+    final textColor = isDark ? Colors.white : ZanateColors.zanateDark;
+
+    if (isDesktop) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          border: Border(
+            bottom: BorderSide(color: borderColor, width: 0.8),
+          ),
+        ),
+        child: Column(
+          children: [
+            // Row 1: Search Field
+            Container(
+              height: 40,
+              decoration: BoxDecoration(
+                color: containerBg,
+                border: Border.all(color: borderColor, width: 0.8),
+              ),
+              child: Row(
+                children: [
+                  const SizedBox(width: 12),
+                  const Icon(
+                    PhosphorIconsRegular.magnifyingGlass,
+                    size: 16,
+                    color: ZanateColors.zanateAccent,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: const InputDecoration(
+                        hintText: 'Buscar en Marketplace (postres, tutorías, libros, cálculo...)',
+                        hintStyle: TextStyle(fontSize: 12.5, color: Color(0xFF94A3B8)),
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.symmetric(vertical: 10),
+                      ),
+                      style: TextStyle(fontSize: 13, color: textColor),
+                      onSubmitted: (val) {
+                        setState(() => _searchQuery = val.trim());
+                        _loadData();
+                      },
+                    ),
+                  ),
+                  if (_searchQuery.isNotEmpty)
+                    IconButton(
+                      icon: const Icon(PhosphorIconsRegular.x, size: 14),
+                      splashRadius: 14,
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() => _searchQuery = '');
+                        _loadData();
+                      },
+                    ),
+                  TextButton.icon(
+                    style: TextButton.styleFrom(
+                      backgroundColor: ZanateColors.zanateAccent,
+                      foregroundColor: Colors.white,
+                      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      minimumSize: const Size(0, 40),
+                    ),
+                    icon: const Icon(PhosphorIconsBold.magnifyingGlass, size: 15),
+                    label: const Text(
+                      'Buscar',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                    ),
+                    onPressed: () {
+                      setState(() => _searchQuery = _searchController.text.trim());
+                      _loadData();
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            // Row 2: Filters (Sede / Ubicación, Facultad)
+            Row(
+              children: [
+                // Sede / Ubicación
+                Expanded(
+                  child: Container(
+                    height: 38,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      color: containerBg,
+                      border: Border.all(color: borderColor, width: 0.8),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _selectedSede,
+                        isExpanded: true,
+                        icon: const Icon(PhosphorIconsRegular.caretDown, size: 13),
+                        items: USACConstants.sedes
+                            .map(
+                              (s) => DropdownMenuItem<String>(
+                                value: s['id']!,
+                                child: Text(
+                                  s['nombre']!,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(fontSize: 11.5, color: textColor),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (val) {
+                          setState(() => _selectedSede = val ?? 'todas');
+                          _loadData();
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Facultad
+                Expanded(
+                  child: Container(
+                    height: 38,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      color: containerBg,
+                      border: Border.all(color: borderColor, width: 0.8),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _selectedFacultad,
+                        isExpanded: true,
+                        icon: const Icon(PhosphorIconsRegular.caretDown, size: 13),
+                        items: USACConstants.facultades
+                            .map(
+                              (f) => DropdownMenuItem<String>(
+                                value: f['id'].toString(),
+                                child: Text(
+                                  f['nombre'].toString(),
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(fontSize: 11.5, color: textColor),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (val) {
+                          setState(() => _selectedFacultad = val ?? 'todas');
+                          _loadData();
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Mobile layout
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        border: Border(
+          bottom: BorderSide(color: borderColor, width: 0.8),
+        ),
+      ),
+      child: Column(
+        children: [
+          // Search Field
+          Container(
+            height: 38,
+            decoration: BoxDecoration(
+              color: containerBg,
+              border: Border.all(color: borderColor, width: 0.8),
+            ),
+            child: Row(
+              children: [
+                const SizedBox(width: 10),
+                const Icon(
+                  PhosphorIconsRegular.magnifyingGlass,
+                  size: 15,
+                  color: ZanateColors.zanateAccent,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: const InputDecoration(
+                      hintText: 'Buscar en Marketplace...',
+                      hintStyle: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                      border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(vertical: 9),
+                    ),
+                    style: TextStyle(fontSize: 12, color: textColor),
+                    onSubmitted: (val) {
+                      setState(() => _searchQuery = val.trim());
+                      _loadData();
+                    },
+                  ),
+                ),
+                if (_searchQuery.isNotEmpty)
+                  IconButton(
+                    icon: const Icon(PhosphorIconsRegular.x, size: 14),
+                    splashRadius: 14,
+                    onPressed: () {
+                      _searchController.clear();
+                      setState(() => _searchQuery = '');
+                      _loadData();
+                    },
+                  ),
+                IconButton(
+                  tooltip: 'Buscar',
+                  icon: const Icon(PhosphorIconsBold.magnifyingGlass, size: 16, color: ZanateColors.zanateAccent),
+                  onPressed: () {
+                    setState(() => _searchQuery = _searchController.text.trim());
+                    _loadData();
+                  },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 6),
+          // Sede / Ubicación & Facultad Row
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: 34,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                    borderRadius: BorderRadius.circular(16),
+                    color: containerBg,
+                    border: Border.all(color: borderColor, width: 0.8),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedSede,
+                      isExpanded: true,
+                      icon: const Icon(PhosphorIconsRegular.caretDown, size: 12),
+                      items: USACConstants.sedes
+                          .map(
+                            (s) => DropdownMenuItem<String>(
+                              value: s['id']!,
+                              child: Text(
+                                s['nombre']!,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: 10.5, color: textColor),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (val) {
+                        setState(() => _selectedSede = val ?? 'todas');
+                        _loadData();
+                      },
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Container(
+                  height: 34,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: containerBg,
+                    border: Border.all(color: borderColor, width: 0.8),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedFacultad,
+                      isExpanded: true,
+                      icon: const Icon(PhosphorIconsRegular.caretDown, size: 12),
+                      items: USACConstants.facultades
+                          .map(
+                            (f) => DropdownMenuItem<String>(
+                              value: f['id'].toString(),
+                              child: Text(
+                                f['nombre'].toString(),
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: 10.5, color: textColor),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (val) {
+                        setState(() => _selectedFacultad = val ?? 'todas');
+                        _loadData();
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 3. eBay-Style "Compra por Categorías" Visual Section
+  Widget _buildEbayCategoriesSection(bool isDark) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            width: 0.8,
+          ),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Compra por Categorías',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.2,
+                  color: isDark ? Colors.white : ZanateColors.zanateDark,
+                ),
+              ),
+              if (_selectedCategory != 'todos')
+                InkWell(
+                  onTap: () {
+                    setState(() => _selectedCategory = 'todos');
+                    _loadData();
+                  },
+                  child: const Text(
+                    'Ver todas',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: ZanateColors.zanateAccent,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: USACConstants.marketplaceCategories.map((cat) {
+                final isSelected = _selectedCategory == cat.id;
+                final visuals = _getCategoryVisuals(cat.id);
+
+                return Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: InkWell(
+                    onTap: () {
+                      setState(() => _selectedCategory = cat.id);
+                      _loadData();
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      width: 130,
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? ZanateColors.zanateAccent.withValues(alpha: isDark ? 0.25 : 0.08)
+                            : (isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isSelected
+                              ? ZanateColors.zanateAccent
+                              : (isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder),
+                          width: isSelected ? 1.5 : 0.8,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            visuals.icon,
+                            size: 20,
+                            color: isSelected
+                                ? ZanateColors.zanateAccent
+                                : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            cat.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
+                              color: isSelected
+                                  ? ZanateColors.zanateAccent
+                                  : (isDark ? Colors.white : ZanateColors.zanateDark),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            visuals.subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 4. eBay-Style "Ofertas y Aportes del Día" Spotlight Carousel
+  Widget _buildEbayDealsSection(bool isDark) {
+    final deals = _listings.where((item) => item.isFree || item.upvotes > 0).take(8).toList();
+
+    if (deals.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            width: 0.8,
+          ),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                PhosphorIconsBold.lightning,
+                size: 16,
+                color: Color(0xFFF59E0B),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Ofertas y Aportes del Día',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.2,
+                  color: isDark ? Colors.white : ZanateColors.zanateDark,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text(
+                  'GRATIS & DESTACADOS',
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF059669),
+                    letterSpacing: 0.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 130,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: deals.length,
+              separatorBuilder: (context, index) => const SizedBox(width: 10),
+              itemBuilder: (context, idx) {
+                final item = deals[idx];
+                final visuals = _getCategoryVisuals(item.category);
+
+                return Container(
+                  width: 240,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg,
                     border: Border.all(
                       color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
                       width: 0.8,
                     ),
-                    boxShadow: isDark
-                        ? []
-                        : [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.02),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
                   ),
                   child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: ZanateColors.zanateAccent.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          PhosphorIconsBold.storefront,
-                          size: 22,
-                          color: ZanateColors.zanateAccent,
-                        ),
+                        width: 76,
+                        height: 106,
+                        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                        child: item.imageUrls.isNotEmpty
+                            ? Image.network(
+                                item.imageUrls.first,
+                                fit: BoxFit.cover,
+                                errorBuilder: (ctx, err, stack) => Center(
+                                  child: Icon(visuals.icon, size: 24, color: const Color(0xFF94A3B8)),
+                                ),
+                              )
+                            : Center(
+                                child: Icon(visuals.icon, size: 24, color: const Color(0xFF94A3B8)),
+                              ),
                       ),
-                      const SizedBox(width: 14),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: item.isFree ? const Color(0xFF059669) : ZanateColors.zanateAccent,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                item.isFree ? 'GRATIS' : item.formattedPrice,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 5),
                             Text(
-                              'Marketplace & Tutorías',
+                              item.title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 17,
-                                letterSpacing: -0.2,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
                                 color: isDark ? Colors.white : ZanateColors.zanateDark,
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Emprendimientos estudiantiles, tutorías, almuerzos, postres y útiles.',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isDark
-                                    ? const Color(0xFF94A3B8)
-                                    : const Color(0xFF64748B),
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
+                            const SizedBox(height: 5),
+                            Row(
+                              children: [
+                                const Icon(
+                                  PhosphorIconsRegular.mapPin,
+                                  size: 11,
+                                  color: Color(0xFF94A3B8),
+                                ),
+                                const SizedBox(width: 3),
+                                Expanded(
+                                  child: Text(
+                                    item.locationDetail.isNotEmpty ? item.locationDetail : item.sede,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8)),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
                       ),
-                      if (isDesktop) ...[
-                        const SizedBox(width: 12),
-                        IconButton(
-                          tooltip: 'Publicar Anuncio',
-                          onPressed: _handleCreateListingClick,
-                          icon: Icon(
-                            PhosphorIconsBold.plus,
-                            size: 20,
-                            color: isDark ? Colors.white : ZanateColors.zanateDark,
-                          ),
-                        ),
-                      ],
                     ],
                   ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // Sponsor VIP / First plane Showcase
-                SponsorCarousel(
-                  sponsoredItems: _sponsoredListings,
-                  onRequestSponsor: _openSponsorRequestDialog,
-                  onHideSponsored: _hideSponsoredItem,
-                  onReportSponsored: _handleReportItem,
-                ),
-
-                // Search & Filter Dropdowns
-                if (isMobile) ...[
-                  TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText:
-                          'Buscar postres, almuerzos, tutorías o libros...',
-                      prefixIcon: const Icon(Icons.search, size: 20),
-                      suffixIcon: _searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear, size: 18),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() => _searchQuery = '');
-                                _loadData();
-                              },
-                            )
-                          : null,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                    ),
-                    onSubmitted: (val) {
-                      setState(() => _searchQuery = val);
-                      _loadData();
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      // Sede Selector
-                      Expanded(
-                        child: DropdownButtonFormField<String>(
-                          initialValue: _selectedSede,
-                          isExpanded: true,
-                          decoration: const InputDecoration(
-                            labelText: 'Sede / Campus',
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 8,
-                            ),
-                          ),
-                          items: USACConstants.sedes
-                              .map(
-                                (s) => DropdownMenuItem<String>(
-                                  value: s['id']!,
-                                  child: Text(
-                                    s['nombre']!,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontSize: 11),
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (val) {
-                            setState(() {
-                              _selectedSede = val ?? 'todas';
-                            });
-                            _loadData();
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Faculty Selector
-                      Expanded(
-                        child: DropdownButtonFormField<String>(
-                          initialValue: _selectedFacultad,
-                          isExpanded: true,
-                          decoration: const InputDecoration(
-                            labelText: 'Facultad / Unidad',
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 8,
-                            ),
-                          ),
-                          items: USACConstants.facultades
-                              .map(
-                                (f) => DropdownMenuItem<String>(
-                                  value: f['id'].toString(),
-                                  child: Text(
-                                    f['nombre'].toString(),
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontSize: 11),
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (val) {
-                            setState(() {
-                              _selectedFacultad = val ?? 'todas';
-                            });
-                            _loadData();
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ] else ...[
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _searchController,
-                          decoration: InputDecoration(
-                            hintText:
-                                'Buscar postres, almuerzos, tutorías o libros...',
-                            prefixIcon: const Icon(Icons.search, size: 20),
-                            suffixIcon: _searchQuery.isNotEmpty
-                                ? IconButton(
-                                    icon: const Icon(Icons.clear, size: 18),
-                                    onPressed: () {
-                                      _searchController.clear();
-                                      setState(() => _searchQuery = '');
-                                      _loadData();
-                                    },
-                                  )
-                                : null,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 12,
-                            ),
-                          ),
-                          onSubmitted: (val) {
-                            setState(() => _searchQuery = val);
-                            _loadData();
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-
-                      // Sede Selector
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 180),
-                        child: DropdownButtonFormField<String>(
-                          initialValue: _selectedSede,
-                          isExpanded: true,
-                          decoration: const InputDecoration(
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 10,
-                            ),
-                          ),
-                          items: USACConstants.sedes
-                              .map(
-                                (s) => DropdownMenuItem<String>(
-                                  value: s['id']!,
-                                  child: Text(
-                                    s['nombre']!,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (val) {
-                            setState(() {
-                              _selectedSede = val ?? 'todas';
-                            });
-                            _loadData();
-                          },
-                        ),
-                      ),
-
-                      const SizedBox(width: 8),
-
-                      // Faculty Selector
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 180),
-                        child: DropdownButtonFormField<String>(
-                          initialValue: _selectedFacultad,
-                          isExpanded: true,
-                          decoration: const InputDecoration(
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 10,
-                            ),
-                          ),
-                          items: USACConstants.facultades
-                              .map(
-                                (f) => DropdownMenuItem<String>(
-                                  value: f['id'].toString(),
-                                  child: Text(
-                                    f['nombre'].toString(),
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (val) {
-                            setState(() {
-                              _selectedFacultad = val ?? 'todas';
-                            });
-                            _loadData();
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-
-                const SizedBox(height: 12),
-
-                // Category Chips and Free filter
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      // Solo Gratis toggle capsule
-                      InkWell(
-                        onTap: () {
-                          setState(() => _onlyFree = !_onlyFree);
-                          _loadData();
-                        },
-                        borderRadius: BorderRadius.circular(20),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 180),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                          decoration: BoxDecoration(
-                            color: _onlyFree
-                                ? ZanateColors.zanateAccent
-                                : (isDark ? const Color(0xFF1E293B) : Colors.white),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: _onlyFree
-                                  ? ZanateColors.zanateAccent
-                                  : (isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder),
-                              width: 0.8,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                _onlyFree
-                                    ? PhosphorIconsFill.checkCircle
-                                    : PhosphorIconsRegular.gift,
-                                size: 14,
-                                color: _onlyFree
-                                    ? Colors.white
-                                    : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
-                              ),
-                              const SizedBox(width: 5),
-                              Text(
-                                'Solo Gratuitos',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: _onlyFree ? FontWeight.w700 : FontWeight.w500,
-                                  color: _onlyFree
-                                      ? Colors.white
-                                      : (isDark ? const Color(0xFFE2E8F0) : ZanateColors.zanateDark),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-
-                      // Category Pills
-                      ...USACConstants.marketplaceCategories.map((cat) {
-                        final isSelected = _selectedCategory == cat.id;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: InkWell(
-                            onTap: () {
-                              setState(() => _selectedCategory = cat.id);
-                              _loadData();
-                            },
-                            borderRadius: BorderRadius.circular(20),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 180),
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? (isDark ? Colors.white : ZanateColors.zanateDark)
-                                    : (isDark ? const Color(0xFF1E293B) : Colors.white),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? Colors.transparent
-                                      : (isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder),
-                                  width: 0.8,
-                                ),
-                              ),
-                              child: Text(
-                                cat.label,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                                  color: isSelected
-                                      ? (isDark ? const Color(0xFF0F172A) : Colors.white)
-                                      : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // Offline Banner if degraded network
-                if (_isOffline) ...[
-                  OfflineBanner(onRetry: _loadData),
-                  const SizedBox(height: 12),
-                ],
-
-                // Feed of listings
-                if (_isLoading)
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: 4,
-                    itemBuilder: (ctx, i) => const Padding(
-                      padding: EdgeInsets.only(bottom: 12),
-                      child: SkeletonCard(height: 220),
-                    ),
-                  )
-                else if (_listings.isEmpty)
-                  EmptyStateWidget(
-                    icon: Icons.storefront_outlined,
-                    title: 'No hay publicaciones en esta categoría aún',
-                    description:
-                        '¿Ofreces tutorías, almuerzos, postres o libros universitarios? ¡Sé el primero en publicar!',
-                    buttonText: 'Crear Primera Publicación',
-                    onButtonPressed: _handleCreateListingClick,
-                  )
-                else
-                  Responsive(
-                    mobile: ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _listings.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 12),
-                      itemBuilder: (ctx, i) {
-                        final item = _listings[i];
-                        return MarketplaceCard(
-                          item: item,
-                          isOwner:
-                              item.isMine ||
-                              (item.userId != null &&
-                                  item.userId == SupabaseService.currentUserId),
-                          onUpvote: () => _handleToggleUpvote(item),
-                          onStatusChanged: (newStatus) =>
-                              _handleUpdateItemStatus(item, newStatus),
-                          onSponsoredHide: () => _hideSponsoredItem(item),
-                          onReport: (reason) => _handleReportItem(item, reason),
-                        );
-                      },
-                    ),
-                    desktop: GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            childAspectRatio: 0.78,
-                            crossAxisSpacing: 16,
-                            mainAxisSpacing: 16,
-                          ),
-                      itemCount: _listings.length,
-                      itemBuilder: (ctx, i) {
-                        final item = _listings[i];
-                        return MarketplaceCard(
-                          item: item,
-                          isOwner:
-                              item.isMine ||
-                              (item.userId != null &&
-                                  item.userId == SupabaseService.currentUserId),
-                          onUpvote: () => _handleToggleUpvote(item),
-                          onStatusChanged: (newStatus) =>
-                              _handleUpdateItemStatus(item, newStatus),
-                          onSponsoredHide: () => _hideSponsoredItem(item),
-                          onReport: (reason) => _handleReportItem(item, reason),
-                        );
-                      },
-                    ),
-                  ),
-              ],
+                );
+              },
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 5. Feed Header Row
+  Widget _buildFeedFilterHeader(bool isDark) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            width: 0.8,
           ),
         ),
       ),
-      floatingActionButton: widget.showFloatingActionButton
-          ? FloatingActionButton.extended(
-              heroTag: 'marketplace_fab',
-              onPressed: _handleCreateListingClick,
-              backgroundColor: ZanateColors.zanateAccent,
-              foregroundColor: Colors.white,
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            '${_listings.length} publicaciones disponibles',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+            ),
+          ),
+          InkWell(
+            onTap: () {
+              setState(() => _onlyFree = !_onlyFree);
+              _loadData();
+            },
+            borderRadius: BorderRadius.circular(6),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: _onlyFree
+                    ? ZanateColors.zanateAccent
+                    : (isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: _onlyFree
+                      ? ZanateColors.zanateAccent
+                      : (isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder),
+                  width: 0.8,
+                ),
               ),
-              icon: const Icon(PhosphorIconsBold.plus, size: 18),
-              label: const Text(
-                'Publicar Anuncio',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _onlyFree ? PhosphorIconsFill.checkCircle : PhosphorIconsRegular.gift,
+                    size: 13,
+                    color: _onlyFree ? Colors.white : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Solo Gratis',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: _onlyFree ? FontWeight.w700 : FontWeight.w500,
+                      color: _onlyFree ? Colors.white : (isDark ? const Color(0xFFE2E8F0) : ZanateColors.zanateDark),
+                    ),
+                  ),
+                ],
               ),
-            )
-          : null,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPostsFeed(bool isDark) {
+    if (_isLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(40),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (_listings.isEmpty) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        children: const [
+          EmptyStateWidget(
+            icon: PhosphorIconsRegular.storefront,
+            title: 'No hay publicaciones para estas preferencias',
+            description:
+                'Prueba ajustando tus preferencias de búsqueda o usa el botón + superior para publicar un anuncio.',
+          ),
+        ],
+      );
+    }
+
+    return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
+      itemCount: _listings.length,
+      itemBuilder: (ctx, i) {
+        final item = _listings[i];
+        return MarketplaceCard(
+          key: ValueKey(item.id),
+          item: item,
+          isOwner: item.isMine ||
+              (item.userId != null &&
+                  item.userId == SupabaseService.currentUserId),
+          onUpvote: () => _handleToggleUpvote(item),
+          onStatusChanged: (newStatus) =>
+              _handleUpdateItemStatus(item, newStatus),
+          onSponsoredHide: () => _hideSponsoredItem(item),
+          onReport: (reason) => _handleReportItem(item, reason),
+          onShare: () => _handleShareListing(item),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDesktop = Responsive.isDesktop(context);
+
+    return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+      body: Column(
+        children: [
+          // 1. Squared Top Header: Clean, Simple, Centered Title without symbol box, Gear for Settings on Left
+          _buildSquaredHeader(isDark),
+
+          // 2. Search & Filters Bar (Ubicación por Sede + Facultad + Carrera)
+          _buildSearchAndFilters(isDark, isDesktop),
+
+          // 3. eBay "Compra por categorías"
+          _buildEbayCategoriesSection(isDark),
+
+          // 4. eBay "Ofertas y Aportes del Día"
+          _buildEbayDealsSection(isDark),
+
+          // Sponsor VIP Showcase (if any)
+          if (_sponsoredListings.isNotEmpty) ...[
+            SponsorCarousel(
+              sponsoredItems: _sponsoredListings,
+              onRequestSponsor: _openSponsorRequestDialog,
+              onHideSponsored: _hideSponsoredItem,
+              onReportSponsored: _handleReportItem,
+            ),
+          ],
+
+          // 5. Feed Filter Header
+          _buildFeedFilterHeader(isDark),
+
+          // Offline Banner if degraded network
+          if (_isOffline) ...[
+            OfflineBanner(onRetry: _loadData),
+          ],
+
+          // 6. Squared Full-Width Feed (ListView with 1px border dividers)
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _loadData,
+              child: _buildPostsFeed(isDark),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: null,
     );
   }
 }

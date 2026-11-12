@@ -1,3 +1,5 @@
+import '../services/share_count_service.dart';
+
 enum MarketplaceCategory {
   comidaPostres,
   tutoriasAcademica,
@@ -80,6 +82,7 @@ class MarketplaceItem {
   final int moderationStatus; // 0: Activo, 1: En revisión, 2: Oculto/Bloqueado
   final int reportedCount;
   final int upvotes;
+  final int sharesCount;
   final bool isUpvotedByMe;
   final String status; // available, reserved, sold, paused, archived
   final bool isSellerVerified;
@@ -112,6 +115,7 @@ class MarketplaceItem {
     this.moderationStatus = 0,
     this.reportedCount = 0,
     this.upvotes = 0,
+    this.sharesCount = 0,
     this.isUpvotedByMe = false,
     this.status = 'available',
     this.isSellerVerified = false,
@@ -210,6 +214,7 @@ class MarketplaceItem {
     int? moderationStatus,
     int? reportedCount,
     int? upvotes,
+    int? sharesCount,
     bool? isUpvotedByMe,
     String? status,
     bool? isSellerVerified,
@@ -242,6 +247,7 @@ class MarketplaceItem {
       moderationStatus: moderationStatus ?? this.moderationStatus,
       reportedCount: reportedCount ?? this.reportedCount,
       upvotes: upvotes ?? this.upvotes,
+      sharesCount: sharesCount ?? this.sharesCount,
       isUpvotedByMe: isUpvotedByMe ?? this.isUpvotedByMe,
       status: status ?? this.status,
       isSellerVerified: isSellerVerified ?? this.isSellerVerified,
@@ -311,6 +317,18 @@ class MarketplaceItem {
       upvotes: (map['upvotes'] is int)
           ? map['upvotes']
           : int.tryParse(map['upvotes']?.toString() ?? '0') ?? 0,
+      sharesCount: () {
+        final rawShares = map['shares_count'] ?? map['shares'];
+        int parsedShares = 0;
+        if (rawShares != null) {
+          parsedShares = (rawShares is int)
+              ? rawShares
+              : int.tryParse(rawShares.toString()) ?? 0;
+        }
+        final itemId = map['id']?.toString() ?? '';
+        final localShares = ShareCountService.getCachedCount(itemId);
+        return localShares > parsedShares ? localShares : parsedShares;
+      }(),
       isUpvotedByMe: isUpvotedByMe,
       status: map['status']?.toString() ?? 'available',
       isSellerVerified:
