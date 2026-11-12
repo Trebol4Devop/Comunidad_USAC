@@ -15,6 +15,7 @@ class MarketplaceCard extends StatefulWidget {
   final Function(String reason)? onReport;
   final Function(String newStatus)? onStatusChanged;
   final VoidCallback? onSponsoredHide;
+  final VoidCallback? onShare;
   final bool isOwner;
 
   const MarketplaceCard({
@@ -24,6 +25,7 @@ class MarketplaceCard extends StatefulWidget {
     this.onReport,
     this.onStatusChanged,
     this.onSponsoredHide,
+    this.onShare,
     this.isOwner = false,
   });
 
@@ -90,21 +92,13 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
-          width: 0.8,
+        color: isDark ? const Color(0xFF0F172A) : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? const Color(0xFF1E293B) : ZanateColors.subtleBorder,
+            width: 0.8,
+          ),
         ),
-        boxShadow: isDark
-            ? []
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.02),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -510,158 +504,100 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                   ),
                 ],
 
-                // Preventive Banner if Seller is NOT verified
+                // Discrete verification notice
                 if (!item.isSellerVerified && !item.isSold) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surface,
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: theme.dividerColor),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.info_outline,
-                          size: 14,
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            'Vendedor no validado con carné. Se sugiere realizar la transacción en persona dentro del campus.',
-                            style: TextStyle(
-                              fontSize: 10,
-                              height: 1.25,
-                              fontWeight: FontWeight.w500,
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(
+                        PhosphorIconsRegular.shieldWarning,
+                        size: 13,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      ),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          'Vendedor independiente no verificado · Trato en campus',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ],
 
-                // 1-Touch Product Lifecycle Buttons (For Seller or Owner)
+                // Sleek Seller Status Selector
                 if (widget.onStatusChanged != null &&
                     (widget.isOwner || item.isMine)) ...[
                   const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 4,
-                    children: [
-                      if (!item.isReserved && !item.isSold)
-                        ActionChip(
-                          avatar: Icon(
-                            Icons.bookmark_outline,
-                            size: 14,
-                            color: theme.colorScheme.onSurfaceVariant,
+                  PopupMenuButton<String>(
+                    tooltip: 'Cambiar estado del anuncio',
+                    onSelected: (newStatus) => widget.onStatusChanged!(newStatus),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+                          width: 0.8,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            PhosphorIconsRegular.tag,
+                            size: 12,
+                            color: ZanateColors.zanateAccent,
                           ),
-                          label: const Text(
-                            'Marcar Reservado',
+                          const SizedBox(width: 5),
+                          Text(
+                            'Estado: ${item.status.toUpperCase()}',
                             style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? Colors.white : ZanateColors.zanateDark,
                             ),
                           ),
-                          onPressed: () => widget.onStatusChanged!('reserved'),
-                          backgroundColor: theme.colorScheme.surface,
-                          side: BorderSide(color: theme.dividerColor),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
+                          const SizedBox(width: 4),
+                          Icon(
+                            PhosphorIconsRegular.caretDown,
+                            size: 11,
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                           ),
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                        ],
+                      ),
+                    ),
+                    itemBuilder: (ctx) => [
+                      if (!item.isReserved && !item.isSold)
+                        const PopupMenuItem(
+                          value: 'reserved',
+                          child: Text('Marcar como Reservado'),
                         ),
                       if (item.isReserved)
-                        ActionChip(
-                          avatar: Icon(
-                            Icons.check_circle_outline,
-                            size: 14,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                          label: const Text(
-                            'Disponible',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          onPressed: () => widget.onStatusChanged!('available'),
-                          backgroundColor: theme.colorScheme.surface,
-                          side: BorderSide(color: theme.dividerColor),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                        const PopupMenuItem(
+                          value: 'available',
+                          child: Text('Marcar como Disponible'),
                         ),
                       if (!item.isSold)
-                        ActionChip(
-                          avatar: Icon(
-                            Icons.done_all,
-                            size: 14,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                          label: const Text(
-                            'Marcar Vendido',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          onPressed: () => widget.onStatusChanged!('sold'),
-                          backgroundColor: theme.colorScheme.surface,
-                          side: BorderSide(color: theme.dividerColor),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                        const PopupMenuItem(
+                          value: 'sold',
+                          child: Text('Marcar como Vendido'),
                         ),
                       if (item.status != 'paused' && !item.isSold)
-                        ActionChip(
-                          avatar: Icon(
-                            Icons.pause_circle_outline,
-                            size: 14,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                          label: const Text(
-                            'Pausar',
-                            style: TextStyle(fontSize: 11),
-                          ),
-                          onPressed: () => widget.onStatusChanged!('paused'),
-                          backgroundColor: theme.colorScheme.surface,
-                          side: BorderSide(color: theme.dividerColor),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                        const PopupMenuItem(
+                          value: 'paused',
+                          child: Text('Pausar anuncio'),
                         ),
                       if (item.status == 'paused')
-                        ActionChip(
-                          avatar: Icon(
-                            Icons.play_circle_outline,
-                            size: 14,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                          label: const Text(
-                            'Reanudar',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          onPressed: () => widget.onStatusChanged!('available'),
-                          backgroundColor: theme.colorScheme.surface,
-                          side: BorderSide(color: theme.dividerColor),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                        const PopupMenuItem(
+                          value: 'available',
+                          child: Text('Reanudar anuncio'),
                         ),
                     ],
                   ),
@@ -725,6 +661,50 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                         ),
                       ),
                     ),
+
+                    if (widget.onShare != null) ...[
+                      const SizedBox(width: 8),
+                      // Share pill button with count
+                      InkWell(
+                        onTap: widget.onShare,
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                PhosphorIconsRegular.shareNetwork,
+                                size: 14,
+                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                              ),
+                              if (item.sharesCount > 0) ...[
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${item.sharesCount}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark ? const Color(0xFFE2E8F0) : ZanateColors.zanateDark,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
 
                     const SizedBox(width: 8),
 

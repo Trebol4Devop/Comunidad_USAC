@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../../core/constants/zanate_colors.dart';
-import '../../../profile/screens/profile_screen.dart';
-import '../../../rules/screens/rules_screen.dart';
+import '../../../shared/widgets/settings_bottom_sheet.dart';
 import '../../models/discord_forum_models.dart';
 
 class ForumChannelSidebar extends StatelessWidget {
@@ -192,23 +191,26 @@ class ForumChannelSidebar extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Tooltip(
-            message: 'Configuración',
+            message: 'Configuración y Perfil',
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: () => _showConfigSheet(context, isDark),
-                borderRadius: BorderRadius.circular(12),
+                onTap: () => SettingsBottomSheet.show(
+                  context,
+                  activeAlias: activeAlias ?? 'Estudiante',
+                  onAliasChanged: onAliasChanged ?? (_) {},
+                  onToggleTheme: onToggleTheme,
+                ),
                 child: Container(
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
                     color: bgTile,
-                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: borderColor, width: 0.8),
                   ),
                   child: Center(
                     child: PhosphorIcon(
-                      PhosphorIconsRegular.gearSix,
+                      PhosphorIconsRegular.gear,
                       size: 20,
                       color: muted,
                     ),
@@ -219,120 +221,6 @@ class ForumChannelSidebar extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  void _showConfigSheet(BuildContext context, bool isDark) {
-    final theme = Theme.of(context);
-    final borderColor =
-        isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
-
-    showModalBottomSheet<void>(
-      context: context,
-      useSafeArea: true,
-      backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        side: BorderSide(color: borderColor, width: 0.8),
-      ),
-      builder: (ctx) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 18),
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                child: Text(
-                  'Configuración',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              if (activeAlias != null)
-                ListTile(
-                  leading: const PhosphorIcon(
-                    PhosphorIconsRegular.userCircle,
-                    size: 24,
-                  ),
-                  title: const Text(
-                    'Preferencias de usuario',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  subtitle: Text('Alias actual: $activeAlias'),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  onTap: () {
-                    Navigator.of(ctx).pop();
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => ProfileScreen(
-                          activeAlias: activeAlias!,
-                          onAliasChanged: onAliasChanged ?? (_) {},
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              if (onToggleTheme != null)
-                ListTile(
-                  leading: PhosphorIcon(
-                    isDark
-                        ? PhosphorIconsRegular.sun
-                        : PhosphorIconsRegular.moon,
-                    size: 24,
-                  ),
-                  title: Text(
-                    isDark ? 'Tema claro' : 'Tema oscuro',
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  onTap: () {
-                    Navigator.of(ctx).pop();
-                    onToggleTheme?.call();
-                  },
-                ),
-              ListTile(
-                leading: const PhosphorIcon(
-                  PhosphorIconsRegular.shieldCheck,
-                  size: 24,
-                ),
-                title: const Text(
-                  'Normas y descargo',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                onTap: () {
-                  Navigator.of(ctx).pop();
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const RulesScreen()),
-                  );
-                },
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 

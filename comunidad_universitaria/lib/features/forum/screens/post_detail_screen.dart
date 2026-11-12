@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../core/constants/categories.dart';
 import '../../../core/constants/zanate_colors.dart';
 import '../../../core/models/post.dart';
 import '../../../core/services/forum_service.dart';
+import '../../../core/services/share_count_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/utils/time_utils.dart';
@@ -134,6 +137,33 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           ),
         ),
       );
+    }
+  }
+
+  Future<void> _handleShare() async {
+    final newCount = _post.sharesCount + 1;
+    setState(() {
+      _post = _post.copyWith(sharesCount: newCount);
+    });
+
+    await ShareCountService.incrementShare(_post.id, table: 'posts');
+
+    final shareText =
+        '${_post.title}\n\n${_post.content}\n\n— ${_post.authorAlias} (Comunidad USAC)';
+    try {
+      await SharePlus.instance.share(
+        ShareParams(text: shareText, subject: _post.title),
+      );
+    } catch (_) {
+      await Clipboard.setData(ClipboardData(text: shareText));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Publicación compartida ($newCount veces). El texto se copió.'),
+          backgroundColor: ZanateColors.zanateAccent,
+        ),
+      );
+      return;
     }
   }
 
@@ -447,6 +477,15 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             ),
             tooltip: 'Citar publicación',
             onPressed: _handleQuotePost,
+          ),
+          IconButton(
+            icon: PhosphorIcon(
+              PhosphorIconsRegular.shareNetwork,
+              color: primaryTextColor,
+              size: 20,
+            ),
+            tooltip: 'Compartir publicación',
+            onPressed: _handleShare,
           ),
           IconButton(
             icon: PhosphorIcon(
@@ -981,6 +1020,43 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                       ),
                                     ),
                                   ],
+                                ),
+                              ),
+                              // Share action badge
+                              InkWell(
+                                onTap: _handleShare,
+                                borderRadius: BorderRadius.circular(20),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: panelSurface,
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: panelBorder, width: 0.8),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      PhosphorIcon(
+                                        PhosphorIconsRegular.shareNetwork,
+                                        size: 16,
+                                        color: secondaryTextColor,
+                                      ),
+                                      const SizedBox(width: 5),
+                                      Text(
+                                        _post.sharesCount > 0
+                                            ? '${_post.sharesCount} compartidos'
+                                            : 'Compartir',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: primaryTextColor,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ],

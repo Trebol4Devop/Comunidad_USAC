@@ -1,22 +1,24 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../core/config/supabase_config.dart';
+import '../../../core/constants/categories.dart';
+import '../../../core/constants/zanate_colors.dart';
 import '../../../core/models/whatsapp_group.dart';
 import '../../../core/services/groups_service.dart';
 import '../../../core/services/local_storage_service.dart';
 import '../../../core/services/supabase_service.dart';
-import '../../../core/utils/responsive.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
-import '../../../core/constants/zanate_colors.dart';
 import '../widgets/create_group_dialog.dart';
 import '../widgets/group_card.dart';
 import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/empty_state_widget.dart';
+import '../../shared/widgets/settings_bottom_sheet.dart';
 
 class GroupsScreen extends StatefulWidget {
   final String activeAlias;
   final Function(String newAlias) onAliasChanged;
+  final VoidCallback? onToggleTheme;
   final String? activeServerName;
   final String? activeFacultadId;
   final String? activeCarreraId;
@@ -30,6 +32,7 @@ class GroupsScreen extends StatefulWidget {
     super.key,
     required this.activeAlias,
     required this.onAliasChanged,
+    this.onToggleTheme,
     this.activeServerName,
     this.activeFacultadId,
     this.activeCarreraId,
@@ -50,7 +53,6 @@ class GroupsScreenState extends State<GroupsScreen> {
   String? _loadError;
   String _selectedFacultad = 'todas';
   String _selectedCarrera = 'todas';
-  bool _showCleanupBanner = true;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
   Timer? _searchDebounce;
@@ -66,7 +68,6 @@ class GroupsScreenState extends State<GroupsScreen> {
     if (widget.activeCarreraId != null) {
       _selectedCarrera = widget.activeCarreraId!;
     }
-    _checkCleanupBanner();
     if (widget.activeFacultadId == null) {
       _loadUserAcademicContext();
     }
@@ -92,20 +93,6 @@ class GroupsScreenState extends State<GroupsScreen> {
     }
   }
 
-  Future<void> _checkCleanupBanner() async {
-    final dismissed = await LocalStorageService.isCleanupNoticeDismissed();
-    if (mounted && dismissed) {
-      setState(() => _showCleanupBanner = false);
-    }
-  }
-
-  Future<void> _dismissCleanupBanner() async {
-    await LocalStorageService.dismissCleanupNotice();
-    if (mounted) {
-      setState(() => _showCleanupBanner = false);
-    }
-  }
-
   Future<void> _loadUserAcademicContext() async {
     final profile = await LocalStorageService.getUserProfile();
     if (mounted &&
@@ -121,47 +108,6 @@ class GroupsScreenState extends State<GroupsScreen> {
     }
   }
 
-  Future<void> _loadGroups() async {
-    final requestId = ++_loadRequestId;
-    setState(() {
-      _isLoading = true;
-      _loadError = null;
-    });
-    try {
-      final list = await GroupsService.fetchGroups(
-        facultad: _selectedFacultad,
-        carrera: _selectedCarrera,
-        searchQuery: _searchQuery,
-      );
-      if (mounted && requestId == _loadRequestId) {
-        setState(() {
-          _groups = list;
-          _isLoading = false;
-          _loadError = null;
-        });
-      }
-    } catch (_) {
-      if (mounted && requestId == _loadRequestId) {
-        setState(() {
-          _isLoading = false;
-          _loadError =
-              'No pudimos cargar los grupos. Comprueba tu conexión e inténtalo de nuevo.';
-        });
-      }
-    }
-  }
-
-  void _onSearchChanged(String value) {
-    setState(() => _searchQuery = value);
-    _searchDebounce?.cancel();
-    _searchDebounce = Timer(const Duration(milliseconds: 350), _loadGroups);
-  }
-
-  void _submitSearch(String _) {
-    _searchDebounce?.cancel();
-    _loadGroups();
-  }
-
   @override
   void dispose() {
     _searchDebounce?.cancel();
@@ -169,52 +115,61 @@ class GroupsScreenState extends State<GroupsScreen> {
     super.dispose();
   }
 
-  Widget _buildLoadError() {
-    return Semantics(
-      liveRegion: true,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.errorContainer,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.cloud_off_outlined,
-              size: 32,
-              color: Theme.of(context).colorScheme.onErrorContainer,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'No se pudieron cargar los grupos',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 4),
-            Text(_loadError!, textAlign: TextAlign.center),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: _loadGroups,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Reintentar'),
-            ),
-          ],
-        ),
-      ),
-    );
+  void _onSearchChanged(String val) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      setState(() => _searchQuery = val.trim());
+      _loadGroups();
+    });
+  }
+
+  void _submitSearch(String val) {
+    _searchDebounce?.cancel();
+    setState(() => _searchQuery = val.trim());
+    _loadGroups();
+  }
+
+  Future<void> _loadGroups() async {
+    final currentRequestId = ++_loadRequestId;
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
+
+    try {
+      final groups = await GroupsService.fetchGroups(
+        facultad: _selectedFacultad,
+        carrera: _selectedCarrera,
+        searchQuery: _searchQuery,
+      );
+      if (mounted && currentRequestId == _loadRequestId) {
+        setState(() {
+          _groups = groups;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted && currentRequestId == _loadRequestId) {
+        setState(() {
+          _loadError = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   Future<void> _handleToggleUpvote(WhatsAppGroup group) async {
     if (_votingGroupIds.contains(group.id)) return;
+    _votingGroupIds.add(group.id);
+
     if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
+      _votingGroupIds.remove(group.id);
       AuthModal.show(
         context,
-        title: 'Inicia Sesión para Votar',
+        title: 'Inicia sesión para votar',
         subtitle:
-            'Para apoyar y verificar enlaces de grupos, debes iniciar sesión.',
+            'Para apoyar un enlace de grupo necesitas autenticar tu cuenta.',
         onAuthenticated: () => _handleToggleUpvote(group),
       );
       return;
@@ -222,9 +177,7 @@ class GroupsScreenState extends State<GroupsScreen> {
 
     final prevUpvoted = group.isUpvotedByMe;
     final prevUpvotes = group.upvotes;
-    _votingGroupIds.add(group.id);
 
-    // Optimistic UI update
     setState(() {
       final idx = _groups.indexWhere((g) => g.id == group.id);
       if (idx != -1) {
@@ -258,20 +211,6 @@ class GroupsScreenState extends State<GroupsScreen> {
         });
       }
       _votingGroupIds.remove(group.id);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            succeeded
-                ? (prevUpvoted
-                      ? 'Se retiró tu voto del grupo.'
-                      : 'Tu voto se registró correctamente.')
-                : 'No se pudo registrar tu voto. Inténtalo de nuevo.',
-          ),
-          backgroundColor: succeeded
-              ? Theme.of(context).colorScheme.inverseSurface
-              : Theme.of(context).colorScheme.error,
-        ),
-      );
     } else {
       _votingGroupIds.remove(group.id);
     }
@@ -307,32 +246,10 @@ class GroupsScreenState extends State<GroupsScreen> {
   }
 
   Widget _buildGroupCard(WhatsAppGroup group) => GroupCard(
+    key: ValueKey(group.id),
     group: group,
     onUpvote: () => _handleToggleUpvote(group),
     onReport: (reason) => _handleReportGroup(group, reason),
-  );
-
-  Widget _buildGroupList() => ListView.separated(
-    shrinkWrap: true,
-    physics: const NeverScrollableScrollPhysics(),
-    itemCount: _groups.length,
-    separatorBuilder: (context, index) => const SizedBox(height: 12),
-    itemBuilder: (context, index) => _buildGroupCard(_groups[index]),
-  );
-
-  Widget _buildGroupGrid() => GridView.builder(
-    shrinkWrap: true,
-    physics: const NeverScrollableScrollPhysics(),
-    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-      crossAxisCount: 2,
-      mainAxisExtent: _groups.any((group) => group.imageUrl?.isNotEmpty == true)
-          ? 440
-          : 300,
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
-    ),
-    itemCount: _groups.length,
-    itemBuilder: (context, index) => _buildGroupCard(_groups[index]),
   );
 
   void openCreateGroupDialog() => _openCreateGroupDialog();
@@ -368,259 +285,465 @@ class GroupsScreenState extends State<GroupsScreen> {
     );
   }
 
-  Widget _buildDiscordWelcomeHero(ThemeData theme, bool isDark) {
-    final channelName = widget.activeChannelName ?? 'todos-los-grupos';
-    final channelDesc =
-        widget.activeChannelDescription ??
-        'Directorio oficial de grupos de WhatsApp y estudio USAC organizados por facultad y curso.';
-    final channelIcon = widget.activeChannelIcon ?? Icons.tag;
+  bool get _hasActivePreferences => _selectedFacultad != 'todas';
 
+  String _getActivePreferencesLabel() {
+    if (_selectedFacultad != 'todas') {
+      final fac = USACConstants.facultades.firstWhere(
+        (f) => f['id'].toString() == _selectedFacultad,
+        orElse: () => {'nombre': 'Facultad'},
+      );
+      return fac['nombre']?.toString().replaceAll('Facultad de ', '') ?? 'Facultad';
+    }
+    return 'Facultad';
+  }
+
+  void _showPreferencesSheet(BuildContext context, bool isDark) {
+    String tempFacultad = _selectedFacultad;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 20,
+                  right: 20,
+                  top: 16,
+                  bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          PhosphorIconsRegular.slidersHorizontal,
+                          size: 20,
+                          color: ZanateColors.zanateAccent,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Filtrar por Facultad',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.2,
+                            color: isDark ? Colors.white : ZanateColors.zanateDark,
+                          ),
+                        ),
+                        const Spacer(),
+                        if (tempFacultad != 'todas')
+                          TextButton(
+                            onPressed: () {
+                              setSheetState(() => tempFacultad = 'todas');
+                            },
+                            child: const Text(
+                              'Restablecer',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFFEF4444),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+
+                    Text(
+                      'Selecciona tu facultad o unidad académica',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg,
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+                          width: 0.8,
+                        ),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: tempFacultad,
+                          isExpanded: true,
+                          icon: const Icon(PhosphorIconsRegular.caretDown, size: 14),
+                          items: USACConstants.facultades
+                              .map(
+                                (f) => DropdownMenuItem<String>(
+                                  value: f['id'].toString(),
+                                  child: Text(
+                                    f['nombre'].toString(),
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 12.5,
+                                      color: isDark ? Colors.white : ZanateColors.zanateDark,
+                                    ),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (val) {
+                            if (val != null) setSheetState(() => tempFacultad = val);
+                          },
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 42,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(sheetContext).pop();
+                          setState(() => _selectedFacultad = tempFacultad);
+                          _loadGroups();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ZanateColors.zanateAccent,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                        ),
+                        child: const Text(
+                          'Aplicar Filtro',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // 1. Squared Full-Width Header: Clean, Simple, Centered Title without Symbol, Gear for Settings on Left
+  Widget _buildSquaredHeader(bool isDark, String titleText) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      height: 56,
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark ? const Color(0xFF303030) : const Color(0xFFD9D9D9),
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            width: 0.8,
+          ),
         ),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(
-            channelIcon,
-            size: 22,
-            color: isDark ? Colors.white : Colors.black87,
+          // Left: Settings Button (Configuración y Perfil)
+          IconButton(
+            tooltip: 'Configuración y Perfil',
+            onPressed: () => SettingsBottomSheet.show(
+              context,
+              activeAlias: widget.activeAlias,
+              onAliasChanged: widget.onAliasChanged,
+              onToggleTheme: widget.onToggleTheme,
+            ),
+            icon: Icon(
+              PhosphorIconsRegular.gear,
+              size: 21,
+              color: isDark ? Colors.white : ZanateColors.zanateDark,
+            ),
+            splashRadius: 22,
           ),
-          const SizedBox(width: 12),
+
+          // Center: Clean, simple, centered title (Matching Forum layout, no symbol box)
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
-                  '¡Te damos la bienvenida a #$channelName!',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  channelDesc,
+                  'DIRECTORIO ESTUDIANTIL',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8,
                     color: isDark
-                        ? const Color(0xFFAAAAAA)
-                        : const Color(0xFF64748B),
+                        ? const Color(0xFF94A3B8)
+                        : Colors.blueGrey.shade400,
                   ),
-                  maxLines: 2,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  titleText,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.3,
+                    color: isDark ? Colors.white : ZanateColors.zanateDark,
+                  ),
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
-          if (!Responsive.isMobile(context)) ...[
-            const SizedBox(width: 8),
-            IconButton.filled(
-              tooltip: 'Compartir Grupo',
-              onPressed: _openCreateGroupDialog,
-              icon: const Icon(Icons.group_add),
+
+          // Right: Minimalist + button to share group
+          IconButton(
+            tooltip: 'Compartir Grupo',
+            onPressed: _openCreateGroupDialog,
+            icon: Icon(
+              PhosphorIconsBold.plus,
+              size: 22,
+              color: isDark ? Colors.white : ZanateColors.zanateDark,
             ),
-          ],
+            splashRadius: 22,
+          ),
         ],
       ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg,
-      body: RefreshIndicator(
-        onRefresh: _loadGroups,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: MaxWidthContainer(
-            maxWidth: 1100,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Top Welcome Hero banner (estilo Discord)
-                _buildDiscordWelcomeHero(theme, isDark),
-
-                // Semester Cleanup Notice
-                if (_showCleanupBanner) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF1E293B)
-                          : const Color(0xFFFEF3C7),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: isDark
-                            ? const Color(0xFF334155)
-                            : const Color(0xFFFCD34D),
-                        width: 0.8,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          PhosphorIconsRegular.info,
-                          color: isDark
-                              ? const Color(0xFFFDE68A)
-                              : const Color(0xFFB45309),
-                          size: 18,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            'Para evitar enlaces caídos, los grupos se depuran automáticamente al iniciar cada nuevo semestre académico.',
-                            style: TextStyle(
-                              color: isDark
-                                  ? const Color(0xFFFDE68A)
-                                  : const Color(0xFF92400E),
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            PhosphorIconsRegular.x,
-                            size: 15,
-                            color: isDark
-                                ? const Color(0xFFFDE68A)
-                                : const Color(0xFF92400E),
-                          ),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          onPressed: _dismissCleanupBanner,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-
-                const SizedBox(height: 14),
-
-                TextField(
-                  controller: _searchController,
-                  onChanged: _onSearchChanged,
-                  onSubmitted: _submitSearch,
-                  textInputAction: TextInputAction.search,
-                  decoration: InputDecoration(
-                    hintText: 'Buscar cursos, secciones o palabras clave...',
-                    hintStyle: TextStyle(
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF94A3B8),
-                      fontSize: 13,
-                    ),
-                    prefixIcon: Icon(
-                      PhosphorIconsRegular.magnifyingGlass,
-                      size: 18,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                    ),
-                    suffixIcon: _searchQuery.isEmpty
-                        ? null
-                        : IconButton(
-                            tooltip: 'Limpiar búsqueda',
-                            onPressed: () {
-                              _searchController.clear();
-                              _onSearchChanged('');
-                            },
-                            icon: const Icon(PhosphorIconsRegular.x, size: 16),
-                          ),
-                    filled: true,
-                    fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(
-                        color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
-                        width: 0.8,
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(
-                        color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
-                        width: 0.8,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(
-                        color: ZanateColors.zanateAccent,
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                if (_loadError != null && _groups.isNotEmpty) ...[
-                  _buildLoadError(),
-                  const SizedBox(height: 16),
-                ],
-
-                // Groups Feed
-                if (_isLoading && _groups.isEmpty)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(40),
-                      child: CircularProgressIndicator(),
-                    ),
-                  )
-                else if (_loadError != null && _groups.isEmpty)
-                  _buildLoadError()
-                else if (_groups.isEmpty)
-                  EmptyStateWidget(
-                    icon: Icons.groups_outlined,
-                    title: 'No se encontraron grupos para este filtro',
-                    description:
-                        '¿Conoces o administras un grupo de WhatsApp o Discord para este curso? ¡Compártelo con tus compañeros!',
-                    buttonText: 'Compartir Enlace',
-                    onButtonPressed: _openCreateGroupDialog,
-                  )
-                else
-                  Responsive(
-                    mobile: _buildGroupList(),
-                    tablet: widget.activeChannelName == null
-                        ? _buildGroupGrid()
-                        : _buildGroupList(),
-                    desktop: _buildGroupGrid(),
-                  ),
-              ],
-            ),
+  // 2. Squared Full-Width Search & Preferences Bar
+  Widget _buildSquaredSearchBar(bool isDark) {
+    return Container(
+      height: 48,
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            width: 0.8,
           ),
         ),
       ),
-      floatingActionButton: widget.showFloatingActionButton
-          ? FloatingActionButton.extended(
-              heroTag: widget.floatingActionButtonHeroTag,
-              onPressed: _openCreateGroupDialog,
-              backgroundColor: ZanateColors.zanateAccent,
-              foregroundColor: Colors.white,
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+      child: Row(
+        children: [
+          Icon(
+            PhosphorIconsRegular.magnifyingGlass,
+            size: 18,
+            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              onChanged: _onSearchChanged,
+              onSubmitted: _submitSearch,
+              textInputAction: TextInputAction.search,
+              decoration: const InputDecoration(
+                hintText: 'Buscar cursos, secciones o palabras clave...',
+                hintStyle: TextStyle(
+                  fontSize: 12.5,
+                  color: Color(0xFF94A3B8),
+                  fontWeight: FontWeight.w400,
+                ),
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(vertical: 12),
               ),
-              icon: const Icon(PhosphorIconsBold.plus, size: 18),
-              label: const Text(
-                'Compartir Grupo',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+              style: TextStyle(
+                fontSize: 13,
+                color: isDark ? Colors.white : ZanateColors.zanateDark,
               ),
-            )
-          : null,
+            ),
+          ),
+          if (_searchQuery.isNotEmpty)
+            IconButton(
+              icon: const Icon(PhosphorIconsRegular.x, size: 15),
+              splashRadius: 16,
+              onPressed: () {
+                _searchController.clear();
+                _onSearchChanged('');
+              },
+            ),
+          const SizedBox(width: 4),
+
+          // Discrete Preferences Pill
+          InkWell(
+            onTap: () => _showPreferencesSheet(context, isDark),
+            borderRadius: BorderRadius.circular(6),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+              decoration: BoxDecoration(
+                color: _hasActivePreferences
+                    ? ZanateColors.zanateAccent.withValues(alpha: isDark ? 0.25 : 0.1)
+                    : (isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: _hasActivePreferences
+                      ? ZanateColors.zanateAccent
+                      : (isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder),
+                  width: 0.8,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _hasActivePreferences
+                        ? PhosphorIconsFill.slidersHorizontal
+                        : PhosphorIconsRegular.slidersHorizontal,
+                    size: 13,
+                    color: _hasActivePreferences
+                        ? ZanateColors.zanateAccent
+                        : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    _getActivePreferencesLabel(),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: _hasActivePreferences ? FontWeight.w700 : FontWeight.w500,
+                      color: _hasActivePreferences
+                          ? ZanateColors.zanateAccent
+                          : (isDark ? const Color(0xFFE2E8F0) : ZanateColors.zanateDark),
+                    ),
+                  ),
+                  if (_hasActivePreferences) ...[
+                    const SizedBox(width: 4),
+                    InkWell(
+                      onTap: () {
+                        setState(() => _selectedFacultad = 'todas');
+                        _loadGroups();
+                      },
+                      child: const Icon(
+                        PhosphorIconsRegular.x,
+                        size: 12,
+                        color: ZanateColors.zanateAccent,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadError() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEF4444).withValues(alpha: 0.1),
+        border: const Border(
+          bottom: BorderSide(
+            color: Color(0xFFEF4444),
+            width: 0.8,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(PhosphorIconsRegular.warningCircle, color: Color(0xFFEF4444), size: 18),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Text(
+              'No se pudieron cargar los grupos. Revisa tu conexión.',
+              style: TextStyle(fontSize: 12, color: Color(0xFFEF4444)),
+            ),
+          ),
+          TextButton(
+            onPressed: _loadGroups,
+            child: const Text('Reintentar', style: TextStyle(fontSize: 12)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGroupsFeed(bool isDark) {
+    if (_isLoading && _groups.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(40),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (_loadError != null && _groups.isEmpty) {
+      return _buildLoadError();
+    }
+
+    if (_groups.isEmpty) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        children: const [
+          EmptyStateWidget(
+            icon: PhosphorIconsRegular.usersThree,
+            title: 'No se encontraron grupos para este filtro',
+            description:
+                'Prueba ajustando tus preferencias o usa el botón + superior para compartir un enlace con tus compañeros.',
+          ),
+        ],
+      );
+    }
+
+    return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
+      itemCount: _groups.length,
+      itemBuilder: (ctx, i) => _buildGroupCard(_groups[i]),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final titleText = widget.activeChannelName != null
+        ? '#${widget.activeChannelName}'
+        : 'Grupos de Estudio';
+
+    return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+      body: Column(
+        children: [
+          // 1. Squared Top Header (Matching Forum layout)
+          _buildSquaredHeader(isDark, titleText),
+
+          // 2. Squared Search & Preference Bar
+          _buildSquaredSearchBar(isDark),
+
+          if (_loadError != null && _groups.isNotEmpty) ...[
+            _buildLoadError(),
+          ],
+
+          // 3. Squared Feed (ListView with 1px border dividers)
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _loadGroups,
+              child: _buildGroupsFeed(isDark),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: null,
     );
   }
 }

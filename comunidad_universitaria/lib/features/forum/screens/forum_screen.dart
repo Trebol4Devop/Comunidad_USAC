@@ -7,6 +7,7 @@ import '../../../core/constants/zanate_colors.dart';
 import '../../../core/models/post.dart';
 import '../../../core/models/user_profile.dart';
 import '../../../core/services/forum_service.dart';
+import '../../../core/services/share_count_service.dart';
 import '../../../core/services/local_storage_service.dart';
 import '../../../core/services/forum_server_preferences_service.dart';
 import '../../../core/services/supabase_service.dart';
@@ -240,9 +241,15 @@ class _ForumScreenState extends State<ForumScreen> {
         feedMode: _feedMode,
       );
 
+      await ShareCountService.preload(posts.map((p) => p.id).toList());
+      final enrichedPosts = posts.map((p) {
+        final count = ShareCountService.getCachedCount(p.id);
+        return count > p.sharesCount ? p.copyWith(sharesCount: count) : p;
+      }).toList();
+
       if (mounted) {
         setState(() {
-          _posts = posts;
+          _posts = enrichedPosts;
           _isLoading = false;
           _isOffline = false;
         });
@@ -500,8 +507,18 @@ class _ForumScreenState extends State<ForumScreen> {
   }
 
   Future<void> _sharePost(Post post) async {
+    final newCount = post.sharesCount + 1;
+    setState(() {
+      final idx = _posts.indexWhere((p) => p.id == post.id);
+      if (idx != -1) {
+        _posts[idx] = _posts[idx].copyWith(sharesCount: newCount);
+      }
+    });
+
+    await ShareCountService.incrementShare(post.id, table: 'posts');
+
     final shareText =
-        '${post.title}\n\n${post.content}\n\n— ${post.authorAlias}';
+        '${post.title}\n\n${post.content}\n\n— ${post.authorAlias} (Comunidad USAC)';
     try {
       await SharePlus.instance.share(
         ShareParams(text: shareText, subject: post.title),
@@ -510,10 +527,12 @@ class _ForumScreenState extends State<ForumScreen> {
       await Clipboard.setData(ClipboardData(text: shareText));
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No se pudo abrir compartir. El texto se copió.'),
+        SnackBar(
+          content: Text('Publicación compartida ($newCount veces). El texto se copió.'),
+          backgroundColor: ZanateColors.zanateAccent,
         ),
       );
+      return;
     }
   }
 
@@ -799,35 +818,17 @@ class _ForumScreenState extends State<ForumScreen> {
       ),
       child: Row(
         children: [
-          Material(
-            color: isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg,
-            borderRadius: BorderRadius.circular(12),
-            child: InkWell(
-              onTap: () => _scaffoldKey.currentState?.openDrawer(),
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isDark
-                        ? const Color(0xFF334155)
-                        : ZanateColors.subtleBorder,
-                    width: 0.8,
-                  ),
-                ),
-                child: Center(
-                  child: PhosphorIcon(
-                    PhosphorIconsRegular.list,
-                    size: 19,
-                    color: isDark ? Colors.white : ZanateColors.zanateDark,
-                  ),
-                ),
-              ),
+          IconButton(
+            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+            icon: PhosphorIcon(
+              PhosphorIconsRegular.list,
+              size: 22,
+              color: isDark ? Colors.white : ZanateColors.zanateDark,
             ),
+            tooltip: 'Menú de canales',
+            splashRadius: 22,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
           const PhosphorIcon(
             PhosphorIconsFill.whatsappLogo,
             size: 20,

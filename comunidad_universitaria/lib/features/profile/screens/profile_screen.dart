@@ -1,3 +1,5 @@
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import '../../../core/constants/zanate_colors.dart';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../../core/constants/categories.dart';
@@ -11,11 +13,7 @@ import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/utils/time_utils.dart';
 import '../../forum/screens/post_detail_screen.dart';
-import '../../rules/screens/rules_screen.dart';
-import '../../shared/widgets/auth_modal.dart';
-import 'totp_enrollment_screen.dart';
 import '../../shared/widgets/empty_state_widget.dart';
-import '../widgets/carne_validation_modal.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String activeAlias;
@@ -315,7 +313,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
         title: Text(
           title,
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -355,74 +353,39 @@ class _ProfileScreenState extends State<ProfileScreen>
     final theme = Theme.of(context);
     final isDesktop = Responsive.isDesktop(context);
 
+    final isDark = theme.brightness == Brightness.dark;
     return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg,
       appBar: AppBar(
-        title: const Text('Preferencias de Usuario'),
+        title: Text(
+          'Preferencias de Usuario',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 16,
+            letterSpacing: -0.2,
+            color: (theme.brightness == Brightness.dark) ? Colors.white : ZanateColors.zanateDark,
+          ),
+        ),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: (theme.brightness == Brightness.dark) ? const Color(0xFF1E293B) : Colors.white,
+        shape: Border(
+          bottom: BorderSide(
+            color: (theme.brightness == Brightness.dark) ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            width: 0.8,
+          ),
+        ),
         leading: Navigator.of(context).canPop()
             ? IconButton(
-                icon: const Icon(Icons.arrow_back),
+                icon: Icon(
+                  PhosphorIconsRegular.arrowLeft,
+                  color: (theme.brightness == Brightness.dark) ? Colors.white : ZanateColors.zanateDark,
+                  size: 20,
+                ),
                 tooltip: 'Regresar',
                 onPressed: () => Navigator.of(context).pop(),
               )
             : null,
-        actions: [
-          PopupMenuButton<String>(
-            tooltip: 'Ajustes',
-            icon: const Icon(Icons.settings_outlined),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            onSelected: (value) {
-              switch (value) {
-                case 'theme':
-                  widget.onToggleTheme?.call();
-                case 'rules':
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const RulesScreen()),
-                  );
-                case 'totp':
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const TotpEnrollmentScreen(),
-                    ),
-                  );
-              }
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'theme',
-                child: ListTile(
-                  leading: Icon(
-                    widget.isDarkMode
-                        ? Icons.light_mode_outlined
-                        : Icons.dark_mode_outlined,
-                  ),
-                  title: Text(
-                    widget.isDarkMode ? 'Tema claro' : 'Tema oscuro',
-                  ),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'rules',
-                child: ListTile(
-                  leading: Icon(Icons.shield_outlined),
-                  title: Text('Normas y descargo'),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'totp',
-                child: ListTile(
-                  leading: Icon(Icons.security_outlined),
-                  title: Text('Seguridad TOTP'),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(width: 8),
-        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -465,14 +428,14 @@ class _ProfileScreenState extends State<ProfileScreen>
                           alignment: Alignment.centerRight,
                           child: ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF004B87),
+                              backgroundColor: ZanateColors.zanateAccent,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 24,
                                 vertical: 14,
                               ),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.zero,
                               ),
                             ),
                             onPressed: _isSaving ? null : _saveProfile,
@@ -502,16 +465,6 @@ class _ProfileScreenState extends State<ProfileScreen>
 
                         // User Activity Section (Tabs)
                         _buildActivitySection(theme),
-
-                        const SizedBox(height: 28),
-
-                        // Data Usage & Privacy Transparency Section
-                        _buildDataUsageCard(theme),
-
-                        const SizedBox(height: 28),
-
-                        // Account & Preferences Section
-                        _buildAccountSection(theme),
                         const SizedBox(height: 40),
                       ],
                     ),
@@ -534,9 +487,9 @@ class _ProfileScreenState extends State<ProfileScreen>
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.zero,
         border: Border.all(
-          color: isDark ? const Color(0xFF303030) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
         ),
         boxShadow: [
           BoxShadow(
@@ -565,7 +518,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                     right: 0,
                     child: InkWell(
                       onTap: _showAvatarPickerModal,
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.zero,
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
@@ -614,8 +567,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                       children: [
                         Icon(
                           isAuthenticated
-                              ? Icons.cloud_done_outlined
-                              : Icons.lock_open_outlined,
+                              ? PhosphorIconsRegular.cloudCheck
+                              : PhosphorIconsRegular.user,
                           size: 14,
                           color: isAuthenticated
                               ? const Color(0xFF059669)
@@ -652,7 +605,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                               labelText: 'Seudónimo Visible en la Comunidad',
                               hintText: 'Ej. Estudiante USAC #402',
                               prefixIcon: const Icon(
-                                Icons.badge_outlined,
+                                PhosphorIconsRegular.identificationBadge,
                                 size: 18,
                               ),
                               isDense: true,
@@ -662,7 +615,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                                 vertical: 10,
                               ),
                               suffixIcon: IconButton(
-                                icon: const Icon(Icons.shuffle, size: 18),
+                                icon: const Icon(PhosphorIconsRegular.diceFive, size: 18),
                                 tooltip: 'Generar seudónimo aleatorio',
                                 onPressed: _generateRandomAlias,
                               ),
@@ -677,129 +630,6 @@ class _ProfileScreenState extends State<ProfileScreen>
               ),
             ],
           ),
-
-          const SizedBox(height: 14),
-
-          // Bio field
-          TextField(
-            controller: _bioController,
-            maxLines: 2,
-            maxLength: 140,
-            decoration: const InputDecoration(
-              labelText: 'Presentación o Bio Estudiantil',
-              hintText:
-                  'Ej. Estudiante de 6to semestre apasionado por desarrollo y proyectos comunitarios...',
-              prefixIcon: Icon(Icons.edit_note_outlined, size: 18),
-              isDense: true,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 10,
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 14),
-
-          // Tarjeta de Validación de Carné y Consentimiento Informado
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: (_profile?.isCarneVerified ?? false)
-                  ? const Color(0xFF059669).withValues(alpha: 0.08)
-                  : const Color(0xFF0284C7).withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: (_profile?.isCarneVerified ?? false)
-                    ? const Color(0xFF059669).withValues(alpha: 0.3)
-                    : const Color(0xFF0284C7).withValues(alpha: 0.3),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  (_profile?.isCarneVerified ?? false)
-                      ? Icons.verified
-                      : Icons.verified_user_outlined,
-                  color: (_profile?.isCarneVerified ?? false)
-                      ? const Color(0xFF059669)
-                      : const Color(0xFF0284C7),
-                  size: 24,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        (_profile?.isCarneVerified ?? false)
-                            ? 'Estudiante Validado: ${_profile?.studentName} · ${_profile?.carne}'
-                            : 'Validación con Carné Universitario',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: (_profile?.isCarneVerified ?? false)
-                              ? const Color(0xFF059669)
-                              : const Color(0xFF0284C7),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        (_profile?.isCarneVerified ?? false)
-                            ? 'Tu nombre y badge de verificado se muestran en Marketplace. En el Foro se mantiene tu perfil estudiantil.'
-                            : 'No hay una fuente institucional conectada: no se ha consultado Registro y Estadística y tu condición estudiantil no está verificada.',
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          height: 1.3,
-                          color: isDark
-                              ? Colors.grey.shade300
-                              : const Color(0xFF334155),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: () {
-                    if (_profile != null) {
-                      CarneValidationModal.show(
-                        context,
-                        currentProfile: _profile!,
-                        onProfileUpdated: (updated) {
-                          setState(() {
-                            _profile = updated;
-                          });
-                        },
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: (_profile?.isCarneVerified ?? false)
-                        ? const Color(0xFF059669)
-                        : const Color(0xFF0284C7),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 8,
-                    ),
-                    minimumSize: const Size(60, 34),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: Text(
-                    (_profile?.isCarneVerified ?? false)
-                        ? 'Verificar'
-                        : 'Validar',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );
@@ -808,16 +638,16 @@ class _ProfileScreenState extends State<ProfileScreen>
   Widget _buildRoleBadge(ThemeData theme) {
     final role = _profile?.role ?? 'student';
     String label = 'Estudiante';
-    IconData icon = Icons.school;
-    Color color = const Color(0xFF004B87);
+    IconData icon = PhosphorIconsRegular.graduationCap;
+    Color color = ZanateColors.zanateAccent;
 
     if (role == 'admin') {
       label = 'Administrador';
-      icon = Icons.verified_user;
+      icon = PhosphorIconsFill.shieldCheck;
       color = const Color(0xFFDC2626);
     } else if (role == 'moderator') {
       label = 'Moderador';
-      icon = Icons.shield;
+      icon = PhosphorIconsRegular.shield;
       color = const Color(0xFFD97706);
     }
 
@@ -825,7 +655,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.zero,
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
@@ -860,9 +690,9 @@ class _ProfileScreenState extends State<ProfileScreen>
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.zero,
         border: Border.all(
-          color: isDark ? const Color(0xFF303030) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
         ),
       ),
       child: Column(
@@ -873,22 +703,34 @@ class _ProfileScreenState extends State<ProfileScreen>
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF004B87).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  color: ZanateColors.zanateAccent.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.zero,
                 ),
                 child: const Icon(
-                  Icons.school_outlined,
+                  PhosphorIconsRegular.graduationCap,
                   color: Color(0xFF004B87),
                   size: 18,
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  'Información Académica',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Información Académica (Opcional)',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'Opcional · Úsala para autocompletar cursos y grupos de tu carrera',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -902,7 +744,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             isExpanded: true,
             decoration: const InputDecoration(
               labelText: 'Facultad / Unidad Académica',
-              prefixIcon: Icon(Icons.account_balance_outlined, size: 18),
+              prefixIcon: Icon(PhosphorIconsRegular.buildings, size: 18),
               isDense: true,
             ),
             items: USACConstants.facultades.map((f) {
@@ -938,7 +780,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             isExpanded: true,
             decoration: const InputDecoration(
               labelText: 'Carrera',
-              prefixIcon: Icon(Icons.menu_book_outlined, size: 18),
+              prefixIcon: Icon(PhosphorIconsRegular.bookOpen, size: 18),
               isDense: true,
             ),
             items: carreras.map((c) {
@@ -966,7 +808,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             isExpanded: true,
             decoration: const InputDecoration(
               labelText: 'Sede / Centro Universitario',
-              prefixIcon: Icon(Icons.location_on_outlined, size: 18),
+              prefixIcon: Icon(PhosphorIconsRegular.mapPin, size: 18),
               isDense: true,
             ),
             items: USACConstants.sedes.map((s) {
@@ -997,9 +839,9 @@ class _ProfileScreenState extends State<ProfileScreen>
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.zero,
         border: Border.all(
-          color: isDark ? const Color(0xFF303030) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
         ),
       ),
       child: Column(
@@ -1011,7 +853,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   color: const Color(0xFF0D9488).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.zero,
                 ),
                 child: const Icon(
                   Icons.contact_phone_outlined,
@@ -1025,7 +867,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Canales de Contacto',
+                      'Canales de Contacto (Opcional)',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -1090,9 +932,9 @@ class _ProfileScreenState extends State<ProfileScreen>
     return Material(
       color: isDark ? const Color(0xFF1E293B) : Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.zero,
         side: BorderSide(
-          color: isDark ? const Color(0xFF303030) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
         ),
       ),
       clipBehavior: Clip.antiAlias,
@@ -1106,11 +948,11 @@ class _ProfileScreenState extends State<ProfileScreen>
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF004B87).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
+                    color: ZanateColors.zanateAccent.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.zero,
                   ),
                   child: const Icon(
-                    Icons.history_edu_outlined,
+                    PhosphorIconsRegular.clockCounterClockwise,
                     color: Color(0xFF004B87),
                     size: 18,
                   ),
@@ -1125,7 +967,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.refresh, size: 18),
+                  icon: const Icon(PhosphorIconsRegular.arrowsClockwise, size: 18),
                   tooltip: 'Actualizar actividad',
                   onPressed: _loadUserActivity,
                 ),
@@ -1134,17 +976,23 @@ class _ProfileScreenState extends State<ProfileScreen>
           ),
           TabBar(
             controller: _tabController,
+            indicatorColor: ZanateColors.zanateAccent,
+            indicatorWeight: 2.5,
+            labelColor: isDark ? Colors.white : ZanateColors.zanateDark,
+            unselectedLabelColor: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+            labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
             tabs: [
               Tab(
-                icon: const Icon(Icons.forum_outlined, size: 16),
+                icon: const Icon(PhosphorIconsRegular.chatsCircle, size: 18),
                 text: 'Mis Posts · ${_myPosts.length}',
               ),
               Tab(
-                icon: const Icon(Icons.groups_outlined, size: 16),
+                icon: const Icon(PhosphorIconsRegular.usersThree, size: 18),
                 text: 'Mis Grupos · ${_myGroups.length}',
               ),
               Tab(
-                icon: const Icon(Icons.storefront_outlined, size: 16),
+                icon: const Icon(PhosphorIconsRegular.shoppingBag, size: 18),
                 text: 'Mis Anuncios · ${_myMarketplaceItems.length}',
               ),
             ],
@@ -1170,7 +1018,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   Widget _buildPostsTab(ThemeData theme) {
     if (_myPosts.isEmpty) {
       return const EmptyStateWidget(
-        icon: Icons.forum_outlined,
+        icon: PhosphorIconsRegular.chatsCircle,
         title: 'Sin publicaciones en el foro',
         description:
             'Las consultas o aportes que crees en el Foro Estudiantil aparecerán aquí para que puedas gestionarlos.',
@@ -1199,7 +1047,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
-                icon: const Icon(Icons.open_in_new, size: 18),
+                icon: const Icon(PhosphorIconsRegular.arrowSquareOut, size: 18),
                 tooltip: 'Ver detalle de post',
                 onPressed: () {
                   Navigator.of(context).push(
@@ -1214,7 +1062,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               ),
               IconButton(
                 icon: const Icon(
-                  Icons.delete_outline,
+                  PhosphorIconsRegular.trash,
                   size: 18,
                   color: Color(0xFFDC2626),
                 ),
@@ -1231,7 +1079,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   Widget _buildGroupsTab(ThemeData theme) {
     if (_myGroups.isEmpty) {
       return const EmptyStateWidget(
-        icon: Icons.groups_outlined,
+        icon: PhosphorIconsRegular.usersThree,
         title: 'Sin grupos de estudio compartidos',
         description:
             'Los enlaces de grupos de WhatsApp o Discord que compartas se listarán aquí.',
@@ -1258,7 +1106,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           ),
           trailing: IconButton(
             icon: const Icon(
-              Icons.delete_outline,
+              PhosphorIconsRegular.trash,
               size: 18,
               color: Color(0xFFDC2626),
             ),
@@ -1273,7 +1121,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   Widget _buildMarketplaceTab(ThemeData theme) {
     if (_myMarketplaceItems.isEmpty) {
       return const EmptyStateWidget(
-        icon: Icons.storefront_outlined,
+        icon: PhosphorIconsRegular.shoppingBag,
         title: 'Sin anuncios en el Marketplace',
         description:
             'Tus publicaciones de productos, comidas, libros o tutorías aparecerán aquí.',
@@ -1304,7 +1152,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           ),
           trailing: IconButton(
             icon: const Icon(
-              Icons.delete_outline,
+              PhosphorIconsRegular.trash,
               size: 18,
               color: Color(0xFFDC2626),
             ),
@@ -1316,459 +1164,11 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-  Widget _buildDataUsageCard(ThemeData theme) {
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? const Color(0xFF303030) : const Color(0xFFE2E8F0),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0284C7).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.privacy_tip_outlined,
-                  color: Color(0xFF0284C7),
-                  size: 18,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Uso de Datos y Privacidad',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      '¿Cómo y por qué se utiliza tu información en la plataforma?',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        fontSize: 11,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Item 1: Alias & Identity
-          _buildDataUsageItem(
-            theme: theme,
-            icon: Icons.badge_outlined,
-            iconColor: const Color(0xFF004B87),
-            title: 'Seudónimo y Protección de Identidad',
-            description:
-                'Tu seudónimo protege tu privacidad frente a otros estudiantes. Es el único identificador visible al publicar en el foro o compartir grupos de estudio, evitando exponer tu nombre real o datos personales.',
-          ),
-          const SizedBox(height: 12),
-
-          // Item 2: Academic Info
-          _buildDataUsageItem(
-            theme: theme,
-            icon: Icons.school_outlined,
-            iconColor: const Color(0xFF0D9488),
-            title: 'Información Académica',
-            description:
-                'Se utiliza exclusivamente para filtrar y mostrarte contenido relevante: dudas sobre prerrequisitos de tu carrera, grupos de cursos específicos y artículos de marketplace en tu misma sede.',
-          ),
-          const SizedBox(height: 12),
-
-          // Item 3: Contact Channels
-          _buildDataUsageItem(
-            theme: theme,
-            icon: Icons.chat_outlined,
-            iconColor: const Color(0xFF16A34A),
-            title: 'Canales de Contacto',
-            description:
-                'Se almacenan localmente en tu dispositivo como borrador de conveniencia. Solo se adjuntan a los anuncios específicos que tú decidas publicar en el Marketplace o tutorías para que los interesados te contacten directamente.',
-          ),
-          const SizedBox(height: 12),
-
-          // Item 4: Data Control & Retention
-          _buildDataUsageItem(
-            theme: theme,
-            icon: Icons.shield_outlined,
-            iconColor: const Color(0xFF7C3AED),
-            title: 'Control Total y No Comercialización',
-            description:
-                'Comunidad Universitaria es una iniciativa sin fines de lucro. No comercializamos, no rastreamos con fines publicitarios ni compartimos tus datos con entidades externas ni con autoridades de la universidad. Puedes editar tus datos o eliminar tus publicaciones en cualquier momento.',
-          ),
-
-          const SizedBox(height: 14),
-
-          // Reassurance Box
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: isDark
-                    ? const Color(0xFF303030)
-                    : const Color(0xFFE2E8F0),
-              ),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.lock_outline,
-                  size: 16,
-                  color: Color(0xFF0284C7),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Tus aportes colaborativos fortalecen la red estudiantil manteniendo la autonomía y privacidad de cada compañero.',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: isDark
-                          ? Colors.grey.shade300
-                          : Colors.grey.shade700,
-                      height: 1.3,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDataUsageItem({
-    required ThemeData theme,
-    required IconData icon,
-    required Color iconColor,
-    required String title,
-    required String description,
-  }) {
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF252525) : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark ? const Color(0xFF303030) : const Color(0xFFE2E8F0),
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 16, color: iconColor),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  description,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey.shade600,
-                    height: 1.35,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAccountSection(ThemeData theme) {
-    final isDark = theme.brightness == Brightness.dark;
-    final isAuthenticated = SupabaseService.isAuthenticated;
-    final isDesktop = Responsive.isDesktop(context);
-
-    return Material(
-      color: isDark ? const Color(0xFF1E293B) : Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: isDark ? const Color(0xFF303030) : const Color(0xFFE2E8F0),
-        ),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF7C3AED).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.settings_outlined,
-                    color: Color(0xFF7C3AED),
-                    size: 18,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Cuenta y Preferencias',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // Theme Switch
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Icon(
-                widget.isDarkMode
-                    ? Icons.dark_mode_outlined
-                    : Icons.light_mode_outlined,
-                size: 22,
-              ),
-              title: const Text(
-                'Tema de la Aplicación',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text(
-                widget.isDarkMode
-                    ? 'Modo Oscuro activado'
-                    : 'Modo Claro activado',
-                style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-              ),
-              trailing: Switch(
-                value: widget.isDarkMode,
-                onChanged: (_) => widget.onToggleTheme?.call(),
-              ),
-            ),
-
-            const Divider(),
-
-            // Community Rules Link
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.shield_outlined, size: 22),
-              title: const Text(
-                'Normas de Convivencia y Descargo',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-              ),
-              subtitle: const Text(
-                'Conoce los lineamientos de respeto y privacidad',
-                style: TextStyle(fontSize: 11),
-              ),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (ctx) => const RulesScreen()),
-                );
-              },
-            ),
-
-            const Divider(),
-
-            // Login or Logout
-            if (!isAuthenticated) ...[
-              isDesktop
-                  ? ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: const Icon(
-                        Icons.login,
-                        size: 22,
-                        color: Color(0xFF004B87),
-                      ),
-                      title: const Text(
-                        'Iniciar Sesión o Registrarse',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      subtitle: const Text(
-                        'Vincular con Google o Correo para sincronizar tus publicaciones en otros dispositivos',
-                        style: TextStyle(fontSize: 11),
-                      ),
-                      trailing: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF004B87),
-                          foregroundColor: Colors.white,
-                        ),
-                        onPressed: () {
-                          AuthModal.show(
-                            context,
-                            title: 'Acceso a Cuenta Estudiantil',
-                            subtitle:
-                                'Inicia sesión para sincronizar tus aportes y publicaciones.',
-                            onAuthenticated: () {
-                              _loadFullProfile();
-                            },
-                          );
-                        },
-                        child: const Text('Acceder'),
-                      ),
-                    )
-                  : Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: const [
-                              Icon(
-                                Icons.login,
-                                size: 20,
-                                color: Color(0xFF004B87),
-                              ),
-                              SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Iniciar Sesión o Registrarse',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'Vincular con Google o Correo para sincronizar tus publicaciones en otros dispositivos',
-                            style: TextStyle(fontSize: 11),
-                          ),
-                          const SizedBox(height: 10),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF004B87),
-                              foregroundColor: Colors.white,
-                            ),
-                            onPressed: () {
-                              AuthModal.show(
-                                context,
-                                title: 'Acceso a Cuenta Estudiantil',
-                                subtitle:
-                                    'Inicia sesión para sincronizar tus aportes y publicaciones.',
-                                onAuthenticated: () {
-                                  _loadFullProfile();
-                                },
-                              );
-                            },
-                            child: const Text('Acceder'),
-                          ),
-                        ],
-                      ),
-                    ),
-            ] else ...[
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(
-                  Icons.security_outlined,
-                  size: 22,
-                  color: Color(0xFF004B87),
-                ),
-                title: const Text(
-                  'Autenticación en dos pasos',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                ),
-                subtitle: const Text(
-                  'Configura un autenticador TOTP para proteger tu cuenta',
-                  style: TextStyle(fontSize: 11),
-                ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const TotpEnrollmentScreen(),
-                    ),
-                  );
-                },
-              ),
-              const Divider(),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(
-                  Icons.logout,
-                  size: 22,
-                  color: Color(0xFFDC2626),
-                ),
-                title: const Text(
-                  'Cerrar Sesión',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                ),
-                subtitle: Text(
-                  'Sesión iniciada como ${SupabaseService.currentUser?.email ?? 'Usuario'}',
-                  style: const TextStyle(fontSize: 11),
-                ),
-                trailing: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFDC2626),
-                    side: const BorderSide(color: Color(0xFFDC2626)),
-                  ),
-                  onPressed: () async {
-                    await SupabaseService.signOut();
-                    await _loadFullProfile();
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Sesión cerrada.')),
-                      );
-                    }
-                  },
-                  child: const Text('Cerrar Sesión'),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
   void _showAvatarPickerModal() {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.zero,
       ),
       builder: (ctx) {
         return StatefulBuilder(
@@ -1801,7 +1201,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                           setModalState(() => _selectedAvatarColor = idx);
                           setState(() => _selectedAvatarColor = idx);
                         },
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.zero,
                         child: Container(
                           width: 36,
                           height: 36,
@@ -1853,7 +1253,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                           setModalState(() => _selectedAvatarIcon = idx);
                           setState(() => _selectedAvatarIcon = idx);
                         },
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.zero,
                         child: Container(
                           width: 40,
                           height: 40,
@@ -1863,7 +1263,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                                     context,
                                   ).colorScheme.primary.withValues(alpha: 0.15)
                                 : Colors.transparent,
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.zero,
                             border: Border.all(
                               color: isSelected
                                   ? Theme.of(context).colorScheme.primary

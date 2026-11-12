@@ -579,6 +579,7 @@ class PostCard extends StatelessWidget {
                       icon: PhosphorIconsRegular.shareNetwork,
                       label: 'Compartir',
                       onTap: onShare,
+                      count: post.sharesCount,
                     ),
                     const SizedBox(width: 14),
                   ],

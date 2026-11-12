@@ -62,7 +62,7 @@ class _AliasModalState extends State<AliasModal> {
     return Dialog(
       backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.zero,
         side: BorderSide(
           color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
           width: 0.8,
@@ -82,7 +82,7 @@ class _AliasModalState extends State<AliasModal> {
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: ZanateColors.zanateAccent.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.zero,
                     ),
                     child: const Icon(
                       PhosphorIconsBold.userCircle,
@@ -161,8 +161,8 @@ class _AliasModalState extends State<AliasModal> {
                         backgroundColor: ZanateColors.zanateAccent,
                         foregroundColor: Colors.white,
                         elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.zero,
                         ),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
