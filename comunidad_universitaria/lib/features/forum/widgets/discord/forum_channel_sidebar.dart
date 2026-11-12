@@ -53,31 +53,62 @@ class ForumChannelSidebar extends StatelessWidget {
             decoration: BoxDecoration(
               border: Border(bottom: BorderSide(color: borderColor)),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Text(
-                  activeServer.name
-                      .replaceAll(RegExp(r'\s*\([^)]*\)'), '')
-                      .trim(),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
+                if (activeServer.resolvedLogoAsset != null) ...[
+                  Container(
+                    width: 28,
+                    height: 28,
+                    margin: const EdgeInsets.only(right: 10),
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF26282B) : Colors.white,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF383A40) : const Color(0xFFE2E8F0),
+                        width: 1,
+                      ),
+                    ),
+                    child: Image.asset(
+                      activeServer.resolvedLogoAsset!,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) => Icon(
+                        activeServer.icon,
+                        size: 16,
+                        color: activeServer.color,
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  activeServer.isGroups
-                      ? 'Grupos de estudio'
-                      : 'Comunidad universitaria',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: isDark
-                        ? const Color(0xFF949BA4)
-                        : const Color(0xFF64748B),
+                ],
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        activeServer.name
+                            .replaceAll(RegExp(r'\s*\([^)]*\)'), '')
+                            .trim(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        activeServer.isGroups
+                            ? 'Grupos de estudio'
+                            : 'Comunidad universitaria',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: isDark
+                              ? const Color(0xFF949BA4)
+                              : const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],

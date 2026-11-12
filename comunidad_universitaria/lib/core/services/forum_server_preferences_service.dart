@@ -39,12 +39,12 @@ class ForumServerPreferencesService {
     'id': server.id,
     'name': server.name,
     'shortCode': server.shortCode,
-
     'facultadId': server.facultadId,
     'carreraId': server.carreraId,
     'description': server.description,
     'color': server.color.toARGB32(),
     'memberCount': server.memberCount,
+    'logoAsset': server.resolvedLogoAsset,
   };
 
   static IconData _iconForFaculty(String facultyId) {
@@ -75,6 +75,7 @@ class ForumServerPreferencesService {
     }
 
     final memberCount = json['memberCount'];
+    final logoAsset = json['logoAsset'] as String?;
     return ForumServer(
       id: id,
       name: name,
@@ -85,6 +86,7 @@ class ForumServerPreferencesService {
       description: description,
       color: Color(color),
       memberCount: memberCount is int ? memberCount : null,
+      logoAsset: logoAsset ?? ForumServer.getLogoAssetFor(id: id, facultadId: facultadId),
     );
   }
 }

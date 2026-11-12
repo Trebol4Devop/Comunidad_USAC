@@ -298,6 +298,10 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
                           final carreraName = item['carreraNombre'] as String;
                           final facultadName = item['facultadNombre'] as String;
                           final carreraId = item['carreraId'] as String;
+                          final logoAsset = ForumServer.getLogoAssetFor(
+                            id: carreraId,
+                            facultadId: facId,
+                          );
 
                           return ListTile(
                             contentPadding: const EdgeInsets.symmetric(
@@ -307,18 +311,38 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
                             leading: Container(
                               width: 40,
                               height: 40,
+                              padding: const EdgeInsets.all(4),
                               decoration: BoxDecoration(
                                 color: isDark
-                                    ? const Color(0xFF333333)
-                                    : const Color(0xFFF0F0F0),
+                                    ? const Color(0xFF26282B)
+                                    : const Color(0xFFF8FAFC),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: isDark
+                                      ? const Color(0xFF383A40)
+                                      : const Color(0xFFE2E8F0),
+                                  width: 1,
+                                ),
                               ),
-                              child: Icon(
-                                icon,
-                                color: isDark
-                                    ? Colors.white
-                                    : const Color(0xFF202020),
-                                size: 20,
-                              ),
+                              child: logoAsset != null
+                                  ? Image.asset(
+                                      logoAsset,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (context, error, stackTrace) => Icon(
+                                        icon,
+                                        color: isDark
+                                            ? Colors.white
+                                            : const Color(0xFF202020),
+                                        size: 20,
+                                      ),
+                                    )
+                                  : Icon(
+                                      icon,
+                                      color: isDark
+                                          ? Colors.white
+                                          : const Color(0xFF202020),
+                                      size: 20,
+                                    ),
                             ),
                             title: Text(
                               carreraName,
@@ -356,6 +380,7 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
                                 description:
                                     'Canal de $carreraName · $facultadName',
                                 color: color,
+                                logoAsset: logoAsset,
                               );
 
                               widget.onServerSelected(newServer);

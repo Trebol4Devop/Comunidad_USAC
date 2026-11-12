@@ -21,7 +21,9 @@ dependencies:
   path_provider: ^2.1.2
   latlong2: ^0.9.1
   usac_campus_map:
-    path: ../../usac_campus_map
+    git:
+      url: https://github.com/Trebol4Devop/usac_campus_map.git
+      ref: develop
   connectivity_plus: ^7.3.2
   pretty_animated_text: ^3.3.0
   morphtext: ^0.2.1
@@ -38,3 +40,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/zanate_logo.png
+    - assets/images/facultades/

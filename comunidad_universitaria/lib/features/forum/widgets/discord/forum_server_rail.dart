@@ -173,6 +173,12 @@ class _ServerButton extends StatelessWidget {
     final inactiveBg = isDark ? const Color(0xFF313338) : Colors.white;
     final activeFg = Colors.white;
     final inactiveFg = isDark ? const Color(0xFFDBDEE1) : const Color(0xFF313338);
+    final logoAsset = server.resolvedLogoAsset;
+    final hasLogo = logoAsset != null && logoAsset.isNotEmpty;
+
+    final containerBg = hasLogo
+        ? (isDark ? const Color(0xFF26282B) : Colors.white)
+        : (isSelected ? activeBg : inactiveBg);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -203,7 +209,7 @@ class _ServerButton extends StatelessWidget {
                 ),
               ),
 
-              // Ícono de servidor en formato squircle 48x48px
+              // Ícono o escudo de facultad en formato squircle 48x48px
               Center(
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
@@ -211,9 +217,19 @@ class _ServerButton extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: isSelected ? activeBg : inactiveBg,
+                    color: containerBg,
                     // Activo se expande a forma ligeramente más cuadrada (14px), inactivo más redondeado (20px)
                     borderRadius: BorderRadius.circular(isSelected ? 14 : 20),
+                    border: hasLogo
+                        ? Border.all(
+                            color: isSelected
+                                ? activeBg
+                                : (isDark
+                                    ? const Color(0xFF383A40)
+                                    : const Color(0xFFE2E8F0)),
+                            width: isSelected ? 2 : 1,
+                          )
+                        : null,
                     boxShadow: isSelected
                         ? [
                             BoxShadow(
@@ -230,11 +246,31 @@ class _ServerButton extends StatelessWidget {
                       onTap: onTap,
                       borderRadius: BorderRadius.circular(isSelected ? 14 : 20),
                       child: Center(
-                        child: Icon(
-                          server.icon,
-                          size: 22,
-                          color: isSelected ? activeFg : inactiveFg,
-                        ),
+                        child: hasLogo
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(
+                                  isSelected ? 12 : 18,
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(4),
+                                  child: Image.asset(
+                                    logoAsset,
+                                    width: 36,
+                                    height: 36,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (context, error, stackTrace) => Icon(
+                                      server.icon,
+                                      size: 22,
+                                      color: isSelected ? activeFg : inactiveFg,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : Icon(
+                                server.icon,
+                                size: 22,
+                                color: isSelected ? activeFg : inactiveFg,
+                              ),
                       ),
                     ),
                   ),

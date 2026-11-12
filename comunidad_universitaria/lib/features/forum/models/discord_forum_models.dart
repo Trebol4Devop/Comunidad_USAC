@@ -11,6 +11,7 @@ class ForumServer {
   final Color color;
   final int? memberCount;
   final bool isGroups;
+  final String? logoAsset;
 
   const ForumServer({
     required this.id,
@@ -23,7 +24,88 @@ class ForumServer {
     this.color = const Color(0xFF004B87),
     this.memberCount,
     this.isGroups = false,
+    this.logoAsset,
   });
+
+  /// Resuelve la ruta del escudo o logotipo oficial de la facultad / carrera
+  String? get resolvedLogoAsset {
+    if (logoAsset != null && logoAsset!.isNotEmpty) return logoAsset;
+    if (isGroups) return null;
+    return getLogoAssetFor(id: id, facultadId: facultadId);
+  }
+
+  /// Mapeo centralizado de logos y escudos oficiales de la USAC
+  static String? getLogoAssetFor({required String id, required String facultadId}) {
+    final normalized = id.toLowerCase().replaceAll('server_', '').replaceAll('08_', '');
+    switch (normalized) {
+      case 'todas':
+        return 'assets/images/facultades/USAC_General.png';
+      case 'area_comun':
+        return 'assets/images/facultades/BAS_Area_Comun.png';
+      case 'sistemas':
+        return 'assets/images/facultades/SIST_Sistemas.png';
+      case 'civil':
+        return 'assets/images/facultades/CIV_Civil.png';
+      case 'industrial':
+        return 'assets/images/facultades/IND_Industrial.png';
+      case 'mecanica_industrial':
+        return 'assets/images/facultades/IND_Mecanica_Industrial.png';
+      case 'quimica':
+        return 'assets/images/facultades/QUIM_Quimica.png';
+      case 'mecanica':
+        return 'assets/images/facultades/MEC_Mecanica.png';
+      case 'electrica':
+        return 'assets/images/facultades/ELEC_Electrica.png';
+      case 'electronica':
+        return 'assets/images/facultades/ELEC_Electronica.png';
+      case 'mecanica_electrica':
+        return 'assets/images/facultades/ELEC_Mecanica_Electrica.png';
+      case 'ambiental':
+        return 'assets/images/facultades/AMB_Ambiental.png';
+      case 'postgrado':
+        return 'assets/images/facultades/POST_Postgrado.png';
+      case 'eris':
+      case 'sanitaria':
+        return 'assets/images/facultades/ERIS_Sanitaria.png';
+      case 'medicina':
+        return 'assets/images/facultades/MED_Ciencias_Medicas.png';
+      case 'derecho':
+        return 'assets/images/facultades/DER_Ciencias_Juridicas.png';
+      case 'arquitectura':
+        return 'assets/images/facultades/ARQ_Arquitectura.png';
+      case 'economicas':
+        return 'assets/images/facultades/ECON_Ciencias_Economicas.png';
+      case 'agronomia':
+        return 'assets/images/facultades/AGRO_Agronomia.png';
+    }
+
+    switch (facultadId) {
+      case 'todas':
+        return 'assets/images/facultades/USAC_General.png';
+      case '01':
+        return 'assets/images/facultades/AGRO_Agronomia.png';
+      case '02':
+        return 'assets/images/facultades/ARQ_Arquitectura.png';
+      case '03':
+        return 'assets/images/facultades/ECON_Ciencias_Economicas.png';
+      case '04':
+        return 'assets/images/facultades/DER_Ciencias_Juridicas.png';
+      case '05':
+        return 'assets/images/facultades/MED_Ciencias_Medicas.png';
+      case '06':
+        return 'assets/images/facultades/FARMA_CCQQ_y_Farmacia.png';
+      case '07':
+        return 'assets/images/facultades/HUM_Humanidades.png';
+      case '08':
+        return 'assets/images/facultades/ING_Facultad_Ingenieria.png';
+      case '09':
+        return 'assets/images/facultades/ODO_Odontologia.png';
+      case '10':
+        return 'assets/images/facultades/VET_Veterinaria_y_Zootecnia.png';
+      default:
+        return null;
+    }
+  }
 
   /// Official Grupos de Estudio / WhatsApp Server
   static const ForumServer groupsServer = ForumServer(
