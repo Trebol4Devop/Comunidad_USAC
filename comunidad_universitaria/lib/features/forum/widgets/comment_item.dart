@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import '../../../core/constants/zanate_colors.dart';
 import '../../../core/models/post.dart';
 import '../../shared/widgets/anonymous_author_header.dart';
 import '../../shared/widgets/report_dialog.dart';
@@ -96,18 +98,18 @@ class CommentItemWidget extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
-                            Icons.reply,
+                          PhosphorIcon(
+                            PhosphorIconsRegular.arrowBendDownRight,
                             size: 14,
-                            color: theme.colorScheme.primary,
+                            color: ZanateColors.zanateAccent,
                           ),
                           const SizedBox(width: 4),
-                          Text(
+                          const Text(
                             'Responder',
                             style: TextStyle(
                               fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w700,
+                              color: ZanateColors.zanateAccent,
                             ),
                           ),
                         ],
