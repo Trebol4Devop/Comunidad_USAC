@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import '../../../../core/constants/zanate_colors.dart';
 import '../../models/discord_forum_models.dart';
 import 'forum_carrera_picker_dialog.dart';
 
 class ForumServerRail extends StatelessWidget {
   final List<ForumServer> servers;
   final ForumServer activeServer;
-
   final Function(ForumServer) onSelectServer;
   final Function(ForumServer) onAddServer;
   final bool showAddButton;
@@ -34,12 +35,11 @@ class ForumServerRail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final railBackground = isDark
-        ? const Color(0xFF171717)
-        : const Color(0xFFF7F7F7);
-    final borderColor = isDark
-        ? const Color(0xFF303030)
-        : const Color(0xFFE5E5E5);
+    final railBackground =
+        isDark ? const Color(0xFF111827) : ZanateColors.railBg;
+    final borderColor =
+        isDark ? const Color(0xFF1F2937) : ZanateColors.subtleBorder;
+
     final visibleServers = <ForumServer>[];
     for (final server in servers) {
       if (!server.isGroups &&
@@ -49,10 +49,10 @@ class ForumServerRail extends StatelessWidget {
     }
 
     return Container(
-      width: 64,
+      width: 68,
       decoration: BoxDecoration(
         color: railBackground,
-        border: Border(right: BorderSide(color: borderColor)),
+        border: Border(right: BorderSide(color: borderColor, width: 0.8)),
       ),
       child: SafeArea(
         bottom: false,
@@ -74,25 +74,32 @@ class ForumServerRail extends StatelessWidget {
             ),
             if (showAddButton)
               Padding(
-                padding: const EdgeInsets.only(bottom: 12, top: 8),
+                padding: const EdgeInsets.only(bottom: 14, top: 8),
                 child: Tooltip(
                   message: 'Agregar servidor',
                   child: SizedBox(
-                    width: 40,
-                    height: 40,
-                    child: OutlinedButton(
-                      onPressed: () => _addServer(context),
-                      style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        foregroundColor: isDark
-                            ? Colors.white
-                            : const Color(0xFF202020),
-                        side: BorderSide(color: borderColor),
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.zero,
+                    width: 46,
+                    height: 46,
+                    child: Material(
+                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      child: InkWell(
+                        onTap: () => _addServer(context),
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: borderColor, width: 0.8),
+                          ),
+                          child: PhosphorIcon(
+                            PhosphorIconsRegular.plus,
+                            size: 20,
+                            color: isDark
+                                ? Colors.white
+                                : ZanateColors.zanateDark,
+                          ),
                         ),
                       ),
-                      child: const Icon(Icons.add, size: 21),
                     ),
                   ),
                 ),
@@ -118,11 +125,15 @@ class _ServerButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final foreground = isDark ? Colors.white : const Color(0xFF202020);
-    final muted = isDark ? const Color(0xFFB3B3B3) : const Color(0xFF555555);
+    final activeBg =
+        isDark ? ZanateColors.zanateAccent : ZanateColors.zanateDark;
+    final inactiveBg = Colors.transparent;
+    final activeIconColor = Colors.white;
+    final inactiveIconColor =
+        isDark ? const Color(0xFF94A3B8) : Colors.blueGrey.shade600;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
+      padding: const EdgeInsets.symmetric(vertical: 5),
       child: Tooltip(
         message: server.name.replaceAll(RegExp(r'\s*\([^)]*\)'), '').trim(),
         preferBelow: false,
@@ -131,29 +142,55 @@ class _ServerButton extends StatelessWidget {
           child: Stack(
             alignment: Alignment.centerLeft,
             children: [
-              if (isSelected)
-                Container(width: 3, height: 28, color: foreground),
+              // Píldora indicadora izquierda
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOutCubic,
+                width: isSelected ? 4 : 0,
+                height: isSelected ? 28 : 0,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? ZanateColors.zanateAccent
+                      : ZanateColors.zanateDark,
+                  borderRadius: const BorderRadius.only(
+                    topRight: Radius.circular(4),
+                    bottomRight: Radius.circular(4),
+                  ),
+                ),
+              ),
               Center(
-                child: InkWell(
-                  onTap: onTap,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 140),
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? (isDark
-                                ? const Color(0xFF333333)
-                                : const Color(0xFFE8E8E8))
-                          : Colors.transparent,
-                      border: Border.all(
-                        color: isSelected ? foreground : Colors.transparent,
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: onTap,
+                    borderRadius: BorderRadius.circular(16),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeOutCubic,
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: isSelected ? activeBg : inactiveBg,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color: activeBg.withValues(alpha: 0.25),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ]
+                            : null,
                       ),
-                    ),
-                    child: Icon(
-                      server.icon,
-                      size: 19,
-                      color: isSelected ? foreground : muted,
+                      child: Center(
+                        child: Icon(
+                          server.icon,
+                          size: 22,
+                          color: isSelected
+                              ? activeIconColor
+                              : inactiveIconColor,
+                        ),
+                      ),
                     ),
                   ),
                 ),
