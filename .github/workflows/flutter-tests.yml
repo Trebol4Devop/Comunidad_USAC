@@ -71,7 +71,7 @@ jobs:
     name: Supabase pgTAP DB Integration Tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    if: github.event_name == 'workflow_dispatch' || vars.ENABLE_DB_TESTS == 'true' || secrets.SUPABASE_ACCESS_TOKEN != ''
+    if: github.event_name == 'workflow_dispatch' || vars.ENABLE_DB_TESTS == 'true'
 
     steps:
       - name: Checkout del repositorio
