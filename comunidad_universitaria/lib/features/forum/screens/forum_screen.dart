@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../core/config/supabase_config.dart';
+import '../../../core/constants/zanate_colors.dart';
 import '../../../core/models/post.dart';
 import '../../../core/models/user_profile.dart';
 import '../../../core/services/forum_service.dart';
@@ -606,7 +608,7 @@ class _ForumScreenState extends State<ForumScreen> {
     final isDesktopOrTablet = !Responsive.isMobile(context);
     final showRightSidebar = Responsive.isDesktop(context);
 
-    final feedBg = theme.scaffoldBackgroundColor;
+    final feedBg = isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg;
 
     final isGroups = _activeServer.isGroups;
     final currentChannel = isGroups ? _groupsActiveChannel : _activeChannel;
@@ -620,7 +622,7 @@ class _ForumScreenState extends State<ForumScreen> {
         body: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 1. Server Rail (72px)
+            // 1. Server Rail (68px)
             ForumServerRail(
               servers: _servers,
               activeServer: _activeServer,
@@ -629,7 +631,7 @@ class _ForumScreenState extends State<ForumScreen> {
               showAddButton: false,
             ),
 
-            // 2. Channel Sidebar (240px)
+            // 2. Channel Sidebar (244px)
             ForumChannelSidebar(
               activeServer: _activeServer,
               activeChannel: currentChannel,
@@ -699,18 +701,33 @@ class _ForumScreenState extends State<ForumScreen> {
             Expanded(
               child: Column(
                 children: [
-                  SizedBox(
+                  Container(
                     height: 48,
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      border: Border(
+                        bottom: BorderSide(
+                          color: isDark
+                              ? const Color(0xFF334155)
+                              : ZanateColors.subtleBorder,
+                          width: 0.8,
+                        ),
+                      ),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.search_rounded, size: 20),
+                          icon: const PhosphorIcon(
+                            PhosphorIconsRegular.magnifyingGlass,
+                            size: 20,
+                          ),
                           tooltip: 'Buscar publicaciones',
                           onPressed: _openSearchFromDrawer,
                         ),
                         IconButton(
-                          icon: const Icon(
-                            Icons.local_fire_department_rounded,
+                          icon: const PhosphorIcon(
+                            PhosphorIconsFill.flame,
                             size: 20,
                             color: Color(0xFFF59E0B),
                           ),
@@ -769,31 +786,62 @@ class _ForumScreenState extends State<ForumScreen> {
 
   Widget _buildMobileGroupsHeader(ThemeData theme, bool isDark) {
     return Container(
-      height: 48,
+      height: 52,
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1C1C1C) : Colors.white,
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
         border: Border(
           bottom: BorderSide(
-            color: isDark ? const Color(0xFF303030) : const Color(0xFFE2E8F0),
-            width: 1,
+            color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            width: 0.8,
           ),
         ),
       ),
       child: Row(
         children: [
-          IconButton(
-            icon: const Icon(Icons.menu, size: 22),
-            tooltip: 'Canales y Servidores',
-            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+          Material(
+            color: isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg,
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              onTap: () => _scaffoldKey.currentState?.openDrawer(),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isDark
+                        ? const Color(0xFF334155)
+                        : ZanateColors.subtleBorder,
+                    width: 0.8,
+                  ),
+                ),
+                child: Center(
+                  child: PhosphorIcon(
+                    PhosphorIconsRegular.list,
+                    size: 19,
+                    color: isDark ? Colors.white : ZanateColors.zanateDark,
+                  ),
+                ),
+              ),
+            ),
           ),
-          const SizedBox(width: 4),
-          const Icon(Icons.chat, size: 18, color: Color(0xFF25D366)),
+          const SizedBox(width: 8),
+          const PhosphorIcon(
+            PhosphorIconsFill.whatsappLogo,
+            size: 20,
+            color: Color(0xFF25D366),
+          ),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
               _groupsActiveChannel.name,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 14.5,
+                color: isDark ? Colors.white : ZanateColors.zanateDark,
+              ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -801,7 +849,7 @@ class _ForumScreenState extends State<ForumScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
               color: const Color(0xFF25D366).withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(6),
             ),
             child: const Text(
               'WAPP',
@@ -814,8 +862,8 @@ class _ForumScreenState extends State<ForumScreen> {
           ),
           const SizedBox(width: 4),
           IconButton(
-            icon: const Icon(
-              Icons.local_fire_department_rounded,
+            icon: const PhosphorIcon(
+              PhosphorIconsFill.flame,
               size: 20,
               color: Color(0xFFF59E0B),
             ),
@@ -835,39 +883,107 @@ class _ForumScreenState extends State<ForumScreen> {
   }
 
   Widget _buildMobileChannelHeader(ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
+    final serverName = _activeServer.name
+        .replaceAll(RegExp(r'\s*\([^)]*\)'), '')
+        .trim()
+        .toUpperCase();
+    final channelName = _activeChannel.name.replaceAll('#', '').trim();
+
     return Container(
-      constraints: const BoxConstraints(minHeight: 52),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      constraints: const BoxConstraints(minHeight: 56),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
         border: Border(
-          bottom: BorderSide(color: theme.colorScheme.outlineVariant),
+          bottom: BorderSide(
+            color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            width: 0.8,
+          ),
         ),
       ),
       child: Row(
         children: [
+          // Botón de menú minimalista (sin contenedor de color)
           IconButton(
-            icon: const Icon(Icons.menu, size: 22),
-            tooltip: 'Canales y servidores',
             onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+            icon: PhosphorIcon(
+              PhosphorIconsRegular.list,
+              size: 24,
+              color: isDark ? Colors.white : ZanateColors.zanateDark,
+            ),
+            tooltip: 'Menú de canales',
+            splashRadius: 22,
           ),
+          const SizedBox(width: 4),
+
+          // Título central con doble jerarquía
           Expanded(
-            child: Text(
-              _welcomeChannelTitle(),
-              textAlign: TextAlign.center,
-              maxLines: 3,
-              softWrap: true,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-                fontSize: 12.5,
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  serverName,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8,
+                    color: isDark
+                        ? const Color(0xFF94A3B8)
+                        : Colors.blueGrey.shade400,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      '#',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: ZanateColors.zanateAccent,
+                      ),
+                    ),
+                    const SizedBox(width: 3),
+                    Flexible(
+                      child: Text(
+                        channelName,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.3,
+                          color: isDark
+                              ? Colors.white
+                              : ZanateColors.zanateDark,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
+          const SizedBox(width: 4),
+
+          // Botón + minimalista (sin contenedor de color)
           if (!_activeChannel.isSpecial)
             IconButton(
-              icon: const Icon(Icons.add, size: 22),
-              tooltip: 'Crear publicación',
               onPressed: _openCreateDialog,
+              icon: PhosphorIcon(
+                PhosphorIconsBold.plus,
+                size: 22,
+                color: isDark ? Colors.white : ZanateColors.zanateDark,
+              ),
+              tooltip: 'Nueva consulta',
+              splashRadius: 22,
             )
           else
             const SizedBox(width: 48),
@@ -1017,92 +1133,177 @@ class _ForumScreenState extends State<ForumScreen> {
   Widget _buildFeedFilterBar(ThemeData theme, bool isDark) {
     if (_activeChannel.isSpecial) return const SizedBox.shrink();
 
+    final isHot = _feedMode == FeedMode.hot;
+    final isRecent = _feedMode == FeedMode.recent;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF232428) : const Color(0xFFF1F5F9),
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
         border: Border(
           bottom: BorderSide(
-            color: isDark ? const Color(0xFF202225) : const Color(0xFFE2E8F0),
-            width: 1,
+            color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            width: 0.8,
           ),
         ),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
           children: [
-            ChoiceChip(
-              avatar: Icon(
-                Icons.local_fire_department,
-                size: 16,
-                color: _feedMode == FeedMode.hot
-                    ? Colors.white
-                    : (isDark
-                          ? Colors.orange.shade300
-                          : Colors.orange.shade700),
-              ),
-              label: const Text('En Llamas'),
-              labelStyle: TextStyle(
-                fontSize: 12,
-                fontWeight: _feedMode == FeedMode.hot
-                    ? FontWeight.bold
-                    : FontWeight.normal,
-                color: _feedMode == FeedMode.hot
-                    ? Colors.white
-                    : (isDark ? Colors.grey.shade300 : const Color(0xFF334155)),
-              ),
-              selected: _feedMode == FeedMode.hot,
-              selectedColor: isDark
-                  ? const Color(0xFFEA580C)
-                  : const Color(0xFFF97316),
-              backgroundColor: isDark ? const Color(0xFF2B2D31) : Colors.white,
-              visualDensity: VisualDensity.compact,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              onSelected: (selected) {
-                if (selected && _feedMode != FeedMode.hot) {
+            // Chip "En Llamas"
+            GestureDetector(
+              onTap: () {
+                if (!isHot) {
                   setState(() => _feedMode = FeedMode.hot);
                   _loadPosts();
                 }
               },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                decoration: BoxDecoration(
+                  gradient: isHot ? ZanateColors.hotFlameGradient : null,
+                  color: isHot
+                      ? null
+                      : (isDark
+                          ? const Color(0xFF0F172A)
+                          : ZanateColors.surfaceBg),
+                  borderRadius: BorderRadius.circular(24),
+                  border: isHot
+                      ? null
+                      : Border.all(
+                          color: isDark
+                              ? const Color(0xFF334155)
+                              : ZanateColors.subtleBorder,
+                          width: 0.8,
+                        ),
+                  boxShadow: isHot
+                      ? [
+                          BoxShadow(
+                            color: const Color(0xFFFF512F)
+                                .withValues(alpha: 0.28),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    PhosphorIcon(
+                      PhosphorIconsFill.flame,
+                      size: 16,
+                      color: isHot
+                          ? Colors.white
+                          : (isDark
+                              ? const Color(0xFFF97316)
+                              : const Color(0xFFEA580C)),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'En Llamas',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: isHot ? FontWeight.w700 : FontWeight.w600,
+                        color: isHot
+                            ? Colors.white
+                            : (isDark
+                                ? const Color(0xFF94A3B8)
+                                : Colors.blueGrey.shade600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
             const SizedBox(width: 8),
-            ChoiceChip(
-              avatar: Icon(
-                Icons.schedule,
-                size: 16,
-                color: _feedMode == FeedMode.recent
-                    ? Colors.white
-                    : (isDark
-                          ? Colors.blue.shade300
-                          : Colors.blue.shade700),
-              ),
-              label: const Text('Recientes'),
-              labelStyle: TextStyle(
-                fontSize: 12,
-                fontWeight: _feedMode == FeedMode.recent
-                    ? FontWeight.bold
-                    : FontWeight.normal,
-                color: _feedMode == FeedMode.recent
-                    ? Colors.white
-                    : (isDark ? Colors.grey.shade300 : const Color(0xFF334155)),
-              ),
-              selected: _feedMode == FeedMode.recent,
-              selectedColor: isDark
-                  ? const Color(0xFF2563EB)
-                  : const Color(0xFF3B82F6),
-              backgroundColor: isDark ? const Color(0xFF2B2D31) : Colors.white,
-              visualDensity: VisualDensity.compact,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              onSelected: (selected) {
-                if (selected && _feedMode != FeedMode.recent) {
+
+            // Chip "Recientes"
+            GestureDetector(
+              onTap: () {
+                if (!isRecent) {
                   setState(() => _feedMode = FeedMode.recent);
                   _loadPosts();
                 }
               },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                decoration: BoxDecoration(
+                  color: isRecent
+                      ? (isDark
+                          ? ZanateColors.zanateAccent
+                          : ZanateColors.zanateDark)
+                      : (isDark
+                          ? const Color(0xFF0F172A)
+                          : ZanateColors.surfaceBg),
+                  borderRadius: BorderRadius.circular(24),
+                  border: isRecent
+                      ? null
+                      : Border.all(
+                          color: isDark
+                              ? const Color(0xFF334155)
+                              : ZanateColors.subtleBorder,
+                          width: 0.8,
+                        ),
+                  boxShadow: isRecent
+                      ? [
+                          BoxShadow(
+                            color: (isDark
+                                    ? ZanateColors.zanateAccent
+                                    : ZanateColors.zanateDark)
+                                .withValues(alpha: 0.22),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    PhosphorIcon(
+                      PhosphorIconsFill.clock,
+                      size: 16,
+                      color: isRecent
+                          ? Colors.white
+                          : (isDark
+                              ? const Color(0xFF94A3B8)
+                              : Colors.blueGrey.shade600),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Recientes',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight:
+                            isRecent ? FontWeight.w700 : FontWeight.w600,
+                        color: isRecent
+                            ? Colors.white
+                            : (isDark
+                                ? const Color(0xFF94A3B8)
+                                : Colors.blueGrey.shade600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
@@ -1127,13 +1328,15 @@ class _ForumScreenState extends State<ForumScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         children: [
           EmptyStateWidget(
-            icon: _activeChannel.icon,
+            icon: _activeChannel.isSpecial
+                ? PhosphorIconsRegular.bookmarkSimple
+                : null,
             title: _activeChannel.isSpecial
                 ? 'No tienes publicaciones guardadas'
                 : 'No hay mensajes en ${_activeChannel.name}',
             description: _activeChannel.isSpecial
                 ? 'Guarda consultas importantes del foro tocando el icono de marcador.'
-                : 'Sé el primero en iniciar una conversación o formular una duda en este canal.',
+                : 'Sé el primero en formular una consulta o compartir información en este canal.',
           ),
         ],
       );
@@ -1194,15 +1397,15 @@ class _ForumScreenState extends State<ForumScreen> {
 
     if (isDesktop) {
       return Container(
-        height: 56,
+        height: 60,
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1C1C1C) : const Color(0xFFF8FAFC),
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
           border: Border(
             bottom: BorderSide(
-              color: isDark ? const Color(0xFF303030) : const Color(0xFFE2E8F0),
-              width: 1,
+              color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+              width: 0.8,
             ),
           ),
         ),
@@ -1210,21 +1413,23 @@ class _ForumScreenState extends State<ForumScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
-              width: 30,
-              height: 30,
+              width: 34,
+              height: 34,
               decoration: BoxDecoration(
                 color: isDark
-                    ? const Color(0xFF252525)
-                    : const Color(0xFFEEF2FF),
-                borderRadius: BorderRadius.circular(6),
+                    ? const Color(0xFF0F172A)
+                    : ZanateColors.zanateAccent.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(
-                _activeChannel.icon,
-                size: 16,
-                color: theme.colorScheme.primary,
+              child: Center(
+                child: Icon(
+                  _activeChannel.icon,
+                  size: 18,
+                  color: ZanateColors.zanateAccent,
+                ),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -1232,21 +1437,23 @@ class _ForumScreenState extends State<ForumScreen> {
                 children: [
                   Text(
                     _welcomeChannelTitle(),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13.5,
+                      letterSpacing: -0.2,
+                      color: isDark ? Colors.white : ZanateColors.zanateDark,
                     ),
-                    maxLines: 2,
-                    softWrap: true,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
                   Text(
                     _activeChannel.description,
                     style: TextStyle(
-                      fontSize: 10.5,
+                      fontSize: 11,
                       color: isDark
-                          ? const Color(0xFFAAAAAA)
-                          : const Color(0xFF64748B),
+                          ? const Color(0xFF94A3B8)
+                          : Colors.blueGrey.shade400,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -1256,38 +1463,35 @@ class _ForumScreenState extends State<ForumScreen> {
             ),
             const SizedBox(width: 12),
             SizedBox(
-              width: 180,
-              height: 32,
+              width: 200,
+              height: 36,
               child: TextField(
                 controller: _searchController,
                 style: TextStyle(
                   fontSize: 12,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  color: isDark ? Colors.white : ZanateColors.zanateDark,
                 ),
                 decoration: InputDecoration(
                   hintText: 'Buscar...',
                   hintStyle: TextStyle(
-                    fontSize: 11,
+                    fontSize: 11.5,
                     color: isDark
-                        ? const Color(0xFFAAAAAA)
-                        : Colors.grey.shade500,
+                        ? const Color(0xFF64748B)
+                        : Colors.blueGrey.shade400,
                   ),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    size: 15,
+                  prefixIcon: PhosphorIcon(
+                    PhosphorIconsRegular.magnifyingGlass,
+                    size: 16,
                     color: isDark
-                        ? const Color(0xFFAAAAAA)
-                        : Colors.grey.shade500,
+                        ? const Color(0xFF94A3B8)
+                        : Colors.blueGrey.shade500,
                   ),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
                           padding: EdgeInsets.zero,
-                          icon: Icon(
-                            Icons.clear,
-                            size: 13,
-                            color: isDark
-                                ? const Color(0xFFAAAAAA)
-                                : Colors.grey.shade500,
+                          icon: const PhosphorIcon(
+                            PhosphorIconsRegular.x,
+                            size: 14,
                           ),
                           onPressed: () {
                             _searchController.clear();
@@ -1298,26 +1502,34 @@ class _ForumScreenState extends State<ForumScreen> {
                       : null,
                   contentPadding: const EdgeInsets.symmetric(
                     vertical: 0,
-                    horizontal: 8,
+                    horizontal: 10,
                   ),
                   filled: true,
-                  fillColor: isDark ? const Color(0xFF252525) : Colors.white,
+                  fillColor:
+                      isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide(
                       color: isDark
-                          ? const Color(0xFF303030)
-                          : const Color(0xFFCBD5E1),
-                      width: 1,
+                          ? const Color(0xFF334155)
+                          : ZanateColors.subtleBorder,
+                      width: 0.8,
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide(
                       color: isDark
-                          ? const Color(0xFF303030)
-                          : const Color(0xFFCBD5E1),
-                      width: 1,
+                          ? const Color(0xFF334155)
+                          : ZanateColors.subtleBorder,
+                      width: 0.8,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(
+                      color: ZanateColors.zanateAccent,
+                      width: 1.2,
                     ),
                   ),
                 ),
@@ -1329,36 +1541,16 @@ class _ForumScreenState extends State<ForumScreen> {
             ),
             if (!_activeChannel.isSpecial) ...[
               const SizedBox(width: 8),
-              if (Responsive.isTablet(context))
-                IconButton.filled(
-                  onPressed: _openCreateDialog,
-                  tooltip: 'Publicar',
-                  icon: const Icon(Icons.add),
-                )
-              else
-                SizedBox(
-                  height: 32,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                    icon: const Icon(Icons.add, size: 15),
-                    label: const Text(
-                      'Publicar',
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    onPressed: _openCreateDialog,
-                  ),
+              IconButton(
+                tooltip: 'Nueva publicación',
+                icon: PhosphorIcon(
+                  PhosphorIconsBold.plus,
+                  size: 20,
+                  color: isDark ? Colors.white : ZanateColors.zanateDark,
                 ),
+                onPressed: _openCreateDialog,
+                splashRadius: 20,
+              ),
             ],
           ],
         ),

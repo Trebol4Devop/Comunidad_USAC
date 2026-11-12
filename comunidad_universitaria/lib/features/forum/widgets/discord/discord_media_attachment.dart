@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import '../../../../core/constants/zanate_colors.dart';
 import '../../../shared/widgets/image_viewer_dialog.dart';
 
 /// Un componente de medios con estilo Discord para adjuntos de imagen y GIF.
@@ -32,15 +34,14 @@ class DiscordMediaAttachment extends StatelessWidget {
 
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final radius = borderRadius ?? BorderRadius.circular(8);
+    final radius = borderRadius ?? BorderRadius.circular(14);
 
-    // Discord slate backgrounds for image containers
     final containerBg = isDark
-        ? const Color(0xFF222222)
-        : const Color(0xFFE2E8F0);
+        ? const Color(0xFF1E293B)
+        : ZanateColors.surfaceBg;
     final borderColor = isDark
-        ? const Color(0xFF303030)
-        : const Color(0xFFCBD5E1);
+        ? const Color(0xFF334155)
+        : ZanateColors.subtleBorder;
 
     return Align(
       alignment: Alignment.centerLeft,
@@ -107,9 +108,9 @@ class DiscordMediaAttachment extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                Icons.broken_image_outlined,
+                                PhosphorIconsRegular.imageBroken,
                                 size: 20,
-                                color: Colors.grey.shade500,
+                                color: Colors.blueGrey.shade400,
                               ),
                               const SizedBox(width: 8),
                               Text(
@@ -133,12 +134,12 @@ class DiscordMediaAttachment extends StatelessWidget {
                       right: 8,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 7,
-                          vertical: 3,
+                          horizontal: 8,
+                          vertical: 4,
                         ),
                         decoration: BoxDecoration(
                           color: Colors.black.withValues(alpha: 0.72),
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -155,11 +156,11 @@ class DiscordMediaAttachment extends StatelessWidget {
                               ),
                             ] else ...[
                               const Icon(
-                                Icons.zoom_in,
+                                PhosphorIconsRegular.magnifyingGlassPlus,
                                 color: Colors.white,
-                                size: 12,
+                                size: 13,
                               ),
-                              const SizedBox(width: 3),
+                              const SizedBox(width: 4),
                               const Text(
                                 'Ampliar',
                                 style: TextStyle(

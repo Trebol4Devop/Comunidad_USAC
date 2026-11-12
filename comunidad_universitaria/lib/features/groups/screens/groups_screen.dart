@@ -7,6 +7,8 @@ import '../../../core/services/groups_service.dart';
 import '../../../core/services/local_storage_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import '../../../core/constants/zanate_colors.dart';
 import '../widgets/create_group_dialog.dart';
 import '../widgets/group_card.dart';
 import '../../shared/widgets/auth_modal.dart';
@@ -314,11 +316,7 @@ class GroupsScreenState extends State<GroupsScreen> {
     shrinkWrap: true,
     physics: const NeverScrollableScrollPhysics(),
     itemCount: _groups.length,
-    separatorBuilder: (context, index) => Divider(
-      height: 1,
-      thickness: 1,
-      color: Theme.of(context).dividerColor.withValues(alpha: 0.6),
-    ),
+    separatorBuilder: (context, index) => const SizedBox(height: 12),
     itemBuilder: (context, index) => _buildGroupCard(_groups[index]),
   );
 
@@ -440,6 +438,7 @@ class GroupsScreenState extends State<GroupsScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg,
       body: RefreshIndicator(
         onRefresh: _loadGroups,
         child: SingleChildScrollView(
@@ -463,23 +462,24 @@ class GroupsScreenState extends State<GroupsScreen> {
                     ),
                     decoration: BoxDecoration(
                       color: isDark
-                          ? const Color(0xFF262015)
-                          : const Color(0xFFFFF3CD),
-                      borderRadius: BorderRadius.circular(12),
+                          ? const Color(0xFF1E293B)
+                          : const Color(0xFFFEF3C7),
+                      borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: isDark
-                            ? const Color(0xFF4A3B20)
-                            : const Color(0xFFFFEEBA),
+                            ? const Color(0xFF334155)
+                            : const Color(0xFFFCD34D),
+                        width: 0.8,
                       ),
                     ),
                     child: Row(
                       children: [
                         Icon(
-                          Icons.info_outline,
+                          PhosphorIconsRegular.info,
                           color: isDark
                               ? const Color(0xFFFDE68A)
-                              : const Color(0xFF856404),
-                          size: 20,
+                              : const Color(0xFFB45309),
+                          size: 18,
                         ),
                         const SizedBox(width: 10),
                         Expanded(
@@ -488,18 +488,18 @@ class GroupsScreenState extends State<GroupsScreen> {
                             style: TextStyle(
                               color: isDark
                                   ? const Color(0xFFFDE68A)
-                                  : const Color(0xFF856404),
+                                  : const Color(0xFF92400E),
                               fontSize: 12,
                             ),
                           ),
                         ),
                         IconButton(
                           icon: Icon(
-                            Icons.close,
-                            size: 16,
+                            PhosphorIconsRegular.x,
+                            size: 15,
                             color: isDark
                                 ? const Color(0xFFFDE68A)
-                                : const Color(0xFF856404),
+                                : const Color(0xFF92400E),
                           ),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
@@ -510,7 +510,7 @@ class GroupsScreenState extends State<GroupsScreen> {
                   ),
                 ],
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
 
                 TextField(
                   controller: _searchController,
@@ -518,9 +518,16 @@ class GroupsScreenState extends State<GroupsScreen> {
                   onSubmitted: _submitSearch,
                   textInputAction: TextInputAction.search,
                   decoration: InputDecoration(
-                    labelText: 'Buscar grupos',
-                    hintText: 'Curso, nombre o descripción',
-                    prefixIcon: const Icon(Icons.search),
+                    hintText: 'Buscar cursos, secciones o palabras clave...',
+                    hintStyle: TextStyle(
+                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF94A3B8),
+                      fontSize: 13,
+                    ),
+                    prefixIcon: Icon(
+                      PhosphorIconsRegular.magnifyingGlass,
+                      size: 18,
+                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    ),
                     suffixIcon: _searchQuery.isEmpty
                         ? null
                         : IconButton(
@@ -529,10 +536,31 @@ class GroupsScreenState extends State<GroupsScreen> {
                               _searchController.clear();
                               _onSearchChanged('');
                             },
-                            icon: const Icon(Icons.close),
+                            icon: const Icon(PhosphorIconsRegular.x, size: 16),
                           ),
+                    filled: true,
+                    fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(
+                        color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+                        width: 0.8,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(
+                        color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+                        width: 0.8,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(
+                        color: ZanateColors.zanateAccent,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                 ),
@@ -580,10 +608,17 @@ class GroupsScreenState extends State<GroupsScreen> {
           ? FloatingActionButton.extended(
               heroTag: widget.floatingActionButtonHeroTag,
               onPressed: _openCreateGroupDialog,
-              backgroundColor: const Color(0xFF16A34A),
+              backgroundColor: ZanateColors.zanateAccent,
               foregroundColor: Colors.white,
-              icon: const Icon(Icons.group_add),
-              label: const Text('Compartir Grupo'),
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              icon: const Icon(PhosphorIconsBold.plus, size: 18),
+              label: const Text(
+                'Compartir Grupo',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+              ),
             )
           : null,
     );

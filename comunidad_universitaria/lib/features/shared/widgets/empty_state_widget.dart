@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import '../../../core/constants/zanate_colors.dart';
 
 class EmptyStateWidget extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
   final String title;
   final String description;
   final String? buttonText;
@@ -9,7 +11,7 @@ class EmptyStateWidget extends StatelessWidget {
 
   const EmptyStateWidget({
     super.key,
-    required this.icon,
+    this.icon,
     required this.title,
     required this.description,
     this.buttonText,
@@ -19,32 +21,63 @@ class EmptyStateWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final titleColor = isDark ? Colors.white : ZanateColors.zanateDark;
+    final subtitleColor =
+        isDark ? const Color(0xFF94A3B8) : Colors.blueGrey.shade500;
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 48),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(18),
+              width: 88,
+              height: 88,
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [
+                    ZanateColors.zanateAccent.withValues(alpha: isDark ? 0.25 : 0.14),
+                    const Color(0xFF38BDF8).withValues(alpha: isDark ? 0.16 : 0.08),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                border: Border.all(
+                  color: ZanateColors.zanateAccent.withValues(alpha: 0.2),
+                  width: 1,
+                ),
               ),
-              child: Icon(
-                icon,
-                size: 48,
-                color: theme.colorScheme.primary.withValues(alpha: 0.8),
+              child: Center(
+                child: icon != null
+                    ? Icon(
+                        icon,
+                        size: 38,
+                        color: ZanateColors.zanateAccent,
+                      )
+                    : const Text(
+                        '#',
+                        style: TextStyle(
+                          fontSize: 42,
+                          fontWeight: FontWeight.w900,
+                          color: ZanateColors.zanateAccent,
+                        ),
+                      ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.4,
+                color: titleColor,
               ),
             ),
             const SizedBox(height: 8),
@@ -53,15 +86,38 @@ class EmptyStateWidget extends StatelessWidget {
               child: Text(
                 description,
                 textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall?.copyWith(fontSize: 13),
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 1.45,
+                  color: subtitleColor,
+                ),
               ),
             ),
-            if (buttonText != null && onButtonPressed != null) ...[
-              const SizedBox(height: 20),
-              ElevatedButton.icon(
+            if (onButtonPressed != null) ...[
+              const SizedBox(height: 24),
+              FilledButton.icon(
                 onPressed: onButtonPressed,
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(buttonText!),
+                style: FilledButton.styleFrom(
+                  backgroundColor:
+                      isDark ? ZanateColors.zanateAccent : ZanateColors.zanateDark,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  elevation: 0,
+                ),
+                icon: const PhosphorIcon(PhosphorIconsRegular.plus, size: 18),
+                label: Text(
+                  buttonText ?? 'Iniciar conversación',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
             ],
           ],

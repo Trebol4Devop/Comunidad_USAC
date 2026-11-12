@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../core/constants/categories.dart';
+import '../../../core/constants/zanate_colors.dart';
 import '../../../core/models/post.dart';
 import '../../../core/utils/time_utils.dart';
 import '../../shared/widgets/report_dialog.dart';
@@ -43,9 +45,15 @@ class PostCard extends StatelessWidget {
     required VoidCallback? onTap,
     int? count,
     bool isActive = false,
+    Color? activeColor,
   }) {
     final theme = Theme.of(context);
-    final color = theme.colorScheme.onSurface;
+    final isDark = theme.brightness == Brightness.dark;
+    final defaultColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+    final color = isActive
+        ? (activeColor ?? ZanateColors.zanateAccent)
+        : defaultColor;
+
     return Semantics(
       button: true,
       label: label,
@@ -53,18 +61,19 @@ class PostCard extends StatelessWidget {
         message: label,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(8),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 3),
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, size: 20, color: color),
+                Icon(icon, size: 19, color: color),
                 if (count != null && count > 0) ...[
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 5),
                   Text(
                     '$count',
-                    style: theme.textTheme.labelSmall?.copyWith(
+                    style: TextStyle(
+                      fontSize: 12,
                       color: color,
                       fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
                     ),
@@ -86,10 +95,10 @@ class PostCard extends StatelessWidget {
     final showModBanner = isModerator && modStatus > 0;
     final modColor = modStatus == 1 ? const Color(0xFFEAB308) : const Color(0xFFEF4444);
 
-    final cardBg = theme.colorScheme.surface;
+    final cardBg = isDark ? const Color(0xFF0F172A) : Colors.white;
     final cardBorder = showModBanner
         ? modColor
-        : theme.colorScheme.outlineVariant;
+        : (isDark ? const Color(0xFF1E293B) : ZanateColors.subtleBorder);
 
     return Container(
       decoration: BoxDecoration(
@@ -97,16 +106,14 @@ class PostCard extends StatelessWidget {
         border: Border(
           bottom: BorderSide(
             color: cardBorder,
-            width: showModBanner ? 2.0 : 1.0,
+            width: showModBanner ? 2.0 : 0.8,
           ),
         ),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          hoverColor: theme.colorScheme.surfaceContainerHighest.withValues(
-            alpha: 0.45,
-          ),
+          hoverColor: ZanateColors.zanateAccent.withValues(alpha: 0.03),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
@@ -126,7 +133,7 @@ class PostCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        modStatus == 1 ? Icons.hourglass_top : Icons.visibility_off,
+                        modStatus == 1 ? PhosphorIconsRegular.hourglass : PhosphorIconsRegular.eyeSlash,
                         size: 13,
                         color: modColor,
                       ),
@@ -148,15 +155,15 @@ class PostCard extends StatelessWidget {
                 Row(
                   children: [
                     Icon(
-                      Icons.push_pin,
+                      PhosphorIconsFill.pushPin,
                       size: 14,
-                      color: theme.colorScheme.primary,
+                      color: ZanateColors.zanateAccent,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       'Publicación Fijada',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.primary,
+                      style: TextStyle(
+                        color: ZanateColors.zanateAccent,
                         fontWeight: FontWeight.bold,
                         fontSize: 11,
                       ),
@@ -170,12 +177,22 @@ class PostCard extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.person_outline,
-                    size: 23,
-                    color: isDark ? Colors.white70 : Colors.black87,
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: ZanateColors.zanateAccent.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Icon(
+                        PhosphorIconsBold.user,
+                        size: 16,
+                        color: ZanateColors.zanateAccent,
+                      ),
+                    ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,23 +205,40 @@ class PostCard extends StatelessWidget {
                             Text(
                               post.authorAlias,
                               overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
                                 fontSize: 13,
+                                color: isDark ? Colors.white : ZanateColors.zanateDark,
                               ),
                             ),
-                            Text(
-                              _getCategoryLabel(post.category),
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                fontSize: 10,
-                                color: theme.colorScheme.onSurfaceVariant,
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF1E293B) : ZanateColors.surfaceBg,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Text(
+                                _getCategoryLabel(post.category),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                ),
                               ),
                             ),
                           ],
                         ),
+                        const SizedBox(height: 1),
                         Text(
                           TimeUtils.timeAgo(post.createdAt),
-                          style: theme.textTheme.bodySmall?.copyWith(fontSize: 11),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark ? const Color(0xFF64748B) : Colors.blueGrey.shade400,
+                          ),
                         ),
                       ],
                     ),
@@ -212,17 +246,17 @@ class PostCard extends StatelessWidget {
                   if (onReport != null || (post.isMine && onDelete != null))
                     PopupMenuButton<String>(
                     tooltip: 'Más opciones',
-                    color: theme.colorScheme.surface,
+                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
                     surfaceTintColor: Colors.transparent,
-                    elevation: 2,
+                    elevation: 3,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      side: BorderSide(color: theme.colorScheme.outlineVariant),
+                      borderRadius: BorderRadius.circular(10),
+                      side: BorderSide(color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder),
                     ),
                     icon: Icon(
-                      Icons.more_vert,
+                      PhosphorIconsRegular.dotsThreeVertical,
                       size: 18,
-                      color: theme.colorScheme.onSurface,
+                      color: isDark ? Colors.white70 : ZanateColors.zanateDark,
                     ),
                     onSelected: (val) {
                       if (val == 'report' && onReport != null) {
@@ -238,20 +272,20 @@ class PostCard extends StatelessWidget {
                     },
                     itemBuilder: (ctx) => [
                       if (post.isMine && onDelete != null)
-                        const PopupMenuItem(
+                        PopupMenuItem(
                           value: 'delete',
                           height: 44,
                           child: Row(
                             children: [
                               Icon(
-                                Icons.delete_outline,
+                                PhosphorIconsRegular.trash,
                                 size: 17,
                                 color: Colors.red,
                               ),
-                              SizedBox(width: 10),
-                              Text(
+                              const SizedBox(width: 10),
+                              const Text(
                                 'Eliminar publicación',
-                                style: TextStyle(color: Colors.red),
+                                style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600),
                               ),
                             ],
                           ),
@@ -263,9 +297,9 @@ class PostCard extends StatelessWidget {
                           child: Row(
                             children: [
                               Icon(
-                                Icons.flag_outlined,
+                                PhosphorIconsRegular.flag,
                                 size: 17,
-                                color: theme.colorScheme.onSurface,
+                                color: isDark ? Colors.white : ZanateColors.zanateDark,
                               ),
                               const SizedBox(width: 10),
                               const Text('Reportar'),
@@ -511,16 +545,19 @@ class PostCard extends StatelessWidget {
                 children: [
                   _buildAction(
                     context,
-                    icon: Icons.thumb_up_alt_outlined,
+                    icon: post.isLikedByMe
+                        ? PhosphorIconsFill.thumbsUp
+                        : PhosphorIconsRegular.thumbsUp,
                     label: 'Me gusta',
                     onTap: onLike,
                     count: post.likes,
                     isActive: post.isLikedByMe,
+                    activeColor: ZanateColors.zanateAccent,
                   ),
                   const SizedBox(width: 14),
                   _buildAction(
                     context,
-                    icon: Icons.chat_bubble_outline,
+                    icon: PhosphorIconsRegular.chatCircle,
                     label: 'Comentar',
                     onTap: onTap,
                     count: post.commentCount,
@@ -529,7 +566,7 @@ class PostCard extends StatelessWidget {
                   if (onRepost != null) ...[
                     _buildAction(
                       context,
-                      icon: Icons.repeat,
+                      icon: PhosphorIconsRegular.repeat,
                       label: 'Republicar',
                       onTap: onRepost,
                       count: post.repostsCount,
@@ -539,7 +576,7 @@ class PostCard extends StatelessWidget {
                   if (onShare != null) ...[
                     _buildAction(
                       context,
-                      icon: Icons.share_outlined,
+                      icon: PhosphorIconsRegular.shareNetwork,
                       label: 'Compartir',
                       onTap: onShare,
                     ),
@@ -549,13 +586,14 @@ class PostCard extends StatelessWidget {
                     _buildAction(
                       context,
                       icon: post.isBookmarkedByMe
-                          ? Icons.bookmark
-                          : Icons.bookmark_border,
+                          ? PhosphorIconsFill.bookmarkSimple
+                          : PhosphorIconsRegular.bookmarkSimple,
                       label: post.isBookmarkedByMe
                           ? 'Quitar de guardados'
                           : 'Guardar',
                       onTap: onBookmark,
                       isActive: post.isBookmarkedByMe,
+                      activeColor: const Color(0xFFF59E0B),
                     ),
                 ],
               ),

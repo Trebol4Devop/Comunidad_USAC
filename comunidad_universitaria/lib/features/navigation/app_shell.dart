@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show ScrollDirection;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import '../../core/constants/zanate_colors.dart';
 import '../../core/utils/responsive.dart';
 import '../forum/screens/forum_screen.dart';
 import '../groups/screens/groups_screen.dart';
@@ -137,7 +139,18 @@ class _AppShellState extends State<AppShell> {
       appBar: isMobile
           ? null
           : AppBar(
-              toolbarHeight: kToolbarHeight,
+              toolbarHeight: 60,
+              elevation: 0,
+              backgroundColor:
+                  widget.isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+              shape: Border(
+                bottom: BorderSide(
+                  color: widget.isDarkMode
+                      ? const Color(0xFF334155)
+                      : ZanateColors.subtleBorder,
+                  width: 0.8,
+                ),
+              ),
               centerTitle: false,
               titleSpacing: 16,
               title: Row(
@@ -147,7 +160,7 @@ class _AppShellState extends State<AppShell> {
                   Expanded(
                     child: InkWell(
                       onTap: _showDisclaimerModal,
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(8),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
@@ -162,27 +175,9 @@ class _AppShellState extends State<AppShell> {
                                   fontSize: 22,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 0.5,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 5,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: theme.colorScheme.primary.withValues(
-                                    alpha: 0.12,
-                                  ),
-                                  borderRadius: BorderRadius.circular(5),
-                                ),
-                                child: Text(
-                                  'No Oficial',
-                                  style: TextStyle(
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.bold,
-                                    color: theme.colorScheme.primary,
-                                  ),
+                                  color: widget.isDarkMode
+                                      ? Colors.white
+                                      : ZanateColors.zanateDark,
                                 ),
                               ),
                             ],
@@ -192,8 +187,10 @@ class _AppShellState extends State<AppShell> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              color: theme.colorScheme.onSurfaceVariant,
-                              fontSize: 10,
+                              color: widget.isDarkMode
+                                  ? const Color(0xFF94A3B8)
+                                  : Colors.blueGrey.shade400,
+                              fontSize: 10.5,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -205,16 +202,19 @@ class _AppShellState extends State<AppShell> {
               ),
               actions: [
                 IconButton(
-                  icon: const Icon(Icons.shield_outlined, size: 20),
+                  icon: const PhosphorIcon(
+                    PhosphorIconsRegular.shieldCheck,
+                    size: 20,
+                  ),
                   tooltip: 'Normas y Descargo',
                   onPressed: _navigateToRules,
                 ),
                 const SizedBox(width: 4),
                 IconButton(
-                  icon: Icon(
+                  icon: PhosphorIcon(
                     widget.isDarkMode
-                        ? Icons.light_mode_outlined
-                        : Icons.dark_mode_outlined,
+                        ? PhosphorIconsRegular.sun
+                        : PhosphorIconsRegular.moon,
                     size: 20,
                   ),
                   tooltip: 'Cambiar tema',
@@ -351,63 +351,48 @@ class _AppShellState extends State<AppShell> {
               child: ClipRect(
                 child: _showMobileTopBar
                     ? Container(
+                        height: 60,
                         decoration: BoxDecoration(
+                          color: widget.isDarkMode
+                              ? const Color(0xFF1E293B)
+                              : Colors.white,
                           border: Border(
                             top: BorderSide(
-                              color: theme.colorScheme.outlineVariant,
+                              color: widget.isDarkMode
+                                  ? const Color(0xFF334155)
+                                  : ZanateColors.subtleBorder,
+                              width: 0.8,
                             ),
                           ),
                         ),
-                        child: NavigationBarTheme(
-                          data: NavigationBarThemeData(
-                            height: 58,
-                            indicatorColor: Colors.transparent,
-                            backgroundColor: theme.colorScheme.surface,
-                            elevation: 0,
-                            iconTheme: WidgetStateProperty.resolveWith((states) {
-                              return IconThemeData(
-                                size: 23,
-                                color: theme.colorScheme.onSurface,
-                              );
-                            }),
-                          ),
-                          child: NavigationBar(
-                            labelBehavior:
-                                NavigationDestinationLabelBehavior.alwaysHide,
-                            selectedIndex:
-                                _navigationIndexForScreen(_currentIndex),
-                            onDestinationSelected: (index) {
-                              final screenIndex =
-                                  _screenIndexForNavigation(index);
-                              setState(() {
-                                _currentIndex = screenIndex;
-                                _visitedTabs.add(screenIndex);
-                                _showMobileTopBar = true;
-                              });
-                            },
-                            destinations: const [
-                              NavigationDestination(
-                                icon: Icon(Icons.chat_bubble_outline),
-                                selectedIcon: Icon(Icons.chat_bubble_outline),
-                                label: 'Foro',
-                              ),
-                              NavigationDestination(
-                                icon: Icon(Icons.groups_outlined),
-                                selectedIcon: Icon(Icons.groups_outlined),
-                                label: 'Grupos',
-                              ),
-                              NavigationDestination(
-                                icon: Icon(Icons.map_outlined),
-                                selectedIcon: Icon(Icons.map_outlined),
-                                label: 'Mapa',
-                              ),
-                              NavigationDestination(
-                                icon: Icon(Icons.local_mall_outlined),
-                                selectedIcon: Icon(Icons.local_mall_outlined),
-                                label: 'Marketplace',
-                              ),
-                            ],
-                          ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _buildBottomNavItem(
+                              navIndex: 0,
+                              label: 'Foro',
+                              activeIcon: PhosphorIconsFill.chatsCircle,
+                              inactiveIcon: PhosphorIconsRegular.chatsCircle,
+                            ),
+                            _buildBottomNavItem(
+                              navIndex: 1,
+                              label: 'Grupos',
+                              activeIcon: PhosphorIconsFill.usersThree,
+                              inactiveIcon: PhosphorIconsRegular.usersThree,
+                            ),
+                            _buildBottomNavItem(
+                              navIndex: 2,
+                              label: 'Mapa',
+                              activeIcon: PhosphorIconsFill.mapTrifold,
+                              inactiveIcon: PhosphorIconsRegular.mapTrifold,
+                            ),
+                            _buildBottomNavItem(
+                              navIndex: 3,
+                              label: 'Marketplace',
+                              activeIcon: PhosphorIconsFill.shoppingBag,
+                              inactiveIcon: PhosphorIconsRegular.shoppingBag,
+                            ),
+                          ],
                         ),
                       )
                     : const SizedBox(
@@ -416,6 +401,56 @@ class _AppShellState extends State<AppShell> {
                       ),
               ),
             ),
+    );
+  }
+
+  Widget _buildBottomNavItem({
+    required int navIndex,
+    required String label,
+    required IconData activeIcon,
+    required IconData inactiveIcon,
+  }) {
+    final currentNavIndex = _navigationIndexForScreen(_currentIndex);
+    final isSelected = currentNavIndex == navIndex;
+    final isDark = widget.isDarkMode;
+
+    final activeColor = isDark ? Colors.white : ZanateColors.zanateDark;
+    final inactiveColor =
+        isDark ? const Color(0xFF64748B) : Colors.blueGrey.shade400;
+
+    return Semantics(
+      label: label,
+      selected: isSelected,
+      button: true,
+      child: InkWell(
+        onTap: () {
+          final screenIndex = _screenIndexForNavigation(navIndex);
+          setState(() {
+            _currentIndex = screenIndex;
+            _visitedTabs.add(screenIndex);
+            _showMobileTopBar = true;
+          });
+        },
+        borderRadius: BorderRadius.circular(20),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? (isDark
+                    ? ZanateColors.zanateAccent.withValues(alpha: 0.22)
+                    : ZanateColors.zanateDark.withValues(alpha: 0.08))
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: PhosphorIcon(
+            isSelected ? activeIcon : inactiveIcon,
+            size: 24,
+            color: isSelected ? activeColor : inactiveColor,
+          ),
+        ),
+      ),
     );
   }
 
@@ -434,32 +469,40 @@ class _AppShellState extends State<AppShell> {
   }
 
   Widget _buildMobileHeader(ThemeData theme) {
+    final isDark = widget.isDarkMode;
     return Container(
-      height: 64,
+      height: 60,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: theme.appBarTheme.backgroundColor ?? const Color(0xFF1C1C1C),
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
         border: Border(
-          bottom: BorderSide(color: theme.colorScheme.outlineVariant, width: 1),
+          bottom: BorderSide(
+            color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            width: 0.8,
+          ),
         ),
       ),
       child: InkWell(
         onTap: _showDisclaimerModal,
-        borderRadius: BorderRadius.circular(8),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildBrandMark(),
-            const SizedBox(width: 8),
-            Text(
-              'Zanate',
-              style: GoogleFonts.croissantOne(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.5,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildBrandMark(),
+              const SizedBox(width: 8),
+              Text(
+                'Zanate',
+                style: GoogleFonts.croissantOne(
+                  fontSize: 21,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
+                  color: isDark ? Colors.white : ZanateColors.zanateDark,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
