@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import '../../../core/constants/zanate_colors.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../core/constants/categories.dart';
@@ -635,15 +637,22 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
                       onPressed: _isSubmitting
                           ? null
                           : () => Navigator.of(context).pop(),
+                      style: TextButton.styleFrom(
+                        foregroundColor: theme.brightness == Brightness.dark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      ),
                       child: const Text('Cancelar'),
                     ),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0F5132),
+                        backgroundColor: ZanateColors.zanateAccent,
                         foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
+                          horizontal: 18,
+                          vertical: 11,
                         ),
                       ),
                       onPressed: _isSubmitting ? null : _submit,
@@ -656,9 +665,10 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Icon(Icons.check, size: 16),
+                          : const Icon(PhosphorIconsBold.paperPlaneTilt, size: 16),
                       label: Text(
                         _isSubmitting ? 'Guardando...' : 'Compartir Grupo',
+                        style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),
                   ],
@@ -679,7 +689,14 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
       );
     } else {
       return Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: theme.brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(
+            color: theme.brightness == Brightness.dark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            width: 0.8,
+          ),
+        ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 620),
           child: content,
