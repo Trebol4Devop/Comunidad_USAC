@@ -39,12 +39,6 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
   String? _authErrorMessage;
   String? _infoMessage;
 
-  // Email/Password login controllers
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
-  bool _isSignUp = false;
-
   String _currentAlias = '';
 
   @override
@@ -56,8 +50,6 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
 
   @override
   void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
     unawaited(_googleAuthSubscription?.cancel());
     super.dispose();
   }
@@ -144,47 +136,6 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
           _isLoading = false;
           _waitingForGoogle = false;
           _authErrorMessage = 'Error al conectar con Google: $e';
-        });
-      }
-    }
-  }
-
-  Future<void> _handleEmailAuth() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() {
-      _isLoading = true;
-      _authErrorMessage = null;
-      _infoMessage = null;
-    });
-
-    try {
-      final email = _emailController.text.trim();
-      final password = _passwordController.text.trim();
-
-      if (_isSignUp) {
-        final res = await SupabaseService.signUp(email: email, password: password);
-        if (mounted && res?.session == null) {
-          setState(() {
-            _isLoading = false;
-            _infoMessage =
-                'Cuenta creada. Revisa tu correo para confirmarla y después vuelve a iniciar sesión.';
-          });
-          return;
-        }
-      } else {
-        await SupabaseService.signInWithPassword(email: email, password: password);
-      }
-
-      if (mounted) {
-        setState(() => _isLoading = false);
-        _loadUserAlias();
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _authErrorMessage = e.toString().replaceAll('Exception: ', '').replaceAll('AuthException: ', '');
         });
       }
     }
@@ -712,193 +663,118 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
           ),
         ],
       ),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF004B87).withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.lock_outline, color: Color(0xFF004B87), size: 24),
-                ),
-                const SizedBox(width: 10),
-                const Text(
-                  'Comunidad USAC SSO',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Inicia Sesión para Conectar con PEMTREE',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Ingresa con tu cuenta de Comunidad USAC para otorgar acceso a la aplicación cliente.',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall?.copyWith(fontSize: 12),
-            ),
-            const SizedBox(height: 20),
-
-            if (_authErrorMessage != null) ...[
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFEE2E2),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFFCA5A5)),
+                  color: const Color(0xFF004B87).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
-                  _authErrorMessage!,
-                  style: const TextStyle(color: Color(0xFFB91C1C), fontSize: 12),
-                ),
+                child: const Icon(Icons.lock_outline, color: Color(0xFF004B87), size: 24),
               ),
-              const SizedBox(height: 14),
-            ],
-
-            if (_infoMessage != null) ...[
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE0F2FE),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFF7DD3FC)),
-                ),
-                child: Text(
-                  _infoMessage!,
-                  style: const TextStyle(color: Color(0xFF075985), fontSize: 12),
-                ),
-              ),
-              const SizedBox(height: 14),
-            ],
-
-            // Google Sign In
-            OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              icon: const Icon(Icons.g_mobiledata, size: 24, color: Color(0xFFEA4335)),
-              label: const Text('Continuar con Google', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-              onPressed: (_isLoading || _waitingForGoogle)
-                  ? null
-                  : _handleGoogleSignIn,
-            ),
-            if (_waitingForGoogle) ...[
-              const SizedBox(height: 10),
+              const SizedBox(width: 10),
               const Text(
-                'Completa el acceso en Google y regresa a Comunidad USAC.',
-                textAlign: TextAlign.center,
+                'Comunidad USAC SSO',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ],
-
-            const SizedBox(height: 14),
-
-            Row(
-              children: const [
-                Expanded(child: Divider()),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10),
-                  child: Text('o con correo', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                ),
-                Expanded(child: Divider()),
-              ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Inicia Sesión para Conectar con PEMTREE',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
             ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Ingresa con tu cuenta de Comunidad USAC para otorgar acceso a la aplicación cliente.',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall?.copyWith(fontSize: 12),
+          ),
+          const SizedBox(height: 20),
 
-            const SizedBox(height: 14),
-
-            // Email
-            TextFormField(
-              controller: _emailController,
-              keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: 'Correo electrónico',
-                hintText: 'tu_correo@ejemplo.com',
-                prefixIcon: Icon(Icons.email_outlined, size: 18),
-                isDense: true,
+          if (_authErrorMessage != null) ...[
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEE2E2),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFFCA5A5)),
               ),
-              validator: (val) {
-                if (val == null || !val.contains('@')) {
-                  return 'Ingresa un correo válido';
-                }
-                return null;
-              },
-            ),
-
-            const SizedBox(height: 12),
-
-            // Password
-            TextFormField(
-              controller: _passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Contraseña',
-                hintText: '••••••••',
-                prefixIcon: Icon(Icons.lock_outline, size: 18),
-                isDense: true,
-              ),
-              validator: (val) {
-                if (val == null || val.length < 6) {
-                  return 'La contraseña debe tener al menos 6 caracteres';
-                }
-                return null;
-              },
-            ),
-
-            const SizedBox(height: 18),
-
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF004B87),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 13),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              onPressed: _isLoading ? null : _handleEmailAuth,
-              child: _isLoading
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                    )
-                  : Text(
-                      _isSignUp ? 'Crear Cuenta y Continuar' : 'Iniciar Sesión y Continuar',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                    ),
-            ),
-
-            const SizedBox(height: 8),
-
-            TextButton(
-              onPressed: _isLoading
-                  ? null
-                  : () {
-                      setState(() {
-                        _isSignUp = !_isSignUp;
-                        _authErrorMessage = null;
-                        _infoMessage = null;
-                      });
-                    },
               child: Text(
-                _isSignUp ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate aquí',
-                style: const TextStyle(fontSize: 12),
+                _authErrorMessage!,
+                style: const TextStyle(color: Color(0xFFB91C1C), fontSize: 12),
               ),
+            ),
+            const SizedBox(height: 14),
+          ],
+
+          if (_infoMessage != null) ...[
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE0F2FE),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFF7DD3FC)),
+              ),
+              child: Text(
+                _infoMessage!,
+                style: const TextStyle(color: Color(0xFF075985), fontSize: 12),
+              ),
+            ),
+            const SizedBox(height: 14),
+          ],
+
+          // Google Sign In
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF004B87),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            icon: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  )
+                : const Icon(Icons.g_mobiledata, size: 26, color: Colors.white),
+            label: Text(
+              _isLoading ? 'Conectando...' : 'Continuar con Google',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            ),
+            onPressed: (_isLoading || _waitingForGoogle)
+                ? null
+                : _handleGoogleSignIn,
+          ),
+          if (_waitingForGoogle) ...[
+            const SizedBox(height: 10),
+            const Text(
+              'Completa el acceso en Google y regresa a Comunidad USAC.',
+              textAlign: TextAlign.center,
             ),
           ],
-        ),
+
+          const SizedBox(height: 16),
+          Text(
+            'El acceso se realiza de forma segura mediante tu cuenta de Google.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 11,
+              color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+            ),
+          ),
+        ],
       ),
     );
   }

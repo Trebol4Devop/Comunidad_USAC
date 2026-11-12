@@ -43,7 +43,7 @@ void main() {
   });
 
   group('LocalStorageService Profile Persistence', () {
-    test('round-trip saveUserProfile y getUserProfile con todos los campos', () async {
+    test('no marca carné como verificado sin fuente institucional', () async {
       SupabaseService.debugUserId = 'auth-uid-100';
 
       const profile = UserProfile(
@@ -80,7 +80,20 @@ void main() {
       expect(loaded.contactInstagram, 'insta_destacado');
       expect(loaded.carne, '202112345');
       expect(loaded.studentName, 'Ana Lucía Gómez');
-      expect(loaded.isCarneVerified, isTrue);
+      expect(loaded.isCarneVerified, isFalse);
+    });
+
+    test('downgrades un indicador local heredado de verificación', () async {
+      SharedPreferences.setMockInitialValues({
+        'usac_forum_alias': 'Estudiante #505',
+        'usac_carne_verified': true,
+      });
+
+      final profile = await LocalStorageService.getUserProfile();
+      final prefs = await SharedPreferences.getInstance();
+
+      expect(profile.isCarneVerified, isFalse);
+      expect(prefs.getBool('usac_carne_verified'), isFalse);
     });
 
     test('getUserProfile aplica defaults limpios en ausencia de datos previos', () async {

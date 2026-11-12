@@ -1,3 +1,5 @@
+import '../services/share_count_service.dart';
+
 class PollOption {
   final String id;
   final String pollId;
@@ -99,6 +101,7 @@ class Post {
   final Post? quotedPost;
   final PostPoll? poll;
   final int repostsCount;
+  final int sharesCount;
   final bool isPinned;
   final int moderationStatus;
   final bool isLikedByMe;
@@ -131,6 +134,7 @@ class Post {
     this.quotedPost,
     this.poll,
     this.repostsCount = 0,
+    this.sharesCount = 0,
     this.isPinned = false,
     this.moderationStatus = 0,
     this.isLikedByMe = false,
@@ -163,6 +167,7 @@ class Post {
     Post? quotedPost,
     PostPoll? poll,
     int? repostsCount,
+    int? sharesCount,
     bool? isPinned,
     int? moderationStatus,
     bool? isLikedByMe,
@@ -193,6 +198,7 @@ class Post {
       quotedPost: quotedPost ?? this.quotedPost,
       poll: poll ?? this.poll,
       repostsCount: repostsCount ?? this.repostsCount,
+      sharesCount: sharesCount ?? this.sharesCount,
       isPinned: isPinned ?? this.isPinned,
       moderationStatus: moderationStatus ?? this.moderationStatus,
       isLikedByMe: isLikedByMe ?? this.isLikedByMe,
@@ -265,6 +271,18 @@ class Post {
       repostsCount: (map['reposts_count'] is int)
           ? map['reposts_count']
           : int.tryParse(map['reposts_count']?.toString() ?? '0') ?? 0,
+      sharesCount: () {
+        final rawShares = map['shares_count'] ?? map['shares'];
+        int parsedShares = 0;
+        if (rawShares != null) {
+          parsedShares = (rawShares is int)
+              ? rawShares
+              : int.tryParse(rawShares.toString()) ?? 0;
+        }
+        final postId = map['id']?.toString() ?? '';
+        final localShares = ShareCountService.getCachedCount(postId);
+        return localShares > parsedShares ? localShares : parsedShares;
+      }(),
       isPinned: map['is_pinned'] == true,
       moderationStatus: (map['moderation_status'] is int)
           ? map['moderation_status']

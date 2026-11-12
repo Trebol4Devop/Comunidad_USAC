@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../core/constants/categories.dart';
+import '../../../core/constants/zanate_colors.dart';
 import '../../../core/models/post.dart';
 import '../../../core/services/forum_service.dart';
 import '../../../core/services/storage_service.dart';
@@ -9,9 +11,9 @@ import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
 import '../../legal/widgets/terms_consent_modal.dart';
 import '../../shared/widgets/alias_dice_button.dart';
+import '../../../core/services/profile_service.dart';
 import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/gif_picker_modal.dart';
-import '../../../core/services/profile_service.dart';
 import '../models/discord_forum_models.dart';
 
 class CreatePostDialog extends StatefulWidget {
@@ -57,7 +59,7 @@ class CreatePostDialog extends StatefulWidget {
         useSafeArea: true,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         builder: (ctx) => CreatePostDialog(
           activeAlias: activeAlias,
@@ -98,7 +100,6 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
   final _titleController = TextEditingController();
   final _contentController = TextEditingController();
 
-  late String _authorAlias;
   String? _uploadedImageUrl;
   String? _selectedGifUrl;
   bool _isUploadingImage = false;
@@ -113,6 +114,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
   late String _selectedCategory;
   late String _selectedFacultad;
   late String _selectedCarrera;
+  late String _authorAlias;
   bool _isSubmitting = false;
   bool _isEphemeral = false;
 
@@ -307,15 +309,9 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
         if (newPost != null) {
           widget.onPostCreated(newPost);
           Navigator.of(context).pop();
-          final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text(
-                'Publicación creada exitosamente en el foro.',
-              ),
-              backgroundColor: isDarkTheme
-                  ? const Color(0xFF2563EB)
-                  : const Color(0xFF004B87),
+            const SnackBar(
+              content: Text('Publicación creada exitosamente en el foro.'),
             ),
           );
         }
@@ -331,7 +327,6 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                   .replaceAll('Exception: ', '')
                   .replaceAll('AuthException: ', ''),
             ),
-            backgroundColor: Colors.red,
           ),
         );
       }
@@ -346,12 +341,17 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
     final maxHeight =
         MediaQuery.of(context).size.height * (isMobile ? 0.90 : 0.85);
 
+    final bgFill = isDark ? const Color(0xFF1E293B) : ZanateColors.surfaceBg;
+    final borderColor = isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
+    final primaryTextColor = isDark ? Colors.white : ZanateColors.zanateDark;
+    final secondaryTextColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+
     Widget content = Form(
       key: _formKey,
       child: ConstrainedBox(
         constraints: BoxConstraints(maxHeight: maxHeight),
         child: SingleChildScrollView(
-          padding: EdgeInsets.all(isMobile ? 16 : 24),
+          padding: EdgeInsets.all(isMobile ? 20 : 28),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -360,20 +360,21 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
+                      color: ZanateColors.zanateAccent.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(14),
                     ),
                     child: Icon(
                       widget.quotedPost != null
-                          ? Icons.format_quote
-                          : Icons.add_comment_outlined,
-                      color: theme.colorScheme.primary,
+                          ? PhosphorIconsRegular.quotes
+                          : PhosphorIconsRegular.chatCircleText,
+                      color: ZanateColors.zanateAccent,
                       size: 22,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -382,14 +383,20 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                           widget.quotedPost != null
                               ? 'Citar Publicación'
                               : 'Nueva Consulta en el Foro',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.4,
+                            color: primaryTextColor,
                           ),
                         ),
+                        const SizedBox(height: 2),
                         Text(
                           'Foro Estudiantil USAC · Espacio Libre',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.primary,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: ZanateColors.zanateAccent,
                           ),
                         ),
                       ],
@@ -397,69 +404,79 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 16),
 
               // Selector de identidad anónima con dados
-              Wrap(
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 8,
-                runSpacing: 4,
-                children: [
-                  Text(
-                    'Publicando como:',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: isDark
-                          ? Colors.grey.shade400
-                          : Colors.grey.shade600,
-                      fontWeight: FontWeight.w500,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: bgFill,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: borderColor, width: 0.9),
+                ),
+                child: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    Text(
+                      'Publicando como:',
+                      style: TextStyle(
+                        color: secondaryTextColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  AliasDiceButton(
-                    alias: _authorAlias,
-                    onAliasChanged: (newAlias) {
-                      setState(() => _authorAlias = newAlias);
-                      widget.onAliasChanged(newAlias);
-                    },
-                    compact: true,
-                  ),
-                ],
+                    AliasDiceButton(
+                      alias: _authorAlias,
+                      onAliasChanged: (newAlias) {
+                        setState(() => _authorAlias = newAlias);
+                        widget.onAliasChanged(newAlias);
+                      },
+                      compact: true,
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
 
               // Quote preview banner if quoting a post
               if (widget.quotedPost != null) ...[
                 Container(
-                  padding: const EdgeInsets.all(10),
-                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 14),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.2),
-                    ),
+                    color: bgFill,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: borderColor),
                   ),
                   child: Row(
                     children: [
                       Icon(
-                        Icons.format_quote,
-                        size: 18,
-                        color: theme.colorScheme.primary,
+                        PhosphorIconsRegular.quotes,
+                        size: 20,
+                        color: ZanateColors.zanateAccent,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               'Citando a ${widget.quotedPost!.authorAlias}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
                                 fontSize: 11,
+                                color: primaryTextColor,
                               ),
                             ),
+                            const SizedBox(height: 2),
                             Text(
                               widget.quotedPost!.title,
-                              style: const TextStyle(fontSize: 12),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: secondaryTextColor,
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -471,23 +488,41 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                 ),
               ],
 
-              // Canal y Servidor: selector si está en todos los temas o guardados, o asignado si viene de un canal específico
+              // Canal y Servidor
               if (_canSelectChannel) ...[
                 DropdownButtonFormField<String>(
                   isExpanded: true,
                   initialValue: _selectedCategory,
+                  dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
                   decoration: InputDecoration(
                     labelText: 'Canal de publicación',
                     prefixIcon: Icon(
-                      Icons.tag,
+                      PhosphorIconsRegular.hash,
                       size: 20,
-                      color: theme.colorScheme.primary,
+                      color: ZanateColors.zanateAccent,
                     ),
                     helperText:
                         'Publica tu consulta en el canal correspondiente dentro de $_serverLabel.',
+                    filled: true,
+                    fillColor: bgFill,
                     contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: borderColor),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: borderColor),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(
+                        color: ZanateColors.zanateAccent,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                   items: const [
@@ -537,21 +572,19 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 14,
-                    vertical: 11,
+                    vertical: 12,
                   ),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.2),
-                    ),
+                    color: bgFill,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: borderColor),
                   ),
                   child: Row(
                     children: [
                       Icon(
-                        Icons.tag,
-                        size: 22,
-                        color: theme.colorScheme.primary,
+                        PhosphorIconsBold.hash,
+                        size: 20,
+                        color: ZanateColors.zanateAccent,
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -562,10 +595,11 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                               children: [
                                 Flexible(
                                   child: Text(
-                                    '#$_channelLabel',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
+                                    _channelLabel,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
                                       fontSize: 13,
+                                      color: primaryTextColor,
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -573,66 +607,83 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                                 const SizedBox(width: 8),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 1.5,
+                                    horizontal: 8,
+                                    vertical: 3,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: theme.colorScheme.primary.withValues(
-                                      alpha: 0.15,
+                                    color: ZanateColors.zanateAccent.withValues(
+                                      alpha: 0.12,
                                     ),
-                                    borderRadius: BorderRadius.circular(4),
+                                    borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: const Text(
                                     'Canal asignado',
                                     style: TextStyle(
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.bold,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: ZanateColors.zanateAccent,
                                     ),
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 3),
                             Text(
                               'Servidor: $_serverLabel',
                               style: TextStyle(
                                 fontSize: 11,
-                                color: isDark
-                                    ? Colors.grey.shade400
-                                    : Colors.grey.shade600,
+                                color: secondaryTextColor,
                               ),
                             ),
                           ],
                         ),
                       ),
                       Icon(
-                        Icons.lock_outline,
+                        PhosphorIconsRegular.lockSimple,
                         size: 16,
-                        color: Colors.grey.shade400,
+                        color: secondaryTextColor,
                       ),
                     ],
                   ),
                 ),
               ],
 
-              // Selector de carrera de la facultad si se está publicando desde el servidor general de una facultad
+              // Selector de carrera si aplica
               if (_canSelectCarrera && _availableCareers.isNotEmpty) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 DropdownButtonFormField<String>(
                   isExpanded: true,
                   initialValue: _selectedCarrera,
+                  dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
                   decoration: InputDecoration(
                     labelText: 'Carrera o Especialidad',
                     prefixIcon: Icon(
-                      Icons.school_outlined,
+                      PhosphorIconsRegular.graduationCap,
                       size: 20,
-                      color: theme.colorScheme.primary,
+                      color: ZanateColors.zanateAccent,
                     ),
                     helperText:
                         'Selecciona la carrera correspondiente dentro de $_serverLabel.',
+                    filled: true,
+                    fillColor: bgFill,
                     contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: borderColor),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: borderColor),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(
+                        color: ZanateColors.zanateAccent,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                   items: _availableCareers.map((c) {
@@ -649,37 +700,85 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                 ),
               ],
 
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
 
               // Post Title
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: primaryTextColor,
+                ),
+                decoration: InputDecoration(
                   labelText: 'Título de la consulta o aporte',
                   hintText: 'Ej. ¿Qué catedrático recomiendan para Física 1?',
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 8,
+                  filled: true,
+                  fillColor: bgFill,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: borderColor),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: borderColor),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(
+                      color: ZanateColors.zanateAccent,
+                      width: 1.5,
+                    ),
                   ),
                 ),
                 validator: (val) {
-                  if (val == null || val.trim().length < 5) {
-                    return 'El título debe tener al menos 5 caracteres.';
+                  if (val == null || val.trim().length < 3) {
+                    return 'El título debe tener al menos 3 caracteres.';
                   }
                   return null;
                 },
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
 
               // Post Content
               TextFormField(
                 controller: _contentController,
                 maxLines: 4,
-                decoration: const InputDecoration(
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 1.45,
+                  color: primaryTextColor,
+                ),
+                decoration: InputDecoration(
                   labelText: 'Detalle o descripción',
                   hintText:
                       'Explica tu duda o comparte el material de estudio con la comunidad...',
+                  filled: true,
+                  fillColor: bgFill,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: borderColor),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: borderColor),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(
+                      color: ZanateColors.zanateAccent,
+                      width: 1.5,
+                    ),
+                  ),
                 ),
                 validator: (val) {
                   if (val == null || val.trim().length < 10) {
@@ -689,103 +788,44 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                 },
               ),
 
-              if (_isEphemeral) ...[
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Chip(
-                    avatar: const Icon(
-                      Icons.timer,
-                      size: 15,
-                      color: Color(0xFFD97706),
-                    ),
-                    label: const Text(
-                      'Expira en 24 h',
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFFB45309),
-                      ),
-                    ),
-                    backgroundColor: isDark
-                        ? const Color(0xFF451A03).withValues(alpha: 0.6)
-                        : const Color(0xFFFEF3C7),
-                    side: BorderSide(
-                      color: isDark
-                          ? const Color(0xFF78350F)
-                          : const Color(0xFFFDE68A),
-                    ),
-                    visualDensity: VisualDensity.compact,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                ),
-              ],
-
-              const SizedBox(height: 10),
-
-              // SwitchListTile para post efímero (La Pizarra Nocturna)
-              Material(
-                color: isDark
-                    ? const Color(0xFF1E293B).withValues(alpha: 0.6)
-                    : const Color(0xFFF1F5F9),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  side: BorderSide(
-                    color: isDark
-                        ? const Color(0xFF334155)
-                        : const Color(0xFFE2E8F0),
-                  ),
-                ),
-                child: SwitchListTile(
-                  value: _isEphemeral,
-                  onChanged: (val) => setState(() => _isEphemeral = val),
-                  title: const Text(
-                    'Desaparece en 24h',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                  ),
-                  subtitle: const Text(
-                    'La Pizarra Nocturna: el post se ocultará al amanecer.',
-                    style: TextStyle(fontSize: 11),
-                  ),
-                  secondary: Icon(
-                    Icons.nightlight_round,
-                    color: _isEphemeral
-                        ? Colors.amber.shade600
-                        : (isDark
-                              ? Colors.grey.shade400
-                              : Colors.grey.shade600),
-                    size: 22,
-                  ),
-                  dense: true,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 0,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
 
               // Media & Poll toolbar
               Row(
                 children: [
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
+                      foregroundColor: primaryTextColor,
+                      side: BorderSide(color: borderColor),
+                      backgroundColor: bgFill,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
+                        horizontal: 12,
+                        vertical: 8,
                       ),
                     ),
                     onPressed: _isUploadingImage ? null : _pickAndUploadImage,
-                    icon: const Icon(Icons.image_outlined, size: 16),
-                    label: const Text('Foto', style: TextStyle(fontSize: 12)),
+                    icon: Icon(
+                      PhosphorIconsRegular.image,
+                      size: 17,
+                      color: ZanateColors.zanateAccent,
+                    ),
+                    label: const Text('Foto', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                   ),
                   const SizedBox(width: 8),
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
+                      foregroundColor: primaryTextColor,
+                      side: BorderSide(color: borderColor),
+                      backgroundColor: bgFill,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
+                        horizontal: 12,
+                        vertical: 8,
                       ),
                     ),
                     onPressed: () {
@@ -799,41 +839,46 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                         },
                       );
                     },
-                    icon: const Icon(Icons.gif_box_outlined, size: 16),
-                    label: const Text('GIF', style: TextStyle(fontSize: 12)),
+                    icon: Icon(
+                      PhosphorIconsRegular.gif,
+                      size: 17,
+                      color: ZanateColors.zanateAccent,
+                    ),
+                    label: const Text('GIF', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                   ),
                   const SizedBox(width: 8),
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
+                      foregroundColor: _showPollForm ? Colors.white : primaryTextColor,
+                      side: BorderSide(
+                        color: _showPollForm ? ZanateColors.zanateAccent : borderColor,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       backgroundColor: _showPollForm
-                          ? (isDark
-                                ? const Color(
-                                    0xFF3B82F6,
-                                  ).withValues(alpha: 0.25)
-                                : const Color(
-                                    0xFF004B87,
-                                  ).withValues(alpha: 0.12))
-                          : null,
+                          ? ZanateColors.zanateAccent
+                          : bgFill,
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
+                        horizontal: 12,
+                        vertical: 8,
                       ),
                     ),
                     onPressed: () =>
                         setState(() => _showPollForm = !_showPollForm),
                     icon: Icon(
-                      Icons.poll_outlined,
-                      size: 16,
-                      color: _showPollForm ? theme.colorScheme.primary : null,
+                      PhosphorIconsRegular.chartBar,
+                      size: 17,
+                      color: _showPollForm ? Colors.white : ZanateColors.zanateAccent,
                     ),
                     label: Text(
                       'Encuesta',
                       style: TextStyle(
                         fontSize: 12,
-                        color: _showPollForm ? theme.colorScheme.primary : null,
+                        color: _showPollForm ? Colors.white : primaryTextColor,
                         fontWeight: _showPollForm
-                            ? FontWeight.bold
-                            : FontWeight.normal,
+                            ? FontWeight.w700
+                            : FontWeight.w600,
                       ),
                     ),
                   ),
@@ -842,19 +887,13 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
 
               // Interactive Poll Creator Section
               if (_showPollForm) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? const Color(0xFF1E293B)
-                        : const Color(0xFF004B87).withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: isDark
-                          ? const Color(0xFF334155)
-                          : const Color(0xFF004B87).withValues(alpha: 0.2),
-                    ),
+                    color: bgFill,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: borderColor),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -862,40 +901,56 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            'Crear Encuesta Estudiantil',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                              color: theme.colorScheme.primary,
-                            ),
+                          Row(
+                            children: [
+                              Icon(
+                                PhosphorIconsRegular.chartBar,
+                                size: 16,
+                                color: ZanateColors.zanateAccent,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Crear Encuesta Estudiantil',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                  color: primaryTextColor,
+                                ),
+                              ),
+                            ],
                           ),
                           IconButton(
-                            icon: const Icon(Icons.close, size: 16),
+                            icon: Icon(PhosphorIconsRegular.x, size: 16, color: secondaryTextColor),
                             onPressed: () =>
                                 setState(() => _showPollForm = false),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 8),
                       TextFormField(
                         controller: _pollQuestionController,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Pregunta de la encuesta',
                           hintText: 'Opcional, por defecto usará el título',
                           isDense: true,
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 8,
+                          filled: true,
+                          fillColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: borderColor),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 10),
                       ..._pollOptionControllers.asMap().entries.map((entry) {
                         final idx = entry.key;
                         final ctrl = entry.value;
                         return Padding(
-                          padding: const EdgeInsets.only(bottom: 6),
+                          padding: const EdgeInsets.only(bottom: 8),
                           child: Row(
                             children: [
                               Expanded(
@@ -904,19 +959,25 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                                   decoration: InputDecoration(
                                     labelText: 'Opción ${idx + 1}',
                                     isDense: true,
+                                    filled: true,
+                                    fillColor: isDark ? const Color(0xFF0F172A) : Colors.white,
                                     contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 8,
+                                      horizontal: 12,
+                                      vertical: 10,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(color: borderColor),
                                     ),
                                   ),
                                 ),
                               ),
                               if (_pollOptionControllers.length > 2)
                                 IconButton(
-                                  icon: const Icon(
-                                    Icons.delete_outline,
+                                  icon: Icon(
+                                    PhosphorIconsRegular.trash,
                                     size: 18,
-                                    color: Colors.red,
+                                    color: Colors.red.shade400,
                                   ),
                                   onPressed: () => _removePollOption(idx),
                                 ),
@@ -926,11 +987,17 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                       }),
                       if (_pollOptionControllers.length < 5)
                         TextButton.icon(
+                          style: TextButton.styleFrom(
+                            foregroundColor: ZanateColors.zanateAccent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
                           onPressed: _addPollOption,
-                          icon: const Icon(Icons.add, size: 16),
+                          icon: Icon(PhosphorIconsRegular.plus, size: 16),
                           label: const Text(
                             'Añadir opción',
-                            style: TextStyle(fontSize: 12),
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
                           ),
                         ),
                     ],
@@ -940,27 +1007,27 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
 
               // Attached GIF Preview
               if (_selectedGifUrl != null) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 Stack(
                   children: [
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(14),
                       child: Image.network(
                         _selectedGifUrl!,
                         width: double.infinity,
-                        height: 150,
+                        height: 160,
                         fit: BoxFit.cover,
                       ),
                     ),
                     Positioned(
-                      top: 6,
-                      right: 6,
+                      top: 8,
+                      right: 8,
                       child: InkWell(
                         onTap: () => setState(() => _selectedGifUrl = null),
                         child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(
-                            color: Colors.black54,
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.65),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
@@ -977,32 +1044,41 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
 
               // Attached Image Preview
               if (_uploadedImageUrl != null) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 Stack(
                   children: [
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(14),
                       child: Image.network(
                         _uploadedImageUrl!,
                         width: double.infinity,
-                        height: 140,
+                        height: 160,
                         fit: BoxFit.cover,
                         errorBuilder: (ctx, err, stack) => Container(
-                          height: 140,
-                          color: Colors.grey.shade300,
-                          child: const Center(child: Icon(Icons.broken_image)),
+                          height: 160,
+                          decoration: BoxDecoration(
+                            color: bgFill,
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Center(
+                            child: Icon(
+                              PhosphorIconsRegular.imageBroken,
+                              size: 32,
+                              color: secondaryTextColor,
+                            ),
+                          ),
                         ),
                       ),
                     ),
                     Positioned(
-                      top: 6,
-                      right: 6,
+                      top: 8,
+                      right: 8,
                       child: InkWell(
                         onTap: () => setState(() => _uploadedImageUrl = null),
                         child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(
-                            color: Colors.black54,
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.65),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
@@ -1017,7 +1093,98 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                 ),
               ],
 
-              const SizedBox(height: 18),
+              const SizedBox(height: 14),
+
+              // Tarjeta para post efímero (La Pizarra Nocturna)
+              Material(
+                color: bgFill,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(
+                    color: _isEphemeral
+                        ? ZanateColors.zanateAccent.withValues(alpha: 0.35)
+                        : borderColor,
+                  ),
+                ),
+                child: SwitchListTile.adaptive(
+                  value: _isEphemeral,
+                  activeTrackColor: ZanateColors.zanateAccent,
+                  onChanged: (val) => setState(() => _isEphemeral = val),
+                  title: Text(
+                    'Desaparece en 24h',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: primaryTextColor,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'La Pizarra Nocturna: el post se ocultará al amanecer.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: secondaryTextColor,
+                    ),
+                  ),
+                  secondary: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: _isEphemeral
+                          ? ZanateColors.zanateAccent.withValues(alpha: 0.15)
+                          : borderColor.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      PhosphorIconsRegular.moonStars,
+                      color: _isEphemeral
+                          ? ZanateColors.zanateAccent
+                          : secondaryTextColor,
+                      size: 20,
+                    ),
+                  ),
+                  dense: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 2,
+                  ),
+                ),
+              ),
+
+              if (_isEphemeral) ...[
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF3C7),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFFFDE68A)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          PhosphorIconsRegular.timer,
+                          size: 14,
+                          color: const Color(0xFFD97706),
+                        ),
+                        const SizedBox(width: 5),
+                        const Text(
+                          'Expira en 24 h',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFFD97706),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 22),
 
               // Action Buttons
               Align(
@@ -1029,18 +1196,35 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                   runSpacing: 8,
                   children: [
                     TextButton(
+                      style: TextButton.styleFrom(
+                        foregroundColor: secondaryTextColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                      ),
                       onPressed: _isSubmitting
                           ? null
                           : () => Navigator.of(context).pop(),
-                      child: const Text('Cancelar'),
+                      child: const Text(
+                        'Cancelar',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
                     ),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.colorScheme.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        backgroundColor: ZanateColors.zanateDark,
                         foregroundColor: Colors.white,
+                        elevation: 0,
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
+                          horizontal: 20,
+                          vertical: 13,
                         ),
                       ),
                       onPressed: _isSubmitting ? null : _submit,
@@ -1053,8 +1237,11 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Icon(Icons.send, size: 16),
-                      label: Text(_isSubmitting ? 'Publicando...' : 'Publicar'),
+                          : Icon(PhosphorIconsBold.paperPlaneTilt, size: 16, color: Colors.white),
+                      label: Text(
+                        _isSubmitting ? 'Publicando...' : 'Publicar',
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
                     ),
                   ],
                 ),
@@ -1074,7 +1261,11 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
       );
     } else {
       return Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: borderColor, width: 0.9),
+        ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 620),
           child: content,

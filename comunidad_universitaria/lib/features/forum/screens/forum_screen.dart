@@ -1,19 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../core/config/supabase_config.dart';
+import '../../../core/constants/zanate_colors.dart';
 import '../../../core/models/post.dart';
 import '../../../core/models/user_profile.dart';
 import '../../../core/services/forum_service.dart';
+import '../../../core/services/share_count_service.dart';
 import '../../../core/services/local_storage_service.dart';
+import '../../../core/services/forum_server_preferences_service.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/utils/responsive.dart';
 import '../models/discord_forum_models.dart';
 import '../widgets/create_post_dialog.dart';
 import '../widgets/discord/forum_channel_sidebar.dart';
+import '../widgets/discord/forum_carrera_picker_dialog.dart';
 import '../widgets/discord/forum_server_rail.dart';
 import '../widgets/discord/popular_servers_sidebar.dart';
 import '../widgets/post_card.dart';
 import 'post_detail_screen.dart';
 import '../../groups/screens/groups_screen.dart';
-import '../../reviews/screens/seccion_reviews_screen.dart';
+import '../../../core/services/profile_service.dart';
 import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/empty_state_widget.dart';
 
@@ -79,8 +87,16 @@ class _ForumScreenState extends State<ForumScreen> {
   @override
   void initState() {
     super.initState();
-    _servers = List.from(ForumServer.defaultServers);
-    _activeServer = widget.activeServer ?? _servers.first;
+    final generalServer = ForumServer.defaultServers.first;
+    _servers = [generalServer];
+    _activeServer =
+        widget.activeServer != null && !widget.activeServer!.isGroups
+        ? widget.activeServer!
+        : generalServer;
+    if (!_servers.any((server) => server.id == _activeServer.id)) {
+      _servers.add(_activeServer);
+    }
+    _loadSavedServers();
     _activeChannel =
         widget.activeChannel ??
         ForumChannel.defaultChannels.firstWhere(
@@ -109,6 +125,18 @@ class _ForumScreenState extends State<ForumScreen> {
     if (!_activeServer.isGroups) {
       _loadPosts();
     }
+  }
+
+  Future<void> _loadSavedServers() async {
+    final savedServers = await ForumServerPreferencesService.load();
+    if (!mounted || savedServers.isEmpty) return;
+    setState(() {
+      for (final server in savedServers) {
+        if (!_servers.any((item) => item.id == server.id)) {
+          _servers.add(server);
+        }
+      }
+    });
   }
 
   Future<void> _loadPopularServers() async {
@@ -145,9 +173,6 @@ class _ForumScreenState extends State<ForumScreen> {
             );
           }
         });
-        if (widget.initialPopularServers == null) {
-          _loadPopularServers();
-        }
       }
     } catch (e) {
       debugPrint('Error cargando estructura del foro desde DB: $e');
@@ -173,6 +198,7 @@ class _ForumScreenState extends State<ForumScreen> {
       shouldReload = true;
     }
     if (widget.activeServer != null &&
+        !widget.activeServer!.isGroups &&
         widget.activeServer!.id != _activeServer.id) {
       _activeServer = widget.activeServer!;
       if (!_activeServer.isGroups) {
@@ -215,9 +241,15 @@ class _ForumScreenState extends State<ForumScreen> {
         feedMode: _feedMode,
       );
 
+      await ShareCountService.preload(posts.map((p) => p.id).toList());
+      final enrichedPosts = posts.map((p) {
+        final count = ShareCountService.getCachedCount(p.id);
+        return count > p.sharesCount ? p.copyWith(sharesCount: count) : p;
+      }).toList();
+
       if (mounted) {
         setState(() {
-          _posts = posts;
+          _posts = enrichedPosts;
           _isLoading = false;
           _isOffline = false;
         });
@@ -232,7 +264,29 @@ class _ForumScreenState extends State<ForumScreen> {
     }
   }
 
+  Future<void> _addServerFromSidebar() async {
+    ForumServer? selectedServer;
+    await ForumCarreraPickerDialog.show(
+      context,
+      onServerSelected: (server) {
+        selectedServer = server;
+        _onAddServer(server);
+      },
+    );
+    if (!mounted) return;
+    if (selectedServer != null) {
+      _onSelectServer(selectedServer!);
+      if (_scaffoldKey.currentState?.isDrawerOpen == true) {
+        Navigator.of(context).pop();
+      }
+    }
+  }
+
   void _onSelectServer(ForumServer server) {
+    if (server.isGroups) return;
+    if (!_servers.any((item) => item.id == server.id)) {
+      _onAddServer(server);
+    }
     if (_activeServer.id == server.id) return;
     setState(() {
       _activeServer = server;
@@ -259,11 +313,11 @@ class _ForumScreenState extends State<ForumScreen> {
   }
 
   void _onAddServer(ForumServer newServer) {
-    final exists = _servers.any((s) => s.id == newServer.id);
+    if (newServer.isGroups) return;
+    final exists = _servers.any((server) => server.id == newServer.id);
     if (!exists) {
-      setState(() {
-        _servers.add(newServer);
-      });
+      setState(() => _servers.add(newServer));
+      ForumServerPreferencesService.save(_servers);
     }
   }
 
@@ -319,14 +373,41 @@ class _ForumScreenState extends State<ForumScreen> {
       }
     });
 
-    final success = await ForumService.toggleLike(post);
-    if (mounted && success != !prevLiked) {
+    try {
+      final success = await ForumService.toggleLike(post);
+      if (mounted && success != !prevLiked) {
+        setState(() {
+          final idx = _posts.indexWhere((p) => p.id == post.id);
+          if (idx != -1) {
+            _posts[idx] = post.copyWith(
+              isLikedByMe: prevLiked,
+              likes: prevLikes,
+            );
+          }
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'No se pudo registrar el me gusta. Inténtalo de nuevo.',
+            ),
+          ),
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
       setState(() {
         final idx = _posts.indexWhere((p) => p.id == post.id);
         if (idx != -1) {
           _posts[idx] = post.copyWith(isLikedByMe: prevLiked, likes: prevLikes);
         }
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No se pudo registrar el me gusta. Inténtalo de nuevo.',
+          ),
+        ),
+      );
     }
   }
 
@@ -425,6 +506,36 @@ class _ForumScreenState extends State<ForumScreen> {
     }
   }
 
+  Future<void> _sharePost(Post post) async {
+    final newCount = post.sharesCount + 1;
+    setState(() {
+      final idx = _posts.indexWhere((p) => p.id == post.id);
+      if (idx != -1) {
+        _posts[idx] = _posts[idx].copyWith(sharesCount: newCount);
+      }
+    });
+
+    await ShareCountService.incrementShare(post.id, table: 'posts');
+
+    final shareText =
+        '${post.title}\n\n${post.content}\n\n— ${post.authorAlias} (Comunidad USAC)';
+    try {
+      await SharePlus.instance.share(
+        ShareParams(text: shareText, subject: post.title),
+      );
+    } catch (_) {
+      await Clipboard.setData(ClipboardData(text: shareText));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Publicación compartida ($newCount veces). El texto se copió.'),
+          backgroundColor: ZanateColors.zanateAccent,
+        ),
+      );
+      return;
+    }
+  }
+
   void _handleQuotePost(Post post) {
     if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
       AuthModal.show(
@@ -513,12 +624,10 @@ class _ForumScreenState extends State<ForumScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final width = MediaQuery.of(context).size.width;
-    final isDesktopOrTablet = width >= 768;
-    final showRightSidebar = width >= 1050;
+    final isDesktopOrTablet = !Responsive.isMobile(context);
+    final showRightSidebar = Responsive.isDesktop(context);
 
-    // Discord main chat background: #313338 dark, #FFFFFF light
-    final feedBg = isDark ? const Color(0xFF313338) : Colors.white;
+    final feedBg = isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg;
 
     final isGroups = _activeServer.isGroups;
     final currentChannel = isGroups ? _groupsActiveChannel : _activeChannel;
@@ -532,24 +641,25 @@ class _ForumScreenState extends State<ForumScreen> {
         body: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 1. Server Rail (72px)
+            // 1. Server Rail (68px)
             ForumServerRail(
               servers: _servers,
               activeServer: _activeServer,
-              faculties: _faculties,
               onSelectServer: _onSelectServer,
               onAddServer: _onAddServer,
+              showAddButton: false,
             ),
 
-            // 2. Channel Sidebar (240px)
+            // 2. Channel Sidebar (244px)
             ForumChannelSidebar(
               activeServer: _activeServer,
               activeChannel: currentChannel,
               channels: currentChannels,
               onSelectChannel: _onSelectChannel,
-              onServerChanged: _onSelectServer,
+              onAddServer: _addServerFromSidebar,
               activeAlias: widget.activeAlias,
               onAliasChanged: widget.onAliasChanged,
+              onToggleTheme: widget.onToggleTheme,
             ),
 
             // 3. Main Content: GroupsScreen if isGroups, otherwise Channel Feed
@@ -558,11 +668,14 @@ class _ForumScreenState extends State<ForumScreen> {
                 child: GroupsScreen(
                   activeAlias: widget.activeAlias,
                   onAliasChanged: widget.onAliasChanged,
+                  activeServerName: _activeServer.name,
                   activeFacultadId: _activeServer.facultadId,
                   activeCarreraId: _groupsActiveChannel.categoryId,
                   activeChannelName: _groupsActiveChannel.name,
                   activeChannelDescription: _groupsActiveChannel.description,
                   activeChannelIcon: _groupsActiveChannel.icon,
+                  showFloatingActionButton: Responsive.isMobile(context),
+                  floatingActionButtonHeroTag: 'forum_groups_screen_fab',
                 ),
               )
             else
@@ -587,6 +700,7 @@ class _ForumScreenState extends State<ForumScreen> {
       key: _scaffoldKey,
       backgroundColor: feedBg,
       drawer: Drawer(
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
         width: 312,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -594,7 +708,6 @@ class _ForumScreenState extends State<ForumScreen> {
             ForumServerRail(
               servers: _servers,
               activeServer: _activeServer,
-              faculties: _faculties,
               onSelectServer: (srv) {
                 _onSelectServer(srv);
                 if (_scaffoldKey.currentState?.isDrawerOpen == true) {
@@ -602,21 +715,60 @@ class _ForumScreenState extends State<ForumScreen> {
                 }
               },
               onAddServer: _onAddServer,
+              showAddButton: false,
             ),
             Expanded(
-              child: ForumChannelSidebar(
-                activeServer: _activeServer,
-                activeChannel: currentChannel,
-                channels: currentChannels,
-                onSelectChannel: _onSelectChannel,
-                onServerChanged: (srv) {
-                  _onSelectServer(srv);
-                  if (_scaffoldKey.currentState?.isDrawerOpen == true) {
-                    Navigator.of(context).pop();
-                  }
-                },
-                activeAlias: widget.activeAlias,
-                onAliasChanged: widget.onAliasChanged,
+              child: Column(
+                children: [
+                  Container(
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      border: Border(
+                        bottom: BorderSide(
+                          color: isDark
+                              ? const Color(0xFF334155)
+                              : ZanateColors.subtleBorder,
+                          width: 0.8,
+                        ),
+                      ),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: const PhosphorIcon(
+                            PhosphorIconsRegular.magnifyingGlass,
+                            size: 20,
+                          ),
+                          tooltip: 'Buscar publicaciones',
+                          onPressed: _openSearchFromDrawer,
+                        ),
+                        IconButton(
+                          icon: const PhosphorIcon(
+                            PhosphorIconsFill.flame,
+                            size: 20,
+                            color: Color(0xFFF59E0B),
+                          ),
+                          tooltip: 'Comunidades populares',
+                          onPressed: _openPopularServersFromDrawer,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: ForumChannelSidebar(
+                      activeServer: _activeServer,
+                      activeChannel: currentChannel,
+                      channels: currentChannels,
+                      onSelectChannel: _onSelectChannel,
+                      onAddServer: _addServerFromSidebar,
+                      activeAlias: widget.activeAlias,
+                      onAliasChanged: widget.onAliasChanged,
+                      onToggleTheme: widget.onToggleTheme,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -629,12 +781,13 @@ class _ForumScreenState extends State<ForumScreen> {
             if (isGroups)
               _buildMobileGroupsHeader(theme, isDark)
             else
-              _buildMobileChannelHeader(theme, isDark),
+              _buildMobileChannelHeader(theme),
             Expanded(
               child: isGroups
                   ? GroupsScreen(
                       activeAlias: widget.activeAlias,
                       onAliasChanged: widget.onAliasChanged,
+                      activeServerName: _activeServer.name,
                       activeFacultadId: _activeServer.facultadId,
                       activeCarreraId: _groupsActiveChannel.categoryId,
                       activeChannelName: _groupsActiveChannel.name,
@@ -652,31 +805,44 @@ class _ForumScreenState extends State<ForumScreen> {
 
   Widget _buildMobileGroupsHeader(ThemeData theme, bool isDark) {
     return Container(
-      height: 48,
+      height: 52,
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF313338) : Colors.white,
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
         border: Border(
           bottom: BorderSide(
-            color: isDark ? const Color(0xFF202225) : const Color(0xFFE2E8F0),
-            width: 1,
+            color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            width: 0.8,
           ),
         ),
       ),
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.menu, size: 22),
-            tooltip: 'Canales y Servidores',
             onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+            icon: PhosphorIcon(
+              PhosphorIconsRegular.list,
+              size: 22,
+              color: isDark ? Colors.white : ZanateColors.zanateDark,
+            ),
+            tooltip: 'Menú de canales',
+            splashRadius: 22,
           ),
           const SizedBox(width: 4),
-          const Icon(Icons.chat, size: 18, color: Color(0xFF25D366)),
+          const PhosphorIcon(
+            PhosphorIconsFill.whatsappLogo,
+            size: 20,
+            color: Color(0xFF25D366),
+          ),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
-              '#${_groupsActiveChannel.name}',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              _groupsActiveChannel.name,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 14.5,
+                color: isDark ? Colors.white : ZanateColors.zanateDark,
+              ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -684,7 +850,7 @@ class _ForumScreenState extends State<ForumScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
               color: const Color(0xFF25D366).withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(6),
             ),
             child: const Text(
               'WAPP',
@@ -697,8 +863,8 @@ class _ForumScreenState extends State<ForumScreen> {
           ),
           const SizedBox(width: 4),
           IconButton(
-            icon: const Icon(
-              Icons.local_fire_department_rounded,
+            icon: const PhosphorIcon(
+              PhosphorIconsFill.flame,
               size: 20,
               color: Color(0xFFF59E0B),
             ),
@@ -710,64 +876,176 @@ class _ForumScreenState extends State<ForumScreen> {
     );
   }
 
-  Widget _buildMobileChannelHeader(ThemeData theme, bool isDark) {
+  String _welcomeChannelTitle() {
+    final serverName = _activeServer.name
+        .replaceAll(RegExp(r'\s*\([^)]*\)'), '')
+        .trim();
+    return '$serverName · ${_activeChannel.name}';
+  }
+
+  Widget _buildMobileChannelHeader(ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
+    final serverName = _activeServer.name
+        .replaceAll(RegExp(r'\s*\([^)]*\)'), '')
+        .trim()
+        .toUpperCase();
+    final channelName = _activeChannel.name.replaceAll('#', '').trim();
+
     return Container(
-      height: 48,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      constraints: const BoxConstraints(minHeight: 56),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF313338) : Colors.white,
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
         border: Border(
           bottom: BorderSide(
-            color: isDark ? const Color(0xFF202225) : const Color(0xFFE2E8F0),
-            width: 1,
+            color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            width: 0.8,
           ),
         ),
       ),
       child: Row(
         children: [
+          // Botón de menú minimalista (sin contenedor de color)
           IconButton(
-            icon: const Icon(Icons.menu, size: 22),
-            tooltip: 'Canales y Servidores',
             onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+            icon: PhosphorIcon(
+              PhosphorIconsRegular.list,
+              size: 24,
+              color: isDark ? Colors.white : ZanateColors.zanateDark,
+            ),
+            tooltip: 'Menú de canales',
+            splashRadius: 22,
           ),
           const SizedBox(width: 4),
-          Icon(
-            _activeChannel.icon,
-            size: 18,
-            color: isDark ? const Color(0xFF949BA4) : theme.colorScheme.primary,
-          ),
-          const SizedBox(width: 6),
+
+          // Título central con doble jerarquía
           Expanded(
-            child: Text(
-              '#${_activeChannel.name}',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: _activeServer.color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              _activeServer.shortCode,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: _activeServer.color,
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  serverName,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8,
+                    color: isDark
+                        ? const Color(0xFF94A3B8)
+                        : Colors.blueGrey.shade400,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      '#',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: ZanateColors.zanateAccent,
+                      ),
+                    ),
+                    const SizedBox(width: 3),
+                    Flexible(
+                      child: Text(
+                        channelName,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.3,
+                          color: isDark
+                              ? Colors.white
+                              : ZanateColors.zanateDark,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
           const SizedBox(width: 4),
-          IconButton(
-            icon: const Icon(
-              Icons.local_fire_department_rounded,
-              size: 20,
-              color: Color(0xFFF59E0B),
-            ),
-            tooltip: 'Comunidades Populares',
-            onPressed: () => _showPopularServersModal(context),
+
+          // Botón + minimalista (sin contenedor de color)
+          if (!_activeChannel.isSpecial)
+            IconButton(
+              onPressed: _openCreateDialog,
+              icon: PhosphorIcon(
+                PhosphorIconsBold.plus,
+                size: 22,
+                color: isDark ? Colors.white : ZanateColors.zanateDark,
+              ),
+              tooltip: 'Nueva consulta',
+              splashRadius: 22,
+            )
+          else
+            const SizedBox(width: 48),
+        ],
+      ),
+    );
+  }
+
+  void _openSearchFromDrawer() {
+    Navigator.of(context).pop();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _showSearchDialog();
+    });
+  }
+
+  void _openPopularServersFromDrawer() {
+    Navigator.of(context).pop();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _showPopularServersModal(context);
+    });
+  }
+
+  void _showSearchDialog() {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        title: const Text('Buscar en el foro'),
+        content: TextField(
+          controller: _searchController,
+          autofocus: true,
+          textInputAction: TextInputAction.search,
+          decoration: InputDecoration(
+            hintText: 'Buscar publicaciones...',
+            prefixIcon: const Icon(Icons.search_rounded),
+            suffixIcon: _searchController.text.isEmpty
+                ? null
+                : IconButton(
+                    tooltip: 'Limpiar búsqueda',
+                    onPressed: _searchController.clear,
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+          ),
+          onSubmitted: (value) {
+            Navigator.of(dialogContext).pop();
+            setState(() => _searchQuery = value.trim());
+            _loadPosts();
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              setState(() => _searchQuery = _searchController.text.trim());
+              _loadPosts();
+            },
+            child: const Text('Buscar'),
           ),
         ],
       ),
@@ -779,22 +1057,20 @@ class _ForumScreenState extends State<ForumScreen> {
       context: context,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       builder: (ctx) {
-        return ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-          child: SizedBox(
-            height: 480,
-            child: PopularServersSidebar(
-              popularServers: _popularServers,
-              activeServer: _activeServer,
-              isLoading: _isLoadingPopular,
-              isModal: true,
-              onSelectServer: (srv) {
-                Navigator.of(ctx).pop();
-                _onSelectServer(srv);
-              },
-              onRefresh: _loadPopularServers,
-            ),
+        return SizedBox(
+          height: 480,
+          child: PopularServersSidebar(
+            popularServers: _popularServers,
+            activeServer: _activeServer,
+            isLoading: _isLoadingPopular,
+            isModal: true,
+            onSelectServer: (srv) {
+              Navigator.of(ctx).pop();
+              _onSelectServer(srv);
+            },
+            onRefresh: _loadPopularServers,
           ),
         );
       },
@@ -807,8 +1083,8 @@ class _ForumScreenState extends State<ForumScreen> {
         // Barra superior fija para todos los canales con bienvenida, buscador y botón de publicar
         _buildDiscordWelcomeHero(theme, isDark),
 
-        // Selector compacto de modo de feed: "En Llamas" vs "Recientes"
-        _buildFeedModeSelector(theme, isDark),
+        // Filtro de muro (En Llamas / Recientes)
+        _buildFeedFilterBar(theme, isDark),
 
         if (_isOffline) ...[
           Container(
@@ -827,13 +1103,17 @@ class _ForumScreenState extends State<ForumScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Sin conexión — Mostrando contenido guardado.',
+                    'No se pudo actualizar el feed. Comprueba tu conexión.',
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.amber.shade700,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
+                ),
+                TextButton(
+                  onPressed: _isLoading ? null : _loadPosts,
+                  child: const Text('Reintentar'),
                 ),
               ],
             ),
@@ -848,6 +1128,187 @@ class _ForumScreenState extends State<ForumScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildFeedFilterBar(ThemeData theme, bool isDark) {
+    if (_activeChannel.isSpecial) return const SizedBox.shrink();
+
+    final isHot = _feedMode == FeedMode.hot;
+    final isRecent = _feedMode == FeedMode.recent;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            width: 0.8,
+          ),
+        ),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            // Chip "En Llamas"
+            GestureDetector(
+              onTap: () {
+                if (!isHot) {
+                  setState(() => _feedMode = FeedMode.hot);
+                  _loadPosts();
+                }
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                decoration: BoxDecoration(
+                  gradient: isHot ? ZanateColors.hotFlameGradient : null,
+                  color: isHot
+                      ? null
+                      : (isDark
+                          ? const Color(0xFF0F172A)
+                          : ZanateColors.surfaceBg),
+                  borderRadius: BorderRadius.circular(24),
+                  border: isHot
+                      ? null
+                      : Border.all(
+                          color: isDark
+                              ? const Color(0xFF334155)
+                              : ZanateColors.subtleBorder,
+                          width: 0.8,
+                        ),
+                  boxShadow: isHot
+                      ? [
+                          BoxShadow(
+                            color: const Color(0xFFFF512F)
+                                .withValues(alpha: 0.28),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    PhosphorIcon(
+                      PhosphorIconsFill.flame,
+                      size: 16,
+                      color: isHot
+                          ? Colors.white
+                          : (isDark
+                              ? const Color(0xFFF97316)
+                              : const Color(0xFFEA580C)),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'En Llamas',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: isHot ? FontWeight.w700 : FontWeight.w600,
+                        color: isHot
+                            ? Colors.white
+                            : (isDark
+                                ? const Color(0xFF94A3B8)
+                                : Colors.blueGrey.shade600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+
+            // Chip "Recientes"
+            GestureDetector(
+              onTap: () {
+                if (!isRecent) {
+                  setState(() => _feedMode = FeedMode.recent);
+                  _loadPosts();
+                }
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                decoration: BoxDecoration(
+                  color: isRecent
+                      ? (isDark
+                          ? ZanateColors.zanateAccent
+                          : ZanateColors.zanateDark)
+                      : (isDark
+                          ? const Color(0xFF0F172A)
+                          : ZanateColors.surfaceBg),
+                  borderRadius: BorderRadius.circular(24),
+                  border: isRecent
+                      ? null
+                      : Border.all(
+                          color: isDark
+                              ? const Color(0xFF334155)
+                              : ZanateColors.subtleBorder,
+                          width: 0.8,
+                        ),
+                  boxShadow: isRecent
+                      ? [
+                          BoxShadow(
+                            color: (isDark
+                                    ? ZanateColors.zanateAccent
+                                    : ZanateColors.zanateDark)
+                                .withValues(alpha: 0.22),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    PhosphorIcon(
+                      PhosphorIconsFill.clock,
+                      size: 16,
+                      color: isRecent
+                          ? Colors.white
+                          : (isDark
+                              ? const Color(0xFF94A3B8)
+                              : Colors.blueGrey.shade600),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Recientes',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight:
+                            isRecent ? FontWeight.w700 : FontWeight.w600,
+                        color: isRecent
+                            ? Colors.white
+                            : (isDark
+                                ? const Color(0xFF94A3B8)
+                                : Colors.blueGrey.shade600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -868,19 +1329,15 @@ class _ForumScreenState extends State<ForumScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         children: [
           EmptyStateWidget(
-            icon: _activeChannel.icon,
+            icon: _activeChannel.isSpecial
+                ? PhosphorIconsRegular.bookmarkSimple
+                : null,
             title: _activeChannel.isSpecial
                 ? 'No tienes publicaciones guardadas'
-                : 'No hay mensajes en #${_activeChannel.name}',
+                : 'No hay mensajes en ${_activeChannel.name}',
             description: _activeChannel.isSpecial
                 ? 'Guarda consultas importantes del foro tocando el icono de marcador.'
-                : 'Sé el primero en iniciar una conversación o formular una duda en este canal.',
-            buttonText: _activeChannel.isSpecial
-                ? null
-                : 'Crear Primera Publicación',
-            onButtonPressed: _activeChannel.isSpecial
-                ? null
-                : _openCreateDialog,
+                : 'Sé el primero en formular una consulta o compartir información en este canal.',
           ),
         ],
       );
@@ -891,7 +1348,7 @@ class _ForumScreenState extends State<ForumScreen> {
       child: ListView.builder(
         controller: _feedScrollController,
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: EdgeInsets.zero,
         itemCount: _posts.length,
         itemBuilder: (ctx, index) {
           final post = _posts[index];
@@ -903,41 +1360,32 @@ class _ForumScreenState extends State<ForumScreen> {
             onLike: () => _handleToggleLike(post),
             onBookmark: () => _handleToggleBookmark(post),
             onRepost: () => _handleQuotePost(post),
+            onShare: () => _sharePost(post),
             onVotePoll: (pollId, optionId) => _handleVotePoll(pollId, optionId),
             onDelete: post.isMine
                 ? () async {
-                    final ok = await ForumService.softDeletePost(post.id);
+                    final ok = await ProfileService.deletePost(post.id);
                     if (!mounted) return;
                     if (ok) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Publicación eliminada')),
-                      );
                       _loadPosts();
-                    } else {
-                      final msg = post.isLegalHold
-                          ? 'No se puede eliminar: contenido bajo retención legal.'
-                          : 'No se pudo eliminar la publicación.';
-                      ScaffoldMessenger.of(
-                        context,
-                      ).showSnackBar(SnackBar(content: Text(msg)));
                     }
                   }
                 : null,
             onReport: (reason) async {
-              final ok = await ForumService.reportPost(
+              final success = await ForumService.reportPost(
                 postId: post.id,
                 reason: reason,
               );
               if (!mounted) return;
-              if (ok) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Gracias por tu reporte. Se ha enviado al equipo de moderación.',
-                    ),
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    success
+                        ? 'Gracias por tu reporte. Se ha enviado al equipo de moderación.'
+                        : 'No se pudo enviar el reporte. Inténtalo de nuevo.',
                   ),
-                );
-              }
+                ),
+              );
             },
           );
         },
@@ -945,128 +1393,20 @@ class _ForumScreenState extends State<ForumScreen> {
     );
   }
 
-  Widget _buildFeedModeSelector(ThemeData theme, bool isDark) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF232428) : const Color(0xFFF1F5F9),
-        border: Border(
-          bottom: BorderSide(
-            color: isDark ? const Color(0xFF202225) : const Color(0xFFE2E8F0),
-            width: 1,
-          ),
-        ),
-      ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            ChoiceChip(
-              avatar: Icon(
-                Icons.local_fire_department,
-                size: 16,
-                color: _feedMode == FeedMode.hot
-                    ? Colors.white
-                    : (isDark
-                          ? Colors.orange.shade300
-                          : Colors.orange.shade700),
-              ),
-              label: const Text('En Llamas'),
-              labelStyle: TextStyle(
-                fontSize: 12,
-                fontWeight: _feedMode == FeedMode.hot
-                    ? FontWeight.bold
-                    : FontWeight.normal,
-                color: _feedMode == FeedMode.hot
-                    ? Colors.white
-                    : (isDark ? Colors.grey.shade300 : const Color(0xFF334155)),
-              ),
-              selected: _feedMode == FeedMode.hot,
-              selectedColor: isDark
-                  ? const Color(0xFFEA580C)
-                  : const Color(0xFFF97316),
-              backgroundColor: isDark ? const Color(0xFF2B2D31) : Colors.white,
-              visualDensity: VisualDensity.compact,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              onSelected: (selected) {
-                if (selected && _feedMode != FeedMode.hot) {
-                  setState(() => _feedMode = FeedMode.hot);
-                  _loadPosts();
-                }
-              },
-            ),
-            const SizedBox(width: 8),
-            ChoiceChip(
-              avatar: Icon(
-                Icons.schedule,
-                size: 16,
-                color: _feedMode == FeedMode.recent
-                    ? Colors.white
-                    : (isDark ? Colors.blue.shade300 : Colors.blue.shade700),
-              ),
-              label: const Text('Recientes'),
-              labelStyle: TextStyle(
-                fontSize: 12,
-                fontWeight: _feedMode == FeedMode.recent
-                    ? FontWeight.bold
-                    : FontWeight.normal,
-                color: _feedMode == FeedMode.recent
-                    ? Colors.white
-                    : (isDark ? Colors.grey.shade300 : const Color(0xFF334155)),
-              ),
-              selected: _feedMode == FeedMode.recent,
-              selectedColor: isDark
-                  ? const Color(0xFF2563EB)
-                  : const Color(0xFF3B82F6),
-              backgroundColor: isDark ? const Color(0xFF2B2D31) : Colors.white,
-              visualDensity: VisualDensity.compact,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              onSelected: (selected) {
-                if (selected && _feedMode != FeedMode.recent) {
-                  setState(() => _feedMode = FeedMode.recent);
-                  _loadPosts();
-                }
-              },
-            ),
-            const SizedBox(width: 8),
-            IconButton(
-              icon: const Icon(Icons.rate_review_outlined, size: 20),
-              tooltip: 'Reseñas de secciones',
-              visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.all(6),
-              constraints: const BoxConstraints(),
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const SeccionReviewsScreen(),
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildDiscordWelcomeHero(ThemeData theme, bool isDark) {
-    final width = MediaQuery.of(context).size.width;
-    final isDesktop = width >= 800;
+    final isDesktop = !Responsive.isMobile(context);
 
     if (isDesktop) {
       return Container(
-        height: 56,
+        height: 60,
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF2B2D31) : const Color(0xFFF8FAFC),
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
           border: Border(
             bottom: BorderSide(
-              color: isDark ? const Color(0xFF202225) : const Color(0xFFE2E8F0),
-              width: 1,
+              color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+              width: 0.8,
             ),
           ),
         ),
@@ -1074,31 +1414,35 @@ class _ForumScreenState extends State<ForumScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
-              width: 30,
-              height: 30,
+              width: 34,
+              height: 34,
               decoration: BoxDecoration(
                 color: isDark
-                    ? const Color(0xFF383A40)
-                    : const Color(0xFFEEF2FF),
-                borderRadius: BorderRadius.circular(6),
+                    ? const Color(0xFF0F172A)
+                    : ZanateColors.zanateAccent.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(
-                _activeChannel.icon,
-                size: 16,
-                color: theme.colorScheme.primary,
+              child: Center(
+                child: Icon(
+                  _activeChannel.icon,
+                  size: 18,
+                  color: ZanateColors.zanateAccent,
+                ),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '¡Te damos la bienvenida a #${_activeChannel.name}!',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
+                    _welcomeChannelTitle(),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13.5,
+                      letterSpacing: -0.2,
+                      color: isDark ? Colors.white : ZanateColors.zanateDark,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -1107,10 +1451,10 @@ class _ForumScreenState extends State<ForumScreen> {
                   Text(
                     _activeChannel.description,
                     style: TextStyle(
-                      fontSize: 10.5,
+                      fontSize: 11,
                       color: isDark
-                          ? const Color(0xFF949BA4)
-                          : const Color(0xFF64748B),
+                          ? const Color(0xFF94A3B8)
+                          : Colors.blueGrey.shade400,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -1120,38 +1464,35 @@ class _ForumScreenState extends State<ForumScreen> {
             ),
             const SizedBox(width: 12),
             SizedBox(
-              width: 180,
-              height: 32,
+              width: 200,
+              height: 36,
               child: TextField(
                 controller: _searchController,
                 style: TextStyle(
                   fontSize: 12,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  color: isDark ? Colors.white : ZanateColors.zanateDark,
                 ),
                 decoration: InputDecoration(
                   hintText: 'Buscar...',
                   hintStyle: TextStyle(
-                    fontSize: 11,
+                    fontSize: 11.5,
                     color: isDark
-                        ? const Color(0xFF949BA4)
-                        : Colors.grey.shade500,
+                        ? const Color(0xFF64748B)
+                        : Colors.blueGrey.shade400,
                   ),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    size: 15,
+                  prefixIcon: PhosphorIcon(
+                    PhosphorIconsRegular.magnifyingGlass,
+                    size: 16,
                     color: isDark
-                        ? const Color(0xFF949BA4)
-                        : Colors.grey.shade500,
+                        ? const Color(0xFF94A3B8)
+                        : Colors.blueGrey.shade500,
                   ),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
                           padding: EdgeInsets.zero,
-                          icon: Icon(
-                            Icons.clear,
-                            size: 13,
-                            color: isDark
-                                ? const Color(0xFF949BA4)
-                                : Colors.grey.shade500,
+                          icon: const PhosphorIcon(
+                            PhosphorIconsRegular.x,
+                            size: 14,
                           ),
                           onPressed: () {
                             _searchController.clear();
@@ -1162,26 +1503,34 @@ class _ForumScreenState extends State<ForumScreen> {
                       : null,
                   contentPadding: const EdgeInsets.symmetric(
                     vertical: 0,
-                    horizontal: 8,
+                    horizontal: 10,
                   ),
                   filled: true,
-                  fillColor: isDark ? const Color(0xFF1E1F22) : Colors.white,
+                  fillColor:
+                      isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide(
                       color: isDark
-                          ? const Color(0xFF383A40)
-                          : const Color(0xFFCBD5E1),
-                      width: 1,
+                          ? const Color(0xFF334155)
+                          : ZanateColors.subtleBorder,
+                      width: 0.8,
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide(
                       color: isDark
-                          ? const Color(0xFF383A40)
-                          : const Color(0xFFCBD5E1),
-                      width: 1,
+                          ? const Color(0xFF334155)
+                          : ZanateColors.subtleBorder,
+                      width: 0.8,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(
+                      color: ZanateColors.zanateAccent,
+                      width: 1.2,
                     ),
                   ),
                 ),
@@ -1193,28 +1542,15 @@ class _ForumScreenState extends State<ForumScreen> {
             ),
             if (!_activeChannel.isSpecial) ...[
               const SizedBox(width: 8),
-              SizedBox(
-                height: 32,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                  ),
-                  icon: const Icon(Icons.add, size: 15),
-                  label: const Text(
-                    'Publicar',
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  onPressed: _openCreateDialog,
+              IconButton(
+                tooltip: 'Nueva publicación',
+                icon: PhosphorIcon(
+                  PhosphorIconsBold.plus,
+                  size: 20,
+                  color: isDark ? Colors.white : ZanateColors.zanateDark,
                 ),
+                onPressed: _openCreateDialog,
+                splashRadius: 20,
               ),
             ],
           ],
@@ -1222,140 +1558,6 @@ class _ForumScreenState extends State<ForumScreen> {
       );
     }
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF2B2D31) : const Color(0xFFF8FAFC),
-        border: Border(
-          bottom: BorderSide(
-            color: isDark ? const Color(0xFF202225) : const Color(0xFFE2E8F0),
-            width: 1,
-          ),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                _activeChannel.icon,
-                size: 18,
-                color: theme.colorScheme.primary,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  '¡Te damos la bienvenida a #${_activeChannel.name}!',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13.5,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (!_activeChannel.isSpecial)
-                SizedBox(
-                  height: 30,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                    icon: const Icon(Icons.add, size: 14),
-                    label: const Text(
-                      'Publicar',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    onPressed: _openCreateDialog,
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 34,
-            child: TextField(
-              controller: _searchController,
-              style: TextStyle(
-                fontSize: 12,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
-              ),
-              decoration: InputDecoration(
-                hintText: 'Buscar en #${_activeChannel.name}...',
-                hintStyle: TextStyle(
-                  fontSize: 11.5,
-                  color: isDark
-                      ? const Color(0xFF949BA4)
-                      : Colors.grey.shade500,
-                ),
-                prefixIcon: Icon(
-                  Icons.search,
-                  size: 16,
-                  color: isDark
-                      ? const Color(0xFF949BA4)
-                      : Colors.grey.shade500,
-                ),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        padding: EdgeInsets.zero,
-                        icon: Icon(
-                          Icons.clear,
-                          size: 14,
-                          color: isDark
-                              ? const Color(0xFF949BA4)
-                              : Colors.grey.shade500,
-                        ),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() => _searchQuery = '');
-                          _loadPosts();
-                        },
-                      )
-                    : null,
-                contentPadding: const EdgeInsets.symmetric(
-                  vertical: 0,
-                  horizontal: 8,
-                ),
-                filled: true,
-                fillColor: isDark ? const Color(0xFF1E1F22) : Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
-                  borderSide: BorderSide(
-                    color: isDark
-                        ? const Color(0xFF383A40)
-                        : const Color(0xFFCBD5E1),
-                    width: 1,
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
-                  borderSide: BorderSide(
-                    color: isDark
-                        ? const Color(0xFF383A40)
-                        : const Color(0xFFCBD5E1),
-                    width: 1,
-                  ),
-                ),
-              ),
-              onSubmitted: (val) {
-                setState(() => _searchQuery = val);
-                _loadPosts();
-              },
-            ),
-          ),
-        ],
-      ),
-    );
+    return const SizedBox.shrink();
   }
 }

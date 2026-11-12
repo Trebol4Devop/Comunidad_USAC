@@ -52,7 +52,10 @@ class LocalStorageService {
     final instagram = prefs.getString(_keyInstagram);
     final carne = prefs.getString(_keyCarne);
     final studentName = prefs.getString(_keyStudentName);
-    final isCarneVerified = prefs.getBool(_keyCarneVerified) ?? false;
+    if (prefs.getBool(_keyCarneVerified) == true) {
+      await prefs.setBool(_keyCarneVerified, false);
+    }
+    const isCarneVerified = false;
     final userId = SupabaseService.currentUserId ?? 'local_user';
     final role = await SupabaseService.getUserRole();
     final email = SupabaseService.currentUser?.email;
@@ -99,7 +102,7 @@ class LocalStorageService {
       await prefs.remove(_keyStudentName);
     }
 
-    await prefs.setBool(_keyCarneVerified, profile.isCarneVerified);
+    await prefs.setBool(_keyCarneVerified, false);
 
     if (profile.contactWhatsapp != null) {
       await prefs.setString(_keyWhatsapp, profile.contactWhatsapp!.trim());

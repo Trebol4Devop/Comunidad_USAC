@@ -58,7 +58,7 @@ identificados en el levantamiento de código:
 | **Manejo de errores** (`UX-X-001`, `002`, `003`)         | Hecho |    Hecho    | Hecho  |      Hecho      |   Hecho    | Hecho |
 | **Estados vacíos** (`UX-X-004`)                          | Hecho |    Hecho    | Hecho  |      Hecho      |    N/A     |  N/A  |
 | **Carga con skeletons** (`UX-X-005`)                     | Hecho |    Hecho    | Hecho  |      Hecho      |    N/A     |  N/A  |
-| **Modo offline y caché** (`UX-X-006`)                    | Hecho |    Hecho    | Hecho  |     Parcial     |    N/A     |  N/A  |
+| **Modo offline y caché** (`UX-X-006`)                    | Parcial | Parcial | Parcial | Parcial | N/A | N/A |
 | **Notificaciones / Snackbars** (`UX-X-007`)              | Hecho |    Hecho    | Hecho  |      Hecho      |   Hecho    | Hecho |
 | **Accesibilidad WCAG 2.2 AA** (`UX-X-008`, `009`, `010`) | Hecho |    Hecho    | Hecho  |      Hecho      |   Hecho    | Hecho |
 | **Responsividad y modales** (`UX-X-011`, `012`)          | Hecho |    Hecho    | Hecho  |      Hecho      |   Hecho    | Hecho |
@@ -230,7 +230,7 @@ identificados en el levantamiento de código:
 - **Actor / rol:** Todos (Visitante, Estudiante Registrado, Estudiante Verificado)
 - **Prioridad:** Must
 - **Estado objetivo:** La plataforma implementa la estrategia de caché **Stale-While-Revalidate** para permitir la lectura continua de contenidos académicos sin conexión a internet (en pasillos, sótanos o áreas de baja cobertura del campus universitario). Los datos guardados localmente nunca se destruyen por vencimiento de un temporizador corto; se presentan al usuario como datos en caché acompañados del banner no intrusivo `OfflineBanner`. Las acciones que requieren conectividad para escritura informan amigablemente la restricción y protegen los borradores.
-- **Problema actual [Mejora]:** En [`cache_service.dart:109-111`](../../comunidad_universitaria/lib/core/services/cache_service.dart#L109-L111) y [`network_state_widgets.dart:94-156`](../../comunidad_universitaria/lib/features/shared/widgets/network_state_widgets.dart#L94-L156), el método `getPersisted` borra y devuelve `null` si han pasado más de 45 segundos desde la captura (`difference > ttlMs return null`), dejando la aplicación vacía y deshabilitada en situaciones reales de desconexión en el campus.
+- **Problema actual [Mejora]:** `CacheService` conserva la copia persistida vencida y `getPersisted(..., allowStale: true)` permite recuperarla; los servicios de Foro, Grupos y Marketplace la usan como fallback tras fallar la consulta de red para sus consultas predeterminadas. Esto no implementa todavía SWR completo: no muestra la caché al instante mientras revalida en segundo plano, la persistencia no cubre todos los filtros y falta validar el flujo offline integrado, incluidos los estados visuales y la conservación de borradores ante fallos de escritura.
 - **Precondiciones:** El estudiante ha navegado previamente por la aplicación y el dispositivo pierde la conectividad a internet.
 - **UI / contenido:**
   - Componente `OfflineBanner` anclado bajo la barra superior (AppBar):
@@ -392,8 +392,8 @@ identificados en el levantamiento de código:
 - **Estado objetivo:** La plataforma unifica su adaptabilidad responsiva en torno a **dos breakpoints canónicos**:
   1. **Móvil (< 700px):** Disposición vertical de 1 columna; navegación por cascarón inferior (`NavigationBar`) con 3 destinos directos (Foro, Marketplace, Grupos) y FAB contextual; menús y formularios como hojas inferiores (`ModalBottomSheet`).
   2. **Tablet (700px – 1100px):** Disposición intermedia de 2 columnas o barra lateral colapsable; navegación por pestañas superiores o riel compacto; modales centrados en pantalla; cuadrícula de marketplace en 2 columnas.
-  3. **Desktop (≥ 1100px):** Disposición completa multi-columna tipo Discord (Rail de servidores de 72px + Sidebar de canales de 240px + Feed central acotado por `MaxWidthContainer` + Sidebar derecha de comunidades populares en ≥ 1050/1100px); cuadrícula de marketplace en 3 a 4 columnas.
-- **Problema actual [Mejora]:** En [`responsive.dart:15-35`](../../comunidad_universitaria/lib/core/utils/responsive.dart#L15-L35), [`app_shell.dart:180-215`](../../comunidad_universitaria/lib/features/navigation/app_shell.dart#L180-L215) y [`popular_servers_sidebar.dart:15-25`](../../comunidad_universitaria/lib/features/forum/widgets/discord/popular_servers_sidebar.dart#L15-L25), existen puntos de corte discordantes (sidebar en 1050px mientras `Responsive.isDesktop` usa 1100px; y ciertas vistas de foro evalúan 768px mientras el core define 700px), lo que provoca saltos visuales incongruentes al redimensionar ventanas en navegador.
+  3. **Desktop (≥ 1100px):** Disposición completa multi-columna tipo Discord (Rail de servidores de 72px + Sidebar de canales de 240px + Feed central acotado por `MaxWidthContainer` + Sidebar derecha de comunidades populares); cuadrícula de marketplace en 3 a 4 columnas.
+- **Discrepancia identificada y corrección aplicada:** El foro usaba cortes propios (768px y 1050px) distintos de las utilidades centrales. `forum_screen.dart` ahora usa `Responsive.isMobile` y `Responsive.isDesktop`; la navegación conserva el corte móvil de 700px y el layout desktop comienza en 1100px.
 - **Precondiciones:** La ventana de la aplicación se ejecuta en dispositivos de diversas dimensiones o se redimensiona dinámicamente en el navegador.
 - **UI / contenido:**
   - _Móvil (< 700px):_ Título de AppBar abreviado ("Comunidad USAC"), navegación inferior fija, ocultamiento de columnas auxiliares.

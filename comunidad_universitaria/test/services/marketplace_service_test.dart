@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
 import 'package:comunidad_universitaria/core/config/supabase_config.dart';
 import 'package:comunidad_universitaria/core/services/marketplace_service.dart';
 import 'package:comunidad_universitaria/core/services/supabase_service.dart';
@@ -55,6 +56,10 @@ void main() {
     test(
       'isFree fuerza precio en 0.0 y nullifica contactos en blanco',
       () async {
+        fakeServer.onGet(
+          '/rest/v1/profiles',
+          (_) => {'seller_verification_status': 'verified'},
+        );
         Map<String, dynamic>? insertedItem;
         fakeServer.onPost('/rest/v1/marketplace_items', (req) {
           insertedItem = jsonDecode(req.body) as Map<String, dynamic>;
@@ -97,6 +102,8 @@ void main() {
         expect(insertedItem!['contact_instagram'], isNull);
         expect(insertedItem!['contact_telegram'], '@quimica_gratis');
         expect(insertedItem!['upvotes'], 1);
+        expect(insertedItem!['is_sponsored'], isFalse);
+        expect(insertedItem!['sponsor_badge_text'], isNull);
       },
     );
   });
@@ -119,7 +126,9 @@ void main() {
       bool updateCalled = false;
       fakeServer.onPatch('/rest/v1/marketplace_items', (req) {
         updateCalled = true;
-        return [];
+        return [
+          {'id': 'item-10'},
+        ];
       });
 
       final res = await MarketplaceService.updateItemStatus(
@@ -129,6 +138,20 @@ void main() {
       expect(res, isTrue);
       expect(updateCalled, isTrue);
     });
+
+    test(
+      'updateItemStatus no reporta éxito si RLS no devuelve filas',
+      () async {
+        fakeServer.onPatch('/rest/v1/marketplace_items', (_) => []);
+
+        final result = await MarketplaceService.updateItemStatus(
+          itemId: 'other-users-item',
+          newStatus: 'sold',
+        );
+
+        expect(result, isFalse);
+      },
+    );
   });
 
   group('MarketplaceService.fetchSponsoredListings', () {
@@ -150,6 +173,37 @@ void main() {
     });
   });
 
+  group('MarketplaceService.createListing verification', () {
+    test('bloquea a vendedor no verificado antes de insertar', () async {
+      fakeServer.onGet(
+        '/rest/v1/profiles',
+        (_) => {'seller_verification_status': 'unverified'},
+      );
+      var insertCalled = false;
+      fakeServer.onPost('/rest/v1/marketplace_items', (_) {
+        insertCalled = true;
+        return {};
+      });
+
+      await expectLater(
+        MarketplaceService.createListing(
+          title: 'Libros de cálculo',
+          description: 'En buen estado',
+          price: 50,
+          isFree: false,
+          category: 'libros_materiales',
+          facultad: '08',
+          sede: 'central',
+          buildingCode: 'T-3',
+          locationDetail: 'Entrada',
+          authorAlias: 'Estudiante',
+        ),
+        throwsA(isA<StateError>()),
+      );
+      expect(insertCalled, isFalse);
+    });
+  });
+
   group('MarketplaceService.reportListing', () {
     test('reportListing ejecuta RPC de reporte', () async {
       fakeServer.onPost('/rest/v1/rpc/report_marketplace_item', (req) => true);
@@ -161,6 +215,42 @@ void main() {
         sellerAlias: 'Vendedor Sospechoso',
       );
       expect(res, isTrue);
+    });
+
+    test('reportListing no informa éxito si RPC y fallback fallan', () async {
+      fakeServer.onPost(
+        '/rest/v1/rpc/report_marketplace_item',
+        (_) => http.Response('fallo', 500),
+      );
+      fakeServer.onPost(
+        '/rest/v1/entity_reports',
+        (_) => http.Response('fallo', 500),
+      );
+
+      final result = await MarketplaceService.reportListing(
+        itemId: 'item-spam',
+        reason: 'Precio falso',
+      );
+
+      expect(result, isFalse);
+    });
+
+    test('requestSponsorship no informa éxito si el insert falla', () async {
+      fakeServer.onPost(
+        '/rest/v1/sponsor_requests',
+        (_) => http.Response('fallo', 500),
+      );
+
+      final result = await MarketplaceService.requestSponsorship(
+        brandName: 'Emprendimiento',
+        contactName: 'Persona responsable',
+        contactPhone: '55551234',
+        email: 'contacto@example.com',
+        proposalDetails: 'Una propuesta válida',
+        expectedPlacement: 'Primera Plana',
+      );
+
+      expect(result, isFalse);
     });
   });
 }

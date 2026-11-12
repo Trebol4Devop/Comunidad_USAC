@@ -1,9 +1,6 @@
 class SsoSecurityValidator {
   /// Allowed hosts for local development
-  static const Set<String> allowedLocalhostHosts = {
-    'localhost',
-    '127.0.0.1',
-  };
+  static const Set<String> allowedLocalhostHosts = {'localhost', '127.0.0.1'};
 
   /// Allowed domain suffixes for PEMTREE in production / preview.
   /// Se usa el host completo de PEMTREE (no `netlify.app` a secas) para que
@@ -21,7 +18,8 @@ class SsoSecurityValidator {
   static const String productionCallbackPath = '/auth/callback';
 
   /// Default exact local redirect URI for PEMTREE in development
-  static const String defaultLocalRedirectUri = 'http://localhost:5173/auth/callback';
+  static const String defaultLocalRedirectUri =
+      'http://localhost:5173/auth/callback';
 
   /// Validates that the redirectUri strictly belongs to authorized origins
   /// (Open Redirect Protection), without any asterisks or wildcards.
@@ -76,7 +74,9 @@ class SsoSecurityValidator {
     String tokenType = 'bearer',
     int? expiresIn,
   }) {
-    final cleanRedirect = redirectUri.trim().isEmpty ? defaultLocalRedirectUri : redirectUri.trim();
+    final cleanRedirect = redirectUri.trim().isEmpty
+        ? defaultLocalRedirectUri
+        : redirectUri.trim();
     final baseUri = Uri.parse(cleanRedirect);
     final params = <String, String>{
       'access_token': accessToken,
@@ -87,11 +87,16 @@ class SsoSecurityValidator {
     };
 
     final hashQuery = params.entries
-        .map((e) => '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
+        .map(
+          (e) =>
+              '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}',
+        )
         .join('&');
 
     final existingFragment = baseUri.fragment;
-    final finalFragment = existingFragment.isNotEmpty ? '$existingFragment&$hashQuery' : hashQuery;
+    final finalFragment = existingFragment.isNotEmpty
+        ? '$existingFragment&$hashQuery'
+        : hashQuery;
 
     return baseUri.replace(fragment: finalFragment).toString();
   }
@@ -105,7 +110,9 @@ class SsoSecurityValidator {
     String error = 'access_denied',
     String errorDescription = 'El usuario canceló la autorización',
   }) {
-    final cleanRedirect = redirectUri.trim().isEmpty ? defaultLocalRedirectUri : redirectUri.trim();
+    final cleanRedirect = redirectUri.trim().isEmpty
+        ? defaultLocalRedirectUri
+        : redirectUri.trim();
     final baseUri = Uri.parse(cleanRedirect);
     final params = <String, String>{
       'error': error,
@@ -114,11 +121,16 @@ class SsoSecurityValidator {
     };
 
     final hashQuery = params.entries
-        .map((e) => '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
+        .map(
+          (e) =>
+              '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}',
+        )
         .join('&');
 
     final existingFragment = baseUri.fragment;
-    final finalFragment = existingFragment.isNotEmpty ? '$existingFragment&$hashQuery' : hashQuery;
+    final finalFragment = existingFragment.isNotEmpty
+        ? '$existingFragment&$hashQuery'
+        : hashQuery;
 
     return baseUri.replace(fragment: finalFragment).toString();
   }

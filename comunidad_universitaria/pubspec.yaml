@@ -1,6 +1,6 @@
 name: comunidad_universitaria
 description: "A new Flutter project."
-publish_to: 'none'
+publish_to: "none"
 version: 0.1.0+1
 
 environment:
@@ -17,6 +17,15 @@ dependencies:
   image_picker: ^1.1.2
   http: ^1.2.0
   qr_flutter: ^4.1.0
+  share_plus: 13.3.1
+  path_provider: ^2.1.2
+  latlong2: ^0.9.1
+  usac_campus_map:
+    path: ../../usac_campus_map
+  connectivity_plus: ^7.3.2
+  pretty_animated_text: ^3.3.0
+  morphtext: ^0.2.1
+  phosphoricons_flutter: ^1.1.1
 
 dev_dependencies:
   flutter_test:
@@ -28,3 +37,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/images/zanate_logo.png

@@ -21,14 +21,25 @@ void main() async {
 
   // Load or generate default student pseudonym
   final initialAlias = await LocalStorageService.getOrGenerateAlias();
+  final initialIsDarkMode = await LocalStorageService.isDarkMode();
 
-  runApp(ComunidadUSACApp(initialAlias: initialAlias));
+  runApp(
+    ComunidadUSACApp(
+      initialAlias: initialAlias,
+      initialIsDarkMode: initialIsDarkMode,
+    ),
+  );
 }
 
 class ComunidadUSACApp extends StatefulWidget {
   final String initialAlias;
+  final bool initialIsDarkMode;
 
-  const ComunidadUSACApp({super.key, required this.initialAlias});
+  const ComunidadUSACApp({
+    super.key,
+    required this.initialAlias,
+    this.initialIsDarkMode = false,
+  });
 
   @override
   State<ComunidadUSACApp> createState() => _ComunidadUSACAppState();
@@ -36,12 +47,13 @@ class ComunidadUSACApp extends StatefulWidget {
 
 class _ComunidadUSACAppState extends State<ComunidadUSACApp> {
   late String _activeAlias;
-  ThemeMode _themeMode = ThemeMode.light;
+  late ThemeMode _themeMode;
 
   @override
   void initState() {
     super.initState();
     _activeAlias = widget.initialAlias;
+    _themeMode = widget.initialIsDarkMode ? ThemeMode.dark : ThemeMode.light;
   }
 
   void _updateAlias(String newAlias) {
@@ -50,10 +62,12 @@ class _ComunidadUSACAppState extends State<ComunidadUSACApp> {
     });
   }
 
-  void _toggleTheme() {
-    setState(() {
-      _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
-    });
+  Future<void> _toggleTheme() async {
+    final nextMode = _themeMode == ThemeMode.light
+        ? ThemeMode.dark
+        : ThemeMode.light;
+    setState(() => _themeMode = nextMode);
+    await LocalStorageService.saveThemeMode(nextMode == ThemeMode.dark);
   }
 
   Route<dynamic> _onGenerateRoute(RouteSettings settings) {
@@ -61,11 +75,17 @@ class _ComunidadUSACAppState extends State<ComunidadUSACApp> {
     Uri? uri = Uri.tryParse(rawName);
 
     // In Flutter web, check Uri.base if settings.name is empty or '/'
-    if ((uri == null || (uri.path != '/auth/authorize' && uri.path != 'auth/authorize')) && kIsWeb) {
+    if ((uri == null ||
+            (uri.path != '/auth/authorize' && uri.path != 'auth/authorize')) &&
+        kIsWeb) {
       final base = Uri.base;
-      if (base.path == '/auth/authorize' || base.path == 'auth/authorize' || base.fragment.contains('auth/authorize')) {
+      if (base.path == '/auth/authorize' ||
+          base.path == 'auth/authorize' ||
+          base.fragment.contains('auth/authorize')) {
         if (base.fragment.contains('auth/authorize')) {
-          final cleanFragment = base.fragment.startsWith('/') ? base.fragment : '/${base.fragment}';
+          final cleanFragment = base.fragment.startsWith('/')
+              ? base.fragment
+              : '/${base.fragment}';
           uri = Uri.tryParse(cleanFragment);
         } else {
           uri = base;
@@ -73,7 +93,10 @@ class _ComunidadUSACAppState extends State<ComunidadUSACApp> {
       }
     }
 
-    if (uri != null && (uri.path == '/auth/authorize' || uri.path == 'auth/authorize' || uri.path.endsWith('/auth/authorize'))) {
+    if (uri != null &&
+        (uri.path == '/auth/authorize' ||
+            uri.path == 'auth/authorize' ||
+            uri.path.endsWith('/auth/authorize'))) {
       final params = Map<String, String>.from(uri.queryParameters);
       if (kIsWeb) {
         Uri.base.queryParameters.forEach((k, v) {
@@ -115,7 +138,7 @@ class _ComunidadUSACAppState extends State<ComunidadUSACApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Comunidad USAC',
+      title: 'Comunidad Universitaria',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
@@ -134,11 +157,10 @@ class AppScrollBehavior extends MaterialScrollBehavior {
 
   @override
   Set<PointerDeviceKind> get dragDevices => {
-        PointerDeviceKind.touch,
-        PointerDeviceKind.mouse,
-        PointerDeviceKind.trackpad,
-        PointerDeviceKind.stylus,
-        PointerDeviceKind.invertedStylus,
-      };
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.trackpad,
+    PointerDeviceKind.stylus,
+    PointerDeviceKind.invertedStylus,
+  };
 }
-

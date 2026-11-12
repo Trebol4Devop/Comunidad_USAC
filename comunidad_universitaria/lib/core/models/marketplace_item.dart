@@ -1,3 +1,5 @@
+import '../services/share_count_service.dart';
+
 enum MarketplaceCategory {
   comidaPostres,
   tutoriasAcademica,
@@ -73,12 +75,14 @@ class MarketplaceItem {
   final String? videoUrl; // Exclusivo para patrocinadores / showcase
   final bool isSponsored; // Primera plana
   final String? sponsorBadgeText;
+  final String? sponsorBrandName;
   final String authorAlias;
   final String? userId;
   final DateTime createdAt;
   final int moderationStatus; // 0: Activo, 1: En revisión, 2: Oculto/Bloqueado
   final int reportedCount;
   final int upvotes;
+  final int sharesCount;
   final bool isUpvotedByMe;
   final String status; // available, reserved, sold, paused, archived
   final bool isSellerVerified;
@@ -104,12 +108,14 @@ class MarketplaceItem {
     this.videoUrl,
     this.isSponsored = false,
     this.sponsorBadgeText,
+    this.sponsorBrandName,
     required this.authorAlias,
     this.userId,
     required this.createdAt,
     this.moderationStatus = 0,
     this.reportedCount = 0,
     this.upvotes = 0,
+    this.sharesCount = 0,
     this.isUpvotedByMe = false,
     this.status = 'available',
     this.isSellerVerified = false,
@@ -126,6 +132,11 @@ class MarketplaceItem {
   bool get isSold => status == 'sold';
   bool get isReserved => status == 'reserved';
   bool get isAvailable => status == 'available';
+
+  String? get normalizedSponsorBrandName {
+    final name = sponsorBrandName?.trim();
+    return name == null || name.isEmpty ? null : name;
+  }
 
   bool get isHidden => moderationStatus >= 2;
   bool get isUnderReview => moderationStatus == 1;
@@ -196,12 +207,14 @@ class MarketplaceItem {
     String? videoUrl,
     bool? isSponsored,
     String? sponsorBadgeText,
+    String? sponsorBrandName,
     String? authorAlias,
     String? userId,
     DateTime? createdAt,
     int? moderationStatus,
     int? reportedCount,
     int? upvotes,
+    int? sharesCount,
     bool? isUpvotedByMe,
     String? status,
     bool? isSellerVerified,
@@ -227,12 +240,14 @@ class MarketplaceItem {
       videoUrl: videoUrl ?? this.videoUrl,
       isSponsored: isSponsored ?? this.isSponsored,
       sponsorBadgeText: sponsorBadgeText ?? this.sponsorBadgeText,
+      sponsorBrandName: sponsorBrandName ?? this.sponsorBrandName,
       authorAlias: authorAlias ?? this.authorAlias,
       userId: userId ?? this.userId,
       createdAt: createdAt ?? this.createdAt,
       moderationStatus: moderationStatus ?? this.moderationStatus,
       reportedCount: reportedCount ?? this.reportedCount,
       upvotes: upvotes ?? this.upvotes,
+      sharesCount: sharesCount ?? this.sharesCount,
       isUpvotedByMe: isUpvotedByMe ?? this.isUpvotedByMe,
       status: status ?? this.status,
       isSellerVerified: isSellerVerified ?? this.isSellerVerified,
@@ -283,6 +298,11 @@ class MarketplaceItem {
       videoUrl: map['video_url'],
       isSponsored: map['is_sponsored'] == true,
       sponsorBadgeText: map['sponsor_badge_text'],
+      sponsorBrandName:
+          (map['sponsor_brand_name'] ??
+                  map['sponsor_name'] ??
+                  map['brand_name'])
+              ?.toString(),
       authorAlias: map['author_alias'] ?? 'Estudiante Emprendedor',
       userId: null,
       createdAt: map['created_at'] != null
@@ -297,6 +317,18 @@ class MarketplaceItem {
       upvotes: (map['upvotes'] is int)
           ? map['upvotes']
           : int.tryParse(map['upvotes']?.toString() ?? '0') ?? 0,
+      sharesCount: () {
+        final rawShares = map['shares_count'] ?? map['shares'];
+        int parsedShares = 0;
+        if (rawShares != null) {
+          parsedShares = (rawShares is int)
+              ? rawShares
+              : int.tryParse(rawShares.toString()) ?? 0;
+        }
+        final itemId = map['id']?.toString() ?? '';
+        final localShares = ShareCountService.getCachedCount(itemId);
+        return localShares > parsedShares ? localShares : parsedShares;
+      }(),
       isUpvotedByMe: isUpvotedByMe,
       status: map['status']?.toString() ?? 'available',
       isSellerVerified:

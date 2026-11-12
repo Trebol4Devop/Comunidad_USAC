@@ -15,8 +15,12 @@ class SkeletonCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final baseColor = isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0);
-    final highlightColor = isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9);
+    final baseColor = isDark
+        ? const Color(0xFF1E293B)
+        : const Color(0xFFE2E8F0);
+    final highlightColor = isDark
+        ? const Color(0xFF334155)
+        : const Color(0xFFF1F5F9);
 
     return Container(
       height: height,
@@ -24,9 +28,7 @@ class SkeletonCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: baseColor,
         borderRadius: borderRadius,
-        border: Border.all(
-          color: highlightColor.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: highlightColor.withValues(alpha: 0.3)),
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -94,10 +96,7 @@ class SkeletonCard extends StatelessWidget {
 class OfflineBanner extends StatelessWidget {
   final VoidCallback? onRetry;
 
-  const OfflineBanner({
-    super.key,
-    this.onRetry,
-  });
+  const OfflineBanner({super.key, this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -129,7 +128,9 @@ class OfflineBanner extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
+                color: isDark
+                    ? const Color(0xFFFDE68A)
+                    : const Color(0xFF92400E),
               ),
             ),
           ),
@@ -145,7 +146,9 @@ class OfflineBanner extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309),
+                  color: isDark
+                      ? const Color(0xFFFBBF24)
+                      : const Color(0xFFB45309),
                 ),
               ),
             ),

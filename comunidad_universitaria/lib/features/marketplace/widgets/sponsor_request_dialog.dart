@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import '../../../core/constants/zanate_colors.dart';
 import '../../../core/services/marketplace_service.dart';
 import '../../../core/utils/responsive.dart';
 
@@ -38,6 +40,7 @@ class _SponsorRequestDialogState extends State<SponsorRequestDialog> {
 
   String _placement = 'Primera Plana - Marketplace';
   bool _isSubmitting = false;
+  String? _submitError;
 
   @override
   void dispose() {
@@ -52,28 +55,42 @@ class _SponsorRequestDialogState extends State<SponsorRequestDialog> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isSubmitting = true);
+    setState(() {
+      _isSubmitting = true;
+      _submitError = null;
+    });
 
-    final success = await MarketplaceService.requestSponsorship(
-      brandName: _brandController.text.trim(),
-      contactName: _contactController.text.trim(),
-      contactPhone: _phoneController.text.trim(),
-      email: _emailController.text.trim(),
-      proposalDetails: _proposalController.text.trim(),
-      expectedPlacement: _placement,
-    );
+    var success = false;
+    try {
+      success = await MarketplaceService.requestSponsorship(
+        brandName: _brandController.text.trim(),
+        contactName: _contactController.text.trim(),
+        contactPhone: _phoneController.text.trim(),
+        email: _emailController.text.trim(),
+        proposalDetails: _proposalController.text.trim(),
+        expectedPlacement: _placement,
+      );
+    } catch (_) {
+      success = false;
+    }
 
-    if (mounted) {
-      setState(() => _isSubmitting = false);
-      if (success) {
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('¡Solicitud enviada con éxito! El equipo se comunicará contigo por WhatsApp.'),
-            backgroundColor: Color(0xFF004B87),
+    if (!mounted) return;
+    if (success) {
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            '¡Solicitud enviada con éxito! El equipo se comunicará contigo por WhatsApp.',
           ),
-        );
-      }
+          backgroundColor: Color(0xFF004B87),
+        ),
+      );
+    } else {
+      setState(() {
+        _isSubmitting = false;
+        _submitError =
+            'No se pudo enviar la solicitud. Tus datos siguen en el formulario; inténtalo de nuevo.';
+      });
     }
   }
 
@@ -81,7 +98,8 @@ class _SponsorRequestDialogState extends State<SponsorRequestDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isMobile = Responsive.isMobile(context);
-    final maxHeight = MediaQuery.of(context).size.height * (isMobile ? 0.90 : 0.85);
+    final maxHeight =
+        MediaQuery.of(context).size.height * (isMobile ? 0.90 : 0.85);
 
     Widget content = Form(
       key: _formKey,
@@ -93,168 +111,237 @@ class _SponsorRequestDialogState extends State<SponsorRequestDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-            // Header
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.star_outline, color: Color(0xFFD97706), size: 24),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Solicitar Espacio de Patrocinador',
-                        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      const Text(
-                        'Anúnciate en primera plana con video y mayor alcance',
-                        style: TextStyle(fontSize: 12, color: Color(0xFFD97706)),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-
-            const Divider(height: 24),
-
-            TextFormField(
-              controller: _brandController,
-              decoration: const InputDecoration(
-                labelText: 'Nombre del Emprendimiento, Marca o Negocio',
-                hintText: 'Ej. Librería Central / Pastelería Universitaria',
-              ),
-              validator: (val) => (val == null || val.trim().isEmpty) ? 'Ingresa el nombre del negocio' : null,
-            ),
-
-            const SizedBox(height: 12),
-
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _contactController,
-                    decoration: const InputDecoration(
-                      labelText: 'Nombre del Encargado',
-                      hintText: 'Tu nombre',
-                    ),
-                    validator: (val) => (val == null || val.trim().isEmpty) ? 'Ingresa tu nombre' : null,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: TextFormField(
-                    controller: _phoneController,
-                    keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(
-                      labelText: 'WhatsApp',
-                      hintText: '55551234',
-                    ),
-                    validator: (val) => (val == null || val.trim().isEmpty) ? 'Ingresa tu WhatsApp' : null,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-
-            TextFormField(
-              controller: _emailController,
-              keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: 'Correo Electrónico de Contacto',
-                hintText: 'contacto@ejemplo.com',
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            DropdownButtonFormField<String>(
-              initialValue: _placement,
-              isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: 'Espacio Deseado',
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              ),
-              items: const [
-                DropdownMenuItem(value: 'Primera Plana - Marketplace', child: Text('Primera Plana — Marketplace con Video y Fotos', overflow: TextOverflow.ellipsis)),
-                DropdownMenuItem(value: 'Banner en Foro Universitario', child: Text('Banner Destacado en Foro Universitario', overflow: TextOverflow.ellipsis)),
-                DropdownMenuItem(value: 'Todos los Espacios', child: Text('Patrocinio Integral Multisección', overflow: TextOverflow.ellipsis)),
-              ],
-              onChanged: (val) => setState(() => _placement = val ?? _placement),
-            ),
-
-            const SizedBox(height: 12),
-
-            TextFormField(
-              controller: _proposalController,
-              maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: 'Detalle de la propuesta o productos a promocionar',
-                hintText: 'Describe qué productos o servicios ofreces a los estudiantes...',
-              ),
-              validator: (val) => (val == null || val.trim().isEmpty) ? 'Describe tu propuesta' : null,
-            ),
-
-            const SizedBox(height: 16),
-
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Text(
-                'Nota: Los patrocinios ayudan al sostenimiento autónomo de la plataforma estudiantil. No se admiten productos no autorizados por las normas comunitarias.',
-                style: TextStyle(fontSize: 11, color: Color(0xFF475569)),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            Align(
-              alignment: Alignment.centerRight,
-              child: Wrap(
-                alignment: WrapAlignment.end,
-                spacing: 12,
-                runSpacing: 8,
+              // Header
+              Row(
                 children: [
-                  TextButton(
-                    onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
-                    child: const Text('Cancelar'),
-                  ),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFD97706),
-                      foregroundColor: Colors.white,
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    onPressed: _isSubmitting ? null : _submit,
-                    child: Text(_isSubmitting ? 'Enviando...' : 'Enviar Solicitud'),
+                    child: const Icon(
+                      PhosphorIconsBold.sparkle,
+                      color: Color(0xFFD97706),
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Solicitar Espacio de Patrocinador',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const Text(
+                          'Anúnciate en primera plana con video y mayor alcance',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFFD97706),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-            ),
-          ],
+
+              const Divider(height: 24),
+
+              TextFormField(
+                controller: _brandController,
+                decoration: const InputDecoration(
+                  labelText: 'Nombre del Emprendimiento, Marca o Negocio',
+                  hintText: 'Ej. Librería Central / Pastelería Universitaria',
+                ),
+                validator: (val) => (val == null || val.trim().isEmpty)
+                    ? 'Ingresa el nombre del negocio'
+                    : null,
+              ),
+
+              const SizedBox(height: 12),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _contactController,
+                      decoration: const InputDecoration(
+                        labelText: 'Nombre del Encargado',
+                        hintText: 'Tu nombre',
+                      ),
+                      validator: (val) => (val == null || val.trim().isEmpty)
+                          ? 'Ingresa tu nombre'
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                        labelText: 'WhatsApp',
+                        hintText: '55551234',
+                      ),
+                      validator: (val) =>
+                          val == null ||
+                              !RegExp(r'^\d{8}$').hasMatch(val.trim())
+                          ? 'Ingresa un número de WhatsApp de 8 dígitos.'
+                          : null,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              TextFormField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  labelText: 'Correo Electrónico de Contacto',
+                  hintText: 'contacto@ejemplo.com',
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              DropdownButtonFormField<String>(
+                initialValue: _placement,
+                isExpanded: true,
+                decoration: const InputDecoration(
+                  labelText: 'Espacio Deseado',
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                ),
+                items: const [
+                  DropdownMenuItem(
+                    value: 'Primera Plana - Marketplace',
+                    child: Text(
+                      'Primera Plana — Marketplace con Video y Fotos',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: 'Banner en Foro Universitario',
+                    child: Text(
+                      'Banner Destacado en Foro Universitario',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: 'Todos los Espacios',
+                    child: Text(
+                      'Patrocinio Integral Multisección',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+                onChanged: (val) =>
+                    setState(() => _placement = val ?? _placement),
+              ),
+
+              const SizedBox(height: 12),
+
+              TextFormField(
+                controller: _proposalController,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText:
+                      'Detalle de la propuesta o productos a promocionar',
+                  hintText:
+                      'Describe qué productos o servicios ofreces a los estudiantes...',
+                ),
+                validator: (val) => val == null || val.trim().length < 10
+                    ? 'Describe tu propuesta con al menos 10 caracteres.'
+                    : null,
+              ),
+
+              if (_submitError != null) ...[
+                const SizedBox(height: 12),
+                Semantics(
+                  liveRegion: true,
+                  child: Text(
+                    _submitError!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 16),
+
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  'Nota: Los patrocinios ayudan al sostenimiento autónomo de la plataforma estudiantil. No se admiten productos no autorizados por las normas comunitarias.',
+                  style: TextStyle(fontSize: 11, color: Color(0xFF475569)),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              Align(
+                alignment: Alignment.centerRight,
+                child: Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: 12,
+                  runSpacing: 8,
+                  children: [
+                    TextButton(
+                      onPressed: _isSubmitting
+                          ? null
+                          : () => Navigator.of(context).pop(),
+                      child: const Text('Cancelar'),
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFD97706),
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: _isSubmitting ? null : _submit,
+                      child: Text(
+                        _isSubmitting ? 'Enviando...' : 'Enviar Solicitud',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
 
     if (isMobile) {
       return Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
         child: content,
       );
     } else {
       return Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: theme.brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(
+            color: theme.brightness == Brightness.dark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            width: 0.8,
+          ),
+        ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
           child: content,

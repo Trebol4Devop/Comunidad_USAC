@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../../core/constants/categories.dart';
+import '../../../../core/constants/zanate_colors.dart';
 import '../../models/discord_forum_models.dart';
 
 class ForumCarreraPickerDialog extends StatefulWidget {
   final Function(ForumServer server) onServerSelected;
 
-  const ForumCarreraPickerDialog({
-    super.key,
-    required this.onServerSelected,
-  });
+  const ForumCarreraPickerDialog({super.key, required this.onServerSelected});
 
   static Future<void> show(
     BuildContext context, {
@@ -16,12 +15,14 @@ class ForumCarreraPickerDialog extends StatefulWidget {
   }) {
     return showDialog(
       context: context,
-      builder: (ctx) => ForumCarreraPickerDialog(onServerSelected: onServerSelected),
+      builder: (ctx) =>
+          ForumCarreraPickerDialog(onServerSelected: onServerSelected),
     );
   }
 
   @override
-  State<ForumCarreraPickerDialog> createState() => _ForumCarreraPickerDialogState();
+  State<ForumCarreraPickerDialog> createState() =>
+      _ForumCarreraPickerDialogState();
 }
 
 class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
@@ -53,7 +54,13 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
             .replaceAll('(Campus Central)', '')
             .replaceAll('(Extensión)', ' - Extensión')
             .replaceAll(RegExp(r'\s*\([^)]*\)'), '')
-            .replaceAll(RegExp(r'\s*[/|-]\s*(Cursos Básicos|General).*', caseSensitive: false), '')
+            .replaceAll(
+              RegExp(
+                r'\s*[/|-]\s*(Cursos Básicos|General).*',
+                caseSensitive: false,
+              ),
+              '',
+            )
             .replaceAll(RegExp(r'\s+'), ' ')
             .trim();
 
@@ -116,7 +123,7 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
       case '08':
         return const Color(0xFF0284C7);
       case '09':
-        return const Color(0xFF4F46E5);
+        return const Color(0xFF004B87);
       case '10':
         return const Color(0xFF9333EA);
       default:
@@ -139,9 +146,16 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
       return cName.contains(q) || fName.contains(q) || code.contains(q);
     }).toList();
 
+    final borderColor = isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
+    final primaryTextColor = isDark ? Colors.white : ZanateColors.zanateDark;
+    final secondaryTextColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: borderColor, width: 0.8),
+      ),
+      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 580, maxHeight: 620),
         child: Padding(
@@ -152,66 +166,76 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF3B82F6).withValues(alpha: 0.2)
-                          : theme.colorScheme.primary.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
+                      color: ZanateColors.zanateAccent.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                    child: Icon(
-                      Icons.explore_outlined,
-                      color: theme.colorScheme.primary,
-                      size: 24,
+                    child: const Center(
+                      child: PhosphorIcon(
+                        PhosphorIconsRegular.compass,
+                        color: ZanateColors.zanateAccent,
+                        size: 22,
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Explorar Carreras',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                        ),
                         Text(
-                          'Selecciona tu carrera para acceder a sus canales exclusivos',
-                          style: TextStyle(fontSize: 12, color: isDark ? Colors.grey.shade400 : Colors.grey.shade600),
+                          'Agregar servidor',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 18,
+                            letterSpacing: -0.3,
+                            color: primaryTextColor,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Elige una carrera o facultad para añadirla a tu lista',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: secondaryTextColor,
+                          ),
                         ),
                       ],
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, size: 20),
+                    icon: PhosphorIcon(PhosphorIconsRegular.x, size: 18, color: secondaryTextColor),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
               TextField(
                 controller: _searchController,
                 autofocus: true,
                 style: TextStyle(
-                  fontSize: 13,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  fontSize: 13.5,
+                  color: primaryTextColor,
                 ),
                 decoration: InputDecoration(
                   hintText: 'Buscar por carrera, facultad o código...',
                   hintStyle: TextStyle(
                     fontSize: 13,
-                    color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                    color: secondaryTextColor,
                   ),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    size: 20,
-                    color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                  prefixIcon: PhosphorIcon(
+                    PhosphorIconsRegular.magnifyingGlass,
+                    size: 18,
+                    color: secondaryTextColor,
                   ),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
-                          icon: Icon(
-                            Icons.clear,
-                            size: 18,
-                            color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                          icon: PhosphorIcon(
+                            PhosphorIconsRegular.x,
+                            size: 16,
+                            color: secondaryTextColor,
                           ),
                           onPressed: () {
                             _searchController.clear();
@@ -220,18 +244,26 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
                         )
                       : null,
                   filled: true,
-                  fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  fillColor: isDark
+                      ? const Color(0xFF1E293B)
+                      : ZanateColors.surfaceBg,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: borderColor, width: 0.8),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: borderColor, width: 0.8),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(
+                      color: ZanateColors.zanateAccent,
+                      width: 1.5,
                     ),
                   ),
                 ),
@@ -244,9 +276,20 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.search_off, size: 40, color: Colors.grey.shade400),
-                            const SizedBox(height: 8),
-                            Text('No se encontraron carreras que coincidan con "$_searchQuery".'),
+                            PhosphorIcon(
+                              PhosphorIconsRegular.magnifyingGlass,
+                              size: 36,
+                              color: secondaryTextColor.withValues(alpha: 0.6),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              'No se encontraron carreras que coincidan con "$_searchQuery".',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: secondaryTextColor,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
                           ],
                         ),
                       )
@@ -254,52 +297,81 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
                         itemCount: filtered.length,
                         separatorBuilder: (ctx, i) => Divider(
                           height: 1,
-                          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                          color: borderColor,
                         ),
                         itemBuilder: (ctx, i) {
                           final item = filtered[i];
                           final facId = item['facultadId'] as String;
-                          final color = _getColorForFacultad(facId, isDark: isDark);
+                          final color = _getColorForFacultad(
+                            facId,
+                            isDark: isDark,
+                          );
                           final icon = _getIconForFacultad(facId);
                           final carreraName = item['carreraNombre'] as String;
                           final facultadName = item['facultadNombre'] as String;
                           final carreraId = item['carreraId'] as String;
 
                           return ListTile(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             leading: Container(
                               width: 40,
                               height: 40,
                               decoration: BoxDecoration(
                                 color: color.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              child: Icon(icon, color: color, size: 20),
+                              child: Center(
+                                child: Icon(
+                                  icon,
+                                  color: color,
+                                  size: 20,
+                                ),
+                              ),
                             ),
                             title: Text(
                               carreraName,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13.5,
+                                color: primaryTextColor,
+                              ),
                             ),
                             subtitle: Text(
                               facultadName,
-                              style: TextStyle(fontSize: 11, color: isDark ? Colors.grey.shade400 : Colors.grey.shade600),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: secondaryTextColor,
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            trailing: const Icon(Icons.chevron_right, size: 18),
+                            trailing: PhosphorIcon(
+                              PhosphorIconsRegular.caretRight,
+                              size: 16,
+                              color: secondaryTextColor,
+                            ),
                             onTap: () {
                               final short = carreraName.length > 4
                                   ? carreraName.substring(0, 4).toUpperCase()
                                   : carreraName.toUpperCase();
 
                               final newServer = ForumServer(
-                                id: carreraId,
+                                id: facId == 'todas'
+                                    ? carreraId
+                                    : '${facId}_$carreraId',
                                 name: carreraName,
                                 shortCode: short,
                                 icon: icon,
                                 facultadId: facId,
                                 carreraId: carreraId,
-                                description: 'Canal de $carreraName · $facultadName',
+                                description:
+                                    'Canal de $carreraName · $facultadName',
                                 color: color,
                               );
 

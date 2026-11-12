@@ -33,7 +33,8 @@ class ForumServer {
     icon: Icons.chat,
     facultadId: 'todas',
     carreraId: 'todas',
-    description: 'Directorio oficial de grupos de WhatsApp y estudio USAC organizados por facultad y curso.',
+    description:
+        'Directorio oficial de grupos de WhatsApp y estudio USAC organizados por facultad y curso.',
     color: Color(0xFF25D366),
     isGroups: true,
   );
@@ -47,7 +48,8 @@ class ForumServer {
       icon: Icons.school,
       facultadId: 'todas',
       carreraId: 'todas',
-      description: 'Grupos de estudio y WhatsApp de todas las facultades de la USAC.',
+      description:
+          'Grupos de estudio y WhatsApp de todas las facultades de la USAC.',
       color: Color(0xFF004B87),
       isGroups: true,
     ),
@@ -58,7 +60,8 @@ class ForumServer {
       icon: Icons.psychology,
       facultadId: '07',
       carreraId: 'todas',
-      description: 'Grupos de estudio para profesorados, pedagogía y licenciaturas de Humanidades.',
+      description:
+          'Grupos de estudio para profesorados, pedagogía y licenciaturas de Humanidades.',
       color: Color(0xFFD97706),
       isGroups: true,
     ),
@@ -69,7 +72,8 @@ class ForumServer {
       icon: Icons.medical_services,
       facultadId: '05',
       carreraId: '05-00-01',
-      description: 'Grupos de WhatsApp de materias clínicas, ciencias básicas y años de Medicina.',
+      description:
+          'Grupos de WhatsApp de materias clínicas, ciencias básicas y años de Medicina.',
       color: Color(0xFFDC2626),
       isGroups: true,
     ),
@@ -91,7 +95,8 @@ class ForumServer {
       icon: Icons.healing,
       facultadId: '09',
       carreraId: 'todas',
-      description: 'Grupos de WhatsApp para cursos y clínicas dentales de Odontología.',
+      description:
+          'Grupos de WhatsApp para cursos y clínicas dentales de Odontología.',
       color: Color(0xFF4F46E5),
       isGroups: true,
     ),
@@ -102,7 +107,8 @@ class ForumServer {
       icon: Icons.engineering,
       facultadId: '08',
       carreraId: 'todas',
-      description: 'Grupos de WhatsApp de cursos de Área Común y carreras de Ingeniería.',
+      description:
+          'Grupos de WhatsApp de cursos de Área Común y carreras de Ingeniería.',
       color: Color(0xFF0284C7),
       isGroups: true,
     ),
@@ -113,7 +119,8 @@ class ForumServer {
       icon: Icons.biotech,
       facultadId: '06',
       carreraId: 'todas',
-      description: 'Grupos de WhatsApp de Química, Farmacia, Biología, Nutrición y Química Biológica.',
+      description:
+          'Grupos de WhatsApp de Química, Farmacia, Biología, Nutrición y Química Biológica.',
       color: Color(0xFFE11D48),
       isGroups: true,
     ),
@@ -124,7 +131,8 @@ class ForumServer {
       icon: Icons.health_and_safety,
       facultadId: '05',
       carreraId: 'todas',
-      description: 'Grupos de WhatsApp de la Facultad de Ciencias Médicas, enfermería y fisioterapia.',
+      description:
+          'Grupos de WhatsApp de la Facultad de Ciencias Médicas, enfermería y fisioterapia.',
       color: Color(0xFFDC2626),
       isGroups: true,
     ),
@@ -146,7 +154,8 @@ class ForumServer {
       icon: Icons.trending_up,
       facultadId: '03',
       carreraId: 'todas',
-      description: 'Grupos de WhatsApp de Contaduría Pública y Auditoría, Administración y Economía.',
+      description:
+          'Grupos de WhatsApp de Contaduría Pública y Auditoría, Administración y Economía.',
       color: Color(0xFF0D9488),
       isGroups: true,
     ),
@@ -157,7 +166,8 @@ class ForumServer {
       icon: Icons.architecture,
       facultadId: '02',
       carreraId: 'todas',
-      description: 'Grupos de WhatsApp de Licenciatura en Arquitectura y Diseño Gráfico.',
+      description:
+          'Grupos de WhatsApp de Licenciatura en Arquitectura y Diseño Gráfico.',
       color: Color(0xFF059669),
       isGroups: true,
     ),
@@ -168,7 +178,8 @@ class ForumServer {
       icon: Icons.eco,
       facultadId: '01',
       carreraId: 'todas',
-      description: 'Grupos de WhatsApp de Sistemas de Producción Agrícola y Recursos Naturales.',
+      description:
+          'Grupos de WhatsApp de Sistemas de Producción Agrícola y Recursos Naturales.',
       color: Color(0xFF16A34A),
       isGroups: true,
     ),
@@ -183,7 +194,8 @@ class ForumServer {
       icon: Icons.school,
       facultadId: 'todas',
       carreraId: 'todas',
-      description: 'Espacio general para todas las facultades, escuelas y sedes.',
+      description:
+          'Espacio general para todas las facultades, escuelas y sedes.',
       color: Color(0xFF004B87),
     ),
     groupsServer,
@@ -194,7 +206,8 @@ class ForumServer {
       icon: Icons.auto_stories,
       facultadId: '08',
       carreraId: 'area_comun',
-      description: 'Ciencias básicas, matemáticas, físicas y químicas de primeros semestres.',
+      description:
+          'Ciencias básicas, matemáticas, físicas y químicas de primeros semestres.',
       color: Color(0xFF0284C7),
     ),
     ForumServer(
@@ -204,7 +217,8 @@ class ForumServer {
       icon: Icons.terminal,
       facultadId: '08',
       carreraId: 'sistemas',
-      description: 'Escuela de Ciencias y Sistemas. Programación, proyectos y tecnología.',
+      description:
+          'Escuela de Ciencias y Sistemas. Programación, proyectos y tecnología.',
       color: Color(0xFF0284C7),
     ),
     ForumServer(
@@ -274,7 +288,8 @@ class ForumServer {
       icon: Icons.eco,
       facultadId: '01',
       carreraId: '01-00-02',
-      description: 'Recursos naturales, producción agrícola y gestión ambiental.',
+      description:
+          'Recursos naturales, producción agrícola y gestión ambiental.',
       color: Color(0xFF16A34A),
     ),
   ];
@@ -300,7 +315,10 @@ class ForumChannel {
   });
 
   /// Factory that builds a ForumChannel directly from a `categorias_foro` database record
-  static ForumChannel fromDbCategory({required String id, required String nombre}) {
+  static ForumChannel fromDbCategory({
+    required String id,
+    required String nombre,
+  }) {
     switch (id) {
       case 'todos':
         return ForumChannel(
@@ -309,7 +327,8 @@ class ForumChannel {
           label: nombre,
           categoryId: id,
           icon: Icons.tag,
-          description: 'Visualiza todas las consultas y aportes de esta carrera en un solo lugar.',
+          description:
+              'Visualiza todas las consultas y aportes de esta carrera en un solo lugar.',
         );
       case 'prerrequisitos':
         return ForumChannel(
@@ -318,7 +337,8 @@ class ForumChannel {
           label: nombre,
           categoryId: id,
           icon: Icons.school_outlined,
-          description: 'Consultas sobre créditos, asignaciones, prerrequisitos y cierre de pensum.',
+          description:
+              'Consultas sobre créditos, asignaciones, prerrequisitos y cierre de pensum.',
         );
       case 'catedraticos':
         return ForumChannel(
@@ -327,7 +347,8 @@ class ForumChannel {
           label: nombre,
           categoryId: id,
           icon: Icons.record_voice_over_outlined,
-          description: 'Experiencias, recomendaciones y estilo de evaluación de docentes y auxiliares.',
+          description:
+              'Experiencias, recomendaciones y estilo de evaluación de docentes y auxiliares.',
         );
       case 'apuntes':
         return ForumChannel(
@@ -336,7 +357,8 @@ class ForumChannel {
           label: nombre,
           categoryId: id,
           icon: Icons.folder_shared_outlined,
-          description: 'Material de estudio, resúmenes, parciales pasados, libros y guías de laboratorio.',
+          description:
+              'Material de estudio, resúmenes, parciales pasados, libros y guías de laboratorio.',
         );
       case 'horarios':
         return ForumChannel(
@@ -345,7 +367,8 @@ class ForumChannel {
           label: nombre,
           categoryId: id,
           icon: Icons.schedule_outlined,
-          description: 'Información de traslapes, cupos, secciones y asignación de laboratorios.',
+          description:
+              'Información de traslapes, cupos, secciones y asignación de laboratorios.',
         );
       case 'general':
         return ForumChannel(
@@ -354,7 +377,8 @@ class ForumChannel {
           label: nombre,
           categoryId: id,
           icon: Icons.chat_bubble_outline,
-          description: 'Cafetería estudiantil, avisos generales y vida universitaria en la carrera.',
+          description:
+              'Cafetería estudiantil, avisos generales y vida universitaria en la carrera.',
         );
       default:
         final slug = id.replaceAll('_', '-').toLowerCase();
@@ -377,7 +401,8 @@ class ForumChannel {
       label: 'Todas las áreas',
       categoryId: 'todos',
       icon: Icons.tag,
-      description: 'Visualiza todas las consultas y aportes de esta carrera en un solo lugar.',
+      description:
+          'Visualiza todas las consultas y aportes de esta carrera en un solo lugar.',
     ),
     ForumChannel(
       id: 'prerrequisitos',
@@ -385,7 +410,8 @@ class ForumChannel {
       label: 'Prerrequisitos & Pensum',
       categoryId: 'prerrequisitos',
       icon: Icons.school_outlined,
-      description: 'Consultas sobre créditos, asignaciones, prerrequisitos y cierre de pensum.',
+      description:
+          'Consultas sobre créditos, asignaciones, prerrequisitos y cierre de pensum.',
     ),
     ForumChannel(
       id: 'catedraticos',
@@ -393,7 +419,8 @@ class ForumChannel {
       label: 'Catedráticos & Auxiliares',
       categoryId: 'catedraticos',
       icon: Icons.record_voice_over_outlined,
-      description: 'Experiencias, recomendaciones y estilo de evaluación de docentes y auxiliares.',
+      description:
+          'Experiencias, recomendaciones y estilo de evaluación de docentes y auxiliares.',
     ),
     ForumChannel(
       id: 'apuntes',
@@ -401,7 +428,8 @@ class ForumChannel {
       label: 'Apuntes & Exámenes',
       categoryId: 'apuntes',
       icon: Icons.folder_shared_outlined,
-      description: 'Material de estudio, resúmenes, parciales pasados, libros y guías de laboratorio.',
+      description:
+          'Material de estudio, resúmenes, parciales pasados, libros y guías de laboratorio.',
     ),
     ForumChannel(
       id: 'horarios',
@@ -409,7 +437,8 @@ class ForumChannel {
       label: 'Horarios & Secciones',
       categoryId: 'horarios',
       icon: Icons.schedule_outlined,
-      description: 'Información de traslapes, cupos, secciones y asignación de laboratorios.',
+      description:
+          'Información de traslapes, cupos, secciones y asignación de laboratorios.',
     ),
   ];
 
@@ -431,7 +460,8 @@ class ForumChannel {
       label: 'Todas las Facultades',
       categoryId: 'todas',
       icon: Icons.tag,
-      description: 'Directorio completo de grupos de WhatsApp de todas las facultades.',
+      description:
+          'Directorio completo de grupos de WhatsApp de todas las facultades.',
     ),
     ForumChannel(
       id: '08',
@@ -455,7 +485,8 @@ class ForumChannel {
       label: 'Ciencias Económicas',
       categoryId: '03',
       icon: Icons.trending_up,
-      description: 'Grupos de WhatsApp para Auditoría, Administración y Economía.',
+      description:
+          'Grupos de WhatsApp para Auditoría, Administración y Economía.',
     ),
     ForumChannel(
       id: '04',
@@ -503,7 +534,8 @@ class ForumChannel {
       label: 'Facultad de Odontología',
       categoryId: '09',
       icon: Icons.healing,
-      description: 'Grupos de WhatsApp para materias y clínicas de Odontología.',
+      description:
+          'Grupos de WhatsApp para materias y clínicas de Odontología.',
     ),
     ForumChannel(
       id: '10',
@@ -516,23 +548,25 @@ class ForumChannel {
   ];
 
   /// Builds groups channels dynamically from database faculties
-  static List<ForumChannel> groupsChannelsFromFaculties(List<ForumFaculty> faculties) {
+  static List<ForumChannel> groupsChannelsFromFaculties(
+    List<ForumFaculty> faculties,
+  ) {
     if (faculties.isEmpty) return groupsChannels;
     final List<ForumChannel> list = [];
     for (final f in faculties) {
       final slug = f.id == 'todas'
           ? 'todos-los-grupos'
           : f.name
-              .toLowerCase()
-              .replaceAll('facultad de ', '')
-              .replaceAll('ciencias ', 'ciencias-')
-              .replaceAll(' ', '-')
-              .replaceAll('á', 'a')
-              .replaceAll('é', 'e')
-              .replaceAll('í', 'i')
-              .replaceAll('ó', 'o')
-              .replaceAll('ú', 'u')
-              .replaceAll('ñ', 'n');
+                .toLowerCase()
+                .replaceAll('facultad de ', '')
+                .replaceAll('ciencias ', 'ciencias-')
+                .replaceAll(' ', '-')
+                .replaceAll('á', 'a')
+                .replaceAll('é', 'e')
+                .replaceAll('í', 'i')
+                .replaceAll('ó', 'o')
+                .replaceAll('ú', 'u')
+                .replaceAll('ñ', 'n');
 
       list.add(
         ForumChannel(
@@ -582,7 +616,8 @@ class ForumChannel {
           label: 'Todas las Facultades',
           categoryId: 'todas',
           icon: Icons.tag,
-          description: 'Directorio completo de grupos de WhatsApp de todas las facultades.',
+          description:
+              'Directorio completo de grupos de WhatsApp de todas las facultades.',
         ),
       ];
     }
@@ -1244,7 +1279,8 @@ class PopularServerItem {
           icon: Icons.terminal,
           facultadId: '08',
           carreraId: 'sistemas',
-          description: 'Espacio de discusión para Ingeniería en Ciencias y Sistemas.',
+          description:
+              'Espacio de discusión para Ingeniería en Ciencias y Sistemas.',
           color: const Color(0xFF0284C7),
         ),
         facultyName: 'Facultad de Ingeniería',
@@ -1276,7 +1312,8 @@ class PopularServerItem {
           icon: Icons.balance,
           facultadId: '04',
           carreraId: '04-00-01',
-          description: 'Espacio de discusión para Ciencias Jurídicas y Sociales.',
+          description:
+              'Espacio de discusión para Ciencias Jurídicas y Sociales.',
           color: const Color(0xFF7C3AED),
         ),
         facultyName: 'Ciencias Jurídicas y Sociales',
@@ -1308,7 +1345,8 @@ class PopularServerItem {
           icon: Icons.calculate,
           facultadId: '03',
           carreraId: '03-00-01',
-          description: 'Espacio de discusión para Contaduría Pública y Auditoría.',
+          description:
+              'Espacio de discusión para Contaduría Pública y Auditoría.',
           color: const Color(0xFF0D9488),
         ),
         facultyName: 'Ciencias Económicas',
@@ -1319,5 +1357,3 @@ class PopularServerItem {
     ];
   }
 }
-
-

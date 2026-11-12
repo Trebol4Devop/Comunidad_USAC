@@ -7,4 +7,5 @@ scripts/*.json
 *.log
 definition/
 .migration_fetch_staging
+image.png
 .wrangler/

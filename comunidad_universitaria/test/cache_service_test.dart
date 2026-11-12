@@ -25,13 +25,25 @@ void main() {
 
   group('CacheService', () {
     test('buildKey es estable aunque cambie el orden de los filtros', () {
-      final a = CacheService.buildKey({'category': 'todos', 'sede': 'central', 'onlyFree': false});
-      final b = CacheService.buildKey({'sede': 'central', 'onlyFree': false, 'category': 'todos'});
+      final a = CacheService.buildKey({
+        'category': 'todos',
+        'sede': 'central',
+        'onlyFree': false,
+      });
+      final b = CacheService.buildKey({
+        'sede': 'central',
+        'onlyFree': false,
+        'category': 'todos',
+      });
       expect(a, b);
     });
 
     test('get/set en memoria respeta el TTL', () async {
-      CacheService.set('test_cache', 'feed', [1, 2, 3], ttl: const Duration(milliseconds: 50));
+      CacheService.set('test_cache', 'feed', [
+        1,
+        2,
+        3,
+      ], ttl: const Duration(milliseconds: 50));
       expect(CacheService.get<List<int>>('test_cache', 'feed'), [1, 2, 3]);
 
       await Future<void>.delayed(const Duration(milliseconds: 120));
@@ -49,14 +61,9 @@ void main() {
     });
 
     test('persistencia: roundtrip JSON, TTL e invalidación', () async {
-      await CacheService.setPersisted(
-        'test_cache',
-        'feed',
-        [
-          {'id': 'p1', 'title': 'Hola'},
-        ],
-        ttl: const Duration(milliseconds: 50),
-      );
+      await CacheService.setPersisted('test_cache', 'feed', [
+        {'id': 'p1', 'title': 'Hola'},
+      ], ttl: const Duration(milliseconds: 50));
 
       final loaded = await CacheService.getPersisted<List<dynamic>>(
         'test_cache',
@@ -75,13 +82,19 @@ void main() {
         ),
         isNull,
       );
-
-      await CacheService.setPersisted(
-        'test_cache',
-        'feed',
-        [1],
-        ttl: const Duration(minutes: 1),
+      expect(
+        await CacheService.getPersisted<List<dynamic>>(
+          'test_cache',
+          'feed',
+          (data) => data as List<dynamic>,
+          allowStale: true,
+        ),
+        isNotNull,
       );
+
+      await CacheService.setPersisted('test_cache', 'feed', [
+        1,
+      ], ttl: const Duration(minutes: 1));
       await CacheService.invalidateAll('test_cache');
       expect(CacheService.get('test_cache', 'feed'), isNull);
       expect(
@@ -96,37 +109,40 @@ void main() {
   });
 
   group('Feeds consultan la caché antes de la red', () {
-    test('fetchPosts devuelve la copia en memoria y protege la caché', () async {
-      final post = Post(
-        id: 'cache-post',
-        title: 'Post en caché',
-        category: 'general',
-        content: 'Contenido de prueba',
-        authorAlias: 'Estudiante #1',
-        likes: 3,
-        createdAt: DateTime.now(),
-      );
-      final key = CacheService.buildKey({
-        'user': 'anon',
-        'category': 'todos',
-        'facultad': 'todas',
-        'carrera': 'todas',
-        'search': '',
-        'bookmarks': false,
-        'feedMode': 'hot',
-      });
-      CacheService.set('forum_posts', key, [post]);
+    test(
+      'fetchPosts devuelve la copia en memoria y protege la caché',
+      () async {
+        final post = Post(
+          id: 'cache-post',
+          title: 'Post en caché',
+          category: 'general',
+          content: 'Contenido de prueba',
+          authorAlias: 'Estudiante #1',
+          likes: 3,
+          createdAt: DateTime.now(),
+        );
+        final key = CacheService.buildKey({
+          'user': 'anon',
+          'category': 'todos',
+          'facultad': 'todas',
+          'carrera': 'todas',
+          'search': '',
+          'bookmarks': false,
+          'feedMode': 'hot',
+        });
+        CacheService.set('forum_posts', key, [post]);
 
-      final result = await ForumService.fetchPosts();
-      expect(result.length, 1);
-      expect(result.first.id, 'cache-post');
+        final result = await ForumService.fetchPosts();
+        expect(result.length, 1);
+        expect(result.first.id, 'cache-post');
 
-      // El llamador puede ordenar/mutar la lista sin dañar la caché.
-      result.clear();
-      final again = await ForumService.fetchPosts();
-      expect(again.length, 1);
-      expect(again.first.id, 'cache-post');
-    });
+        // El llamador puede ordenar/mutar la lista sin dañar la caché.
+        result.clear();
+        final again = await ForumService.fetchPosts();
+        expect(again.length, 1);
+        expect(again.first.id, 'cache-post');
+      },
+    );
 
     test('fetchGroups devuelve la copia en memoria', () async {
       final group = WhatsAppGroup(

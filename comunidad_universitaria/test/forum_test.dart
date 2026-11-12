@@ -1,13 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:comunidad_universitaria/core/models/post.dart';
 import 'package:comunidad_universitaria/features/forum/screens/forum_screen.dart';
 import 'package:comunidad_universitaria/features/forum/screens/post_detail_screen.dart';
 import 'package:comunidad_universitaria/features/forum/widgets/comment_item.dart';
+import 'package:comunidad_universitaria/features/forum/widgets/create_post_dialog.dart';
 import 'package:comunidad_universitaria/features/forum/widgets/post_card.dart';
-import 'package:comunidad_universitaria/features/reviews/screens/seccion_reviews_screen.dart';
+import 'package:comunidad_universitaria/features/shared/widgets/report_dialog.dart';
 
 void main() {
+  testWidgets('Forum feed muestra error de carga y permite reintentar', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ForumScreen(
+          activeAlias: 'Tester',
+          onAliasChanged: (_) {},
+          initialPopularServers: const [],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('No se pudo actualizar el feed. Comprueba tu conexión.'),
+      findsOneWidget,
+    );
+    expect(find.text('Reintentar'), findsOneWidget);
+
+    await tester.tap(find.text('Reintentar'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('No se pudo actualizar el feed. Comprueba tu conexión.'),
+      findsOneWidget,
+    );
+  });
   testWidgets('Abrir PostDetailScreen desde ForumScreen o PostCard', (
     tester,
   ) async {
@@ -22,16 +56,38 @@ void main() {
       commentCount: 2,
     );
 
+    var sharedPost = false;
+    String? reportedReason;
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: PostCard(post: testPost, onTap: () {}, onLike: () {}),
+          body: PostCard(
+            post: testPost,
+            onTap: () {},
+            onLike: () {},
+            onShare: () => sharedPost = true,
+            onReport: (reason) => reportedReason = reason,
+          ),
         ),
       ),
     );
 
     expect(find.text('Duda sobre Matemática'), findsOneWidget);
     expect(find.text('2'), findsOneWidget);
+    expect(find.byTooltip('Compartir'), findsOneWidget);
+    await tester.tap(find.byTooltip('Compartir'));
+    expect(sharedPost, isTrue);
+
+    expect(find.text('Reportar'), findsNothing);
+    await tester.tap(find.byTooltip('Más opciones'));
+    await tester.pumpAndSettle();
+    expect(find.text('Reportar'), findsOneWidget);
+    await tester.tap(find.text('Reportar'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ReportDialog), findsOneWidget);
+    await tester.tap(find.text('Enviar Reporte'));
+    await tester.pumpAndSettle();
+    expect(reportedReason, 'Acoso / Difamación');
   });
 
   testWidgets('Renderizar CommentItemWidget con respuestas anidadas', (
@@ -76,6 +132,127 @@ void main() {
     expect(find.text('Responder'), findsNWidgets(2));
   });
 
+  testWidgets(
+    'PostDetail distingue error de comentarios y permite reintentar',
+    (tester) async {
+      final post = Post(
+        id: 'comments-error',
+        title: 'Consulta',
+        category: 'catedraticos',
+        content: 'Contenido de prueba',
+        authorAlias: 'Estudiante',
+        likes: 0,
+        createdAt: DateTime.now(),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: PostDetailScreen(initialPost: post, activeAlias: 'Tester'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('No se pudieron cargar los comentarios.'),
+        findsOneWidget,
+      );
+      expect(find.text('Aún no hay respuestas'), findsNothing);
+      expect(find.text('Reintentar'), findsOneWidget);
+
+      await tester.tap(find.text('Reintentar'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('No se pudieron cargar los comentarios.'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'PostDetail deshabilita enviar comentario vacío y avisa si falla un like',
+    (tester) async {
+      final post = Post(
+        id: 'like-failure',
+        title: 'Consulta',
+        category: 'catedraticos',
+        content: 'Contenido de prueba',
+        authorAlias: 'Estudiante',
+        likes: 5,
+        createdAt: DateTime.now(),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: PostDetailScreen(initialPost: post, activeAlias: 'Tester'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final sendButton = find.ancestor(
+        of: find.byIcon(Icons.send),
+        matching: find.byType(IconButton),
+      );
+      expect(tester.widget<IconButton>(sendButton).onPressed, isNull);
+
+      final commentField = find.byType(TextField).first;
+      await tester.enterText(commentField, '   ');
+      await tester.pump();
+      expect(tester.widget<IconButton>(sendButton).onPressed, isNull);
+      await tester.enterText(commentField, 'Respuesta válida');
+      await tester.pump();
+      expect(tester.widget<IconButton>(sendButton).onPressed, isNotNull);
+      await tester.enterText(commentField, '');
+      await tester.pump();
+      expect(tester.widget<IconButton>(sendButton).onPressed, isNull);
+
+      final likeCount = find.text('5 votos útiles');
+      await tester.ensureVisible(likeCount);
+      await tester.tap(likeCount);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('No se pudo registrar el me gusta. Inténtalo de nuevo.'),
+        findsOneWidget,
+      );
+      expect(find.text('5 votos útiles'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'El título de publicación acepta el mínimo documentado de 3 caracteres',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: CreatePostDialog(
+              activeAlias: 'Tester',
+              onAliasChanged: (_) {},
+              onPostCreated: (_) {},
+            ),
+          ),
+        ),
+      );
+
+      final titleField = find.byType(TextFormField).first;
+      await tester.enterText(titleField, 'ab');
+      await tester.ensureVisible(find.text('Publicar'));
+      await tester.tap(find.text('Publicar'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('El título debe tener al menos 3 caracteres.'),
+        findsOneWidget,
+      );
+
+      await tester.enterText(titleField, 'abc');
+      await tester.tap(find.text('Publicar'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('El título debe tener al menos 3 caracteres.'),
+        findsNothing,
+      );
+    },
+  );
+
   testWidgets('Renderizar PostDetailScreen con comentarios anidados', (
     tester,
   ) async {
@@ -103,28 +280,4 @@ void main() {
 
     expect(find.text('Duda sobre Matemática'), findsOneWidget);
   });
-
-  testWidgets(
-    'Botón de reseñas de secciones en ForumScreen navega a SeccionReviewsScreen',
-    (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: ForumScreen(
-            activeAlias: 'Estudiante #42',
-            onAliasChanged: (_) {},
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      final reviewsButton = find.byTooltip('Reseñas de secciones');
-      expect(reviewsButton, findsOneWidget);
-
-      await tester.tap(reviewsButton);
-      await tester.pumpAndSettle();
-
-      expect(find.byType(SeccionReviewsScreen), findsOneWidget);
-      expect(find.text('Reseñas de Secciones'), findsOneWidget);
-    },
-  );
 }

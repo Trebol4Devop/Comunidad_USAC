@@ -34,12 +34,12 @@ class RulesScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: isDark
-                      ? const Color(0xFF1E293B)
+                      ? const Color(0xFF222222)
                       : const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: isDark
-                        ? const Color(0xFF334155)
+                        ? const Color(0xFF303030)
                         : const Color(0xFFE2E8F0),
                   ),
                 ),
@@ -339,7 +339,7 @@ class RulesScreen extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1C2541) : Colors.white,
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),

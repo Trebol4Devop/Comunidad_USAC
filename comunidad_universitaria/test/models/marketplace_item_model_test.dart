@@ -212,6 +212,7 @@ void main() {
           'category': 'otros_articulos',
           'image_url': 'https://example.com/single.jpg',
           'is_verified': true,
+          'sponsor_brand_name': 'Marca XYZ',
           'upvotes': '10',
           'reported_count': '0',
           'moderation_status': '0',
@@ -227,6 +228,7 @@ void main() {
         expect(item.isUpvotedByMe, isTrue);
         expect(item.userId, isNull);
         expect(item.isMine, isTrue);
+        expect(item.normalizedSponsorBrandName, 'Marca XYZ');
 
         final insertMap = item.toInsertMap();
         expect(insertMap['title'], 'Engrapadora industrial');

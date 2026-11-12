@@ -111,7 +111,7 @@ void main() {
         expect(find.text('Citar Publicación'), findsOneWidget);
         expect(find.text('Citando a Sancarlista #99'), findsOneWidget);
         expect(find.text('Recomendaciones Física 1'), findsWidgets);
-        expect(find.text('#primer-ingreso'), findsOneWidget);
+        expect(find.text('primer-ingreso'), findsOneWidget);
         expect(find.text('Servidor: Facultad de Ingeniería'), findsOneWidget);
       },
     );
@@ -132,7 +132,7 @@ void main() {
 
         // Debe mostrar mensajes de validación
         expect(
-          find.text('El título debe tener al menos 5 caracteres.'),
+          find.text('El título debe tener al menos 3 caracteres.'),
           findsOneWidget,
         );
         expect(
@@ -140,17 +140,17 @@ void main() {
           findsOneWidget,
         );
 
-        // Llenamos el título con < 5 caracteres
+        // Llenamos el título con menos de 3 caracteres
         final titleField = find.widgetWithText(
           TextFormField,
           'Título de la consulta o aporte',
         );
-        await tester.enterText(titleField, 'Hola');
+        await tester.enterText(titleField, 'Hi');
         await tester.tap(find.text('Publicar'));
         await tester.pumpAndSettle();
 
         expect(
-          find.text('El título debe tener al menos 5 caracteres.'),
+          find.text('El título debe tener al menos 3 caracteres.'),
           findsOneWidget,
         );
 
@@ -160,7 +160,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(
-          find.text('El título debe tener al menos 5 caracteres.'),
+          find.text('El título debe tener al menos 3 caracteres.'),
           findsNothing,
         );
         expect(

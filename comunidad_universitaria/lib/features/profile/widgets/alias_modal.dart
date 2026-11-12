@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import '../../../core/constants/zanate_colors.dart';
 import '../../../core/constants/anonymous_aliases.dart';
 import '../../../core/services/local_storage_service.dart';
 
@@ -58,7 +60,14 @@ class _AliasModalState extends State<AliasModal> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.zero,
+        side: BorderSide(
+          color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+          width: 0.8,
+        ),
+      ),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 420),
         child: Padding(
@@ -70,14 +79,14 @@ class _AliasModalState extends State<AliasModal> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
+                      color: ZanateColors.zanateAccent.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.zero,
                     ),
-                    child: Icon(
-                      Icons.badge_outlined,
-                      color: theme.colorScheme.primary,
+                    child: const Icon(
+                      PhosphorIconsBold.userCircle,
+                      color: ZanateColors.zanateAccent,
                       size: 22,
                     ),
                   ),
@@ -88,13 +97,20 @@ class _AliasModalState extends State<AliasModal> {
                       children: [
                         Text(
                           'Tu Seudónimo Estudiantil',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                            letterSpacing: -0.2,
+                            color: isDark ? Colors.white : ZanateColors.zanateDark,
                           ),
                         ),
+                        const SizedBox(height: 2),
                         Text(
-                          'Aparece al publicar en el foro y compartir grupos',
-                          style: theme.textTheme.bodySmall,
+                          'Identidad comunitaria en foros y grupos',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          ),
                         ),
                       ],
                     ),
@@ -105,9 +121,9 @@ class _AliasModalState extends State<AliasModal> {
               InputDecorator(
                 decoration: InputDecoration(
                   labelText: 'Alias visible',
-                  prefixIcon: const Icon(Icons.person_outline, size: 20),
+                  prefixIcon: const Icon(PhosphorIconsRegular.user, size: 20),
                   suffixIcon: IconButton(
-                    icon: const Icon(Icons.casino_outlined, size: 20),
+                    icon: const Icon(PhosphorIconsRegular.diceFive, size: 20),
                     tooltip: 'Generar alias anónimo',
                     onPressed: _generateRandomAlias,
                   ),
@@ -141,8 +157,20 @@ class _AliasModalState extends State<AliasModal> {
                       child: const Text('Cancelar'),
                     ),
                     ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ZanateColors.zanateAccent,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.zero,
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
+                      ),
                       onPressed: _save,
-                      child: const Text('Guardar Alias'),
+                      child: const Text('Guardar Alias', style: TextStyle(fontWeight: FontWeight.w700)),
                     ),
                   ],
                 ),

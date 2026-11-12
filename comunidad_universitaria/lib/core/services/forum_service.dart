@@ -280,7 +280,7 @@ class ForumService {
       }
       debugPrint('Error al obtener posts del foro: $e');
       if (isDefaultQuery) {
-        final persisted = await _readPersistedPosts(cacheKey);
+        final persisted = await _readPersistedPosts(cacheKey, allowStale: true);
         if (persisted != null) return persisted;
       }
       rethrow;
@@ -288,7 +288,10 @@ class ForumService {
   }
 
   /// Lee la primera página persistida (solo consultas por defecto).
-  static Future<List<Post>?> _readPersistedPosts(String cacheKey) {
+  static Future<List<Post>?> _readPersistedPosts(
+    String cacheKey, {
+    bool allowStale = false,
+  }) {
     return CacheService.getPersisted<List<Post>>(_cacheNamespace, cacheKey, (
       data,
     ) {
@@ -297,7 +300,7 @@ class ForumService {
           .whereType<Map>()
           .map((item) => _postFromCacheMap(Map<String, dynamic>.from(item)))
           .toList();
-    });
+    }, allowStale: allowStale);
   }
 
   static Map<String, dynamic> _postToCacheMap(Post post) {
@@ -434,6 +437,7 @@ class ForumService {
         final options = rawOptions
             .map((o) => PollOption.fromMap(Map<String, dynamic>.from(o)))
             .toList();
+        // Sort options deterministically
         options.sort((a, b) => a.id.compareTo(b.id));
 
         pollsByPostId[postId] = PostPoll(
@@ -998,6 +1002,7 @@ class ForumService {
         return List<ForumChannel>.from(ForumChannel.defaultChannels);
       }
 
+      // Orden estándar alineado con el flujo de uso del foro (sin charla-general)
       const canonicalOrder = [
         'todos',
         'prerrequisitos',

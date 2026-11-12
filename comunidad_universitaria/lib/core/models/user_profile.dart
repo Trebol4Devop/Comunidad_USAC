@@ -12,9 +12,10 @@ class UserProfile {
   final String? contactTelegram;
   final String? contactInstagram;
   final String? email;
-  final String? carne; // Carné universitario validado (ej. 202012345)
-  final String? studentName; // Nombre real oficial validado (ej. Juan Pérez)
-  final bool isCarneVerified; // Si fue validado con Registro y Estadística
+  final String? carne; // Carné aportado por el usuario, puede ser un borrador
+  final String? studentName; // Nombre aportado, no necesariamente verificado
+  final bool
+  isCarneVerified; // Solo true tras una comprobación institucional auténtica
 
   const UserProfile({
     required this.userId,
@@ -106,15 +107,20 @@ class UserProfile {
       carreraId: map['carrera_id']?.toString() ?? 'sistemas',
       sedeId: map['sede_id']?.toString() ?? 'central',
       bio: map['bio']?.toString() ?? '',
-      avatarColorIndex: map['avatar_color_index'] is int ? map['avatar_color_index'] as int : 0,
-      avatarIconIndex: map['avatar_icon_index'] is int ? map['avatar_icon_index'] as int : 0,
+      avatarColorIndex: map['avatar_color_index'] is int
+          ? map['avatar_color_index'] as int
+          : 0,
+      avatarIconIndex: map['avatar_icon_index'] is int
+          ? map['avatar_icon_index'] as int
+          : 0,
       contactWhatsapp: map['contact_whatsapp']?.toString(),
       contactTelegram: map['contact_telegram']?.toString(),
       contactInstagram: map['contact_instagram']?.toString(),
       email: map['email']?.toString(),
       carne: map['carne']?.toString(),
       studentName: map['student_name']?.toString(),
-      isCarneVerified: map['is_carne_verified'] == true || map['is_verified'] == true,
+      isCarneVerified:
+          map['is_carne_verified'] == true || map['is_verified'] == true,
     );
   }
 }

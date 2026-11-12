@@ -228,4 +228,42 @@ class SupabaseService {
     }
     return 'student';
   }
+
+  /// Genera un alias anónimo aleatorio y autorizado por las políticas de la comunidad.
+  /// Llama a la función RPC `generate_anonymous_alias` de PostgreSQL.
+  static Future<String> generateAnonymousAlias() async {
+    if (!SupabaseConfig.isConfigured) return 'Estudiante Anónimo';
+    try {
+      final res = await client.rpc('generate_anonymous_alias');
+      if (res != null && res.toString().trim().isNotEmpty) {
+        return res.toString().trim();
+      }
+    } catch (e) {
+      debugPrint('Error generando alias anónimo en servidor: $e');
+    }
+    return 'Estudiante USAC';
+  }
+
+  /// Valida si un alias propuesto cumple con las directrices de anonimato y seguridad
+  /// llamando a la función RPC `is_valid_anonymous_alias`.
+  static Future<bool> isValidAnonymousAlias(String alias) async {
+    if (!SupabaseConfig.isConfigured) {
+      final norm = alias.trim();
+      return norm.isNotEmpty &&
+          norm.length <= 48 &&
+          !norm.contains('@') &&
+          !norm.contains('.');
+    }
+    try {
+      final res = await client.rpc(
+        'is_valid_anonymous_alias',
+        params: {'p_alias': alias.trim()},
+      );
+      return res == true;
+    } catch (e) {
+      debugPrint('Error validando alias: $e');
+      final norm = alias.trim();
+      return norm.isNotEmpty && norm.length <= 48 && !norm.contains('@');
+    }
+  }
 }

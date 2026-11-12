@@ -44,9 +44,9 @@ La app usa **Material 3** con una identidad cromática inspirada en la USAC
 | Nombre | Rango | Comportamiento |
 |---|---|---|
 | Móvil | `< 700px` | Una columna; `NavigationBar` + FAB; modales como hoja inferior |
-| Tablet | `700px – 1100px` | Intermedio; se pueden mostrar columnas auxiliares |
+| Tablet | `700px – 1099px` | Intermedio; se pueden mostrar columnas auxiliares |
 | Desktop | `>= 1100px` | Multi-columna; pestañas superiores; sidebar de populares |
-| Ancho ultra | `>= 1050px` | Se habilita "Comunidades más populares" a la derecha |
+| Sidebar desktop | `>= 1100px` | Se habilita "Comunidades más populares" a la derecha |
 
 ### 1.5 Contenedores
 - `MaxWidthContainer` limita el ancho de lectura (900–1200px según pantalla) y
@@ -143,10 +143,11 @@ La app usa **Material 3** con una identidad cromática inspirada en la USAC
   **etiqueta canónica** "Patrocinado" (chip de fondo dorado translúcido + texto
   oscuro, contraste AA) y un borde de acento tenue en la tarjeta. Debe verse
   **integrado pero distinguible** en Foro, Grupos y Marketplace.
-- **Problema actual [Mejora]:** no existe un token unificado para el etiquetado de
-  patrocinios; el carrusel actual
-  ([`sponsor_carousel.dart`](../../comunidad_universitaria/lib/features/marketplace/widgets/sponsor_carousel.dart))
-  usa estilos propios no reutilizables. Se centraliza aquí para
+- **Problema actual [Mejora]:** existe el color general `AppTheme.usacGold`, pero
+  `SponsoredContentControls` usa colores literales y no un token específico del
+  sistema de diseño. El widget se comparte entre la tarjeta y el carrusel del
+  Marketplace; no está integrado en Foro ni Grupos y no hay auditoría completa de
+  contraste. Se mantiene pendiente la consistencia transversal para
   [`UX-SPN-003`](12-patrocinios.md).
 - **Precondiciones:** cualquier unidad patrocinada renderizada.
 - **UI / contenido:** chip "Patrocinado"; logotipo del patrocinador con distintivo

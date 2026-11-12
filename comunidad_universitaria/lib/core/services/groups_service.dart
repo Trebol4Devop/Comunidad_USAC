@@ -175,7 +175,10 @@ class GroupsService {
     } catch (e) {
       debugPrint('Error al obtener grupos estudiantiles: $e');
       if (isDefaultQuery) {
-        final persisted = await _readPersistedGroups(cacheKey);
+        final persisted = await _readPersistedGroups(
+          cacheKey,
+          allowStale: true,
+        );
         if (persisted != null) return persisted;
       }
       rethrow;
@@ -183,7 +186,10 @@ class GroupsService {
   }
 
   /// Lee la primera página persistida (solo consultas por defecto).
-  static Future<List<WhatsAppGroup>?> _readPersistedGroups(String cacheKey) {
+  static Future<List<WhatsAppGroup>?> _readPersistedGroups(
+    String cacheKey, {
+    bool allowStale = false,
+  }) {
     return CacheService.getPersisted<List<WhatsAppGroup>>(
       _cacheNamespace,
       cacheKey,
@@ -196,6 +202,7 @@ class GroupsService {
             .map((item) => _groupFromCacheMap(Map<String, dynamic>.from(item)))
             .toList();
       },
+      allowStale: allowStale,
     );
   }
 

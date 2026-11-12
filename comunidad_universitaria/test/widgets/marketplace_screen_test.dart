@@ -7,6 +7,7 @@ import 'package:comunidad_universitaria/core/services/cache_service.dart';
 import 'package:comunidad_universitaria/core/services/supabase_service.dart';
 import 'package:comunidad_universitaria/features/marketplace/screens/marketplace_screen.dart';
 import 'package:comunidad_universitaria/features/marketplace/widgets/create_listing_dialog.dart';
+
 import 'package:comunidad_universitaria/features/marketplace/widgets/marketplace_card.dart';
 import 'package:comunidad_universitaria/features/marketplace/widgets/sponsor_carousel.dart';
 import 'package:comunidad_universitaria/features/shared/widgets/empty_state_widget.dart';
@@ -34,7 +35,10 @@ void main() {
     );
   }
 
-  void seedMarketplaceCache(List<MarketplaceItem> items, {List<MarketplaceItem> sponsored = const []}) {
+  void seedMarketplaceCache(
+    List<MarketplaceItem> items, {
+    List<MarketplaceItem> sponsored = const [],
+  }) {
     final cacheKey = CacheService.buildKey({
       'user': SupabaseService.currentUserId ?? 'anon',
       'category': 'todos',
@@ -47,71 +51,105 @@ void main() {
   }
 
   group('MarketplaceScreen Widget Tests', () {
-    testWidgets('Renderiza en móvil (400x800) y muestra banner de error/offline sin conexión Supabase', (tester) async {
-      tester.view.physicalSize = const Size(400, 800);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
+    testWidgets(
+      'Renderiza en móvil (400x800) y muestra banner de error/offline sin conexión Supabase',
+      (tester) async {
+        tester.view.physicalSize = const Size(400, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
 
-      await tester.pumpWidget(buildTestScreen());
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(buildTestScreen());
+        await tester.pumpAndSettle();
 
-      // Banner de cabecera
-      expect(find.text('Marketplace & Tutorías Estudiantiles'), findsOneWidget);
-      expect(find.textContaining('Espacio libre para emprendimientos sancarlistas'), findsOneWidget);
+        // Banner de cabecera
+        expect(
+          find.text('Marketplace & Tutorías Estudiantiles'),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining(
+            'Espacio libre para emprendimientos sancarlistas',
+          ),
+          findsOneWidget,
+        );
 
-      // SponsorCarousel está presente
-      expect(find.byType(SponsorCarousel), findsOneWidget);
+        // SponsorCarousel está presente
+        expect(find.byType(SponsorCarousel), findsOneWidget);
 
-      // Campo de búsqueda en móvil
-      expect(find.text('Buscar postres, almuerzos, tutorías o libros...'), findsOneWidget);
+        // Campo de búsqueda en móvil
+        expect(
+          find.text('Buscar postres, almuerzos, tutorías o libros...'),
+          findsOneWidget,
+        );
 
-      // Filtro de Solo Gratuitos
-      expect(find.text('Solo Gratuitos'), findsOneWidget);
+        // Filtro de Solo Gratuitos
+        expect(find.text('Solo Gratuitos'), findsOneWidget);
 
-      // En entorno de test sin Supabase ni caché, el catch activa OfflineBanner
-      expect(find.byType(OfflineBanner), findsOneWidget);
-      expect(find.text('Sin conexión. Mostrando contenido en caché.'), findsOneWidget);
-      expect(find.text('Reintentar'), findsOneWidget);
+        // En entorno de test sin Supabase ni caché, el catch activa OfflineBanner
+        expect(find.byType(OfflineBanner), findsOneWidget);
+        expect(
+          find.text('Sin conexión. Mostrando contenido en caché.'),
+          findsOneWidget,
+        );
+        expect(find.text('Reintentar'), findsOneWidget);
 
-      // Botón FAB de publicar
-      expect(find.widgetWithText(FloatingActionButton, 'Publicar Anuncio'), findsOneWidget);
-    });
+        // Botón FAB de publicar
+        expect(
+          find.widgetWithText(FloatingActionButton, 'Publicar Anuncio'),
+          findsOneWidget,
+        );
+      },
+    );
 
-    testWidgets('Renderiza en escritorio (1200x800) con botón superior y buscador amplio', (tester) async {
-      tester.view.physicalSize = const Size(1200, 800);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
+    testWidgets(
+      'Renderiza en escritorio (1200x800) con botón superior y buscador amplio',
+      (tester) async {
+        tester.view.physicalSize = const Size(1200, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
 
-      await tester.pumpWidget(buildTestScreen());
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(buildTestScreen());
+        await tester.pumpAndSettle();
 
-      expect(find.text('Marketplace & Tutorías Estudiantiles'), findsOneWidget);
+        expect(
+          find.text('Marketplace & Tutorías Estudiantiles'),
+          findsOneWidget,
+        );
 
-      // En desktop hay un botón 'Publicar Anuncio' en el header banner además del FAB
-      expect(find.text('Publicar Anuncio'), findsWidgets);
+        // En desktop hay un botón 'Publicar Anuncio' en el header banner además del FAB
+        expect(find.text('Publicar Anuncio'), findsWidgets);
 
-      // Dropdown de Sede y Facultad presentes
-      expect(find.byType(DropdownButtonFormField<String>), findsWidgets);
-    });
+        // Dropdown de Sede y Facultad presentes
+        expect(find.byType(DropdownButtonFormField<String>), findsWidgets);
+      },
+    );
 
-    testWidgets('Muestra EmptyStateWidget cuando la lista de publicaciones está vacía en caché', (tester) async {
-      tester.view.physicalSize = const Size(1200, 800);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
+    testWidgets(
+      'Muestra EmptyStateWidget cuando la lista de publicaciones está vacía en caché',
+      (tester) async {
+        tester.view.physicalSize = const Size(1200, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
 
-      // Sembramos caché vacía
-      seedMarketplaceCache(<MarketplaceItem>[]);
+        // Sembramos caché vacía
+        seedMarketplaceCache(<MarketplaceItem>[]);
 
-      await tester.pumpWidget(buildTestScreen());
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(buildTestScreen());
+        await tester.pumpAndSettle();
 
-      // Debe mostrar el EmptyStateWidget real
-      expect(find.byType(EmptyStateWidget), findsOneWidget);
-      expect(find.text('No hay publicaciones en esta categoría aún'), findsOneWidget);
-      expect(find.text('Crear Primera Publicación'), findsOneWidget);
-    });
+        // Debe mostrar el EmptyStateWidget real
+        expect(find.byType(EmptyStateWidget), findsOneWidget);
+        expect(
+          find.text('No hay publicaciones en esta categoría aún'),
+          findsOneWidget,
+        );
+        expect(find.text('Crear Primera Publicación'), findsOneWidget);
+      },
+    );
 
-    testWidgets('Renderiza MarketplaceCard con los datos del artículo', (tester) async {
+    testWidgets('Renderiza MarketplaceCard con los datos del artículo', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(400, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -129,10 +167,7 @@ void main() {
           theme: AppTheme.lightTheme,
           home: Scaffold(
             body: SingleChildScrollView(
-              child: MarketplaceCard(
-                item: sampleItem,
-                onUpvote: () {},
-              ),
+              child: MarketplaceCard(item: sampleItem, onUpvote: () {}),
             ),
           ),
         ),
@@ -144,27 +179,37 @@ void main() {
       expect(find.text('Q950.00'), findsOneWidget);
     });
 
-    testWidgets('Abre CreateListingDialog al hacer click en el botón de publicar', (tester) async {
-      tester.view.physicalSize = const Size(1200, 800);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
+    testWidgets(
+      'No permite iniciar una publicación sin verificación institucional',
+      (tester) async {
+        tester.view.physicalSize = const Size(1200, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
 
-      seedMarketplaceCache(<MarketplaceItem>[]);
+        seedMarketplaceCache(<MarketplaceItem>[]);
 
-      await tester.pumpWidget(buildTestScreen(activeAlias: 'Vendedora Sancarlista'));
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          buildTestScreen(activeAlias: 'Vendedora Sancarlista'),
+        );
+        await tester.pumpAndSettle();
 
-      // Tap en el FAB de publicar anuncio
-      final fabFinder = find.byType(FloatingActionButton);
-      expect(fabFinder, findsOneWidget);
+        // Tap en el FAB de publicar anuncio
+        final fabFinder = find.byType(FloatingActionButton);
+        expect(fabFinder, findsOneWidget);
 
-      await tester.tap(fabFinder);
-      await tester.pumpAndSettle();
+        await tester.tap(fabFinder);
+        await tester.pumpAndSettle();
 
-      // Debe haberse abierto CreateListingDialog
-      expect(find.byType(CreateListingDialog), findsOneWidget);
-      expect(find.text('Publicar Producto o Servicio'), findsOneWidget);
-    });
+        // Sin un verificador real, no se abre el formulario ni se afirma que
+        // el usuario está habilitado para vender.
+        expect(find.byType(CreateListingDialog), findsNothing);
+        expect(find.text('Verificación necesaria'), findsOneWidget);
+        expect(
+          find.textContaining('verificación institucional real'),
+          findsOneWidget,
+        );
+      },
+    );
 
     testWidgets('Permite alternar el filtro Solo Gratuitos', (tester) async {
       tester.view.physicalSize = const Size(1200, 800);

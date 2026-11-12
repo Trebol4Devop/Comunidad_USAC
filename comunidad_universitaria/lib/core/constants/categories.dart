@@ -749,8 +749,7 @@ class USACConstants {
         },
         {
           'id': '77-00-53',
-          'nombre':
-              'Profesorado en Ciencias de la Información Documental',
+          'nombre': 'Profesorado en Ciencias de la Información Documental',
           'codigo': '77-00-53',
           'sede': 'Central & Chimaltenango',
           'modalidades': ['Diario', 'Sabatino'],

@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 ///
 /// - Memoria: evita repetir consultas dentro del TTL.
 /// - Persistencia: guarda la primera página en SharedPreferences para
-///   arranque sin conexión; la copia persistida también respeta el TTL.
+///   arranque sin conexión. El TTL controla frescura, no disponibilidad offline.
 class CacheService {
   CacheService._();
 
@@ -42,7 +42,12 @@ class CacheService {
   }
 
   /// Guarda un valor en memoria con el TTL indicado.
-  static void set<T>(String namespace, String key, T value, {Duration ttl = defaultTtl}) {
+  static void set<T>(
+    String namespace,
+    String key,
+    T value, {
+    Duration ttl = defaultTtl,
+  }) {
     _memory[_memoryKey(namespace, key)] = _CacheEntry(value, ttl);
   }
 
@@ -89,12 +94,14 @@ class CacheService {
     }
   }
 
-  /// Lee la copia persistida. Devuelve null si no existe o si superó el TTL.
+  /// Lee la copia persistida. Por defecto solo devuelve datos dentro del TTL;
+  /// `allowStale` permite recuperar la última copia durante un fallo de red.
   static Future<T?> getPersisted<T>(
     String namespace,
     String key,
-    T Function(Object? data) decode,
-  ) async {
+    T Function(Object? data) decode, {
+    bool allowStale = false,
+  }) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString(_prefsKey(namespace, key));
@@ -106,8 +113,12 @@ class CacheService {
       final storedAt = DateTime.tryParse(parsed['stored_at']?.toString() ?? '');
       if (storedAt == null) return null;
 
-      final ttlMs = parsed['ttl_ms'] is int ? parsed['ttl_ms'] as int : defaultTtl.inMilliseconds;
-      if (DateTime.now().difference(storedAt).inMilliseconds > ttlMs) return null;
+      final ttlMs = parsed['ttl_ms'] is int
+          ? parsed['ttl_ms'] as int
+          : defaultTtl.inMilliseconds;
+      final isStale =
+          DateTime.now().difference(storedAt).inMilliseconds > ttlMs;
+      if (isStale && !allowStale) return null;
 
       return decode(parsed['data']);
     } catch (e) {
@@ -117,7 +128,8 @@ class CacheService {
   }
 
   static String _memoryKey(String namespace, String key) => '$namespace::$key';
-  static String _prefsKey(String namespace, String key) => '$_prefsPrefix$namespace::$key';
+  static String _prefsKey(String namespace, String key) =>
+      '$_prefsPrefix$namespace::$key';
 }
 
 class _CacheEntry {

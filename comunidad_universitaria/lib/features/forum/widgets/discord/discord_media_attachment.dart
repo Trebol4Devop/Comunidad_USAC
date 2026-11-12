@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import '../../../../core/constants/zanate_colors.dart';
 import '../../../shared/widgets/image_viewer_dialog.dart';
 
 /// Un componente de medios con estilo Discord para adjuntos de imagen y GIF.
@@ -32,11 +34,14 @@ class DiscordMediaAttachment extends StatelessWidget {
 
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final radius = borderRadius ?? BorderRadius.circular(8);
+    final radius = borderRadius ?? BorderRadius.circular(14);
 
-    // Discord slate backgrounds for image containers
-    final containerBg = isDark ? const Color(0xFF1E1F22) : const Color(0xFFE2E8F0);
-    final borderColor = isDark ? const Color(0xFF383A40) : const Color(0xFFCBD5E1);
+    final containerBg = isDark
+        ? const Color(0xFF1E293B)
+        : ZanateColors.surfaceBg;
+    final borderColor = isDark
+        ? const Color(0xFF334155)
+        : ZanateColors.subtleBorder;
 
     return Align(
       alignment: Alignment.centerLeft,
@@ -57,12 +62,13 @@ class DiscordMediaAttachment extends StatelessWidget {
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: onTap ??
+                onTap:
+                    onTap ??
                     () => ImageViewerDialog.show(
-                          context,
-                          imageUrl: imageUrl,
-                          title: title,
-                        ),
+                      context,
+                      imageUrl: imageUrl,
+                      title: title,
+                    ),
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
@@ -82,7 +88,7 @@ class DiscordMediaAttachment extends StatelessWidget {
                               strokeWidth: 2.5,
                               value: loadingProgress.expectedTotalBytes != null
                                   ? loadingProgress.cumulativeBytesLoaded /
-                                      loadingProgress.expectedTotalBytes!
+                                        loadingProgress.expectedTotalBytes!
                                   : null,
                               color: theme.colorScheme.primary,
                             ),
@@ -92,19 +98,28 @@ class DiscordMediaAttachment extends StatelessWidget {
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
                           height: minHeight,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                           color: containerBg,
                           alignment: Alignment.center,
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.broken_image_outlined, size: 20, color: Colors.grey.shade500),
+                              Icon(
+                                PhosphorIconsRegular.imageBroken,
+                                size: 20,
+                                color: Colors.blueGrey.shade400,
+                              ),
                               const SizedBox(width: 8),
                               Text(
                                 'No se pudo cargar la imagen',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: isDark ? const Color(0xFF949BA4) : const Color(0xFF64748B),
+                                  color: isDark
+                                      ? const Color(0xFFAAAAAA)
+                                      : const Color(0xFF64748B),
                                 ),
                               ),
                             ],
@@ -118,10 +133,13 @@ class DiscordMediaAttachment extends StatelessWidget {
                       bottom: 8,
                       right: 8,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.black.withValues(alpha: 0.72),
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -137,8 +155,12 @@ class DiscordMediaAttachment extends StatelessWidget {
                                 ),
                               ),
                             ] else ...[
-                              const Icon(Icons.zoom_in, color: Colors.white, size: 12),
-                              const SizedBox(width: 3),
+                              const Icon(
+                                PhosphorIconsRegular.magnifyingGlassPlus,
+                                color: Colors.white,
+                                size: 13,
+                              ),
+                              const SizedBox(width: 4),
                               const Text(
                                 'Ampliar',
                                 style: TextStyle(

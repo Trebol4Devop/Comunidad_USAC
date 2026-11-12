@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import '../../../core/constants/zanate_colors.dart';
 
 class ReportDialog extends StatefulWidget {
   final String title;
@@ -75,13 +77,23 @@ class _ReportDialogState extends State<ReportDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(
+          color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+          width: 0.8,
+        ),
+      ),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 440),
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(22),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,12 +101,16 @@ class _ReportDialogState extends State<ReportDialog> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(10),
+                      color: const Color(0xFFEF4444).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(Icons.flag_outlined, color: Colors.red.shade700, size: 22),
+                    child: const Icon(
+                      PhosphorIconsBold.flag,
+                      color: Color(0xFFEF4444),
+                      size: 20,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -103,11 +119,22 @@ class _ReportDialogState extends State<ReportDialog> {
                       children: [
                         Text(
                           widget.title,
-                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                            letterSpacing: -0.2,
+                            color: isDark ? Colors.white : ZanateColors.zanateDark,
+                          ),
                         ),
+                        const SizedBox(height: 2),
                         Text(
                           widget.subtitle,
-                          style: theme.textTheme.bodySmall,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
@@ -116,8 +143,12 @@ class _ReportDialogState extends State<ReportDialog> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Selecciona el motivo del reporte:',
-                style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                'Selecciona el motivo:',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  color: isDark ? const Color(0xFFE2E8F0) : ZanateColors.zanateDark,
+                ),
               ),
               const SizedBox(height: 8),
               Flexible(
@@ -129,18 +160,30 @@ class _ReportDialogState extends State<ReportDialog> {
                     final isSelected = _selectedReason == opt;
                     return InkWell(
                       onTap: () => setState(() => _selectedReason = opt),
+                      borderRadius: BorderRadius.circular(8),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
                         child: Row(
                           children: [
                             Icon(
-                              isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                              isSelected
+                                  ? PhosphorIconsFill.radioButton
+                                  : PhosphorIconsRegular.circle,
                               size: 18,
-                              color: isSelected ? theme.colorScheme.primary : Colors.grey.shade500,
+                              color: isSelected
+                                  ? const Color(0xFFEF4444)
+                                  : (isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 10),
                             Expanded(
-                              child: Text(opt, style: theme.textTheme.bodyMedium?.copyWith(fontSize: 13)),
+                              child: Text(
+                                opt,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                  color: isDark ? Colors.white : ZanateColors.zanateDark,
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -154,8 +197,35 @@ class _ReportDialogState extends State<ReportDialog> {
                 TextField(
                   controller: _customReasonController,
                   maxLength: 120,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'Explica brevemente la razón...',
+                    hintStyle: TextStyle(
+                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF94A3B8),
+                      fontSize: 13,
+                    ),
+                    filled: true,
+                    fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+                        width: 0.8,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+                        width: 0.8,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFEF4444),
+                        width: 1.5,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -164,17 +234,31 @@ class _ReportDialogState extends State<ReportDialog> {
                 alignment: Alignment.centerRight,
                 child: Wrap(
                   alignment: WrapAlignment.end,
-                  spacing: 8,
+                  spacing: 10,
                   runSpacing: 8,
                   children: [
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(),
+                      style: TextButton.styleFrom(
+                        foregroundColor: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      ),
                       child: const Text('Cancelar'),
                     ),
                     ElevatedButton(
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade700),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFDC2626),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
+                      ),
                       onPressed: _submit,
-                      child: const Text('Enviar Reporte'),
+                      child: const Text('Enviar Reporte', style: TextStyle(fontWeight: FontWeight.w700)),
                     ),
                   ],
                 ),

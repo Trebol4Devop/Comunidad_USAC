@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
-import '../../../profile/screens/profile_screen.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import '../../../../core/constants/zanate_colors.dart';
+import '../../../shared/widgets/settings_bottom_sheet.dart';
 import '../../models/discord_forum_models.dart';
-import 'forum_carrera_picker_dialog.dart';
 
 class ForumChannelSidebar extends StatelessWidget {
   final ForumServer activeServer;
   final ForumChannel activeChannel;
   final List<ForumChannel>? channels;
   final Function(ForumChannel) onSelectChannel;
-  final Function(ForumServer) onServerChanged;
-  final String activeAlias;
-  final Function(String) onAliasChanged;
+  final VoidCallback? onAddServer;
+  final String? activeAlias;
+  final Function(String)? onAliasChanged;
+  final VoidCallback? onToggleTheme;
 
   const ForumChannelSidebar({
     super.key,
@@ -18,233 +20,203 @@ class ForumChannelSidebar extends StatelessWidget {
     required this.activeChannel,
     this.channels,
     required this.onSelectChannel,
-    required this.onServerChanged,
-    required this.activeAlias,
-    required this.onAliasChanged,
+    this.onAddServer,
+    this.activeAlias,
+    this.onAliasChanged,
+    this.onToggleTheme,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final background = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final borderColor =
+        isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
 
-    // Discord channel sidebar: dark: #2B2D31, light: #F2F3F5
-    final sidebarBg = isDark ? const Color(0xFF2B2D31) : const Color(0xFFF2F3F5);
+    final channelList =
+        channels ??
+        (activeServer.isGroups
+            ? ForumChannel.groupsChannels
+            : ForumChannel.defaultChannels);
 
     return Container(
-      width: 240,
-      color: sidebarBg,
+      width: 244,
+      color: background,
       child: Column(
         children: [
-          // 1. Server Header Banner
-          InkWell(
-            onTap: activeServer.isGroups
-                ? null
-                : () {
-                    ForumCarreraPickerDialog.show(
-                      context,
-                      onServerSelected: onServerChanged,
-                    );
-                  },
-            child: Container(
-              height: 56,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: isDark ? const Color(0xFF202225) : const Color(0xFFE2E8F0),
-                    width: 1,
+          // Cabecera del servidor activo
+          Container(
+            height: 62,
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            alignment: Alignment.centerLeft,
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: borderColor, width: 0.8),
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  activeServer.name
+                      .replaceAll(RegExp(r'\s*\([^)]*\)'), '')
+                      .trim(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.2,
+                    color: isDark ? Colors.white : ZanateColors.zanateDark,
                   ),
                 ),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                activeServer.name.replaceAll(RegExp(r'\s*\([^)]*\)'), '').trim(),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              Icons.verified,
-                              size: 14,
-                              color: theme.colorScheme.primary,
-                            ),
-                          ],
-                        ),
-                        Text(
-                          activeServer.isGroups
-                              ? 'Directorio de WhatsApp · USAC'
-                              : 'Servidor Estudiantil · USAC',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: isDark ? const Color(0xFF949BA4) : const Color(0xFF64748B),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
+                const SizedBox(height: 3),
+                Text(
+                  activeServer.isGroups
+                      ? 'Grupos de estudio'
+                      : 'Comunidad universitaria',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: isDark
+                        ? const Color(0xFF94A3B8)
+                        : Colors.blueGrey.shade400,
                   ),
-                  if (!activeServer.isGroups)
-                    Icon(Icons.keyboard_arrow_down, size: 20, color: Colors.grey.shade500),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
 
-          // 2. Channels List
+          // Lista de canales
           Expanded(
             child: ListView(
               primary: false,
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+              padding: const EdgeInsets.fromLTRB(10, 14, 10, 12),
               children: [
-                if (activeServer.isGroups) ...[
-                  // Category Header: CANALES Y CATEGORÍAS
-                  _buildCategoryHeader('CANALES Y CATEGORÍAS', isDark),
-                  const SizedBox(height: 4),
-
-                  // Channels
-                  ...(channels ?? ForumChannel.groupsChannels).map((channel) {
-                    final isActive = activeChannel.id == channel.id;
-                    return _buildChannelTile(
-                      channel: channel,
-                      isActive: isActive,
-                      theme: theme,
-                      isDark: isDark,
-                    );
-                  }),
-                ] else ...[
-                  // Category Header: CANALES DE DISCUSIÓN
-                  _buildCategoryHeader('CANALES DE DISCUSIÓN', isDark),
-                  const SizedBox(height: 4),
-
-                  // Channels
-                  ...(channels ?? ForumChannel.defaultChannels).map((channel) {
-                    final isActive = activeChannel.id == channel.id;
-                    return _buildChannelTile(
-                      channel: channel,
-                      isActive: isActive,
-                      theme: theme,
-                      isDark: isDark,
-                    );
-                  }),
-
-                  const SizedBox(height: 16),
-
-                  // Category Header: ACCESOS RÁPIDOS
-                  _buildCategoryHeader('PERSONAL', isDark),
-                  const SizedBox(height: 4),
-
-                  // Bookmarks Channel
-                  _buildChannelTile(
-                    channel: ForumChannel.bookmarksChannel,
-                    isActive: activeChannel.id == ForumChannel.bookmarksChannel.id,
-                    theme: theme,
-                    isDark: isDark,
+                _sectionLabel(
+                  activeServer.isGroups ? 'GRUPOS' : 'CANALES',
+                  isDark,
+                ),
+                const SizedBox(height: 6),
+                for (final channel in channelList)
+                  _channelTile(
+                    channel,
+                    activeChannel.id == channel.id,
+                    theme,
+                    isDark,
+                  ),
+                if (!activeServer.isGroups) ...[
+                  const SizedBox(height: 18),
+                  _sectionLabel('PERSONAL', isDark),
+                  const SizedBox(height: 6),
+                  _channelTile(
+                    ForumChannel.bookmarksChannel,
+                    activeChannel.id == ForumChannel.bookmarksChannel.id,
+                    theme,
+                    isDark,
                   ),
                 ],
               ],
             ),
           ),
 
-          // 3. Bottom User Profile Bar
-          Container(
-            height: 54,
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            color: isDark ? const Color(0xFF232428) : const Color(0xFFE3E5E8),
-            child: Row(
-              children: [
-                // User Avatar
-                Stack(
-                  children: [
-                    CircleAvatar(
-                      radius: 16,
-                      backgroundColor: isDark ? const Color(0xFF2563EB) : const Color(0xFF004B87),
-                      child: Text(
-                        activeAlias.isNotEmpty ? activeAlias.characters.first.toUpperCase() : 'U',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      right: 0,
-                      bottom: 0,
-                      child: Container(
-                        width: 9,
-                        height: 9,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF22C55E),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isDark ? const Color(0xFF232428) : Colors.white,
-                            width: 1.5,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 8),
+          // Sección inferior con botones modernos
+          _buildBottomConfigSection(context, theme, isDark, borderColor),
+        ],
+      ),
+    );
+  }
 
-                // Alias & Subtitle
-                Expanded(
-                  child: Column(
+  Widget _buildBottomConfigSection(
+    BuildContext context,
+    ThemeData theme,
+    bool isDark,
+    Color borderColor,
+  ) {
+    final foreground = isDark ? Colors.white : ZanateColors.zanateDark;
+    final muted = isDark ? const Color(0xFF94A3B8) : Colors.blueGrey.shade600;
+    final bgTile = isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF0F172A) : Colors.white,
+        border: Border(top: BorderSide(color: borderColor, width: 0.8)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: Tooltip(
+              message: 'Agregar servidor',
+              child: InkWell(
+                onTap: onAddServer,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  height: 40,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: bgTile,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: borderColor, width: 0.8),
+                  ),
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        activeAlias,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                      PhosphorIcon(
+                        PhosphorIconsRegular.plus,
+                        size: 16,
+                        color: foreground,
                       ),
-                      Text(
-                        'En línea',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: isDark ? const Color(0xFF949BA4) : const Color(0xFF64748B),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          'Agregar servidor',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: foreground,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
-
-                // Settings / Preferences Button
-                IconButton(
-                  icon: const Icon(Icons.settings_outlined, size: 16),
-                  tooltip: 'Preferencias de Usuario',
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => ProfileScreen(
-                          activeAlias: activeAlias,
-                          onAliasChanged: onAliasChanged,
-                        ),
-                      ),
-                    );
-                  },
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Tooltip(
+            message: 'Configuración y Perfil',
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => SettingsBottomSheet.show(
+                  context,
+                  activeAlias: activeAlias ?? 'Estudiante',
+                  onAliasChanged: onAliasChanged ?? (_) {},
+                  onToggleTheme: onToggleTheme,
                 ),
-              ],
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: bgTile,
+                    border: Border.all(color: borderColor, width: 0.8),
+                  ),
+                  child: Center(
+                    child: PhosphorIcon(
+                      PhosphorIconsRegular.gear,
+                      size: 20,
+                      color: muted,
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         ],
@@ -252,66 +224,77 @@ class ForumChannelSidebar extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryHeader(String title, bool isDark) {
+  Widget _sectionLabel(String label, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       child: Text(
-        title,
+        label,
         style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w800,
-          letterSpacing: 0.5,
-          color: isDark ? const Color(0xFF949BA4) : const Color(0xFF64748B),
+          letterSpacing: 0.9,
+          color: isDark ? const Color(0xFF64748B) : Colors.blueGrey.shade400,
         ),
       ),
     );
   }
 
-  Widget _buildChannelTile({
-    required ForumChannel channel,
-    required bool isActive,
-    required ThemeData theme,
-    required bool isDark,
-  }) {
-    // Discord channel active styling
+  Widget _channelTile(
+    ForumChannel channel,
+    bool isActive,
+    ThemeData theme,
+    bool isDark,
+  ) {
     final activeBg = isDark
-        ? const Color(0xFF35373C)
-        : theme.colorScheme.primary.withValues(alpha: 0.12);
-    final activeColor = isDark ? Colors.white : theme.colorScheme.primary;
-    final mutedColor = isDark ? const Color(0xFF949BA4) : const Color(0xFF64748B);
+        ? ZanateColors.zanateAccent.withValues(alpha: 0.25)
+        : ZanateColors.zanateAccent.withValues(alpha: 0.10);
+    final activeTextColor = isDark ? Colors.white : ZanateColors.zanateDark;
+    final inactiveTextColor =
+        isDark ? const Color(0xFF94A3B8) : Colors.blueGrey.shade700;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 1.5),
-      child: InkWell(
-        onTap: () => onSelectChannel(channel),
-        borderRadius: BorderRadius.circular(6),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-          decoration: BoxDecoration(
-            color: isActive ? activeBg : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                channel.icon,
-                size: 18,
-                color: isActive ? activeColor : mutedColor,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  channel.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-                    color: isActive ? activeColor : (isDark ? Colors.grey.shade300 : Colors.grey.shade800),
+    final iconColor = isActive
+        ? ZanateColors.zanateAccent
+        : (isDark ? const Color(0xFF64748B) : Colors.blueGrey.shade500);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Material(
+        color: isActive ? activeBg : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: () => onSelectChannel(channel),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              children: [
+                Icon(
+                  channel.icon,
+                  size: 18,
+                  color: iconColor,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    channel.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight:
+                          isActive ? FontWeight.w700 : FontWeight.w500,
+                      color: isActive ? activeTextColor : inactiveTextColor,
+                    ),
                   ),
                 ),
-              ),
-            ],
+                if (channel.isSpecial)
+                  PhosphorIcon(
+                    PhosphorIconsFill.bookmarkSimple,
+                    size: 13,
+                    color: iconColor,
+                  ),
+              ],
+            ),
           ),
         ),
       ),

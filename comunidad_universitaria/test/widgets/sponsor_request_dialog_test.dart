@@ -56,8 +56,8 @@ void main() {
 
       expect(find.text('Ingresa el nombre del negocio'), findsOneWidget);
       expect(find.text('Ingresa tu nombre'), findsOneWidget);
-      expect(find.text('Ingresa tu WhatsApp'), findsOneWidget);
-      expect(find.text('Describe tu propuesta'), findsOneWidget);
+      expect(find.text('Ingresa un número de WhatsApp de 8 dígitos.'), findsOneWidget);
+      expect(find.text('Describe tu propuesta con al menos 10 caracteres.'), findsOneWidget);
     });
   });
 }

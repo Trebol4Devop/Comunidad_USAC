@@ -158,7 +158,10 @@ class MarketplaceService {
     } catch (e) {
       debugPrint('Error al obtener publicaciones del marketplace: $e');
       if (isDefaultQuery) {
-        final persisted = await _readPersistedListings(cacheKey);
+        final persisted = await _readPersistedListings(
+          cacheKey,
+          allowStale: true,
+        );
         if (persisted != null) return persisted;
       }
       rethrow;
@@ -167,8 +170,9 @@ class MarketplaceService {
 
   /// Lee la primera página persistida (solo consultas por defecto).
   static Future<List<MarketplaceItem>?> _readPersistedListings(
-    String cacheKey,
-  ) {
+    String cacheKey, {
+    bool allowStale = false,
+  }) {
     return CacheService.getPersisted<List<MarketplaceItem>>(
       _cacheNamespace,
       cacheKey,
@@ -183,6 +187,7 @@ class MarketplaceService {
             )
             .toList();
       },
+      allowStale: allowStale,
     );
   }
 
@@ -190,6 +195,7 @@ class MarketplaceService {
     final map = item.toInsertMap();
     map.remove('user_id');
     map['id'] = item.id;
+    map['sponsor_brand_name'] = item.sponsorBrandName;
     map['created_at'] = item.createdAt.toIso8601String();
     map['cache_upvoted'] = item.isUpvotedByMe;
     map['is_mine'] = item.isMine;
@@ -229,6 +235,26 @@ class MarketplaceService {
     }
   }
 
+  static Future<bool> canCreateListing() async {
+    if (!SupabaseConfig.isConfigured) return false;
+    final userId = SupabaseService.currentUserId;
+    if (userId == null || SupabaseService.currentUser?.isAnonymous == true) {
+      return false;
+    }
+
+    try {
+      final profile = await SupabaseService.client
+          .from('profiles')
+          .select('seller_verification_status')
+          .eq('id', userId)
+          .maybeSingle();
+      return profile?['seller_verification_status'] == 'verified';
+    } catch (e) {
+      debugPrint('No se pudo comprobar el estado de vendedor: $e');
+      return false;
+    }
+  }
+
   static Future<MarketplaceItem?> createListing({
     required String title,
     required String description,
@@ -264,8 +290,15 @@ class MarketplaceService {
     }
 
     final userId = SupabaseService.currentUserId;
-    if (userId == null) {
-      throw Exception('Debes iniciar sesión para publicar en el marketplace.');
+    if (userId == null || SupabaseService.currentUser?.isAnonymous == true) {
+      throw StateError('Debes iniciar sesión para publicar en el marketplace.');
+    }
+
+    if (!await canCreateListing()) {
+      throw StateError(
+        'Publicar requiere que el equipo autorizado verifique tu identidad. '
+        'La verificación institucional todavía no está disponible, así que tu anuncio no se guardó.',
+      );
     }
 
     try {
@@ -294,8 +327,10 @@ class MarketplaceService {
         'social_links': socialLinks,
         'image_urls': imageUrls,
         'video_url': videoUrl?.trim().isEmpty == true ? null : videoUrl?.trim(),
-        'is_sponsored': isSponsored,
-        'sponsor_badge_text': sponsorBadgeText,
+        // El cliente nunca asigna privilegios publicitarios; la aprobación de
+        // patrocinios debe ocurrir mediante una operación administrativa segura.
+        'is_sponsored': false,
+        'sponsor_badge_text': null,
         'author_alias': authorAlias.trim(),
         'user_id': SupabaseService.currentUserId,
         'moderation_status': 0,
@@ -341,7 +376,7 @@ class MarketplaceService {
     try {
       // RPC con umbral de auto-moderación; si no existe, inserción directa.
       // Todo reporte vive en entity_reports (entity_type = marketplace_item).
-      await SupabaseService.client
+      final result = await SupabaseService.client
           .rpc(
             'report_marketplace_item',
             params: {
@@ -364,12 +399,13 @@ class MarketplaceService {
               'moderation_status': 0,
               'metadata': {'seller_alias': sellerAlias},
             });
+            return true;
           });
 
-      return true;
+      return result == true;
     } catch (e) {
       debugPrint('Error al reportar publicación de marketplace: $e');
-      return true;
+      return false;
     }
   }
 
@@ -411,11 +447,16 @@ class MarketplaceService {
       throw Exception('La aplicación no está conectada a la base de datos.');
     }
 
+    const allowedStatuses = {'available', 'reserved', 'sold', 'paused'};
+    if (!allowedStatuses.contains(newStatus)) return false;
+
     try {
-      await SupabaseService.client
+      final updated = await SupabaseService.client
           .from('marketplace_items')
           .update({'status': newStatus})
-          .eq('id', itemId);
+          .eq('id', itemId)
+          .select('id');
+      if (updated.isEmpty) return false;
       await CacheService.invalidateAll(_cacheNamespace);
       return true;
     } catch (e) {
@@ -450,7 +491,7 @@ class MarketplaceService {
       return true;
     } catch (e) {
       debugPrint('Error al enviar solicitud de patrocinio: $e');
-      return true;
+      return false;
     }
   }
 
