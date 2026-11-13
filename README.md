@@ -145,10 +145,11 @@ no proporciona todavía un runner equivalente para PowerShell/Windows.
 
 ## Estado actual de autenticación
 
-- El registro e inicio de sesión por correo/contraseña y el acceso con Google
-  están presentes en la app.
-- La decisión acordada es **sin OTP por correo; con TOTP mediante app
-  autenticadora** para MFA. La app incluye inscripción y desafío TOTP.
+- La app ofrece únicamente acceso con Google OAuth; la primera autenticación
+  crea la cuenta automáticamente. No muestra login ni registro por
+  correo/contraseña.
+- Google nunca solicita el TOTP de Comunidad USAC. La inscripción TOTP disponible
+  en el perfil queda separada del flujo de acceso y su uso futuro está pendiente.
 - La confirmación de correo está desactivada en la configuración local. Ese
   archivo no modifica la configuración Auth del proyecto alojado; además, el
   registro sin confirmación no demuestra que se controle la dirección.
@@ -156,8 +157,10 @@ no proporciona todavía un runner equivalente para PowerShell/Windows.
   no forman parte del flujo actual.
 - El código de Google OAuth requiere credenciales y redirects configurados en
   el proveedor/proyecto para probar el flujo real.
-- La exigencia de AAL2 en la base de datos **está pendiente**. No es lo mismo que
-  el guard TOTP de la app.
+- La migración local `20261004000000_require_aal2_and_verified_sellers.sql`
+  exige AAL2 para escrituras si está aplicada en la base. No forma parte del
+  flujo de login de la app. Su estado remoto se verificó como pendiente en el
+  dry-run del 6 de noviembre de 2026; en esa revisión no estaba aplicada.
 
 ### Migración AAL2 pendiente en remoto
 

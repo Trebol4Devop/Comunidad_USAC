@@ -30,52 +30,38 @@ void main() {
     );
   }
 
-  group('AuthModal Widget Tests (Google Only)', () {
-    testWidgets(
-      'Renderiza en vista móvil (400x800) exclusivamente con inicio de sesión de Google',
-      (tester) async {
-        tester.view.physicalSize = const Size(400, 800);
-        tester.view.devicePixelRatio = 1.0;
-        addTearDown(() => tester.view.resetPhysicalSize());
+  group('AuthModal Widget Tests', () {
+    testWidgets('muestra únicamente Google en vista móvil', (tester) async {
+      tester.view.physicalSize = const Size(400, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
 
-        await tester.pumpWidget(buildTestModal());
-        await tester.pumpAndSettle();
+      await tester.pumpWidget(buildTestModal());
+      await tester.pumpAndSettle();
 
-        expect(find.text('Inicia Sesión para Publicar'), findsOneWidget);
-        expect(
-          find.text('Para proteger la comunidad, debes iniciar sesión.'),
-          findsOneWidget,
-        );
+      expect(find.text('Inicia Sesión para Publicar'), findsOneWidget);
+      expect(
+        find.text('Para proteger la comunidad, debes iniciar sesión.'),
+        findsOneWidget,
+      );
 
-        // Botón Google visible
-        expect(find.text('Continuar con Google'), findsOneWidget);
+      expect(find.text('Continuar con Google'), findsOneWidget);
+      expect(
+        find.text(
+          'Usa tu cuenta de Google para iniciar sesión o crear una cuenta.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('o con correo'), findsNothing);
+      expect(find.text('Correo electrónico'), findsNothing);
+      expect(find.text('Contraseña'), findsNothing);
+      expect(find.text('Crear cuenta'), findsNothing);
+      expect(find.byType(TextFormField), findsNothing);
+    });
 
-        // Campos de correo y contraseña NO deben existir
-        expect(find.text('o con correo'), findsNothing);
-        expect(find.widgetWithText(TextFormField, 'Correo electrónico'), findsNothing);
-        expect(find.widgetWithText(TextFormField, 'Contraseña'), findsNothing);
-        expect(find.widgetWithText(ElevatedButton, 'Iniciar Sesión'), findsNothing);
-        expect(find.text('¿No tienes cuenta? Regístrate aquí'), findsNothing);
-        expect(find.text('¿Ya tienes cuenta? Inicia sesión'), findsNothing);
-      },
-    );
-
-    testWidgets(
-      'Renderiza en vista escritorio (1200x800) exclusivamente con inicio de sesión de Google',
-      (tester) async {
-        tester.view.physicalSize = const Size(1200, 800);
-        tester.view.devicePixelRatio = 1.0;
-        addTearDown(() => tester.view.resetPhysicalSize());
-
-        await tester.pumpWidget(buildTestModal());
-        await tester.pumpAndSettle();
-
-        expect(find.text('Continuar con Google'), findsOneWidget);
-        expect(find.byType(TextFormField), findsNothing);
-      },
-    );
-
-    testWidgets('No ofrece formulario de contraseña ni recuperación por correo', (tester) async {
+    testWidgets('muestra únicamente Google en vista escritorio', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -83,9 +69,28 @@ void main() {
       await tester.pumpWidget(buildTestModal());
       await tester.pumpAndSettle();
 
+      expect(find.text('Continuar con Google'), findsOneWidget);
+      expect(find.byType(TextFormField), findsNothing);
+      expect(find.text('Iniciar sesión'), findsNothing);
+      expect(find.text('Crear cuenta'), findsNothing);
+    });
+
+    testWidgets('no ofrece registro ni recuperación por correo', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(buildTestModal());
+      await tester.pumpAndSettle();
+
+      expect(find.text('Continuar con Google'), findsOneWidget);
       expect(find.text('¿Olvidaste tu contraseña?'), findsNothing);
       expect(find.text('Enviar código de recuperación'), findsNothing);
-      expect(find.text('Continuar con Google'), findsOneWidget);
+      expect(find.text('¿No tienes cuenta? Regístrate'), findsNothing);
+      expect(find.text('¿Ya tienes cuenta? Inicia sesión'), findsNothing);
+      expect(find.byType(TextFormField), findsNothing);
     });
   });
 }

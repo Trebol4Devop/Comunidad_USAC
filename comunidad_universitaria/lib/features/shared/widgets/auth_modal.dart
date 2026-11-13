@@ -139,6 +139,7 @@ class _AuthModalState extends State<AuthModal> {
         ? const Color(0xFF334155)
         : const Color(0xFFE2E8F0);
     final isMobile = Responsive.isMobile(context);
+    final isBusy = _isLoading || _waitingForGoogle;
 
     Widget content = SingleChildScrollView(
       padding: EdgeInsets.all(isMobile ? 20 : 24),
@@ -229,9 +230,7 @@ class _AuthModalState extends State<AuthModal> {
               _isLoading ? 'Conectando...' : 'Continuar con Google',
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             ),
-            onPressed: (_isLoading || _waitingForGoogle)
-                ? null
-                : _handleGoogleSignIn,
+            onPressed: isBusy ? null : _handleGoogleSignIn,
           ),
 
           if (_waitingForGoogle) ...[
@@ -251,10 +250,9 @@ class _AuthModalState extends State<AuthModal> {
             ),
           ],
 
-          const SizedBox(height: 16),
-
+          const SizedBox(height: 12),
           Text(
-            'El acceso a Comunidad USAC es exclusivo mediante tu cuenta de Google institucional o personal.',
+            'Usa tu cuenta de Google para iniciar sesión o crear una cuenta.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 11,

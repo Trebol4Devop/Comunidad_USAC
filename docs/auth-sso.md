@@ -17,8 +17,8 @@ Sus migraciones y usuarios no están conectados a ninguna de las dos apps.
 
 1. PEMTREE abre
    `https://zanate.pages.dev/auth/authorize?client_id=pemtree&redirect_uri=https%3A%2F%2Fpemtree.netlify.app%2Fauth%2Fcallback&state=...`.
-2. Zanate valida `client_id`, `redirect_uri` y muestra login (Google o
-   correo/contraseña) si no hay sesión.
+2. Zanate valida `client_id`, `redirect_uri` y, si no hay sesión, ofrece
+   únicamente iniciar sesión con Google.
 3. Tras el consentimiento, Zanate redirige al `redirect_uri` con
    `access_token`, `refresh_token` y `state` en el fragmento.
 4. PEMTREE valida el `state`, crea la sesión con `setSession`, limpia la URL y
@@ -41,10 +41,9 @@ Proveedores → *Google*: ya está habilitado. El callback registrado en Google
 Cloud debe ser exactamente
 `https://hfvsstkfqszpjrsrwhql.supabase.co/auth/v1/callback`.
 
-Correo: `mailer_autoconfirm` está en `false`, así que un registro por
-correo/contraseña debe confirmar el email antes de iniciar sesión. La pantalla
-SSO ya muestra ese aviso. Si se quiere alta inmediata, hay que activar
-*Confirm email* en el dashboard (no recomendado) o configurar SMTP propio.
+El flujo actual de Zanate/PEMTREE usa únicamente Google para autenticarse.
+La configuración de confirmación de Email en Supabase no altera ese flujo; no se
+ofrece registro por correo/contraseña ni se envían códigos de confirmación.
 
 > El MCP de Supabase disponible en este entorno solo expone herramientas de
 > base de datos (SQL, migraciones, ramas, logs). No permite leer ni escribir la

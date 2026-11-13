@@ -1,6 +1,6 @@
 # Autenticación con Supabase: Login y Sign Up
 
-Guía técnica del sistema de autenticación de Comunidad USAC con Supabase Auth, PostgreSQL y RLS. La decisión acordada es **sin OTP por correo; con TOTP mediante app autenticadora** para MFA. El registro no confirma el correo ni envía códigos por email; la app conserva Google OAuth. La recuperación de contraseña por correo está retirada. Las secciones genéricas de verificación de correo que siguen se marcan como no aplicables al proyecto.
+Guía técnica del sistema de autenticación de Comunidad USAC con Supabase Auth, PostgreSQL y RLS. La app ofrece únicamente Google OAuth; la primera autenticación crea la cuenta y Google nunca solicita el TOTP de Comunidad USAC. El registro/inicio con correo y contraseña no se ofrece en la app. La inscripción TOTP del perfil queda separada del acceso.
 
 > Verifica los límites del plan gratuito en https://supabase.com/pricing antes de decidir, porque cambian con el tiempo.
 
@@ -13,11 +13,11 @@ Guía técnica del sistema de autenticación de Comunidad USAC con Supabase Auth
 | Backend | Supabase Auth (GoTrue) | Ya incluye registro, login, tokens, OAuth y recuperación |
 | Base de datos | PostgreSQL de Supabase | Tabla `auth.users` administrada por Supabase + tabla propia `public.profiles` |
 | Autorización | Row Level Security (RLS) | Sin backend propio, la seguridad vive en la BD |
-| Proveedores | Email + contraseña, Google OAuth | Los dos pedidos |
-| Confirmación por correo | Desactivada para el flujo actual | No se envía OTP por correo ni enlace de confirmación; MFA usa TOTP en una app autenticadora |
-| Segundo factor (MFA) | TOTP con app autenticadora | El código lo genera la app y no se envía por correo/SMS; confirmar disponibilidad de MFA Auth según el plan alojado actual |
+| Proveedores de la app | Google OAuth | Único método de acceso expuesto en Flutter |
+| Confirmación por correo | No aplica al flujo actual | La app no registra con Email; el acceso es mediante Google OAuth |
+| TOTP | No se solicita en el flujo de login actual | La app no añade un desafío después de entrar; la inscripción existente desde el perfil queda separada y su uso futuro está pendiente |
 | Flujo OAuth | PKCE (por defecto en `supabase-js` v2) | Más seguro que el flujo implícito |
-| Correo transaccional | No configurado | El registro y la recuperación no envían correo |
+| Correo transaccional | No configurado | La app no ofrece registro por Email ni recuperación |
 
 ### Componentes
 
@@ -88,7 +88,11 @@ create trigger on_auth_user_created
 
 ---
 
-## 3. Flujo de Sign Up (correo y contraseña)
+## 3. Sign Up por correo y contraseña `[No disponible en la app]`
+
+La app ya no ofrece este método. Se conserva el diagrama siguiente solo como
+referencia técnica genérica de Supabase; el registro de usuarios se realiza al
+iniciar sesión por primera vez con Google.
 
 ```mermaid
 flowchart TD
@@ -101,14 +105,14 @@ flowchart TD
     E -->|"Sin sesión: Confirm email sigue activo"| E2["Indicar que se desactive Confirm email en Supabase"]
     E -->|"Con sesión"| F["Cuenta creada y sesión iniciada"]
     F --> G["Trigger crea fila en public.profiles"]
-    G --> H["TotpSessionGuard evalúa el segundo factor"]
+    G --> H["Acceso a la app sin desafío TOTP"]
 ```
 
 **Notas del flujo actual**
 
-- La app espera que `signUp` devuelva sesión y continúa a `TotpSessionGuard`.
+- La app espera que `signUp` devuelva sesión y entra sin solicitar TOTP.
 - Si no devuelve sesión porque el proyecto aún requiere confirmación, hay que desactivar manualmente **Confirm email** en Authentication → Sign In / Providers → Email. La configuración local no modifica el proyecto alojado.
-- El registro no envía correo ni ofrece reenviar/verificar un OTP por email. Esto permite crear cuentas sin demostrar la propiedad de la dirección. El TOTP de MFA se genera en la app autenticadora y no se envía por correo.
+- El registro no envía correo ni ofrece reenviar/verificar un OTP por email. Esto permite crear cuentas sin demostrar la propiedad de la dirección. TOTP no se solicita como paso de inicio de sesión.
 - Guarda metadatos del perfil en `options.data` si se necesitan para el trigger.
 
 ```ts
@@ -137,7 +141,10 @@ confirmación de correo.
 
 ---
 
-## 5. Flujo de Login (correo y contraseña)
+## 5. Login por correo y contraseña `[No disponible en la app]`
+
+La app no muestra este formulario ni llama este método desde la interfaz. El
+único método visible de inicio de sesión es Google OAuth.
 
 ```mermaid
 flowchart TD
@@ -158,7 +165,7 @@ flowchart TD
 
 - Usa **mensaje genérico** para credenciales inválidas (no digas si falló el correo o la contraseña).
 - Si aparece `email_not_confirmed`, el proyecto alojado probablemente conserva **Confirm email** activo; no se ofrece reenviar ni verificar un código.
-- Si el usuario tiene un factor MFA inscrito, tras `signInWithPassword` la sesión queda en nivel `aal1` y debe pasar por el paso de verificación de la sección 9.
+- Aunque el usuario tenga un factor TOTP inscrito, la app no solicita un desafío después de `signInWithPassword`. La sección 9 describe MFA como referencia separada, no como parte del login actual.
 - Un usuario que se registró solo con Google no tiene contraseña; si intenta `signInWithPassword` recibirá credenciales inválidas. Sugiere en la UI "Continuar con Google".
 
 ---
@@ -314,45 +321,37 @@ const { error: vErr } = await supabase.auth.mfa.verify({
 
 Nota: un factor que no se verifica queda como no verificado; limpia los factores sin verificar cuando el usuario abandona la inscripción.
 
-### 9.2 Login con TOTP requerido en la app
+### 9.2 TOTP fuera del login actual
 
-En la app actual, `TotpSessionGuard` exige a toda cuenta registrada que inscriba
-un factor TOTP antes de acceder al contenido. En inicios posteriores, si la
-sesión está en AAL1, se solicita el desafío TOTP; una sesión AAL2 continúa. Los
-visitantes sin cuenta no pasan por este guard. Este control de interfaz es
-independiente de la política AAL2 en Postgres, cuya migración remota sigue
-pendiente (ver §9.3).
+La app no solicita TOTP en el flujo de acceso. En particular, iniciar sesión
+con Google nunca pide el TOTP de Comunidad USAC. La inscripción TOTP que
+permanece disponible desde el perfil no condiciona el acceso; su uso futuro como
+segundo factor queda pendiente de decisión.
+
+La exigencia de AAL2 en Postgres es independiente: si se aplica la migración
+local `20261004000000_require_aal2_and_verified_sellers.sql`, puede bloquear
+escrituras de sesiones AAL1 aunque el login haya sido exitoso; su aplicación
+remota sigue pendiente de revisión (ver §9.3).
 
 ```mermaid
 flowchart TD
-    A["Login con contraseña o Google"] --> B["Sesión AAL1"]
-    B --> C{"TotpSessionGuard: ¿factor TOTP verificado?"}
-    C -->|"No"| D["Inscripción TOTP obligatoria"]
-    D --> E["Verificar primer código"]
-    E --> K["Acceso al contenido de la app (AAL2)"]
-    C -->|"Sí"| F{"¿Sesión actual en AAL2?"}
-    F -->|"Sí"| K
-    F -->|"No: AAL1"| G["Solicitar desafío TOTP"]
-    G --> H["mfa.challenge y mfa.verify"]
-    H --> I{"¿Código válido?"}
-    I -->|"Sí"| K
-    I -->|"No"| J["Mostrar error y permitir reintento"]
-    J --> G
+    A["Login con contraseña o Google"] --> B["Supabase crea/restaura la sesión"]
+    B --> C["La app entra sin solicitar TOTP"]
+    C --> D["La inscripción TOTP del perfil es independiente"]
 ```
 
-Para una cuenta con factor ya inscrito, el desafío se requiere cuando la sesión
-está en AAL1:
+Aunque Supabase pueda reportar un nivel AAL1 para una cuenta con factor
+inscrito, la app actual no usa ese estado para pedir un desafío ni enruta a la
+inscripción al iniciar sesión. El siguiente ejemplo es una referencia genérica
+para una futura implementación, no el comportamiento actual de Comunidad USAC:
 
 ```ts
 const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
 
 if (aal.nextLevel === 'aal2' && aal.currentLevel !== aal.nextLevel) {
-  // Solicitar el desafío TOTP y verificarlo antes de continuar.
+  // En un futuro flujo MFA, solicitar y verificar el desafío TOTP.
 }
 ```
-
-La app además enruta a la inscripción cuando aún no existe un factor verificado;
-no permite continuar como cuenta registrada sin TOTP.
 
 ### 9.3 Aplicar MFA en la base de datos (RLS)
 
