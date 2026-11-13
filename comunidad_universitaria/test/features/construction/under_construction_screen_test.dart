@@ -55,13 +55,7 @@ void main() {
     expect(find.text('Sitio en Construcción'), findsOneWidget);
 
     // Must display Google sign-in button
-    expect(find.text('Iniciar sesión con Google'), findsOneWidget);
-
-    // Mentions that 2-step verification is deactivated
-    expect(
-      find.text('Verificación en 2 pasos desactivada para este entorno'),
-      findsOneWidget,
-    );
+    expect(find.text('Continuar con Google'), findsOneWidget);
 
     // Must NOT display any app features / navigation tabs
     expect(find.text('Foro Estudiantil'), findsNothing);
@@ -99,15 +93,15 @@ void main() {
     // Must still display "Sitio en Construcción"
     expect(find.text('Sitio en Construcción'), findsOneWidget);
 
-    // Must display Google session status and user email
-    expect(find.text('Sesión activa con Google'), findsOneWidget);
+    // Must display session status and user email
+    expect(find.text('Sesión iniciada'), findsOneWidget);
     expect(find.text('estudiante@usac.edu.gt'), findsOneWidget);
 
     // Must display sign out button
     expect(find.text('Cerrar sesión'), findsOneWidget);
 
     // Must NOT display Google sign-in button since already logged in
-    expect(find.text('Iniciar sesión con Google'), findsNothing);
+    expect(find.text('Continuar con Google'), findsNothing);
 
     // Must NOT display any app features
     expect(find.text('Foro Estudiantil'), findsNothing);
@@ -126,7 +120,6 @@ void main() {
 
     // Displays UnderConstructionScreen
     expect(find.text('Sitio en Construcción'), findsOneWidget);
-    expect(find.text('PRE-DESPLIEGUE'), findsOneWidget);
 
     // No TotpSessionGuard screens (e.g., "Verificando seguridad" or "Autenticación en dos pasos")
     expect(find.text('Verificando seguridad'), findsNothing);

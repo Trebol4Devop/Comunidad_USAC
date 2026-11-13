@@ -9,13 +9,12 @@ import '../../../core/constants/zanate_colors.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
 
-/// Pantalla provisional para la fase de pre-despliegue.
+/// Pantalla provisional de sitio en construcción.
 ///
 /// Restricciones del entorno:
 /// 1. La verificación en 2 pasos (TOTP / MFA) está deshabilitada en la app.
 /// 2. Únicamente se permite el inicio de sesión con Google.
-/// 3. El usuario solo puede ver esta pantalla ("Sitio en Construcción") y
-///    no tiene acceso a ninguna función implementada (foro, marketplace, grupos, mapa, etc.).
+/// 3. El usuario solo ve esta pantalla y no tiene acceso a ninguna función interna.
 class UnderConstructionScreen extends StatefulWidget {
   final VoidCallback? onToggleTheme;
   final bool isDarkMode;
@@ -105,7 +104,7 @@ class _UnderConstructionScreenState extends State<UnderConstructionScreen> {
           _isLoading = false;
           _waitingForGoogle = false;
           _errorMessage =
-              'No se pudo iniciar sesión con Google. Por favor, verifica tu conexión e inténtalo de nuevo.';
+              'No se pudo conectar con Google. Por favor, inténtalo de nuevo.';
         });
       }
     }
@@ -155,7 +154,7 @@ class _UnderConstructionScreenState extends State<UnderConstructionScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Barra superior de pre-despliegue
+            // Barra superior limpia
             _buildTopBar(
               isDark: isDark,
               borderColor: borderColor,
@@ -164,7 +163,7 @@ class _UnderConstructionScreenState extends State<UnderConstructionScreen> {
               textSecondary: textSecondary,
             ),
 
-            // Contenido central restringido (solo "Sitio en Construcción")
+            // Contenido central: solo "Sitio en Construcción"
             Expanded(
               child: Center(
                 child: SingleChildScrollView(
@@ -173,7 +172,7 @@ class _UnderConstructionScreenState extends State<UnderConstructionScreen> {
                     vertical: 24,
                   ),
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 520),
+                    constraints: const BoxConstraints(maxWidth: 480),
                     child: Container(
                       decoration: BoxDecoration(
                         color: surfaceColor,
@@ -193,7 +192,7 @@ class _UnderConstructionScreenState extends State<UnderConstructionScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Ícono destacado de Construcción
+                          // Ícono de Construcción
                           _buildConstructionIcon(isDark),
 
                           const SizedBox(height: 20),
@@ -214,11 +213,12 @@ class _UnderConstructionScreenState extends State<UnderConstructionScreen> {
 
                           // Subtítulo
                           Text(
-                            'Plataforma Universitaria en fase de pre-despliegue.',
+                            'Estamos trabajando para brindarte una mejor experiencia. Próximamente disponible para toda la comunidad universitaria.',
                             textAlign: TextAlign.center,
                             style: GoogleFonts.inter(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w400,
+                              height: 1.45,
                               color: textSecondary,
                             ),
                           ),
@@ -240,7 +240,6 @@ class _UnderConstructionScreenState extends State<UnderConstructionScreen> {
                               isDark: isDark,
                               borderColor: borderColor,
                               textPrimary: textPrimary,
-                              textSecondary: textSecondary,
                             ),
                         ],
                       ),
@@ -254,7 +253,7 @@ class _UnderConstructionScreenState extends State<UnderConstructionScreen> {
             Padding(
               padding: const EdgeInsets.only(bottom: 16, top: 8),
               child: Text(
-                '© 2026 Zanate — Comunidad Universitaria USAC • Pre-despliegue',
+                '© 2026 Zanate — Comunidad Universitaria USAC',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(fontSize: 11.5, color: textSecondary),
               ),
@@ -320,46 +319,6 @@ class _UnderConstructionScreenState extends State<UnderConstructionScreen> {
           ),
           const Spacer(),
 
-          // Insignia de pre-despliegue
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? const Color(0xFFF59E0B).withValues(alpha: 0.15)
-                  : const Color(0xFFFEF3C7),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isDark ? const Color(0xFFB45309) : const Color(0xFFFCD34D),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 7,
-                  height: 7,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFD97706),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  'PRE-DESPLIEGUE',
-                  style: GoogleFonts.inter(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
-                    letterSpacing: 0.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(width: 12),
-
           // Botón de cambio de tema
           if (widget.onToggleTheme != null)
             IconButton(
@@ -407,44 +366,10 @@ class _UnderConstructionScreenState extends State<UnderConstructionScreen> {
     required bool isDark,
     required Color borderColor,
     required Color textPrimary,
-    required Color textSecondary,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Mensaje explicativo
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: borderColor),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(
-                Icons.info_outline,
-                size: 20,
-                color: ZanateColors.zanateAccent,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'El acceso a este entorno está reservado exclusivamente para la verificación técnica mediante Google. Todas las funciones de la aplicación están temporalmente deshabilitadas.',
-                  style: GoogleFonts.inter(
-                    fontSize: 12.5,
-                    height: 1.45,
-                    color: textSecondary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 20),
-
         if (_errorMessage != null) ...[
           Container(
             padding: const EdgeInsets.all(12),
@@ -491,10 +416,10 @@ class _UnderConstructionScreenState extends State<UnderConstructionScreen> {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'Completa el inicio de sesión en Google en la ventana abierta. La sesión se activará automáticamente al finalizar.',
+                  'Completa el inicio de sesión en Google en la ventana abierta.',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
-                    fontSize: 12,
+                    fontSize: 12.5,
                     color: textPrimary,
                   ),
                 ),
@@ -504,7 +429,7 @@ class _UnderConstructionScreenState extends State<UnderConstructionScreen> {
           const SizedBox(height: 16),
         ],
 
-        // Botón único: Continuar con Google
+        // Botón único de Google
         ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
@@ -538,7 +463,7 @@ class _UnderConstructionScreenState extends State<UnderConstructionScreen> {
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      'Iniciar sesión con Google',
+                      'Continuar con Google',
                       style: GoogleFonts.inter(
                         fontSize: 14.5,
                         fontWeight: FontWeight.w600,
@@ -547,44 +472,6 @@ class _UnderConstructionScreenState extends State<UnderConstructionScreen> {
                     ),
                   ],
                 ),
-        ),
-
-        const SizedBox(height: 20),
-
-        // Especificaciones del entorno
-        Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-          decoration: BoxDecoration(
-            color: isDark
-                ? const Color(0xFF0F172A).withValues(alpha: 0.5)
-                : const Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildFeatureSpecItem(
-                icon: Icons.check_circle_outline,
-                text: 'Inicio de sesión exclusivo mediante Google OAuth',
-                color: const Color(0xFF10B981),
-                textSecondary: textSecondary,
-              ),
-              const SizedBox(height: 6),
-              _buildFeatureSpecItem(
-                icon: Icons.check_circle_outline,
-                text: 'Verificación en 2 pasos desactivada para este entorno',
-                color: const Color(0xFF10B981),
-                textSecondary: textSecondary,
-              ),
-              const SizedBox(height: 6),
-              _buildFeatureSpecItem(
-                icon: Icons.block_outlined,
-                text: 'Funciones de la comunidad restringidas (en construcción)',
-                color: const Color(0xFFF59E0B),
-                textSecondary: textSecondary,
-              ),
-            ],
-          ),
         ),
       ],
     );
@@ -602,7 +489,7 @@ class _UnderConstructionScreenState extends State<UnderConstructionScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Tarjeta de estado de sesión
+        // Tarjeta simple de cuenta
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -617,8 +504,8 @@ class _UnderConstructionScreenState extends State<UnderConstructionScreen> {
           child: Row(
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: 38,
+                height: 38,
                 decoration: const BoxDecoration(
                   color: Color(0xFF10B981),
                   shape: BoxShape.circle,
@@ -626,18 +513,18 @@ class _UnderConstructionScreenState extends State<UnderConstructionScreen> {
                 child: const Icon(
                   Icons.check_rounded,
                   color: Colors.white,
-                  size: 24,
+                  size: 22,
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Sesión activa con Google',
+                      'Sesión iniciada',
                       style: GoogleFonts.inter(
-                        fontSize: 13,
+                        fontSize: 12.5,
                         fontWeight: FontWeight.w700,
                         color: isDark
                             ? const Color(0xFF6EE7B7)
@@ -662,47 +549,14 @@ class _UnderConstructionScreenState extends State<UnderConstructionScreen> {
           ),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
 
-        // Aviso contundente de "Sitio en construcción"
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: borderColor),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(
-                    Icons.lock_clock_outlined,
-                    color: Color(0xFFD97706),
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Funciones en preparación',
-                    style: GoogleFonts.inter(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w700,
-                      color: textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Tu autenticación mediante Google se ha completado satisfactoriamente.\n\nSin embargo, la aplicación se encuentra en pre-despliegue y ningún módulo (foro estudiantil, marketplace, grupos ni mapa de campus) está habilitado para interactuar en esta versión.',
-                style: GoogleFonts.inter(
-                  fontSize: 12.5,
-                  height: 1.45,
-                  color: textSecondary,
-                ),
-              ),
-            ],
+        Text(
+          'La plataforma estará disponible próximamente.',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            color: textSecondary,
           ),
         ),
 
@@ -738,30 +592,6 @@ class _UnderConstructionScreenState extends State<UnderConstructionScreen> {
             ),
           ),
           onPressed: _isLoading ? null : _handleSignOut,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFeatureSpecItem({
-    required IconData icon,
-    required String text,
-    required Color color,
-    required Color textSecondary,
-  }) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: color),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            text,
-            style: GoogleFonts.inter(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w500,
-              color: textSecondary,
-            ),
-          ),
         ),
       ],
     );
