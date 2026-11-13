@@ -46,6 +46,14 @@ jobs:
         working-directory: comunidad_universitaria
         run: flutter pub get
 
+      - name: Análisis estático
+        working-directory: comunidad_universitaria
+        run: flutter analyze --no-fatal-infos
+
+      - name: Pruebas unitarias
+        working-directory: comunidad_universitaria
+        run: flutter test --no-pub
+
       - name: Compilar web (release)
         working-directory: comunidad_universitaria
         run: |

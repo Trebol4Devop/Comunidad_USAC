@@ -327,7 +327,7 @@ void main() {
         // c3: hijo de c2
         // c4: huérfano (parentId 'c-inexistente') -> debe ir a raíz
         // c5 y c6: ciclo mutuo (c5.parentId = c6, c6.parentId = c5) -> detecta ciclo y envía c6 a raíz
-        fakeServer.onGet('/rest/v1/safe_comments', (req) {
+        fakeServer.onGet('/rest/v1/comments', (req) {
           return [
             {
               'id': 'c1',

@@ -255,7 +255,7 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       }
     } catch (e) {
-      debugPrint('Error al redirigir a PEMTREE: $e');
+      debugPrint('Error al redirigir a PEMTREE: ${e.runtimeType}');
     }
   }
 

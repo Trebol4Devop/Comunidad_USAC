@@ -118,17 +118,7 @@ class CampusCommunitySupabaseService {
       throw StateError('Inicia sesión para debatir en el foro del campus');
     }
 
-    String alias = fallbackAlias ?? 'Estudiante USAC';
-    try {
-      final profile = await client
-          .from('profiles')
-          .select('alias')
-          .eq('id', user.id)
-          .maybeSingle();
-      if (profile != null && profile['alias'] != null) {
-        alias = profile['alias'] as String;
-      }
-    } catch (_) {}
+    final alias = fallbackAlias ?? 'Estudiante USAC';
 
     await client.from('comments').insert({
       'post_id': postId,

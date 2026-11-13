@@ -104,11 +104,14 @@ class NotificationService {
           .eq('user_id', uid)
           .maybeSingle();
 
+      final carreras = await _fetchCareerPreferences(uid);
+
       if (res != null) {
-        return NotificationPreferences.fromMap(Map<String, dynamic>.from(res));
+        return NotificationPreferences.fromMap(
+          Map<String, dynamic>.from(res),
+        ).copyWith(carreras: carreras);
       }
 
-      // Si no existe, crear registro por defecto
       final defaultPrefs = NotificationPreferences(userId: uid);
       await SupabaseService.client
           .from('notification_preferences')
@@ -130,10 +133,43 @@ class NotificationService {
       await SupabaseService.client
           .from('notification_preferences')
           .upsert(prefs.toMap());
+      await _saveCareerPreferences(uid, prefs.carreras);
       return true;
     } catch (e) {
       debugPrint('Error guardando preferencias de notificación: $e');
       return false;
     }
+  }
+
+  static Future<List<String>> _fetchCareerPreferences(String uid) async {
+    try {
+      final res = await SupabaseService.client
+          .from('notification_preference_carreras')
+          .select('carrera_id')
+          .eq('user_id', uid);
+      return (res as List<dynamic>)
+          .map((row) => row['carrera_id']?.toString() ?? '')
+          .where((id) => id.isNotEmpty)
+          .toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  static Future<void> _saveCareerPreferences(
+    String uid,
+    List<String> carreras,
+  ) async {
+    await SupabaseService.client
+        .from('notification_preference_carreras')
+        .delete()
+        .eq('user_id', uid);
+    if (carreras.isEmpty) return;
+    await SupabaseService.client
+        .from('notification_preference_carreras')
+        .insert([
+          for (final carrera in carreras)
+            {'user_id': uid, 'carrera_id': carrera},
+        ]);
   }
 }

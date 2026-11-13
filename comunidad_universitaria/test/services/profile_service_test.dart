@@ -114,7 +114,7 @@ void main() {
 
   group('ProfileService.fetchUserPosts', () {
     test('obtiene publicaciones del usuario filtradas por alias', () async {
-      fakeServer.onGet('/rest/v1/safe_posts_feed', (req) {
+      fakeServer.onGet('/rest/v1/posts', (req) {
         expect(req.url.queryParameters['author_alias'], 'eq.Estudiante Destacado');
         return [
           TestFixtures.postMap(

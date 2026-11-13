@@ -112,8 +112,9 @@ class ForumService {
         if (bookmarkedIds.isEmpty) return [];
 
         var bookmarksQuery = SupabaseService.client
-            .from('safe_posts_feed')
-            .select('*')
+            .from('posts')
+            .select(_postFallbackColumns)
+            .neq('moderation_status', 2)
             .inFilter('id', bookmarkedIds);
 
         if (carrera != 'todas') {
@@ -155,7 +156,10 @@ class ForumService {
         return posts;
       }
 
-      var query = SupabaseService.client.from('safe_posts_feed').select('*');
+      var query = SupabaseService.client
+          .from('posts')
+          .select(_postFallbackColumns)
+          .neq('moderation_status', 2);
 
       if (category != 'todos') {
         query = query.eq('category', category);
@@ -452,7 +456,7 @@ class ForumService {
       debugPrint('Error cargando encuestas: $e');
     }
 
-    // 3. Quoted posts (usando safe_posts_feed)
+    // 3. Posts citados
     final quotedIds = data
         .map((item) => item['quoted_post_id']?.toString())
         .where((id) => id != null && id.isNotEmpty)
@@ -463,8 +467,9 @@ class ForumService {
     if (quotedIds.isNotEmpty) {
       try {
         final quotedRes = await SupabaseService.client
-            .from('safe_posts_feed')
-            .select('*')
+            .from('posts')
+            .select(_postFallbackColumns)
+            .neq('moderation_status', 2)
             .inFilter('id', quotedIds);
 
         for (var q in quotedRes) {
@@ -695,8 +700,9 @@ class ForumService {
 
     try {
       final response = await SupabaseService.client
-          .from('safe_comments')
-          .select('*')
+          .from('comments')
+          .select(_commentFallbackColumns)
+          .neq('moderation_status', 2)
           .eq('post_id', postId)
           .order('created_at', ascending: true)
           .timeout(const Duration(seconds: 10));

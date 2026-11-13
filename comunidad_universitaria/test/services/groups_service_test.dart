@@ -169,7 +169,7 @@ void main() {
           ),
         ];
 
-        fakeServer.onGet('/rest/v1/safe_student_groups', (req) => mockGroups);
+        fakeServer.onGet('/rest/v1/student_groups', (req) => mockGroups);
 
         // Consulta canal #todos-los-grupos de Ingeniería (08)
         final ingGroups = await GroupsService.fetchGroups(

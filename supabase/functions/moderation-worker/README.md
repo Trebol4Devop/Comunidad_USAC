@@ -23,8 +23,8 @@ Evalúa de manera inmediata patrones críticos con alta certeza (`confidence >= 
 ### Veredictos y Estados de Moderación
 | Etiqueta | Confianza | Moderation Status | Acción |
 | :--- | :--- | :--- | :--- |
-| `SAFE_CAMPUS_HUMOR` | Cualquier | `0` (Visible) | Trabajo marcado como completado (`done`). |
-| Cualquier categoría de riesgo | `0.50 <= conf < 0.80` | `1` (En Revisión) | Cola humana de moderación. Contenido original inalterado. |
+| `SAFE_CAMPUS_HUMOR` | Cualquier | `1` (Aprobado) | Trabajo marcado como completado (`done`). |
+| Cualquier categoría de riesgo | `0.50 <= conf < 0.80` | `3` (Revisión) | Cola humana de moderación. Contenido original inalterado. |
 | Cualquier categoría de riesgo | `conf >= 0.80` | `2` (Oculto) | Ocultamiento automático. Registro obligatorio en `moderation_audit_log`. |
 | `SEVERE_THREAT_FRAUD` o `ACCESS_ABUSE_PIRACY` | `conf >= 0.80` | `2` (Oculto) | Además se activa `is_legal_hold = true` (bloqueo legal inmutable). |
 

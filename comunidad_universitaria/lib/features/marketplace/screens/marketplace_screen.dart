@@ -122,7 +122,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
       }
     });
 
-    await ShareCountService.incrementShare(item.id, table: 'marketplace_items');
+    await ShareCountService.incrementShare(item.id);
 
     final shareText =
         '${item.title} - ${item.isFree ? "GRATIS" : item.formattedPrice}\n\n${item.description}\n\nUbicación: ${item.locationDetail.isNotEmpty ? item.locationDetail : item.sede}\n— Publicado por ${item.authorAlias} en Comunidad USAC';

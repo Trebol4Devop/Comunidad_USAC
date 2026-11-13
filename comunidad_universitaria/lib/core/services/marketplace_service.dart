@@ -5,6 +5,15 @@ import 'cache_service.dart';
 import 'supabase_service.dart';
 
 class MarketplaceService {
+  static const String _marketColumns =
+      'id, title, description, price, is_free, category, facultad, sede, '
+      'building_code, location_detail, contact_whatsapp, contact_telegram, '
+      'contact_instagram, contact_messenger, social_links, image_urls, video_url, '
+      'is_sponsored, sponsor_badge_text, author_alias, upvotes, reported_count, '
+      'moderation_status, status, moderation_label, moderation_confidence, '
+      'moderation_reason, moderated_at, moderated_by, created_at, updated_at, '
+      'deleted_at, is_legal_hold';
+
   static const String _cacheNamespace = 'marketplace_items';
 
   // Prohibited words and phrases filter according to community rules
@@ -82,8 +91,8 @@ class MarketplaceService {
 
     try {
       var query = SupabaseService.client
-          .from('safe_marketplace_items')
-          .select('*')
+          .from('marketplace_items')
+          .select(_marketColumns)
           .lt('moderation_status', 2);
 
       if (category != 'todos') {
@@ -216,8 +225,8 @@ class MarketplaceService {
 
     try {
       final response = await SupabaseService.client
-          .from('safe_marketplace_items')
-          .select('*')
+          .from('marketplace_items')
+          .select(_marketColumns)
           .eq('is_sponsored', true)
           .lt('moderation_status', 2)
           .order('created_at', ascending: false)
@@ -242,17 +251,7 @@ class MarketplaceService {
       return false;
     }
 
-    try {
-      final profile = await SupabaseService.client
-          .from('profiles')
-          .select('seller_verification_status')
-          .eq('id', userId)
-          .maybeSingle();
-      return profile?['seller_verification_status'] == 'verified';
-    } catch (e) {
-      debugPrint('No se pudo comprobar el estado de vendedor: $e');
-      return false;
-    }
+    return true;
   }
 
   static Future<MarketplaceItem?> createListing({
@@ -418,18 +417,10 @@ class MarketplaceService {
     }
 
     try {
-      final res = await SupabaseService.client
-          .rpc(
-            'moderate_marketplace_item',
-            params: {'target_item_id': itemId, 'new_status': newStatus},
-          )
-          .catchError((_) async {
-            await SupabaseService.client
-                .from('marketplace_items')
-                .update({'moderation_status': newStatus})
-                .eq('id', itemId);
-            return true;
-          });
+      final res = await SupabaseService.client.rpc(
+        'moderate_marketplace_item',
+        params: {'target_item_id': itemId, 'new_status': newStatus},
+      );
 
       await CacheService.invalidateAll(_cacheNamespace);
       return res == true;
