@@ -1,6 +1,6 @@
 # 07 — Autenticación y Seguridad
 
-> Especificación de requisitos de experiencia de usuario (UX) para autenticación en **Comunidad Universitaria USAC**: modo visitante, registro e inicio de sesión con correo/contraseña sin OTP por correo, Google OAuth con PKCE y servidor SSO para PEMTREE. El acceso actual no solicita TOTP después del login; la inscripción TOTP queda separada y su uso futuro está pendiente. La app no envía códigos de confirmación de registro ni de recuperación de contraseña por correo. Convenciones, matriz de roles y plantilla en [`README.md`](README.md).
+> Especificación de requisitos de experiencia de usuario (UX) para autenticación en **Comunidad Universitaria USAC**: modo visitante, acceso exclusivo con Google OAuth/PKCE y servidor SSO para PEMTREE. Google nunca solicita el TOTP de Comunidad USAC. La inscripción TOTP queda separada del login y su uso futuro está pendiente. Convenciones, matriz de roles y plantilla en [`README.md`](README.md).
 
 ---
 
@@ -9,9 +9,9 @@
 El flujo actual de autenticación de la plataforma **Comunidad Universitaria USAC** ofrece:
 
 1. **Lectura como visitante:** se puede consultar contenido público sin crear una cuenta.
-2. **Acceso con cuenta:** iniciar sesión con Google o correo/contraseña. Tras autenticarse, la app entra sin pedir TOTP, incluso si la cuenta tiene un factor inscrito.
-3. **Sin OTP por correo:** la app no envía códigos de confirmación ni recuperación. El registro sin confirmación no prueba que la persona controle la dirección ingresada.
-4. **SSO para PEMTREE:** la plataforma conserva el flujo OAuth 2.0 / PKCE para herramientas satélite; el login requerido se completa antes de autorizar el acceso.
+2. **Acceso con cuenta:** la app ofrece únicamente Google OAuth. La primera autenticación crea la cuenta si todavía no existe; Google nunca solicita el TOTP de Comunidad USAC.
+3. **Sin acceso por correo:** la app no ofrece registro/inicio de sesión con correo y contraseña ni envía OTP por correo.
+4. **SSO para PEMTREE:** la plataforma conserva el flujo OAuth 2.0 / PKCE para herramientas satélite; el acceso se realiza con Google antes de autorizar la integración.
 
 La inscripción TOTP disponible desde el perfil queda separada del flujo de login. Su uso futuro como segundo factor y cualquier exigencia AAL2 en la base de datos requieren una decisión y validación posteriores. La migración AAL2 local, si se aplica, puede bloquear escrituras de sesiones AAL1 independientemente de la interfaz.
 
@@ -34,15 +34,15 @@ Este documento formaliza y eleva la experiencia analizada en el **Inventario UX*
 ## 3. Matriz de capacidades de acceso y seguridad por rol
 
 > Esta matriz describe requisitos y estados objetivo previos, no el comportamiento
-> actual del login. Actualmente Google y correo/contraseña entran sin desafío
-> TOTP. La migración local AAL2 es independiente y, si está aplicada a la base,
-> puede bloquear escrituras AAL1; su estado debe comprobarse en el entorno usado.
+> actual del login. Actualmente la app ofrece únicamente Google y nunca solicita
+> TOTP. La migración local AAL2 es independiente y, si está aplicada, puede
+> bloquear escrituras AAL1; su estado debe comprobarse en cada entorno.
 
 | Capacidad                                 |  Visitante (Sin sesión)  |  Estudiante en Gracia (AAL1)  | Estudiante Activo (AAL2) | Estudiante Verificado (AAL2) | Vendedor externo verificado (AAL2) | Moderador (AAL2) | Administrador (AAL2) |
 | ----------------------------------------- | :----------------------: | :---------------------------: | :----------------------: | :--------------------------: | :--------------------------------: | :--------------: | :------------------: |
 | Explorar foro, marketplace y grupos       |          Hecho           |             Hecho             |          Hecho           |            Hecho             |               Hecho                |      Hecho       |        Hecho         |
 | Buscar contenidos y filtrar facultades    |          Hecho           |             Hecho             |          Hecho           |            Hecho             |               Hecho                |      Hecho       |        Hecho         |
-| Iniciar sesión (Correo / Google)          |          Hecho           |              N/A              |           N/A            |             N/A              |                N/A                 |       N/A        |         N/A          |
+| Iniciar sesión (Google)                    |          Hecho           |              N/A              |           N/A            |             N/A              |                N/A                 |       N/A        |         N/A          |
 | Crear nueva cuenta comunitaria            |          Hecho           |              N/A              |           N/A            |             N/A              |                N/A                 |       N/A        |         N/A          |
 | Publicar temas y comentarios en el foro   |  Falta _(interceptado)_  | Hecho _(hasta vencer gracia)_ |          Hecho           |            Hecho             |            Falta / N-A             |      Hecho       |        Hecho         |
 | Votar en encuestas y reacciones (_likes_) |  Falta _(interceptado)_  | Hecho _(hasta vencer gracia)_ |          Hecho           |            Hecho             |            Falta / N-A             |      Hecho       |        Hecho         |
@@ -64,12 +64,9 @@ Este documento formaliza y eleva la experiencia analizada en el **Inventario UX*
 flowchart TD
     Guest["Visitante"] --> Read["Consultar contenido público"]
     Guest --> Auth["AuthModal"]
-    Auth --> Choice{"Método"}
-    Choice -->|"Correo y contraseña"| Email["Registro o inicio de sesión"]
-    Choice -->|"Google"| Google["OAuth 2.0 con PKCE"]
-    Email --> Session["Sesión de Supabase"]
-    Google --> Session
-    Session --> App["Entrar a la app; no se solicita TOTP"]
+    Auth --> Google["Única opción: Google OAuth con PKCE"]
+    Google --> Session["Supabase crea o restaura la sesión"]
+    Session --> App["Entrar a la app; Google nunca solicita TOTP"]
     Session --> Profile["Inscripción TOTP opcional y separada desde el perfil"]
 
     SSO["PEMTREE solicita SSO"] --> Consent["Validar solicitud y mostrar consentimiento"]
@@ -122,7 +119,11 @@ si está aplicada a una base, puede rechazar escrituras aunque el login concluya
 
 ---
 
-### UX-AUTH-002 — Registro de cuenta estudiantil con correo y contraseña
+### UX-AUTH-002 — Registro de cuenta estudiantil con correo y contraseña `[Retirado]`
+
+> Este requisito se conserva como referencia histórica, pero el registro por
+> correo/contraseña ya no se ofrece. La primera autenticación con Google crea la
+> cuenta automáticamente. Google nunca solicita TOTP.
 
 - **Actor / rol:** Visitante (Estudiante no registrado)
 - **Prioridad:** Must
@@ -174,7 +175,10 @@ factor y no sustituye esa comprobación.
 
 ---
 
-### UX-AUTH-004 — Inicio de sesión con credenciales de correo y contraseña
+### UX-AUTH-004 — Inicio de sesión con credenciales de correo y contraseña `[Retirado]`
+
+> Este requisito se conserva como referencia histórica, pero la app ya no ofrece
+> acceso con correo/contraseña. El único método disponible es Google OAuth.
 
 - **Actor / rol:** Estudiante registrado, Estudiante verificado, Moderador, Administrador
 - **Prioridad:** Must
@@ -297,12 +301,12 @@ factor y no sustituye esa comprobación.
 
 ### UX-AUTH-008 — Onboarding MFA TOTP `[Pospuesto]`
 
-Este flujo de inducción, período de gracia de 7 días y requisito obligatorio de
+El flujo de inducción, período de gracia de 7 días y requisito obligatorio de
 TOTP no forma parte del comportamiento actual y no debe implementarse como
 bloqueo de acceso o de escritura sin una decisión posterior. Actualmente, el
-login con Google o correo/contraseña entra sin solicitar TOTP. La inscripción
-TOTP permanece separada desde el perfil; cualquier requisito de AAL2 en Postgres
-se gestiona mediante migración y debe revisarse por separado.
+login con Google entra sin solicitar TOTP. La inscripción TOTP permanece
+separada desde el perfil; cualquier requisito de AAL2 en Postgres se gestiona
+mediante migración y debe revisarse por separado.
 
 ---
 
@@ -361,11 +365,10 @@ se gestiona mediante migración y debe revisarse por separado.
 
 ### UX-AUTH-011 — Desafío de sesión MFA TOTP `[Pospuesto]`
 
-El desafío TOTP descrito en este requisito no se presenta en el flujo actual. Un
-usuario con un factor inscrito puede iniciar sesión por Google o por
-correo/contraseña sin que la app solicite su código. La decisión futura sobre
-MFA debe incluir tanto el flujo de interfaz como las políticas AAL2 del backend;
-los códigos de recuperación siguen fuera del alcance.
+El desafío TOTP descrito en este requisito no se presenta en el flujo actual.
+Un usuario puede iniciar sesión por Google sin que la app solicite su código.
+La decisión futura sobre MFA debe incluir tanto el flujo de interfaz como las
+políticas AAL2 del backend; los códigos de recuperación siguen fuera del alcance.
 
 
 ---
@@ -451,7 +454,7 @@ los códigos de recuperación siguen fuera del alcance.
 
 - **Actor / rol:** Estudiante autorizando el acceso a PEMTREE
 - **Prioridad:** Must
-- **Estado objetivo:** Pantalla de consentimiento visual con diseño institucional que expone con claridad los alcances de la integración: muestra los logos de Comunidad USAC y PEMTREE enlazados, detalla los datos específicos que se compartirán con la app satélite (identidad básica, seudónimo comunitario y correo para sincronización de materias), e identifica la cuenta del estudiante que está otorgando el acceso. Si el usuario no tiene una sesión iniciada al llegar, se ofrece un formulario embebido de inicio de sesión (correo/contraseña o Google) sin abandonar la pantalla. Al pulsar "Autorizar y Continuar", los tokens generados (`access_token`, `refresh_token`, `state`) se transmiten de vuelta a PEMTREE exclusivamente en el **fragmento hash (`#`)** de la URL para garantizar que nunca queden registrados en historiales de servidores intermedios, incluyendo además un enlace manual de rescate si el navegador bloquea ventanas emergentes.
+- **Estado objetivo:** Pantalla de consentimiento visual con diseño institucional que expone con claridad los alcances de la integración: muestra los logos de Comunidad USAC y PEMTREE enlazados, detalla los datos específicos que se compartirán con la app satélite (identidad básica, seudónimo comunitario y correo para sincronización de materias), e identifica la cuenta del estudiante que está otorgando el acceso. Si el usuario no tiene una sesión iniciada al llegar, se ofrece el acceso embebido mediante Google sin abandonar la pantalla. Al pulsar "Autorizar y Continuar", los tokens generados (`access_token`, `refresh_token`, `state`) se transmiten de vuelta a PEMTREE exclusivamente en el **fragmento hash (`#`)** de la URL para garantizar que nunca queden registrados en historiales de servidores intermedios, incluyendo además un enlace manual de rescate si el navegador bloquea ventanas emergentes.
 - **Precondiciones:** Solicitud con parámetros válidos validados por `SsoSecurityValidator`.
 - **UI / contenido:**
   - Encabezado con branding conjunto: Escudo Comunidad USAC e Isotipo de PEMTREE unidos por icono de vinculación (`Icons.sync_alt`).
@@ -461,7 +464,7 @@ los códigos de recuperación siguen fuera del alcance.
     - _Identidad y seudónimo:_ Para mostrar tu perfil en PEMTREE.
     - _Correo electrónico:_ Para asociar tus avances de pensum y materias aprobadas.
   - Tarjeta de usuario activo: Muestra el avatar circular, el seudónimo público y el correo de la sesión conectada.
-  - Si el usuario es visitante (no autenticado): En lugar de un rebote, se despliega una pestaña embebida compacta con opciones de acceso ("Continuar con Google" o campos de correo y contraseña).
+  - Si el usuario es visitante (no autenticado): se ofrece únicamente el acceso con Google mediante `AuthModal`.
   - Botones de decisión:
     - "Autorizar y Continuar" (`ElevatedButton` verde institucional `#16A34A`, con texto en negrita).
     - "Cancelar" (`OutlinedButton` neutro).

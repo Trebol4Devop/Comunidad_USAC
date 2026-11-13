@@ -31,9 +31,7 @@ void main() {
   }
 
   group('AuthModal Widget Tests', () {
-    testWidgets('muestra Google y correo/contraseña en vista móvil', (
-      tester,
-    ) async {
+    testWidgets('muestra únicamente Google en vista móvil', (tester) async {
       tester.view.physicalSize = const Size(400, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -48,16 +46,22 @@ void main() {
       );
 
       expect(find.text('Continuar con Google'), findsOneWidget);
-      expect(find.text('o con correo'), findsOneWidget);
-      expect(find.text('Correo electrónico'), findsOneWidget);
-      expect(find.text('Contraseña'), findsOneWidget);
-      expect(find.text('Iniciar sesión'), findsOneWidget);
-      expect(find.text('Continuar con TOTP'), findsNothing);
-      expect(find.text('Verificar código TOTP'), findsNothing);
-      expect(find.text('¿No tienes cuenta? Regístrate'), findsOneWidget);
+      expect(
+        find.text(
+          'Usa tu cuenta de Google para iniciar sesión o crear una cuenta.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('o con correo'), findsNothing);
+      expect(find.text('Correo electrónico'), findsNothing);
+      expect(find.text('Contraseña'), findsNothing);
+      expect(find.text('Crear cuenta'), findsNothing);
+      expect(find.byType(TextFormField), findsNothing);
     });
 
-    testWidgets('muestra las dos opciones en vista escritorio', (tester) async {
+    testWidgets('muestra únicamente Google en vista escritorio', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -66,11 +70,12 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Continuar con Google'), findsOneWidget);
-      expect(find.byType(TextFormField), findsNWidgets(2));
-      expect(find.text('Iniciar sesión'), findsOneWidget);
+      expect(find.byType(TextFormField), findsNothing);
+      expect(find.text('Iniciar sesión'), findsNothing);
+      expect(find.text('Crear cuenta'), findsNothing);
     });
 
-    testWidgets('permite cambiar entre iniciar sesión y crear cuenta', (
+    testWidgets('no ofrece registro ni recuperación por correo', (
       tester,
     ) async {
       tester.view.physicalSize = const Size(1200, 800);
@@ -83,15 +88,9 @@ void main() {
       expect(find.text('Continuar con Google'), findsOneWidget);
       expect(find.text('¿Olvidaste tu contraseña?'), findsNothing);
       expect(find.text('Enviar código de recuperación'), findsNothing);
-
-      await tester.tap(find.text('¿No tienes cuenta? Regístrate'));
-      await tester.pumpAndSettle();
-      expect(find.text('Crear cuenta'), findsOneWidget);
-      expect(find.text('¿Ya tienes cuenta? Inicia sesión'), findsOneWidget);
-
-      await tester.tap(find.text('¿Ya tienes cuenta? Inicia sesión'));
-      await tester.pumpAndSettle();
-      expect(find.text('Iniciar sesión'), findsOneWidget);
+      expect(find.text('¿No tienes cuenta? Regístrate'), findsNothing);
+      expect(find.text('¿Ya tienes cuenta? Inicia sesión'), findsNothing);
+      expect(find.byType(TextFormField), findsNothing);
     });
   });
 }

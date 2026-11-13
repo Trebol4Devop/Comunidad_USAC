@@ -51,9 +51,10 @@ representa ni cuenta con afiliación oficial de las autoridades universitarias.
   planes de suscripción (freemium).
 - Directorio de grupos de estudio (WhatsApp, Telegram, Discord, Drive).
 - Perfil, alias, avatar, verificación de carné y actividad propia.
-- Autenticación por correo/contraseña sin OTP por correo, Google OAuth y MFA
-  TOTP mediante app autenticadora. La recuperación por correo está retirada;
-  SSO con PEMTREE es una integración objetivo pendiente de configuración.
+- Autenticación exclusiva mediante Google OAuth; el primer acceso crea la
+  cuenta automáticamente. Google nunca solicita el TOTP de Comunidad USAC. La
+  inscripción TOTP queda separada del login y su uso futuro está pendiente;
+  SSO con PEMTREE es una integración objetivo.
 - Cascarón de navegación, tema claro/oscuro, normas y descargos.
 - Sistemas transversales: estados, accesibilidad, responsividad, i18n.
 

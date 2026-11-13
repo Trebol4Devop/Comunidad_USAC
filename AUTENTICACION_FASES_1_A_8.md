@@ -5,19 +5,18 @@ de fases compartida. Distingue el comportamiento implementado en la app de las
 migraciones aplicadas en remoto. El desglose TOTP 5.1–5.4 se conserva como el
 plan de seguridad adicional acordado.
 
-**Decisión actual de acceso:** se permite iniciar sesión con Google o con
-correo/contraseña y se entra a la app sin solicitar TOTP después del login. No
-se implementa OTP por correo ni recuperación de contraseña por correo. La
-inscripción TOTP disponible desde el perfil queda separada del acceso; su uso
-como segundo factor se pospone hasta nueva decisión. En este documento, TOTP
-significa un código temporal generado por una app autenticadora.
+**Decisión actual de acceso:** la app ofrece únicamente Google OAuth; el primer
+acceso crea la cuenta automáticamente. No hay login ni registro por
+correo/contraseña. Google nunca solicita el TOTP de Comunidad USAC. La
+inscripción TOTP del perfil queda separada y su uso futuro está pendiente. No se
+implementa OTP ni recuperación por correo.
 
 ## Estado general
 
 | Fase | Alcance | Estado |
 |---|---|---|
 | 1 | Flujo invitado y lectura pública | Implementada; pgTAP verifica restricciones de escritura |
-| 2 | Pantallas de login y registro | Integradas en `AuthModal` |
+| 2 | Pantalla de acceso | `AuthModal` ofrece únicamente Google OAuth; el primer acceso crea la cuenta |
 | 3 | Confirmación de registro por correo | Se retiró el OTP enviado por correo; `enable_confirmations = false` localmente. TOTP para MFA se conserva. El proyecto remoto debe configurarse por separado |
 | 4 | Sesión, cierre de sesión y navegación | Login/logout probados en Auth local; persistencia tras cerrar y reabrir la app queda pendiente de E2E |
 | 5 | Perfil y compatibilidad con el esquema | Trigger y perfil comprobados en la prueba E2E local; migración de contribuciones guest antiguas sigue siendo una decisión de producto |
@@ -117,19 +116,15 @@ completaron los puntos que faltaban en la app:
 No se ejecutó esa configuración ni una autenticación real porque depende de
 credenciales del proveedor y acceso al proyecto remoto correcto.
 
-## Fases 2 y 3 — Pantallas de acceso y registro sin OTP de correo
+## Fases 2 y 3 — Acceso solo con Google
 
-- `AuthModal` contiene los formularios de login y registro por correo/
-  contraseña, y el acceso mediante Google OAuth.
-- La confirmación por OTP de correo se retiró. La configuración local establece
-  `auth.email.enable_confirmations = false`, para que el registro devuelva una
-  sesión y entre a la app sin un paso TOTP.
-- Si el proyecto remoto aún exige confirmación, hay que desactivar **Confirm
-  email** en Authentication > Sign In / Providers > Email. No se cambió ese
-  ajuste remoto.
-- Quitar confirmación significa que una cuenta de correo/contraseña puede
-  registrarse sin demostrar que controla esa dirección. La app no solicita TOTP
-  después del registro ni del inicio de sesión.
+- `AuthModal` ofrece únicamente Google OAuth. Supabase crea la cuenta en el
+  primer acceso si todavía no existe.
+- La app no ofrece registro por correo/contraseña, confirmación por correo ni
+  OTP por email. El ajuste local `auth.email.enable_confirmations = false` no
+  modifica el proyecto alojado y no interviene en el acceso con Google.
+- Google nunca solicita el TOTP de Comunidad USAC. La inscripción TOTP del
+  perfil sigue separada del acceso y su uso futuro está pendiente.
 
 Archivos principales:
 
@@ -139,8 +134,8 @@ Archivos principales:
 
 ## Fases 4 y 7 — Sesión y recuperación de contraseña
 
-- El modal mantiene registro e inicio de sesión con correo/contraseña o Google,
-  sin solicitar ni enviar OTP de confirmación por correo.
+- El modal mantiene únicamente el inicio de sesión con Google OAuth; la
+  primera autenticación también crea la cuenta.
 - La recuperación de contraseña por correo se retiró de la app y queda
   aplazada hasta contar con un servicio de correo con límites adecuados.
 - TOTP no forma parte del acceso actual. No demuestra propiedad del correo ni
@@ -162,8 +157,8 @@ opcional y el acceso a la pantalla está disponible desde el perfil.
 
 ### 5.2 TOTP fuera del flujo de acceso
 
-El flujo principal de la app no instala `TotpSessionGuard`: registrarse o iniciar
-sesión con correo/contraseña o Google no solicita inscripción ni desafío TOTP.
+El flujo principal de la app no instala `TotpSessionGuard`: iniciar sesión con
+Google no solicita inscripción ni desafío TOTP.
 La pantalla de inscripción TOTP disponible desde el perfil queda separada del
 login. Su uso como segundo factor se pospone hasta nueva decisión. Esta decisión
 solo describe el comportamiento de la app; no cambia políticas de base de datos.

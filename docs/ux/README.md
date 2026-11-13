@@ -28,7 +28,7 @@ uniforme (sección 3). Los requisitos son atómicos, verificables y trazables.
 | [`04-marketplace.md`](04-marketplace.md) | Marketplace y tutorías (planes, perfiles de tienda, feed ponderado, ficha de producto, contacto, guardados y telemetría de conversión) |
 | [`05-grupos.md`](05-grupos.md) | Directorio de grupos de estudio (WhatsApp/Telegram/Discord/Drive) |
 | [`06-perfil-y-cuenta.md`](06-perfil-y-cuenta.md) | Perfil, alias, avatar, carné, vendedor externo, actividad propia, menú inicial de nuevos usuarios, intereses y tarjeta de presentación (visibilidad por campo) |
-| [`07-autenticacion.md`](07-autenticacion.md) | Login, registro, acceso por dominio de correo, OTP, recuperación, logout, inscripción TOTP (separada del login), SSO |
+| [`07-autenticacion.md`](07-autenticacion.md) | Acceso solo con Google, logout, inscripción TOTP separada del login y SSO |
 | [`08-navegacion-shell-y-reglas.md`](08-navegacion-shell-y-reglas.md) | Cascarón de navegación, tema, normas y descargos |
 | [`09-sistema-diseno.md`](09-sistema-diseno.md) | Design tokens, componentes, temas claro/oscuro, breakpoints |
 | [`10-transversales.md`](10-transversales.md) | Errores, estados vacíos, red/offline, accesibilidad, i18n, rendimiento |
@@ -102,10 +102,10 @@ Detalle completo en [`01-producto.md`](01-producto.md).
 | Solicitar patrocinio | No | Sí | Sí | Sí | Sí | Sí |
 | Gestión global | No | No | No | No | No | Sí |
 
-**Nota sobre autenticación:** el login actual con Google o correo/contraseña no
-solicita TOTP. La exigencia AAL2 para escrituras es un requisito de diseño y una
-migración local independiente; si está aplicada, puede rechazar escrituras AAL1.
-Ver [`07-autenticacion.md`](07-autenticacion.md).
+**Nota sobre autenticación:** la app actual ofrece solo Google y nunca solicita
+el TOTP de Comunidad USAC. La exigencia AAL2 para escrituras es una migración
+local independiente; si está aplicada, puede rechazar escrituras AAL1. Ver
+[`07-autenticacion.md`](07-autenticacion.md).
 
 ---
 

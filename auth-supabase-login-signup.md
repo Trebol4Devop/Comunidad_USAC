@@ -1,6 +1,6 @@
 # Autenticación con Supabase: Login y Sign Up
 
-Guía técnica del sistema de autenticación de Comunidad USAC con Supabase Auth, PostgreSQL y RLS. El acceso actual es con Google o correo/contraseña, sin pedir TOTP después del login. No se envía OTP ni confirmación de registro por correo y la recuperación de contraseña por correo está retirada. La inscripción TOTP disponible desde el perfil queda fuera del flujo de acceso y su uso futuro está pendiente.
+Guía técnica del sistema de autenticación de Comunidad USAC con Supabase Auth, PostgreSQL y RLS. La app ofrece únicamente Google OAuth; la primera autenticación crea la cuenta y Google nunca solicita el TOTP de Comunidad USAC. El registro/inicio con correo y contraseña no se ofrece en la app. La inscripción TOTP del perfil queda separada del acceso.
 
 > Verifica los límites del plan gratuito en https://supabase.com/pricing antes de decidir, porque cambian con el tiempo.
 
@@ -13,11 +13,11 @@ Guía técnica del sistema de autenticación de Comunidad USAC con Supabase Auth
 | Backend | Supabase Auth (GoTrue) | Ya incluye registro, login, tokens, OAuth y recuperación |
 | Base de datos | PostgreSQL de Supabase | Tabla `auth.users` administrada por Supabase + tabla propia `public.profiles` |
 | Autorización | Row Level Security (RLS) | Sin backend propio, la seguridad vive en la BD |
-| Proveedores | Email + contraseña, Google OAuth | Los dos pedidos |
-| Confirmación por correo | Desactivada para el flujo actual | No se envía OTP por correo ni enlace de confirmación; TOTP no se solicita en el login |
+| Proveedores de la app | Google OAuth | Único método de acceso expuesto en Flutter |
+| Confirmación por correo | No aplica al flujo actual | La app no registra con Email; el acceso es mediante Google OAuth |
 | TOTP | No se solicita en el flujo de login actual | La app no añade un desafío después de entrar; la inscripción existente desde el perfil queda separada y su uso futuro está pendiente |
 | Flujo OAuth | PKCE (por defecto en `supabase-js` v2) | Más seguro que el flujo implícito |
-| Correo transaccional | No configurado | El registro y la recuperación no envían correo |
+| Correo transaccional | No configurado | La app no ofrece registro por Email ni recuperación |
 
 ### Componentes
 
@@ -88,7 +88,11 @@ create trigger on_auth_user_created
 
 ---
 
-## 3. Flujo de Sign Up (correo y contraseña)
+## 3. Sign Up por correo y contraseña `[No disponible en la app]`
+
+La app ya no ofrece este método. Se conserva el diagrama siguiente solo como
+referencia técnica genérica de Supabase; el registro de usuarios se realiza al
+iniciar sesión por primera vez con Google.
 
 ```mermaid
 flowchart TD
@@ -137,7 +141,10 @@ confirmación de correo.
 
 ---
 
-## 5. Flujo de Login (correo y contraseña)
+## 5. Login por correo y contraseña `[No disponible en la app]`
+
+La app no muestra este formulario ni llama este método desde la interfaz. El
+único método visible de inicio de sesión es Google OAuth.
 
 ```mermaid
 flowchart TD
@@ -316,10 +323,10 @@ Nota: un factor que no se verifica queda como no verificado; limpia los factores
 
 ### 9.2 TOTP fuera del login actual
 
-La app no instala `TotpSessionGuard` ni solicita inscripción o desafío TOTP
-tras iniciar sesión con Google o correo/contraseña. La inscripción TOTP que
-permanece disponible desde el perfil no condiciona el acceso. El uso futuro de
-TOTP como segundo factor queda pendiente de decisión.
+La app no solicita TOTP en el flujo de acceso. En particular, iniciar sesión
+con Google nunca pide el TOTP de Comunidad USAC. La inscripción TOTP que
+permanece disponible desde el perfil no condiciona el acceso; su uso futuro como
+segundo factor queda pendiente de decisión.
 
 La exigencia de AAL2 en Postgres es independiente: si se aplica la migración
 local `20261004000000_require_aal2_and_verified_sellers.sql`, puede bloquear

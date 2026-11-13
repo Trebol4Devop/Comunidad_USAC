@@ -145,11 +145,11 @@ no proporciona todavía un runner equivalente para PowerShell/Windows.
 
 ## Estado actual de autenticación
 
-- El registro e inicio de sesión por correo/contraseña y el acceso con Google
-  están presentes en la app.
-- El acceso principal es por Google o correo/contraseña. Ninguno solicita
-  TOTP después de iniciar sesión. La inscripción TOTP disponible en el perfil
-  queda separada del flujo de acceso y su uso futuro está pendiente de decisión.
+- La app ofrece únicamente acceso con Google OAuth; la primera autenticación
+  crea la cuenta automáticamente. No muestra login ni registro por
+  correo/contraseña.
+- Google nunca solicita el TOTP de Comunidad USAC. La inscripción TOTP disponible
+  en el perfil queda separada del flujo de acceso y su uso futuro está pendiente.
 - La confirmación de correo está desactivada en la configuración local. Ese
   archivo no modifica la configuración Auth del proyecto alojado; además, el
   registro sin confirmación no demuestra que se controle la dirección.
