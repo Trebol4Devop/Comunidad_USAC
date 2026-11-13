@@ -1,7 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../config/supabase_config.dart';
-import 'supabase_service.dart';
 
 /// Servicio para registrar y sincronizar la cantidad de veces que una publicación
 /// (post de foro o anuncio de marketplace) ha sido compartida por los estudiantes.
@@ -42,9 +40,8 @@ class ShareCountService {
     }
   }
 
-  /// Incrementa el contador de compartidos de una publicación y lo persiste localmente
-  /// y de forma remota en Supabase si la columna está disponible.
-  static Future<int> incrementShare(String id, {String table = 'posts'}) async {
+  /// Incrementa el contador local de compartidos de una publicación.
+  static Future<int> incrementShare(String id) async {
     if (id.isEmpty) return 0;
     int nextCount = 1;
     try {
@@ -57,19 +54,6 @@ class ShareCountService {
       debugPrint('Error guardando share local: $e');
       nextCount = (_cache[id] ?? 0) + 1;
       _cache[id] = nextCount;
-    }
-
-    // Intento no bloqueante de persistencia en backend
-    try {
-      if (SupabaseConfig.isConfigured) {
-        // Intenta actualizar columna shares_count si existe en la tabla
-        await SupabaseService.client
-            .from(table)
-            .update({'shares_count': nextCount})
-            .eq('id', id);
-      }
-    } catch (_) {
-      // Ignora silenciosamente si la tabla o columna no tiene permisos o no existe en Supabase
     }
 
     return nextCount;

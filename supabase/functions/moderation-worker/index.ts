@@ -395,9 +395,9 @@ async function processJob(supabase: SupabaseClient, job: ModerationJob): Promise
   let applyLegalHold = false;
 
   if (verdict.label === "SAFE_CAMPUS_HUMOR") {
-    newModerationStatus = 0;
+    newModerationStatus = 1; // Aprobado
   } else if (verdict.confidence >= 0.50 && verdict.confidence < 0.80) {
-    newModerationStatus = 1; // Cola de revisión humana
+    newModerationStatus = 3; // Cola de revisión humana
   } else if (verdict.confidence >= 0.80) {
     newModerationStatus = 2; // Ocultado automático
     if (verdict.label === "SEVERE_THREAT_FRAUD" || verdict.label === "ACCESS_ABUSE_PIRACY") {

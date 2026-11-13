@@ -146,7 +146,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       _post = _post.copyWith(sharesCount: newCount);
     });
 
-    await ShareCountService.incrementShare(_post.id, table: 'posts');
+    await ShareCountService.incrementShare(_post.id);
 
     final shareText =
         '${_post.title}\n\n${_post.content}\n\n— ${_post.authorAlias} (Comunidad USAC)';

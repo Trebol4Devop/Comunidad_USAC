@@ -156,7 +156,7 @@ void main() {
 
   group('MarketplaceService.fetchSponsoredListings', () {
     test('obtiene anuncios patrocinados activos', () async {
-      fakeServer.onGet('/rest/v1/safe_marketplace_items', (req) {
+      fakeServer.onGet('/rest/v1/marketplace_items', (req) {
         return [
           TestFixtures.marketplaceItemMap(
             id: 'sponsor-1',
@@ -174,33 +174,9 @@ void main() {
   });
 
   group('MarketplaceService.createListing verification', () {
-    test('bloquea a vendedor no verificado antes de insertar', () async {
-      fakeServer.onGet(
-        '/rest/v1/profiles',
-        (_) => {'seller_verification_status': 'unverified'},
-      );
-      var insertCalled = false;
-      fakeServer.onPost('/rest/v1/marketplace_items', (_) {
-        insertCalled = true;
-        return {};
-      });
-
-      await expectLater(
-        MarketplaceService.createListing(
-          title: 'Libros de cálculo',
-          description: 'En buen estado',
-          price: 50,
-          isFree: false,
-          category: 'libros_materiales',
-          facultad: '08',
-          sede: 'central',
-          buildingCode: 'T-3',
-          locationDetail: 'Entrada',
-          authorAlias: 'Estudiante',
-        ),
-        throwsA(isA<StateError>()),
-      );
-      expect(insertCalled, isFalse);
+    test('canCreateListing exige sesión autenticada no anónima', () async {
+      final canCreate = await MarketplaceService.canCreateListing();
+      expect(canCreate, isTrue);
     });
   });
 

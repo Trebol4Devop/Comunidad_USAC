@@ -5,6 +5,12 @@ import 'cache_service.dart';
 import 'supabase_service.dart';
 
 class GroupsService {
+  static const String _groupColumns =
+      'id, title, carrera, curso, section, link, description, author_alias, '
+      'upvotes, reported_count, created_at, image_url, moderation_status, '
+      'moderation_label, moderation_confidence, moderation_reason, moderated_at, '
+      'moderated_by, platform, updated_at, deleted_at, is_legal_hold';
+
   static const String _cacheNamespace = 'student_groups';
 
   static const Map<String, List<String>> _facultyAliases = {
@@ -78,8 +84,8 @@ class GroupsService {
 
     try {
       var query = SupabaseService.client
-          .from('safe_student_groups')
-          .select('*')
+          .from('student_groups')
+          .select(_groupColumns)
           .lt('moderation_status', 2);
 
       if (carrera != 'todas') {

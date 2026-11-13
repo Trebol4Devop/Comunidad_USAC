@@ -515,7 +515,7 @@ class _ForumScreenState extends State<ForumScreen> {
       }
     });
 
-    await ShareCountService.incrementShare(post.id, table: 'posts');
+    await ShareCountService.incrementShare(post.id);
 
     final shareText =
         '${post.title}\n\n${post.content}\n\n— ${post.authorAlias} (Comunidad USAC)';

@@ -146,7 +146,6 @@ class NotificationPreferences {
       'reply_enabled': replyEnabled,
       'like_enabled': likeEnabled,
       'new_post_enabled': newPostEnabled,
-      'carreras': carreras,
     };
   }
 
