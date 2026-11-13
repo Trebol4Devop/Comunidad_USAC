@@ -1,10 +1,12 @@
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'core/config/app_theme.dart';
 import 'core/config/supabase_config.dart';
 import 'core/services/local_storage_service.dart';
 import 'features/construction/screens/under_construction_screen.dart';
+import 'features/sso/screens/sso_authorize_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,11 +14,13 @@ void main() async {
   // Initialize Supabase client
   await SupabaseConfig.initialize();
 
-  // Load theme preference
+  // Load preferences
+  final initialAlias = await LocalStorageService.getOrGenerateAlias();
   final initialIsDarkMode = await LocalStorageService.isDarkMode();
 
   runApp(
     ComunidadUSACApp(
+      initialAlias: initialAlias,
       initialIsDarkMode: initialIsDarkMode,
     ),
   );
@@ -37,12 +41,20 @@ class ComunidadUSACApp extends StatefulWidget {
 }
 
 class _ComunidadUSACAppState extends State<ComunidadUSACApp> {
+  late String _activeAlias;
   late ThemeMode _themeMode;
 
   @override
   void initState() {
     super.initState();
+    _activeAlias = widget.initialAlias ?? 'Estudiante';
     _themeMode = widget.initialIsDarkMode ? ThemeMode.dark : ThemeMode.light;
+  }
+
+  void _updateAlias(String newAlias) {
+    setState(() {
+      _activeAlias = newAlias;
+    });
   }
 
   Future<void> _toggleTheme() async {
@@ -54,10 +66,61 @@ class _ComunidadUSACAppState extends State<ComunidadUSACApp> {
   }
 
   Route<dynamic> _onGenerateRoute(RouteSettings settings) {
-    // Rama provisional para pre-despliegue:
-    // Todas las rutas redirigen estrictamente a UnderConstructionScreen.
-    // No se expone ninguna función implementada de la aplicación y la
-    // verificación en 2 pasos de la app se encuentra retirada.
+    final rawName = settings.name ?? '';
+    Uri? uri = Uri.tryParse(rawName);
+
+    // En Flutter web, verificar Uri.base si settings.name está vacío o es '/'
+    if ((uri == null ||
+            (uri.path != '/auth/authorize' && uri.path != 'auth/authorize')) &&
+        kIsWeb) {
+      final base = Uri.base;
+      if (base.path == '/auth/authorize' ||
+          base.path == 'auth/authorize' ||
+          base.fragment.contains('auth/authorize')) {
+        if (base.fragment.contains('auth/authorize')) {
+          final cleanFragment = base.fragment.startsWith('/')
+              ? base.fragment
+              : '/${base.fragment}';
+          uri = Uri.tryParse(cleanFragment);
+        } else {
+          uri = base;
+        }
+      }
+    }
+
+    // Ruta SSO para PEMTREE: permite autenticar usuarios exclusivamente con Google y sin 2FA
+    if (uri != null &&
+        (uri.path == '/auth/authorize' ||
+            uri.path == 'auth/authorize' ||
+            uri.path.endsWith('/auth/authorize'))) {
+      final params = Map<String, String>.from(uri.queryParameters);
+      if (kIsWeb) {
+        Uri.base.queryParameters.forEach((k, v) {
+          params.putIfAbsent(k, () => v);
+        });
+        if (Uri.base.fragment.isNotEmpty) {
+          final frag = Uri.tryParse(Uri.base.fragment);
+          if (frag != null) {
+            frag.queryParameters.forEach((k, v) {
+              params.putIfAbsent(k, () => v);
+            });
+          }
+        }
+      }
+
+      return MaterialPageRoute(
+        builder: (_) => SsoAuthorizeScreen(
+          clientId: params['client_id'],
+          redirectUri: params['redirect_uri'],
+          state: params['state'],
+          activeAlias: _activeAlias,
+          onAliasChanged: _updateAlias,
+        ),
+        settings: settings,
+      );
+    }
+
+    // Para cualquier otra ruta de la aplicación: muestra estrictamente el Sitio en Construcción
     return MaterialPageRoute(
       builder: (_) => UnderConstructionScreen(
         onToggleTheme: _toggleTheme,

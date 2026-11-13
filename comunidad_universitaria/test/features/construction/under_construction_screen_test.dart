@@ -132,4 +132,30 @@ void main() {
     expect(find.text('Verificando seguridad'), findsNothing);
     expect(find.text('Autenticación en dos pasos'), findsNothing);
   });
+
+  testWidgets(
+      'ComunidadUSACApp routes /auth/authorize to SsoAuthorizeScreen for PEMTREE SSO',
+      (tester) async {
+    await tester.pumpWidget(
+      Builder(
+        builder: (context) => const ComunidadUSACApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Now push /auth/authorize route
+    final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+    navigator.pushNamed(
+      '/auth/authorize?client_id=pemtree&redirect_uri=http%3A%2F%2Flocalhost%3A5173%2Fauth%2Fcallback&state=test-state',
+    );
+    await tester.pumpAndSettle();
+
+    // SsoAuthorizeScreen is rendered with PEMTREE consent / Google login
+    expect(find.textContaining('PEMTREE'), findsWidgets);
+    expect(find.text('Continuar con Google'), findsOneWidget);
+
+    // No TotpSessionGuard screens
+    expect(find.text('Verificando seguridad'), findsNothing);
+    expect(find.text('Autenticación en dos pasos'), findsNothing);
+  });
 }
