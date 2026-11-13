@@ -5,10 +5,12 @@ de fases compartida. Distingue el comportamiento implementado en la app de las
 migraciones aplicadas en remoto. El desglose TOTP 5.1–5.4 se conserva como el
 plan de seguridad adicional acordado.
 
-**Decisión de autenticación:** sin OTP por correo; con TOTP mediante app
-autenticadora para MFA. En este documento, “OTP por correo” se refiere al
-código enviado por email; TOTP es un código temporal generado por la app
-autenticadora, no enviado por correo.
+**Decisión actual de acceso:** se permite iniciar sesión con Google o con
+correo/contraseña y se entra a la app sin solicitar TOTP después del login. No
+se implementa OTP por correo ni recuperación de contraseña por correo. La
+inscripción TOTP disponible desde el perfil queda separada del acceso; su uso
+como segundo factor se pospone hasta nueva decisión. En este documento, TOTP
+significa un código temporal generado por una app autenticadora.
 
 ## Estado general
 
@@ -21,7 +23,7 @@ autenticadora, no enviado por correo.
 | 5 | Perfil y compatibilidad con el esquema | Trigger y perfil comprobados en la prueba E2E local; migración de contribuciones guest antiguas sigue siendo una decisión de producto |
 | 6 | Google OAuth con PKCE | Código y callbacks web/móvil preparados; pendiente configurar proveedor/redirects y probar con credenciales reales |
 | 7 | Recuperación de contraseña | Aplazada; el flujo de recuperación por correo se retiró de la app por límites del SMTP incluido |
-| 8 | Seguridad adicional y pruebas | RLS de perfiles y visitantes cuenta con pruebas; el flujo TOTP existe en la app. La exigencia global de AAL2 en escrituras está en una migración local pendiente de aplicar y validar en remoto; Google requiere credenciales externas |
+| 8 | Seguridad adicional y pruebas | RLS de perfiles y visitantes cuenta con pruebas; el acceso no exige TOTP. La migración AAL2 local debe revisarse por separado y Google requiere credenciales externas |
 
 Las pruebas y configuración descritas aquí son locales o simuladas; no
 sustituyen una prueba real contra el proveedor. No se han publicado estas
@@ -79,11 +81,11 @@ alternativa.
 
 Una prueba E2E local histórica creó una cuenta descartable, confirmó el código
 OTP enviado por correo y comprobó la fila en `public.profiles` creada por el
-trigger. La confirmación por correo ya no forma parte del flujo actual; TOTP
-mediante app autenticadora se conserva para MFA. La política de conservar o migrar
-contribuciones de cuentas guest antiguas debe decidirse antes de vincularlas a
-cuentas nuevas; no se debe atribuir contenido anónimo automáticamente sin esa
-decisión.
+trigger. La confirmación por correo ya no forma parte del flujo actual. La
+inscripción TOTP permanece separada del login y no se solicita al entrar. La
+política de conservar o migrar contribuciones de cuentas guest antiguas debe
+decidirse antes de vincularlas a cuentas nuevas; no se debe atribuir contenido
+anónimo automáticamente sin esa decisión.
 
 ## Fase 6 — Google OAuth con PKCE
 
@@ -121,13 +123,13 @@ credenciales del proveedor y acceso al proyecto remoto correcto.
   contraseña, y el acceso mediante Google OAuth.
 - La confirmación por OTP de correo se retiró. La configuración local establece
   `auth.email.enable_confirmations = false`, para que el registro devuelva una
-  sesión y continúe al guard TOTP.
+  sesión y entre a la app sin un paso TOTP.
 - Si el proyecto remoto aún exige confirmación, hay que desactivar **Confirm
   email** en Authentication > Sign In / Providers > Email. No se cambió ese
   ajuste remoto.
 - Quitar confirmación significa que una cuenta de correo/contraseña puede
-  registrarse sin demostrar que controla esa dirección. TOTP es un segundo
-  factor y no comprueba la propiedad del correo.
+  registrarse sin demostrar que controla esa dirección. La app no solicita TOTP
+  después del registro ni del inicio de sesión.
 
 Archivos principales:
 
@@ -141,8 +143,8 @@ Archivos principales:
   sin solicitar ni enviar OTP de confirmación por correo.
 - La recuperación de contraseña por correo se retiró de la app y queda
   aplazada hasta contar con un servicio de correo con límites adecuados.
-- TOTP es un segundo factor posterior al registro; no demuestra propiedad del
-  correo ni es un mecanismo para restablecer contraseñas.
+- TOTP no forma parte del acceso actual. No demuestra propiedad del correo ni
+  es un mecanismo para restablecer contraseñas.
 - La sesión la administra el SDK de Supabase. La autorización efectiva de datos
   debe permanecer en Postgres mediante permisos y RLS.
 
@@ -158,20 +160,15 @@ actual ya no incluye la plantilla de recuperación ni un servidor SMTP local.
 autenticador y verificar el primer código de seis dígitos. La inscripción es
 opcional y el acceso a la pantalla está disponible desde el perfil.
 
-### 5.2 Desafío opcional en la sesión
+### 5.2 TOTP fuera del flujo de acceso
 
-`TotpSessionGuard`, instalado como envoltura de la app en `main.dart`, revisa el
-estado Auth de cada cuenta registrada:
+El flujo principal de la app no instala `TotpSessionGuard`: registrarse o iniciar
+sesión con correo/contraseña o Google no solicita inscripción ni desafío TOTP.
+La pantalla de inscripción TOTP disponible desde el perfil queda separada del
+login. Su uso como segundo factor se pospone hasta nueva decisión. Esta decisión
+solo describe el comportamiento de la app; no cambia políticas de base de datos.
 
-- Si no existe un TOTP verificado, permite el acceso normal a la app: el
-  autenticador es opcional y puede configurarse después desde el perfil.
-- Si existe un factor verificado pero la sesión está en AAL1, solicita el
-  desafío TOTP antes de mostrar el contenido de la app.
-- Si la verificación falla o no se puede consultar Auth, muestra una pantalla
-  de error/reintento/cierre de sesión.
-- Los visitantes sin cuenta no quedan sujetos al paso de MFA.
-
-### 5.3 Escrituras protegidas por AAL2 en la base de datos (pendiente en remoto)
+### 5.3 Política AAL2 en la base de datos (independiente del login)
 
 El 9 de octubre se retiró una migración anterior que exigía AAL2 para todas las
 escrituras autenticadas; en ese momento se decidió permitir escrituras AAL1
@@ -181,13 +178,19 @@ El 31 de octubre se agregó una nueva migración,
 `20261004000000_require_aal2_and_verified_sellers.sql`, que vuelve a exigir AAL2
 para las escrituras en tablas públicas protegidas por RLS. También incorpora
 verificación de vendedores para publicar en Marketplace y modifica controles de
-solicitudes de patrocinio. Esta migración **no está aplicada en remoto** y queda
-pendiente para revisión y pruebas posteriores. Su prueba asociada es
-`supabase/tests/authenticated_aal1_write_denied_test.sql`; no se declara validada
-hasta ejecutar la suite local con esta migración.
+solicitudes de patrocinio. El último `dry-run` documentado mostró esta migración
+como pendiente en remoto; no se ha vuelto a verificar su estado. Debe revisarse y probarse antes de
+publicarla. La prueba existente
+`supabase/tests/authenticated_writes_without_otp_test.sql` espera que escrituras
+AAL1 permitidas por RLS funcionen, por lo que entraría en conflicto con esta
+migración y requiere redefinir su expectativa si se decide conservar el requisito
+AAL2. No hay actualmente una prueba `authenticated_aal1_write_denied_test.sql`.
 
-El control TOTP de la interfaz descrito en 5.2 y la exigencia de AAL2 en la base
-de datos son controles distintos: el segundo requiere aplicar la migración.
+La migración exige AAL2 en escrituras si está aplicada en una base local o
+remota; quitar el desafío de la interfaz no cambia esa regla. Si la migración se
+aplica, las escrituras de sesiones AAL1 pueden ser rechazadas aunque el login
+entre correctamente. La aplicación remota seguía pendiente según el dry-run
+registrado arriba; no se alteró esta migración.
 
 ### 5.4 Recuperación y baja de TOTP
 
@@ -228,8 +231,7 @@ revisar el resultado. No reparar el historial remoto automáticamente.
 Los resultados siguientes son históricos y no validan la migración AAL2 añadida
 el 31 de octubre. En el entorno local levantado por Supabase:
 
-- `npx --yes supabase test db --local` — **PASS**, 11 archivos y 123 pruebas.
-  Incluye RLS de perfiles, lectura de visitantes y escrituras AAL1/AAL2.
+- `npx --yes supabase test db --local` — **PASS histórico**, 11 archivos y 123 pruebas antes de incorporar la migración AAL2. Incluye la expectativa de que las escrituras AAL1 permitidas por RLS funcionen; no valida la migración `20261004000000_require_aal2_and_verified_sellers.sql`.
 
 - Después de retirar recovery codes, desde `comunidad_universitaria/`:
   - Las pruebas dirigidas de servicio, guard y enrolamiento TOTP pasaron: **14**.
@@ -273,7 +275,7 @@ recuperación MFA.
 
 - `supabase/tests/anonymous_read_only_test.sql`
 - `supabase/tests/profiles_rls_test.sql`
-- `supabase/tests/authenticated_aal1_write_denied_test.sql` (asociada a la migración AAL2 pendiente)
+- `supabase/tests/authenticated_writes_without_otp_test.sql` (comprueba escrituras AAL1 bajo las políticas anteriores a la migración AAL2)
 - `comunidad_universitaria/lib/core/services/supabase_service.dart`
 - `comunidad_universitaria/lib/core/config/supabase_config.dart`
 - `comunidad_universitaria/lib/features/shared/widgets/auth_modal.dart`

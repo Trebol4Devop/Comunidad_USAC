@@ -2,7 +2,7 @@
 
 Documento maestro de requisitos de experiencia de usuario para la plataforma
 **Comunidad Universitaria USAC** (app Flutter: foro, marketplace, grupos,
-perfil, autenticación, MFA TOTP y SSO).
+perfil, autenticación, inscripción TOTP separada del login y SSO).
 
 > **Naturaleza de este documento:** está redactado en modo **"deber ser"**
 > (should-be). Describe la experiencia objetivo que el producto debe ofrecer,
@@ -28,7 +28,7 @@ uniforme (sección 3). Los requisitos son atómicos, verificables y trazables.
 | [`04-marketplace.md`](04-marketplace.md) | Marketplace y tutorías (planes, perfiles de tienda, feed ponderado, ficha de producto, contacto, guardados y telemetría de conversión) |
 | [`05-grupos.md`](05-grupos.md) | Directorio de grupos de estudio (WhatsApp/Telegram/Discord/Drive) |
 | [`06-perfil-y-cuenta.md`](06-perfil-y-cuenta.md) | Perfil, alias, avatar, carné, vendedor externo, actividad propia, menú inicial de nuevos usuarios, intereses y tarjeta de presentación (visibilidad por campo) |
-| [`07-autenticacion.md`](07-autenticacion.md) | Login, registro, acceso por dominio de correo, OTP, recuperación, logout, MFA TOTP, SSO |
+| [`07-autenticacion.md`](07-autenticacion.md) | Login, registro, acceso por dominio de correo, OTP, recuperación, logout, inscripción TOTP (separada del login), SSO |
 | [`08-navegacion-shell-y-reglas.md`](08-navegacion-shell-y-reglas.md) | Cascarón de navegación, tema, normas y descargos |
 | [`09-sistema-diseno.md`](09-sistema-diseno.md) | Design tokens, componentes, temas claro/oscuro, breakpoints |
 | [`10-transversales.md`](10-transversales.md) | Errores, estados vacíos, red/offline, accesibilidad, i18n, rendimiento |
@@ -102,7 +102,9 @@ Detalle completo en [`01-producto.md`](01-producto.md).
 | Solicitar patrocinio | No | Sí | Sí | Sí | Sí | Sí |
 | Gestión global | No | No | No | No | No | Sí |
 
-**Guards transversales:** toda escritura exige sesión **AAL2** (MFA TOTP).
+**Nota sobre autenticación:** el login actual con Google o correo/contraseña no
+solicita TOTP. La exigencia AAL2 para escrituras es un requisito de diseño y una
+migración local independiente; si está aplicada, puede rechazar escrituras AAL1.
 Ver [`07-autenticacion.md`](07-autenticacion.md).
 
 ---
@@ -113,7 +115,7 @@ Ver [`07-autenticacion.md`](07-autenticacion.md).
 |---|---|
 | **Alias / seudónimo** | Nombre público seudónimo del estudiante en el foro (p. ej. `Estudiante USAC #482`). |
 | **AAL** | *Authenticator Assurance Level*: AAL1 = sesión básica; AAL2 = con segundo factor (TOTP). |
-| **AAL2 guard** | Capa que bloquea escritura/navegación hasta elevar la sesión con TOTP. |
+| **AAL2 guard** | Control de servidor que puede exigir AAL2 a operaciones protegidas. La app no solicita TOTP tras iniciar sesión en el flujo actual. |
 | **Carrera / canal** | En el foro, canal temático dentro de un servidor de facultad. |
 | **Correo institucional / personal** | Institucional otorga acceso a lectura/foro sin verificar carné (lista configurable); personal exige verificación inmediata para acceder. |
 | **Plan de suscripción** | Nivel de servicio del vendedor (`free`, `pro_student`, `business_local`) que define límites, insignia, posicionamiento y analíticas. Vive en `marketplace_plans`. |

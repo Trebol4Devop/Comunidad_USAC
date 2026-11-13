@@ -1,17 +1,19 @@
 # 07 — Autenticación y Seguridad
 
-> Especificación de requisitos de experiencia de usuario (UX) para el sistema de autenticación y seguridad de **Comunidad Universitaria USAC**: modo visitante, registro e inicio de sesión con correo/contraseña sin OTP de correo, Google OAuth con PKCE, autenticación multifactor TOTP, período de gracia y servidor SSO para PEMTREE. La app no envía códigos de confirmación de registro ni de recuperación de contraseña por correo. Convenciones, matriz de roles y plantilla en [`README.md`](README.md).
+> Especificación de requisitos de experiencia de usuario (UX) para autenticación en **Comunidad Universitaria USAC**: modo visitante, registro e inicio de sesión con correo/contraseña sin OTP por correo, Google OAuth con PKCE y servidor SSO para PEMTREE. El acceso actual no solicita TOTP después del login; la inscripción TOTP queda separada y su uso futuro está pendiente. La app no envía códigos de confirmación de registro ni de recuperación de contraseña por correo. Convenciones, matriz de roles y plantilla en [`README.md`](README.md).
 
 ---
 
 ## 1. Visión y arquitectura de autenticación y seguridad
 
-La seguridad en la plataforma **Comunidad Universitaria USAC** se fundamenta en un equilibrio indispensable entre **privacidad estudiantil**, **integridad comunitaria** y **prevención de abusos** ([ver `01-producto.md`](01-producto.md#11-pilares-de-valor)):
+El flujo actual de autenticación de la plataforma **Comunidad Universitaria USAC** ofrece:
 
-1. **Lectura libre sin barreras de entrada (Modo Visitante):** Todo estudiante o interesado debe poder consultar información académica, horarios, recomendaciones de cursos y ofertas del marketplace sin necesidad de crear una cuenta ni entregar sus datos de antemano.
-2. **Escritura protegida bajo AAL2 (Authenticator Assurance Level 2):** Para erradicar la suplantación de identidad, la proliferación de bots, el spam comercial y la manipulación de encuestas estudiantiles, toda acción que altere el estado de la base de datos (publicar, comentar, votar, listar productos, compartir grupos o reportar) exige que la sesión cuente con un segundo factor criptográfico verificado por aplicación de códigos temporales (TOTP).
-3. **Seguridad educativa y proporcional (No punitiva):** Las medidas de protección no deben alienar al alumnado. El enrolamiento de segundo factor debe explicar con claridad su propósito pedagógico y brindar un **período de gracia** de 7 días antes de volverse mandatario para la publicación, permitiendo al usuario explorar la herramienta sin fricciones artificiales.
-4. **Federación académica soberana (SSO para PEMTREE):** La plataforma actúa como proveedor seguro de identidad OAuth 2.0 / PKCE para herramientas satélite creadas por y para estudiantes (como el visor de planes de estudio _PEMTREE_), salvaguardando los tokens de sesión en fragmentos hash de URL para impedir su filtración en servidores intermedios y aplicando listas blancas estrictas contra vulnerabilidades de redirección abierta (_Open Redirect_).
+1. **Lectura como visitante:** se puede consultar contenido público sin crear una cuenta.
+2. **Acceso con cuenta:** iniciar sesión con Google o correo/contraseña. Tras autenticarse, la app entra sin pedir TOTP, incluso si la cuenta tiene un factor inscrito.
+3. **Sin OTP por correo:** la app no envía códigos de confirmación ni recuperación. El registro sin confirmación no prueba que la persona controle la dirección ingresada.
+4. **SSO para PEMTREE:** la plataforma conserva el flujo OAuth 2.0 / PKCE para herramientas satélite; el login requerido se completa antes de autorizar el acceso.
+
+La inscripción TOTP disponible desde el perfil queda separada del flujo de login. Su uso futuro como segundo factor y cualquier exigencia AAL2 en la base de datos requieren una decisión y validación posteriores. La migración AAL2 local, si se aplica, puede bloquear escrituras de sesiones AAL1 independientemente de la interfaz.
 
 ---
 
@@ -22,14 +24,19 @@ Este documento formaliza y eleva la experiencia analizada en el **Inventario UX*
 - **Inventario 4.7 (`TotpEnrollmentScreen`):** Enrolamiento por QR, copia de secreto manual y desvinculación con reautenticación limpia. Los códigos de recuperación MFA están aplazados ([`totp_enrollment_screen.dart`](../../comunidad_universitaria/lib/features/profile/screens/totp_enrollment_screen.dart)).
 - **Inventario 4.8 (`SsoAuthorizeScreen`):** Servidor de autorización OAuth 2.0, formulario de inicio de sesión embebido para visitantes, pantalla de consentimiento y transporte de credenciales ([`sso_authorize_screen.dart:1-901`](../../comunidad_universitaria/lib/features/sso/screens/sso_authorize_screen.dart)).
 - **Inventario 4.10 (`AuthModal`):** Modal adaptativo (BottomSheet en móvil, Dialog en desktop) para login, registro sin OTP por correo y acceso Google ([`auth_modal.dart`](../../comunidad_universitaria/lib/features/shared/widgets/auth_modal.dart)).
-- **Inventario 5.1, 5.2, 5.3 y 5.8:** Registro sin confirmación OTP por correo, MFA TOTP opcional y flujo SSO. La recuperación de contraseña por correo está aplazada.
-- **Inventario 8.1 / Vacío 1 `[Mejora]`:** El bloqueo obligatorio de MFA en el primer registro se retiró: el autenticador es opcional y se configura desde el perfil ([`totp_session_guard.dart`](../../comunidad_universitaria/lib/features/shared/widgets/totp_session_guard.dart)).
+- **Inventario 5.1, 5.2, 5.3 y 5.8:** Registro sin confirmación OTP por correo y flujo SSO. La recuperación de contraseña por correo está aplazada. El login no solicita TOTP; la inscripción disponible desde el perfil no condiciona el acceso.
+- **Inventario 8.1 / Vacío 1 `[Mejora]`:** Se retiró el guard de TOTP del flujo principal de la app. La inscripción TOTP y cualquier requisito MFA futuro quedan separados del inicio de sesión.
 - **Inventario 8.6 / Vacío 6 `[Mejora]`:** Eliminación de la sobreescritura arbitraria de la URI de redirección hacia `localhost:5173` cuando se ejecutan pruebas en hosts locales, respetando la URL legítima solicitada por PEMTREE ([`sso_authorize_screen.dart:188-194`](../../comunidad_universitaria/lib/features/sso/screens/sso_authorize_screen.dart#L188-L194)).
 
 
 ---
 
 ## 3. Matriz de capacidades de acceso y seguridad por rol
+
+> Esta matriz describe requisitos y estados objetivo previos, no el comportamiento
+> actual del login. Actualmente Google y correo/contraseña entran sin desafío
+> TOTP. La migración local AAL2 es independiente y, si está aplicada a la base,
+> puede bloquear escrituras AAL1; su estado debe comprobarse en el entorno usado.
 
 | Capacidad                                 |  Visitante (Sin sesión)  |  Estudiante en Gracia (AAL1)  | Estudiante Activo (AAL2) | Estudiante Verificado (AAL2) | Vendedor externo verificado (AAL2) | Moderador (AAL2) | Administrador (AAL2) |
 | ----------------------------------------- | :----------------------: | :---------------------------: | :----------------------: | :--------------------------: | :--------------------------------: | :--------------: | :------------------: |
@@ -51,73 +58,28 @@ Este documento formaliza y eleva la experiencia analizada en el **Inventario UX*
 
 ---
 
-## 4. Diagrama de flujo de autenticación, ciclo de vida de sesión y MFA
+## 4. Diagrama del flujo actual de autenticación y sesión
 
 ```mermaid
 flowchart TD
-    Guest["Visitante Anónimo (AAL0)"] --> Action{"Intenta mutación o pulsa Acceder"}
-    Action -->|"Lectura pública"| FreeRead["Navegación libre: Foro / Mkt / Grupos"]
-    Action -->|"Escribir / Votar / Publicar"| Modal["AuthModal (Contextual)"]
+    Guest["Visitante"] --> Read["Consultar contenido público"]
+    Guest --> Auth["AuthModal"]
+    Auth --> Choice{"Método"}
+    Choice -->|"Correo y contraseña"| Email["Registro o inicio de sesión"]
+    Choice -->|"Google"| Google["OAuth 2.0 con PKCE"]
+    Email --> Session["Sesión de Supabase"]
+    Google --> Session
+    Session --> App["Entrar a la app; no se solicita TOTP"]
+    Session --> Profile["Inscripción TOTP opcional y separada desde el perfil"]
 
-    subgraph Auth_Modal_Flow ["AuthModal: Autenticación Primaria (AAL1)"]
-        Modal --> Choice{"Método de acceso"}
-        Choice -->|"Registro"| SignUp["Formulario: Correo + Contraseña"]
-        SignUp --> SignUpSession["SupabaseService.signUp (sin confirmación por correo)"]
-
-        Choice -->|"Login Correo"| SignIn["Formulario: Correo + Contraseña"]
-        SignIn --> DoSignIn["SupabaseService.signInWithPassword"]
-
-        Choice -->|"Google OAuth"| GooglePKCE["OAuth 2.0 PKCE (Navegador/DeepLink)"]
-        GooglePKCE --> GoogleReturn["AuthChangeEvent.signedIn"]
-
-
-    end
-
-    SignUpSession --> Guard{"TotpSessionGuard"}
-    DoSignIn --> Guard
-    GoogleReturn --> Guard
-
-    subgraph MFA_Guard_Architecture ["TotpSessionGuard: Evaluación de Factor"]
-        Guard --> CheckFactor{"¿Tiene factor TOTP verified?"}
-
-        CheckFactor -->|"No"| GraceDecision{"¿Período de gracia vigente?"}
-        GraceDecision -->|"Sí (<= 7 días)"| EduScreen["Pantalla formativa: Explicación 2FA"]
-        EduScreen -->|"Omitir temporalmente"| SessionAAL1["Sesión AAL1 (Banner recordatorio en perfil)"]
-        EduScreen -->|"Configurar ahora"| EnrollSc["TotpEnrollmentScreen (isRequired: true)"]
-        GraceDecision -->|"No (Expiró gracia)"| EnrollSc
-
-        CheckFactor -->|"Sí"| CheckAAL{"¿Nivel actual de sesión?"}
-        CheckAAL -->|"AAL2"| SessionAAL2["Acceso Total Desbloqueado (AAL2)"]
-        CheckAAL -->|"AAL1"| ChallengeSc["_TotpChallengeScreen"]
-
-        ChallengeSc --> VerifyChallenge["SupabaseService.verifyTotpChallenge"]
-        VerifyChallenge --> SessionAAL2
-    end
-
-    subgraph MFA_Management ["TotpEnrollmentScreen & Perfil"]
-        EnrollSc --> QR["Escanear QR o Clave Secreta Manual"]
-        QR --> VerifyFirst["Ingresar primer código de 6 dígitos"]
-        VerifyFirst --> SessionAAL2
-
-        SessionAAL2 --> ManageMFA["Perfil: Administrar MFA"]
-        ManageMFA --> RegenBackup["Regenerar 10 códigos (Invalida previos)"]
-        ManageMFA --> DeactivateTOTP["Desactivar TOTP (Exige código actual)"]
-        DeactivateTOTP --> AutoLogout["Cierre de sesión automático (SupabaseService.signOut)"]
-        AutoLogout --> Guest
-    end
-
-    subgraph SSO_Subsystem ["SSO para PEMTREE: /auth/authorize"]
-        SSOIn["Llegada con client_id y redirect_uri"] --> SsoVal{"SsoSecurityValidator"}
-        SsoVal -->|"Inválida / Comodín / Spoofing"| BlockSSO["Pantalla de Bloqueo: Alerta de Seguridad"]
-        SsoVal -->|"Válida (HTTPS o Localhost)"| SsoConsent["SsoAuthorizeScreen"]
-        SsoConsent --> EmbeddedAuth{"¿Sesión activa?"}
-        EmbeddedAuth -->|"No"| SsoLoginForm["Formulario embebido Login/Google"]
-        EmbeddedAuth -->|"Sí"| SsoPrompt["Consentimiento: Compartir perfil con PEMTREE"]
-        SsoLoginForm --> SsoPrompt
-        SsoPrompt -->|"Cancelar"| ReturnCancel["Retorno con error=access_denied"]
-        SsoPrompt -->|"Autorizar"| HashTokens["Redirect con tokens en fragmento hash (#)"]
-    end
+    SSO["PEMTREE solicita SSO"] --> Consent["Validar solicitud y mostrar consentimiento"]
+    Consent -->|"Autorizar con sesión activa"| Return["Volver a PEMTREE con la respuesta OAuth"]
+    Consent -->|"No hay sesión"| Auth
 ```
+
+El diagrama describe el login en el cliente. La autorización de escrituras sigue
+siendo responsabilidad de las políticas/RPC en Postgres; la migración AAL2 local,
+si está aplicada a una base, puede rechazar escrituras aunque el login concluya.
 
 ---
 
@@ -178,13 +140,13 @@ flowchart TD
 - **Interacciones:**
   - Al escribir en los campos, la validación sintáctica (`_formKey.currentState!.validate()`) proporciona retroalimentación sin bloquear la escritura.
   - Al presionar "Registrarme", el botón deshabilita clics subsecuentes y muestra un indicador de progreso circular blanco (`CircularProgressIndicator`, 18px).
-  - Se invoca `SupabaseService.signUp(email, password)`. La cuenta y sesión se crean sin enviar OTP por correo; el guard TOTP gestiona el segundo factor.
+  - Se invoca `SupabaseService.signUp(email, password)`. La cuenta y sesión se crean sin enviar OTP por correo; después del registro se entra sin solicitar TOTP.
 - **Estados:**
   - _Inicial:_ Formulario vacío con foco disponible en el campo de correo.
   - _Carga:_ Botón en estado de carga con spinner activo.
   - _Error de validación inline:_ Mensajes de error en rojo bajo cada campo ("Ingresa un correo válido", "La contraseña debe tener al menos 6 caracteres").
   - _Error del servidor:_ Tarjeta destacada roja superior con mensaje humanizado (p. ej. "Este correo ya se encuentra registrado. Inicia sesión o usa Google si corresponde").
-  - _Éxito:_ Se crea la cuenta y continúa al guard de sesión TOTP.
+  - _Éxito:_ Se crea la cuenta y se entra a la app sin un paso TOTP.
 - **Validaciones y reglas de negocio:**
   - Respaldo técnico: [`auth_modal.dart:175-210`](../../comunidad_universitaria/lib/features/shared/widgets/auth_modal.dart#L175-L210) y [`supabase_service.dart:185-215`](../../comunidad_universitaria/lib/core/services/supabase_service.dart#L185-L215).
   - El correo es normalizado (recorte de espacios y minúsculas) antes del envío.
@@ -196,7 +158,7 @@ flowchart TD
 - **Responsive:**
   - En móvil, se adapta a la aparición del teclado virtual mediante `viewInsets.bottom` para evitar que el botón quede oculto.
 - **Criterios de aceptación (Gherkin):**
-  - **Given** un visitante en `AuthModal` con el formulario de registro visible, **When** ingresa un correo con formato válido y una contraseña de 8 caracteres y pulsa "Registrarme", **Then** el sistema crea la cuenta e inicia sesión sin enviar OTP por correo, y continúa al flujo de seguridad TOTP.
+  - **Given** un visitante en `AuthModal` con el formulario de registro visible, **When** ingresa un correo con formato válido y una contraseña válida y pulsa "Registrarme", **Then** el sistema crea la cuenta e inicia sesión sin enviar OTP por correo ni solicitar TOTP.
   - **Given** un visitante que intenta registrarse con una contraseña de 4 caracteres, **When** pulsa "Registrarme", **Then** el formulario no se envía, se muestra el mensaje de error inline "La contraseña debe tener al menos 6 caracteres" y el foco se sitúa en dicho campo.
 
 ---
@@ -230,9 +192,7 @@ factor y no sustituye esa comprobación.
   - Enlace inferior de registro: "¿No tienes una cuenta aún? Regístrate gratis".
 - **Interacciones:**
   - Al presionar "Iniciar Sesión", se ejecuta `SupabaseService.signInWithEmail(email, password)`.
-  - Si el inicio de sesión es exitoso, el modal se descarta de inmediato. El guardián de seguridad `TotpSessionGuard` evalúa el nivel de aseguramiento de la sesión:
-    - Si el usuario ya tiene TOTP activado pero la sesión está en AAL1, se despliega el desafío de seguridad `_TotpChallengeScreen` (`UX-AUTH-011`).
-    - Si el usuario no tiene TOTP configurado, se evalúa el período de gracia o se presenta la inducción MFA (`UX-AUTH-008`).
+  - Si el inicio de sesión es exitoso, el modal se descarta y se entra a la app. No se solicita TOTP ni se evalúa un desafío después del login, aunque el usuario tenga un factor inscrito.
   - Si el backend devuelve `email_not_confirmed`, se informa que debe desactivarse `Confirm email` en Supabase; no se ofrece envío ni verificación de OTP.
 - **Estados:**
   - _Inicial:_ Formulario listo para ingreso de credenciales.
@@ -249,7 +209,7 @@ factor y no sustituye esa comprobación.
 - **Responsive:**
   - Modal adaptativo a pantalla completa con scroll seguro en pantallas móviles de baja resolución.
 - **Criterios de aceptación (Gherkin):**
-  - **Given** un estudiante registrado que ingresa su correo y contraseña correctos, **When** pulsa "Iniciar Sesión", **Then** el sistema autentica la cuenta, descarta el modal y continúa al flujo correspondiente según su estado de MFA.
+  - **Given** un estudiante registrado que ingresa su correo y contraseña correctos, **When** pulsa "Iniciar Sesión", **Then** el sistema autentica la cuenta, descarta el modal y entra a la app sin solicitar TOTP.
   - **Given** un usuario que introduce una contraseña equivocada, **When** pulsa "Iniciar Sesión", **Then** el formulario no se borra, se presenta el mensaje de error en tarjeta destacada "Credenciales inválidas. Verifica tu correo y contraseña" y el campo de contraseña queda seleccionado para su corrección.
 
 ---
@@ -287,7 +247,7 @@ factor y no sustituye esa comprobación.
   - _Conectando:_ Lanzamiento del flujo OAuth en el navegador del sistema.
   - _Esperando retorno:_ Modal en espera con spinner y botón de cancelación.
   - _Error de conexión:_ Tarjeta roja "Error al conectar con Google: [mensaje]".
-  - _Éxito:_ Cierre del modal y paso al guardián de sesión `TotpSessionGuard`.
+  - _Éxito:_ Cierre del modal y entrada a la app sin solicitar TOTP.
 - **Validaciones y reglas de negocio:**
   - Respaldo técnico: [`auth_modal.dart:100-148`](../../comunidad_universitaria/lib/features/shared/widgets/auth_modal.dart#L100-L148) y configuraciones en `android/app/src/main/AndroidManifest.xml` e `ios/Runner/Info.plist`.
   - Manejo de plataforma: En web utiliza `Uri.base.toString()`, en móvil utiliza el esquema URL `comunidadusac`.
@@ -305,7 +265,7 @@ factor y no sustituye esa comprobación.
 
 - **Actor / rol:** Estudiante registrado, Estudiante verificado, Moderador, Administrador
 - **Prioridad:** Must
-- **Estado objetivo:** El estudiante puede cerrar su sesión de manera voluntaria y segura en cualquier momento desde la sección de "Cuenta y Preferencias" en su perfil (`ProfileScreen`), o como vía de escape garantizada desde las pantallas de desafío o bloqueo de seguridad (`TotpSessionGuard`). Al ejecutar el cierre, el sistema revoca los tokens de refresco en los servidores de Supabase, limpia todas las credenciales cacheadas en memoria y almacenamiento seguro, revoca el estado AAL2 activo y devuelve al usuario al cascarón principal en modo visitante, restableciendo su seudónimo local sin dejar rastros de información personal de la cuenta saliente.
+- **Estado objetivo:** El estudiante puede cerrar su sesión de manera voluntaria y segura desde la sección de "Cuenta y Preferencias" en su perfil (`ProfileScreen`). Al ejecutar el cierre, el sistema revoca los tokens de refresco en los servidores de Supabase, limpia las credenciales de sesión y devuelve al usuario al cascarón principal en modo visitante.
 - **Precondiciones:** Sesión de usuario autenticada activa en Supabase.
 - **UI / contenido:**
   - En `ProfileScreen`: Botón estilizado con borde rojo suave o icono `Icons.logout`, con etiqueta `"Cerrar Sesión"`.
@@ -316,7 +276,7 @@ factor y no sustituye esa comprobación.
     - Botones: "Cancelar" (estilo neutro) y "Cerrar Sesión" (estilo destructivo rojo `#DC2626`).
 - **Interacciones:**
   - Al confirmar en el diálogo, se ejecuta `SupabaseService.signOut()`.
-  - El guardián `TotpSessionGuard` recibe el evento `AuthChangeEvent.signedOut` mediante su listener y ejecuta `_clearGate()`, disolviendo cualquier pantalla de bloqueo.
+
   - La aplicación redirige al usuario a la vista principal del foro en modo visitante y muestra un SnackBar informativo: "Has cerrado sesión correctamente".
 - **Estados:**
   - _Reposo:_ Botón disponible en la interfaz.
@@ -331,48 +291,18 @@ factor y no sustituye esa comprobación.
   - Diálogo centrado en todas las resoluciones.
 - **Criterios de aceptación (Gherkin):**
   - **Given** un estudiante autenticado en su pantalla de perfil que pulsa "Cerrar Sesión", **When** confirma la acción en el diálogo de alerta, **Then** la sesión se cancela en Supabase, la app pasa a modo visitante y el perfil muestra el avatar genérico local.
-  - **Given** un usuario que se encuentra en la pantalla de desafío de seguridad TOTP y no tiene su autenticador a mano, **When** pulsa el botón "Cerrar sesión" de la barra superior, **Then** el sistema cancela la sesión y lo regresa a la navegación libre del foro sin quedar atrapado en el bloqueo.
+  - El flujo actual no incluye una pantalla de bloqueo o desafío TOTP tras iniciar sesión.
 
 ---
 
-### UX-AUTH-008 — Onboarding de MFA TOTP con explicación formativa y período de gracia `[Mejora]`
+### UX-AUTH-008 — Onboarding MFA TOTP `[Pospuesto]`
 
-- **Actor / rol:** Estudiante recién registrado o ingresado con Google por primera vez (Nivel AAL1 sin MFA previo)
-- **Prioridad:** Must
-- **Estado objetivo:** Tras autenticarse por primera vez, el estudiante no es sometido a un bloqueo repentino de la aplicación; en su lugar, se le presenta una pantalla de bienvenida e inducción pedagógica que explica en lenguaje amigable el propósito de la autenticación en dos pasos (proteger su identidad universitaria, blindar la confianza en el marketplace y evitar secuestro de seudónimos). Se implementa un **período de gracia de 7 días naturales** (contados a partir de la creación de la cuenta) durante el cual el alumno puede elegir "Configurar más tarde" para familiarizarse con la plataforma y realizar sus primeras lecturas y aportes antes de que el enrolamiento sea de cumplimiento estricto. Durante la vigencia de la gracia, un banner informativo no intrusivo en su perfil le recuerda los días restantes.
-- **Problema actual [Resuelto]:** `TotpSessionGuard` envuelve la app entera en `main.dart`, pero ya no bloquea la interfaz cuando el estudiante se registra o ingresa con Google sin un factor TOTP verificado: lo deja entrar en AAL1 y la configuración queda disponible, de forma opcional, desde el perfil ([`totp_session_guard.dart`](../../comunidad_universitaria/lib/features/shared/widgets/totp_session_guard.dart)).
-- **Precondiciones:** Sesión activa recién creada en nivel AAL1 donde la lista de factores TOTP verificados está vacía (`verifiedFactors.isEmpty`).
-- **UI / contenido:**
-  - Ilustración o icono destacado de seguridad comunitaria (`Icons.security_update_good`, 56px, en azul institucional `#004B87`).
-  - Título principal: "Protege tu identidad en la Comunidad USAC".
-  - Subtítulo: "Tu cuenta utiliza verificación en dos pasos (TOTP) para garantizar que nadie suplante tu seudónimo ni manipule tus publicaciones".
-  - Tarjeta con 3 pilares formativos:
-    1. _Privacidad blindada:_ Tus aportes y votos en el foro están asegurados frente a accesos indebidos.
-    2. _Confianza en Marketplace:_ Compradores y vendedores interactúan sabiendo que las cuentas son legítimas.
-    3. _Independencia total:_ Funciona con cualquier app de autenticación estándar (Google Authenticator, Microsoft Authenticator o Authy) sin depender de SMS ni datos de terceros.
-  - Botón primario de acción: "Configurar autenticador ahora" (`ElevatedButton` azul con icono `Icons.qr_code_2`).
-  - Botón secundario con período de gracia: `"Configurar más tarde (Te quedan [N] días de prueba)"` (`TextButton` con icono `Icons.access_time`).
-  - En `ProfileScreen` (durante el período de gracia): Banner informativo de tono ámbar suave en la parte superior: "Protección pendiente: Te quedan [N] días para activar tu autenticador en dos pasos antes de que sea obligatorio para publicar. [Configurar ahora]".
-- **Interacciones:**
-  - Si el alumno pulsa "Configurar autenticador ahora", la interfaz avanza al asistente de enrolamiento por QR (`UX-AUTH-009`).
-  - Si el alumno pulsa "Configurar más tarde", se registra la marca de gracia en el cliente y el guardián libera la pantalla (`_clearGate()`), permitiéndole utilizar la aplicación de inmediato.
-  - Al expirar los 7 días de gracia: Si el alumno intenta realizar cualquier acción de publicación o escritura, `TotpSessionGuard` intercepta la acción y exige completar el enrolamiento de forma mandataria sin posibilidad de postergación adicional.
-- **Estados:**
-  - _Inducción inicial:_ Presentación formativa con ambas opciones.
-  - _Período de gracia activo:_ Navegación habilitada con banner recordatorio visible en el perfil.
-  - _Período de gracia expirado:_ Requerimiento estricto de enrolamiento al intentar mutaciones.
-- **Validaciones y reglas de negocio:**
-  - Respaldo técnico: Modificación conceptual sobre [`totp_session_guard.dart:61-102`](../../comunidad_universitaria/lib/features/shared/widgets/totp_session_guard.dart#L61-L102).
-  - La fecha de gracia se calcula como `user.createdAt + 7 días`. Durante este lapso, el usuario puede operar con nivel de aseguramiento AAL1.
-- **Accesibilidad:**
-  - Los pilares formativos se agrupan en una lista semántica con contraste superior a 4.5:1.
-  - Botones táctiles con altura mínima de 48px y espaciado generoso.
-- **Responsive:**
-  - En móviles, la tarjeta se adapta a desplazamiento vertical fluido dentro de un contenedor centrado (`maxWidth: 480px`).
-- **Criterios de aceptación (Gherkin):**
-  - **Given** un estudiante que acaba de registrarse por primera vez en la app, **When** culmina la verificación de su correo, **Then** visualiza la pantalla pedagógica que explica la seguridad comunitaria y exhibe el botón "Configurar más tarde" con el contador de 7 días de gracia.
-  - **Given** un estudiante que pulsa "Configurar más tarde", **When** navega hacia su perfil, **Then** la app le permite utilizar el sistema y muestra un banner informativo con los días restantes del período de gracia y un botón para activarlo cuando lo desee.
-  - **Given** un estudiante cuyo período de gracia de 7 días ha finalizado sin enrolar TOTP, **When** intenta crear una publicación en el foro, **Then** el sistema bloquea la acción y lo conduce obligatoriamente al enrolamiento de TOTP.
+Este flujo de inducción, período de gracia de 7 días y requisito obligatorio de
+TOTP no forma parte del comportamiento actual y no debe implementarse como
+bloqueo de acceso o de escritura sin una decisión posterior. Actualmente, el
+login con Google o correo/contraseña entra sin solicitar TOTP. La inscripción
+TOTP permanece separada desde el perfil; cualquier requisito de AAL2 en Postgres
+se gestiona mediante migración y debe revisarse por separado.
 
 ---
 
@@ -429,38 +359,13 @@ factor y no sustituye esa comprobación.
 
 ---
 
-### UX-AUTH-011 — Desafío de sesión MFA TOTP (Session Challenge) y mitigación de bloqueo
+### UX-AUTH-011 — Desafío de sesión MFA TOTP `[Pospuesto]`
 
-- **Actor / rol:** Estudiante, Moderador o Administrador con TOTP activo en sesión AAL1
-- **Prioridad:** Must
-- **Estado objetivo:** Cuando un usuario que tiene configurada la autenticación en dos pasos inicia sesión desde un nuevo navegador, dispositivo o tras haber expirado su token AAL2, `TotpSessionGuard` presenta la pantalla de desafío `_TotpChallengeScreen` y solicita el código numérico de 6 dígitos de su app autenticadora. Los códigos de recuperación MFA no están disponibles en el Auth alojado del proyecto y quedan aplazados.
-- **Precondiciones:** Cuenta autenticada con al menos un factor TOTP verificado, pero con la sesión actual en nivel AAL1 (`assurance.currentLevel == AuthenticatorAssuranceLevels.aal1`).
-- **UI / contenido:**
-  - Encabezado: Barra superior limpia sin flecha de regreso (para no eludir el guardián), pero con un botón explícito "Cerrar sesión" en la esquina derecha para permitir cancelar el intento.
-  - Icono central de escudo protegido (`Icons.security_outlined`, 48px).
-  - Título: "Confirma que eres tú".
-  - Subtítulo: "Ingresa el código actual de 6 dígitos generado por tu app autenticadora".
-  - Campo numérico de texto centrado con límite de 6 dígitos.
-  - Botón primario: "Verificar código TOTP".
-  - Tarjeta de error inline para retroalimentación inmediata.
-- **Interacciones:**
-  - Al introducir el código y pulsar "Verificar código TOTP", llama a `SupabaseService.verifyTotpChallenge(factorId, code)`.
-  - Si la verificación tiene éxito, el guardián ejecuta `_clearGate()`, la pantalla de bloqueo desaparece sin recargar la app y se restaura el acceso completo en nivel AAL2.
-  - Si la verificación falla, se muestra un mensaje para comprobar el código y la app autenticadora.
-- **Estados:**
-
-  - _Verificando:_ Spinner en botón con campos deshabilitados.
-  - _Error de código inválido:_ "El código no es válido o venció. Revisa tu app autenticadora".
-  - _Éxito:_ Elevación inmediata a AAL2 y desbloqueo total.
-- **Validaciones y reglas de negocio:**
-  - Respaldo técnico: [`totp_session_guard.dart`](../../comunidad_universitaria/lib/features/shared/widgets/totp_session_guard.dart) y `SupabaseService.verifyTotpChallenge`.
-- **Accesibilidad:**
-  - El campo de texto toma el foco inmediatamente al montar la pantalla.
-
-- **Responsive:**
-  - Diseño centrado con ancho restringido a 440px en desktop y padding de 24px en móviles.
-- **Criterios de aceptación (Gherkin):**
-  - **Given** un estudiante con TOTP activo que inicia sesión en un equipo nuevo, **When** ingresa el código de 6 dígitos de su autenticador y pulsa verificar, **Then** la app eleva la sesión a AAL2 y desbloquea la interfaz sin fricciones.
+El desafío TOTP descrito en este requisito no se presenta en el flujo actual. Un
+usuario con un factor inscrito puede iniciar sesión por Google o por
+correo/contraseña sin que la app solicite su código. La decisión futura sobre
+MFA debe incluir tanto el flujo de interfaz como las políticas AAL2 del backend;
+los códigos de recuperación siguen fuera del alcance.
 
 
 ---
