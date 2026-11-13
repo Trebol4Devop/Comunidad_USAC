@@ -1079,10 +1079,12 @@ packages:
   usac_campus_map:
     dependency: "direct main"
     description:
-      path: "../../usac_campus_map"
-      relative: true
-    source: path
-    version: "0.5.0"
+      path: "."
+      ref: develop
+      resolved-ref: f8a6b5398ba6bae82bb27c7bde311b177ca830ac
+      url: "https://github.com/Trebol4Devop/usac_campus_map.git"
+    source: git
+    version: "0.5.1"
   uuid:
     dependency: transitive
     description:

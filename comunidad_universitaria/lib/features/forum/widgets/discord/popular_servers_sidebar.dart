@@ -218,23 +218,40 @@ class PopularServersSidebar extends StatelessWidget {
               ),
               const SizedBox(width: 4),
 
-              // Ícono táctil con fondo sutil
+              // Ícono táctil o escudo con fondo sutil
               Container(
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: item.server.color.withValues(alpha: 0.12),
+                  color: item.server.resolvedLogoAsset != null
+                      ? (isDark ? const Color(0xFF25262B) : const Color(0xFFF8FAFC))
+                      : item.server.color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(
-                    color: item.server.color.withValues(alpha: 0.2),
+                    color: item.server.resolvedLogoAsset != null
+                        ? (isDark ? const Color(0xFF383A40) : const Color(0xFFE2E8F0))
+                        : item.server.color.withValues(alpha: 0.2),
                     width: 1,
                   ),
                 ),
-                child: Icon(
-                  item.server.icon,
-                  size: 15,
-                  color: item.server.color,
-                ),
+                child: item.server.resolvedLogoAsset != null
+                    ? Padding(
+                        padding: const EdgeInsets.all(2),
+                        child: Image.asset(
+                          item.server.resolvedLogoAsset!,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) => Icon(
+                            item.server.icon,
+                            size: 15,
+                            color: item.server.color,
+                          ),
+                        ),
+                      )
+                    : Icon(
+                        item.server.icon,
+                        size: 15,
+                        color: item.server.color,
+                      ),
               ),
               const SizedBox(width: 8),
 

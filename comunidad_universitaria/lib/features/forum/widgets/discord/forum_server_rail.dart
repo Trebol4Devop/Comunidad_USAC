@@ -127,10 +127,16 @@ class _ServerButton extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final activeBg =
         isDark ? ZanateColors.zanateAccent : ZanateColors.zanateDark;
-    final inactiveBg = Colors.transparent;
-    final activeIconColor = Colors.white;
-    final inactiveIconColor =
-        isDark ? const Color(0xFF94A3B8) : Colors.blueGrey.shade600;
+    final inactiveBg = isDark ? const Color(0xFF313338) : Colors.white;
+    final activeFg = Colors.white;
+    final inactiveFg =
+        isDark ? const Color(0xFFDBDEE1) : const Color(0xFF313338);
+    final logoAsset = server.resolvedLogoAsset;
+    final hasLogo = logoAsset != null && logoAsset.isNotEmpty;
+
+    final containerBg = hasLogo
+        ? (isDark ? const Color(0xFF26282B) : Colors.white)
+        : (isSelected ? activeBg : inactiveBg);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
@@ -158,38 +164,68 @@ class _ServerButton extends StatelessWidget {
                   ),
                 ),
               ),
+              // Ícono o escudo de facultad en formato squircle 48x48px
               Center(
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: onTap,
-                    borderRadius: BorderRadius.circular(16),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      curve: Curves.easeOutCubic,
-                      width: 46,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: isSelected ? activeBg : inactiveBg,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: isSelected
-                            ? [
-                                BoxShadow(
-                                  color: activeBg.withValues(alpha: 0.25),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ]
-                            : null,
-                      ),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOutCubic,
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: containerBg,
+                    // Activo se expande a forma ligeramente más cuadrada (14px), inactivo más redondeado (20px)
+                    borderRadius: BorderRadius.circular(isSelected ? 14 : 20),
+                    border: hasLogo
+                        ? Border.all(
+                            color: isSelected
+                                ? activeBg
+                                : (isDark
+                                    ? const Color(0xFF383A40)
+                                    : const Color(0xFFE2E8F0)),
+                            width: isSelected ? 2 : 1,
+                          )
+                        : null,
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: activeBg.withValues(alpha: 0.35),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: onTap,
+                      borderRadius: BorderRadius.circular(isSelected ? 14 : 20),
                       child: Center(
-                        child: Icon(
-                          server.icon,
-                          size: 22,
-                          color: isSelected
-                              ? activeIconColor
-                              : inactiveIconColor,
-                        ),
+                        child: hasLogo
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(
+                                  isSelected ? 12 : 18,
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(4),
+                                  child: Image.asset(
+                                    logoAsset,
+                                    width: 36,
+                                    height: 36,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (context, error, stackTrace) => Icon(
+                                      server.icon,
+                                      size: 22,
+                                      color: isSelected ? activeFg : inactiveFg,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : Icon(
+                                server.icon,
+                                size: 22,
+                                color: isSelected ? activeFg : inactiveFg,
+                              ),
                       ),
                     ),
                   ),
