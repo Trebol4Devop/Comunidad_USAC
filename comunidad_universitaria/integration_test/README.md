@@ -1,4 +1,4 @@
-# Comunidad Universitaria · Suite de Pruebas E2E (`integration_test`)
+# Comunidad Zanate · Suite de Pruebas E2E (`integration_test`)
 
 Este directorio contiene pruebas de integración de la aplicación Flutter de **Comunidad USAC**, ejecutadas mediante el paquete oficial `integration_test`. **PEMTREE es un proyecto cliente separado**; `sso_flow_test.dart` solo prueba la ruta y algunos estados de la pantalla de autorización de Comunidad USAC, no una integración real con PEMTREE ni un intercambio OAuth en vivo.
 
@@ -49,6 +49,7 @@ Los flujos que interactúan con la base de datos (`forum_flow_test.dart`, `marke
 Para ejecutarlos contra tu stack local de Supabase:
 
 1. **Inicia el stack local de Supabase**:
+
    ```bash
    supabase start
    ```
@@ -57,6 +58,7 @@ Para ejecutarlos contra tu stack local de Supabase:
    Ejecuta `supabase status` para copiar la URL del API (por defecto `http://127.0.0.1:54321`) y la `anon key`.
 
 3. **Ejecuta la suite completa** (recomendado: un proceso por archivo):
+
    ```bash
    export SUPABASE_URL=http://127.0.0.1:54321
    export SUPABASE_ANON_KEY=tu_clave_anon_local_aqui
@@ -94,5 +96,6 @@ xvfb-run -a ./scripts/e2e/run_e2e.sh
 ## 🔒 Mecanismo de Seguridad y Gating
 
 Para garantizar que los tests **nunca** se ejecuten por error contra la base de datos de producción remota:
+
 - El helper `isLocalSupabaseConfigured` valida estrictamente que el host de `SUPABASE_URL` pertenezca a direcciones locales (`127.0.0.1`, `localhost`, `10.0.2.2`, `supabase`).
 - Si la URL apunta a un dominio remoto como `*.supabase.co` o no está definida, todos los tests con escrituras reales se marcan como `skip` de manera automática y preventiva.

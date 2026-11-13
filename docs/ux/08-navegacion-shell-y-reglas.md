@@ -1,12 +1,12 @@
 # 08 — Cascarón de Navegación, Tema, Normas y Descargos
 
-> Especificación de requisitos de experiencia de usuario (UX) para el Cascarón de Navegación Global (`AppShell`), el Selector de Tema Visual, el Diálogo de Aviso Comunitario y la Pantalla de Normas y Descargo Legal (`RulesScreen`) de la plataforma **Comunidad Universitaria USAC**. Convenciones, matriz de roles y plantilla de especificación en [`README.md`](README.md).
+> Especificación de requisitos de experiencia de usuario (UX) para el Cascarón de Navegación Global (`AppShell`), el Selector de Tema Visual, el Diálogo de Aviso Comunitario y la Pantalla de Normas y Descargo Legal (`RulesScreen`) de la plataforma **Comunidad Zanate USAC**. Convenciones, matriz de roles y plantilla de especificación en [`README.md`](README.md).
 
 ---
 
 ## 1. Visión y propósito del área
 
-El **Cascarón de Navegación y Reglas** constituye el marco arquitectónico y jurídico sobre el cual se sustenta la totalidad de la experiencia de usuario en **Comunidad Universitaria USAC**. Cumple dos misiones críticas y complementarias:
+El **Cascarón de Navegación y Reglas** constituye el marco arquitectónico y jurídico sobre el cual se sustenta la totalidad de la experiencia de usuario en **Comunidad Zanate USAC**. Cumple dos misiones críticas y complementarias:
 
 1. **Marco de Navegación Unificado y Preservación de Estado (`AppShell`):**
    Proveer un contenedor visual cohesivo, ergonómico y reactivo que albergue los módulos centrales de la plataforma (**Foro Estudiantil**, **Marketplace & Tutorías** y **Directorio de Grupos de Estudio**). El cascarón garantiza transiciones instantáneas y fluidas entre secciones sin recargas destructivas de pantalla mediante `IndexedStack`, adaptando su interfaz según el factor de forma del dispositivo (pestañas superiores en escritorio y barra inferior Material 3 con botón flotante contextual en dispositivos móviles).
@@ -116,7 +116,7 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
 
 - **Actor / rol:** Visitante, Estudiante Registrado, Estudiante Verificado, Moderador, Administrador
 - **Prioridad:** Must
-- **Estado objetivo:** La barra superior (`AppBar`) de la aplicación exhibe una identidad visual universitaria digna y reconocible pero jurídicamente diferenciada, integrando el logotipo de graduación USAC en azul institucional (`#004B87`), un título responsivo adaptado al espacio de pantalla y un distintivo permanente `"No Oficial"` interactivo que evita cualquier confusión sobre el carácter no gubernamental de la plataforma.
+- **Estado objetivo:** La barra superior (`AppBar`) de la aplicación exhibe una identidad visual Zanate digna y reconocible pero jurídicamente diferenciada, integrando el logotipo de graduación USAC en azul institucional (`#004B87`), un título responsivo adaptado al espacio de pantalla y un distintivo permanente `"No Oficial"` interactivo que evita cualquier confusión sobre el carácter no gubernamental de la plataforma.
 - **Precondiciones:** `AppShell` activo en la vista raíz.
 - **UI / contenido:**
   - Logotipo: Contenedor con esquinas redondeadas (8px), fondo azul `#004B87`, con icono `Icons.school` en blanco (20px).
@@ -297,7 +297,7 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
   - Diálogo centrado con esquinas redondeadas (16px).
   - Encabezado con icono `Icons.info_outline` en azul `#004B87` y título `"Aviso Comunitario"` en negrita (16px).
   - Cuerpo textual en 13px con interlineado 1.4:
-    > _"Comunidad Universitaria es una plataforma estudiantil colaborativa, autónoma y sin fines de lucro. No representa formalmente a la administración ni a las autoridades de la Universidad de San Carlos de Guatemala. Los datos académicos, pensums y directorios son informativos y compartidos entre compañeros."_ ([`app_shell.dart:51-54`](../../comunidad_universitaria/lib/features/navigation/app_shell.dart#L51-L54)).
+    > _"Comunidad Zanate es una plataforma estudiantil colaborativa, autónoma y sin fines de lucro. No representa formalmente a la administración ni a las autoridades de la Universidad de San Carlos de Guatemala. Los datos académicos, pensums y directorios son informativos y compartidos entre compañeros."_ ([`app_shell.dart:51-54`](../../comunidad_universitaria/lib/features/navigation/app_shell.dart#L51-L54)).
   - Botones de acción:
     1. `"Ver Normas Completas"` (`TextButton`): Cierra el diálogo y navega a `RulesScreen`.
     2. `"Entendido"` (`TextButton`): Cierra el diálogo y retorna a la vista actual.
@@ -335,7 +335,7 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
     - Fondo `#F1F5F9` (claro) o `#1E293B` (oscuro), con borde redondeado de 16px.
     - Icono de escudo `Icons.shield_outlined` (28px) en contenedor tonal con color primario.
     - Título `"Normas Comunitarias & Descargo Legal"` (estilo `titleLarge` en negrita).
-    - Subtítulo descriptivo: _"Comunidad Universitaria es una iniciativa estudiantil independiente, libre y sin fines de lucro entre compañeros universitarios."_
+    - Subtítulo descriptivo: _"Comunidad Zanate es una iniciativa estudiantil independiente, libre y sin fines de lucro entre compañeros universitarios."_
 - **Interacciones:**
   - Desplazamiento vertical continuo y suave (`SingleChildScrollView`).
   - Toque en la flecha de regreso retorna a la pantalla de origen preservando el estado previo del usuario.
@@ -396,7 +396,7 @@ Este documento formaliza los requisitos del área a partir del análisis del **I
   - Contenedor con esquinas redondeadas (14px), fondo ámbar suave (`#FFFBEB`) y borde delimitador ámbar (`#FDE68A`) ([`rules_screen.dart:173-214`](../../comunidad_universitaria/lib/features/rules/screens/rules_screen.dart#L173-L214)).
   - Encabezado con icono `Icons.info_outline` en ámbar oscuro (`#B45309`, 20px) y título `"Descargo de Responsabilidad Legal e Independencia"` en negrita (`#92400E`, 14px).
   - Texto legal en 12px con interlineado 1.45:
-    > _"Comunidad Universitaria es una plataforma y directorio estudiantil independiente y sin fines de lucro. No representa, no forma parte ni actúa en nombre de las autoridades de la Universidad de San Carlos de Guatemala. Los datos de pensums, materias y facultades se basan en publicaciones de libre acceso con carácter exclusivamente informativo._
+    > _"Comunidad Zanate es una plataforma y directorio estudiantil independiente y sin fines de lucro. No representa, no forma parte ni actúa en nombre de las autoridades de la Universidad de San Carlos de Guatemala. Los datos de pensums, materias y facultades se basan en publicaciones de libre acceso con carácter exclusivamente informativo._
     >
     > _El proyecto se financia mediante patrocinios y donaciones; no vende datos, no utiliza rastreadores publicitarios y no reporta información a las autoridades de la USAC, salvo que lo exija una obligación legal._
     >

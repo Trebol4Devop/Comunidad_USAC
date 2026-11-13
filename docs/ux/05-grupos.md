@@ -2,7 +2,7 @@
 
 > Especificación de requisitos de experiencia de usuario (UX) para el Directorio
 > Colaborativo de Grupos de Estudio (WhatsApp, Telegram, Discord y Google Drive) de
-> la plataforma **Comunidad Universitaria USAC**. Convenciones, matriz de roles y
+> la plataforma **Comunidad Zanate USAC**. Convenciones, matriz de roles y
 > plantilla de especificación en [`README.md`](README.md).
 
 ---
@@ -109,7 +109,7 @@ abordando directamente:
 
 - **Actor / rol:** Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador
 - **Prioridad:** Must
-- **Estado objetivo:** El estudiante puede filtrar el directorio de grupos por Facultad / Escuela, refinar opcionalmente por Carrera universitaria o buscar mediante texto libre por nombre de curso, código o sección. Si el alumno tiene perfil registrado con facultad asignada, el sistema preconfigura los filtros con su contexto académico personal.
+- **Estado objetivo:** El estudiante puede filtrar el directorio de grupos por Facultad / Escuela, refinar opcionalmente por Carrera Zanate o buscar mediante texto libre por nombre de curso, código o sección. Si el alumno tiene perfil registrado con facultad asignada, el sistema preconfigura los filtros con su contexto académico personal.
 - **Problema actual [Mejora]:** En el código actual ([`groups_screen.dart:40-124`](../../comunidad_universitaria/lib/features/groups/screens/groups_screen.dart#L40-L124)), si bien el servicio de datos soporta `searchQuery` con índices trigram en PostgreSQL ([`groups_service.dart:60-63`](../../comunidad_universitaria/lib/core/services/groups_service.dart#L60-L63)), no existe un campo de texto de búsqueda visual en la interfaz de `GroupsScreen`, obligando al alumno a desplazarse manualmente entre decenas de tarjetas para ubicar su asignatura.
 - **Precondiciones:** El catálogo institucional de facultades y carreras (`USACConstants.facultades`) se encuentra disponible en memoria.
 - **UI / contenido:**

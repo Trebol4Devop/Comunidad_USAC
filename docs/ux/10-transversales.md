@@ -1,7 +1,7 @@
 # 10 — Requisitos Transversales de UX
 
 > Especificación de requisitos de experiencia de usuario transversales (UX-X) para
-> la plataforma **Comunidad Universitaria USAC**. Abarca manejo de errores y
+> la plataforma **Comunidad Zanate USAC**. Abarca manejo de errores y
 > mensajería, estados vacíos, carga con skeletons, funcionamiento sin conexión y
 > caché resiliente, notificaciones y snackbars, accesibilidad WCAG 2.2 AA,
 > responsividad y adaptación de modales (breakpoints 700px y 1100px),
@@ -53,18 +53,18 @@ identificados en el levantamiento de código:
 
 ## 3. Matriz de aplicación transversal por módulo
 
-| Dimensión transversal                                    | Foro  | Marketplace | Grupos | Perfil / Cuenta | Auth / MFA |  SSO  |
-| -------------------------------------------------------- | :---: | :---------: | :----: | :-------------: | :--------: | :---: |
-| **Manejo de errores** (`UX-X-001`, `002`, `003`)         | Hecho |    Hecho    | Hecho  |      Hecho      |   Hecho    | Hecho |
-| **Estados vacíos** (`UX-X-004`)                          | Hecho |    Hecho    | Hecho  |      Hecho      |    N/A     |  N/A  |
-| **Carga con skeletons** (`UX-X-005`)                     | Hecho |    Hecho    | Hecho  |      Hecho      |    N/A     |  N/A  |
-| **Modo offline y caché** (`UX-X-006`)                    | Parcial | Parcial | Parcial | Parcial | N/A | N/A |
-| **Notificaciones / Snackbars** (`UX-X-007`)              | Hecho |    Hecho    | Hecho  |      Hecho      |   Hecho    | Hecho |
-| **Accesibilidad WCAG 2.2 AA** (`UX-X-008`, `009`, `010`) | Hecho |    Hecho    | Hecho  |      Hecho      |   Hecho    | Hecho |
-| **Responsividad y modales** (`UX-X-011`, `012`)          | Hecho |    Hecho    | Hecho  |      Hecho      |   Hecho    | Hecho |
-| **Internacionalización es-GT** (`UX-X-013`)              | Hecho |    Hecho    | Hecho  |      Hecho      |   Hecho    | Hecho |
-| **Rendimiento percibido** (`UX-X-014`)                   | Hecho |    Hecho    | Hecho  |      Hecho      |   Hecho    | Hecho |
-| **Privacidad de datos** (`UX-X-015`)                     | Hecho |    Hecho    | Hecho  |      Hecho      |   Hecho    | Hecho |
+| Dimensión transversal                                    |  Foro   | Marketplace | Grupos  | Perfil / Cuenta | Auth / MFA |  SSO  |
+| -------------------------------------------------------- | :-----: | :---------: | :-----: | :-------------: | :--------: | :---: |
+| **Manejo de errores** (`UX-X-001`, `002`, `003`)         |  Hecho  |    Hecho    |  Hecho  |      Hecho      |   Hecho    | Hecho |
+| **Estados vacíos** (`UX-X-004`)                          |  Hecho  |    Hecho    |  Hecho  |      Hecho      |    N/A     |  N/A  |
+| **Carga con skeletons** (`UX-X-005`)                     |  Hecho  |    Hecho    |  Hecho  |      Hecho      |    N/A     |  N/A  |
+| **Modo offline y caché** (`UX-X-006`)                    | Parcial |   Parcial   | Parcial |     Parcial     |    N/A     |  N/A  |
+| **Notificaciones / Snackbars** (`UX-X-007`)              |  Hecho  |    Hecho    |  Hecho  |      Hecho      |   Hecho    | Hecho |
+| **Accesibilidad WCAG 2.2 AA** (`UX-X-008`, `009`, `010`) |  Hecho  |    Hecho    |  Hecho  |      Hecho      |   Hecho    | Hecho |
+| **Responsividad y modales** (`UX-X-011`, `012`)          |  Hecho  |    Hecho    |  Hecho  |      Hecho      |   Hecho    | Hecho |
+| **Internacionalización es-GT** (`UX-X-013`)              |  Hecho  |    Hecho    |  Hecho  |      Hecho      |   Hecho    | Hecho |
+| **Rendimiento percibido** (`UX-X-014`)                   |  Hecho  |    Hecho    |  Hecho  |      Hecho      |   Hecho    | Hecho |
+| **Privacidad de datos** (`UX-X-015`)                     |  Hecho  |    Hecho    |  Hecho  |      Hecho      |   Hecho    | Hecho |
 
 ---
 

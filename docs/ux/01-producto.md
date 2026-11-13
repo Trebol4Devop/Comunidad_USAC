@@ -7,7 +7,7 @@
 
 ## 1. Visión
 
-**Comunidad Universitaria USAC** es una plataforma colaborativa, estudiantil,
+**Comunidad Zanate USAC** es una plataforma colaborativa, estudiantil,
 autónoma y sin fines de lucro para la Universidad de San Carlos de Guatemala.
 Centraliza en un solo lugar la información y los intercambios que hoy ocurren
 dispersos en grupos de WhatsApp, publicaciones de Facebook y pasillos: dudas
@@ -18,6 +18,7 @@ El producto declara explícitamente **independencia institucional**: no
 representa ni cuenta con afiliación oficial de las autoridades universitarias.
 
 ### 1.1 Pilares de valor
+
 1. **Foro académico estructurado** por facultad y carrera, con canales temáticos.
 2. **Directorio de grupos de estudio** con reputación comunitaria.
 3. **Marketplace y tutorías peer-to-peer** sin comisiones ni custodia de fondos,
@@ -31,20 +32,21 @@ representa ni cuenta con afiliación oficial de las autoridades universitarias.
 
 ## 2. Objetivos de experiencia
 
-| Objetivo | Cómo se mide | Requisitos relacionados |
-|---|---|---|
-| Incorporación sin fricción | % que completa registro + MFA TOTP sin abandonar | UX-AUTH |
-| Confianza en las transacciones | % de vendedores con identidad verificada; reportes de fraude | UX-MKT, UX-PRF |
-| Sostenibilidad del Marketplace | adopción de planes (`pro_student`, `business_local`) y retención de vendedores | UX-MKT-017, UX-MKT-018 |
-| Descubrimiento de funcionalidades | % de usuarios que acceden a Grupos y Marketplace | UX-NAV, UX-GRP |
-| Comunidad sana | tiempo de resolución de reportes | UX-FORO, UX-MKT, UX-GRP |
-| Accesibilidad | cumplimiento WCAG 2.2 AA verificable | UX-X |
+| Objetivo                          | Cómo se mide                                                                   | Requisitos relacionados |
+| --------------------------------- | ------------------------------------------------------------------------------ | ----------------------- |
+| Incorporación sin fricción        | % que completa registro + MFA TOTP sin abandonar                               | UX-AUTH                 |
+| Confianza en las transacciones    | % de vendedores con identidad verificada; reportes de fraude                   | UX-MKT, UX-PRF          |
+| Sostenibilidad del Marketplace    | adopción de planes (`pro_student`, `business_local`) y retención de vendedores | UX-MKT-017, UX-MKT-018  |
+| Descubrimiento de funcionalidades | % de usuarios que acceden a Grupos y Marketplace                               | UX-NAV, UX-GRP          |
+| Comunidad sana                    | tiempo de resolución de reportes                                               | UX-FORO, UX-MKT, UX-GRP |
+| Accesibilidad                     | cumplimiento WCAG 2.2 AA verificable                                           | UX-X                    |
 
 ---
 
 ## 3. Alcance
 
 ### 3.1 Incluido
+
 - Foro estudiantil con canales, publicaciones, comentarios anidados, encuestas,
   reacciones, guardado, citado y reporte.
 - Marketplace de productos, servicios y tutorías, con perfiles de tienda y
@@ -58,6 +60,7 @@ representa ni cuenta con afiliación oficial de las autoridades universitarias.
 - Sistemas transversales: estados, accesibilidad, responsividad, i18n.
 
 ### 3.2 No objetivos (Won't, por ahora)
+
 - **UX-PRD-001 — Sin pagos en la plataforma.** La app no procesa pagos ni
   custodia fondos; toda transacción es directa entre estudiantes.
 - **UX-PRD-002 — Sin mensajería interna.** La comunicación ocurre por canales
@@ -68,6 +71,7 @@ representa ni cuenta con afiliación oficial de las autoridades universitarias.
   móvil; el escritorio es un objetivo secundario derivado de Flutter.
 
 ### 3.3 Supuestos
+
 - Los estudiantes usan principalmente teléfono; el diseño prioriza móvil y
   escala a desktop.
 - Muchos accesos ocurren con conexión intermitente → se requiere caché y
@@ -133,6 +137,7 @@ representa ni cuenta con afiliación oficial de las autoridades universitarias.
     - **Given** un comercio aprobado, **When** se le activa `business_local`, **Then** obtiene publicaciones ilimitadas, insignia oficial y carrusel destacado.
 
 ### 4.2 Matriz de capacidades
+
 La matriz resumida vive en [`README.md`](README.md#4-roles-y-matriz-de-capacidades-resumen);
 el detalle de cada capacidad se especifica en el documento de su área.
 
@@ -157,7 +162,7 @@ el detalle de cada capacidad se especifica en el documento de su área.
   siempre se etiqueta, respeta límites de frecuencia y puede ocultarse/reportarse;
   nunca se disfraza de contenido orgánico. [ver `12-patrocinios.md`](12-patrocinios.md)
 - **UX-PRD-026 — Sostenibilidad, financiamiento transparente y protección de
-  datos.** Comunidad Universitaria USAC es un proyecto **sin fines de lucro** que
+  datos.** Comunidad Zanate USAC es un proyecto **sin fines de lucro** que
   se financia mediante **planes de suscripción de visibilidad del Marketplace**
   (modelo SaaS/freemium definido en [`04-marketplace.md`](04-marketplace.md)),
   **patrocinios y donaciones**; **no cobra comisiones por venta**. **No vende
@@ -171,10 +176,12 @@ el detalle de cada capacidad se especifica en el documento de su área.
 ---
 
 ## 6. Métricas de éxito del producto
+
 El detalle operativo (eventos y KPIs) está en
 [`11-metricas-y-trazabilidad.md`](11-metricas-y-trazabilidad.md).
 
 ---
 
 ## 7. Trazabilidad
+
 Ver matriz global en [`11-metricas-y-trazabilidad.md`](11-metricas-y-trazabilidad.md).

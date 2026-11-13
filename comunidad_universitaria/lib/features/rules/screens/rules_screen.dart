@@ -72,7 +72,7 @@ class RulesScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Comunidad Universitaria es una iniciativa estudiantil independiente, libre y sin fines de lucro entre compañeros universitarios.',
+                            'Comunidad Zanate es una iniciativa estudiantil independiente, libre y sin fines de lucro entre compañeros universitarios.',
                             style: theme.textTheme.bodySmall?.copyWith(
                               fontSize: 12,
                             ),
@@ -202,7 +202,7 @@ class RulesScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Comunidad Universitaria es una plataforma y directorio estudiantil independiente y sin fines de lucro. No representa, no forma parte ni actúa en nombre de las autoridades de la Universidad de San Carlos de Guatemala. Los datos de pensums, materias y facultades se basan en publicaciones de libre acceso con carácter exclusivamente informativo.\n\nLos administradores de la plataforma no se hacen responsables de los acuerdos particulares, compras, ventas o contenidos intercambiados en enlaces de terceros.',
+                      'Comunidad Zanate es una plataforma y directorio estudiantil independiente y sin fines de lucro. No representa, no forma parte ni actúa en nombre de las autoridades de la Universidad de San Carlos de Guatemala. Los datos de pensums, materias y facultades se basan en publicaciones de libre acceso con carácter exclusivamente informativo.\n\nLos administradores de la plataforma no se hacen responsables de los acuerdos particulares, compras, ventas o contenidos intercambiados en enlaces de terceros.',
                       style: TextStyle(
                         color: Color(0xFF92400E),
                         fontSize: 12,

@@ -133,7 +133,7 @@ class _ComunidadUSACAppState extends State<ComunidadUSACApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Comunidad Universitaria - Sitio en Construcción',
+      title: 'Comunidad Zanate - Sitio en Construcción',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,

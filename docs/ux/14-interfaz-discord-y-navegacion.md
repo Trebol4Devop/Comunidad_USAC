@@ -1,6 +1,6 @@
 # 14 — Arquitectura de Interfaz Discord, Riel de Servidores y Reubicación de Navegación
 
-> Especificación de requisitos y documentación técnica del nuevo sistema de distribución visual de dos columnas inspirado en Discord, el panel de canales con tarjeta de usuario invernal y la reubicación ergonómica del botón de configuración y normas legales en la plataforma **Comunidad Universitaria USAC**.  
+> Especificación de requisitos y documentación técnica del nuevo sistema de distribución visual de dos columnas inspirado en Discord, el panel de canales con tarjeta de usuario invernal y la reubicación ergonómica del botón de configuración y normas legales en la plataforma **Comunidad Zanate USAC**.  
 > Convenciones, trazabilidad y sistema de diseño en [`README.md`](README.md), [`03-foro.md`](03-foro.md) y [`08-navegacion-shell-y-reglas.md`](08-navegacion-shell-y-reglas.md).
 
 ---
@@ -34,6 +34,7 @@ Para ofrecer una experiencia de usuario familiar, inmersiva y de alto rendimient
 ## 2. Componentes Clave y Distribución Visual
 
 ### 2.1 Barra Lateral de Servidores (`ForumServerRail`)
+
 - **Dimensiones:** Ancho fijo calibrado en **76px** (rango ergonómico 72px – 80px).
 - **Contenedor:** Contenedor scrolleable vertical con espaciado uniforme (`ListView`, padding vertical de 4px).
 - **Íconos de Servidor (Squircles 48x48px):**
@@ -48,7 +49,8 @@ Para ofrecer una experiencia de usuario familiar, inmersiva y de alto rendimient
 ---
 
 ### 2.2 Panel de Canales y Navegación Directa (`ForumChannelSidebar`)
-- **Dimensiones y Adaptabilidad:** 
+
+- **Dimensiones y Adaptabilidad:**
   - **Móvil:** La barra lateral (drawer) ocupa **el 100% del ancho de la pantalla** (`width: MediaQuery.sizeOf(context).width`), permitiendo que el panel de canales se expanda horizontalmente (`Expanded`) en todo el espacio contiguo al riel de 76px, incluyendo botón de cierre (`Icons.close_rounded`) en la cabecera.
   - **Escritorio:** Ampliado a **280px** de ancho fijo para lectura cómoda y balance visual.
 - **Filas de Canal / Chat:**
@@ -59,6 +61,7 @@ Para ofrecer una experiencia de usuario familiar, inmersiva y de alto rendimient
 ---
 
 ### 2.3 Tarjeta de Perfil de Usuario Inferior (`User Footer Card`)
+
 - **Ubicación:** Flotante / fija al pie del panel de canales, superpuesta al final de la columna.
 - **Geometría:** Margen perimetral (`fromLTRB(10, 4, 10, 10)`) con bordes redondeados pronunciados arriba y abajo (`borderRadius: BorderRadius.circular(16)`).
 - **Fondo Invernal Efecto Hielo:**
@@ -83,10 +86,12 @@ Para ofrecer una experiencia de usuario familiar, inmersiva y de alto rendimient
 ## 3. Reubicación Ergonómica de Acciones y Controles
 
 ### 3.1 Limpieza de la Barra Superior Zanate (`AppShell`)
+
 - **Regla:** Se **eliminó el icono de configuración / engranaje** (`Icons.settings_outlined`) de la barra superior donde reside el logotipo y título de Zanate.
 - **Objetivo UX:** Eliminar la duplicidad de controles, garantizar una barra superior despejada y evitar confusiones entre "ajustes de la aplicación" y "ajustes del usuario".
 
 ### 3.2 Traslado de Configuración a `ProfileScreen`
+
 - **Ubicación:** `AppBar.actions` en `ProfileScreen`.
 - **Componente:** `PopupMenuButton<String>` con tooltip `"Ajustes"` e icono `Icons.settings_outlined`.
 - **Opciones Disponibles:**
@@ -95,10 +100,12 @@ Para ofrecer una experiencia de usuario familiar, inmersiva y de alto rendimient
   3. **Seguridad y Enrolamiento TOTP:** Acceso directo a `TotpEnrollmentScreen` para gestión de autenticación de dos factores (2FA / AAL2).
 
 ### 3.3 Reubicación de Normas Comunitarias en el Riel de Servidores
+
 - **Ubicación:** `ForumServerRail`, inmediatamente después del botón de agregar servidor (`+`).
 - **Objetivo UX:** Ofrecer acceso contextual directo a las reglas del foro y transparencia legal sin obligar a los estudiantes a buscar en submenús ocultos.
 
 ### 3.4 Cabecera Móvil Estandarizada y Botón Flotante Reactivo (`FAB`)
+
 - **Cabecera Móvil Estandarizada con Altura Canónica (`toolbarHeight: 64`):**
   - **Altura y Clearance:** Se reemplazó el contenedor móvil comprimido previo por un `AppBar` con `toolbarHeight: 64` (idéntica a la barra de las demás pestañas: Marketplace, Grupos y Mapa), garantizando respeto integral al área segura (`SafeArea`) y el espaciado vertical óptimo para el isotipo de Zanate (48x48px).
   - **Izquierda:** Icono de menú hamburguesa (`Icons.menu`) para abrir la navegación lateral a pantalla completa.
@@ -114,6 +121,7 @@ Para ofrecer una experiencia de usuario familiar, inmersiva y de alto rendimient
   - Tanto en la pantalla aislada de `ForumScreen` como dentro del flujo de pestañas de `AppShell` (a través del callback `onDrawerChanged`), se coordina la visibilidad instantánea del FAB con tooltip `"Crear publicación"`.
 
 ### 3.5 Persistencia de la Barra Lateral y Navegación Inferior con Indicadores
+
 - **Persistencia de la Barra Lateral al Cambiar de Servidor:**
   - Al pulsar un nuevo servidor o facultad en el riel (`ForumServerRail`), la barra lateral **no se cierra**, permitiendo explorar de inmediato los canales y categorías de la nueva comunidad sin fricción.
   - La barra lateral se cierra únicamente cuando el estudiante selecciona un canal temático concreto o pulsa el botón de cerrar (`X`).
@@ -127,15 +135,15 @@ Para ofrecer una experiencia de usuario familiar, inmersiva y de alto rendimient
 
 ## 4. Trazabilidad de Archivos Modificados
 
-| Componente | Archivo | Modificación |
-|---|---|---|
-| `ForumServerRail` | [`forum_server_rail.dart`](file:///C:/Users/HP/Documents/Programacion/Flutter/Comunidad_USAC/comunidad_universitaria/lib/features/forum/widgets/discord/forum_server_rail.dart) | Ancho 76px, squircles 48x48px con radio dinámico 20px/14px, píldora animada y botón de normas bajo el botón `+`. |
-| `ForumChannelSidebar` | [`forum_channel_sidebar.dart`](file:///C:/Users/HP/Documents/Programacion/Flutter/Comunidad_USAC/comunidad_universitaria/lib/features/forum/widgets/discord/forum_channel_sidebar.dart) | Filas con avatar 38px + badge 10px, User Footer Card con degradado invernal, avatar 44px, chevron y apertura inferior. |
-| `ForumScreen` | [`forum_screen.dart`](file:///C:/Users/HP/Documents/Programacion/Flutter/Comunidad_USAC/comunidad_universitaria/lib/features/forum/screens/forum_screen.dart) | Cabecera móvil estandarizada a 64px (`AppBar`), FAB reactivo que desaparece al abrir drawer, persistencia de drawer al cambiar de servidor y `#canal` dinámico. |
-| `AppShell` | [`app_shell.dart`](file:///C:/Users/HP/Documents/Programacion/Flutter/Comunidad_USAC/comunidad_universitaria/lib/features/navigation/app_shell.dart) | Coordinación de `onDrawerChanged` para ocultar FAB del shell en tab Foro, píldora indicadora activa en `NavigationBar` e iconos con estados de selección. |
-| `ProfileScreen` | [`profile_screen.dart`](file:///C:/Users/HP/Documents/Programacion/Flutter/Comunidad_USAC/comunidad_universitaria/lib/features/profile/screens/profile_screen.dart) | Incorporación del botón de configuración (`Icons.settings_outlined`) en `AppBar.actions` con menú de tema, normas y TOTP. |
-| Pruebas Unitarias | [`discord_forum_test.dart`](file:///C:/Users/HP/Documents/Programacion/Flutter/Comunidad_USAC/comunidad_universitaria/test/discord_forum_test.dart) | Verificación de persistencia de drawer al cambiar servidor, ocultamiento y reaparición del FAB al abrir/cerrar menú y títulos `#canal`. |
-| Pruebas de Shell | [`app_shell_test.dart`](file:///C:/Users/HP/Documents/Programacion/Flutter/Comunidad_USAC/comunidad_universitaria/test/widgets/app_shell_test.dart) | Verificación de píldora indicadora en `NavigationBar`, ocultamiento del FAB en drawer móvil y persistencia contextual. |
+| Componente            | Archivo                                                                                                                                                                                 | Modificación                                                                                                                                                    |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ForumServerRail`     | [`forum_server_rail.dart`](file:///C:/Users/HP/Documents/Programacion/Flutter/Comunidad_USAC/comunidad_universitaria/lib/features/forum/widgets/discord/forum_server_rail.dart)         | Ancho 76px, squircles 48x48px con radio dinámico 20px/14px, píldora animada y botón de normas bajo el botón `+`.                                                |
+| `ForumChannelSidebar` | [`forum_channel_sidebar.dart`](file:///C:/Users/HP/Documents/Programacion/Flutter/Comunidad_USAC/comunidad_universitaria/lib/features/forum/widgets/discord/forum_channel_sidebar.dart) | Filas con avatar 38px + badge 10px, User Footer Card con degradado invernal, avatar 44px, chevron y apertura inferior.                                          |
+| `ForumScreen`         | [`forum_screen.dart`](file:///C:/Users/HP/Documents/Programacion/Flutter/Comunidad_USAC/comunidad_universitaria/lib/features/forum/screens/forum_screen.dart)                           | Cabecera móvil estandarizada a 64px (`AppBar`), FAB reactivo que desaparece al abrir drawer, persistencia de drawer al cambiar de servidor y `#canal` dinámico. |
+| `AppShell`            | [`app_shell.dart`](file:///C:/Users/HP/Documents/Programacion/Flutter/Comunidad_USAC/comunidad_universitaria/lib/features/navigation/app_shell.dart)                                    | Coordinación de `onDrawerChanged` para ocultar FAB del shell en tab Foro, píldora indicadora activa en `NavigationBar` e iconos con estados de selección.       |
+| `ProfileScreen`       | [`profile_screen.dart`](file:///C:/Users/HP/Documents/Programacion/Flutter/Comunidad_USAC/comunidad_universitaria/lib/features/profile/screens/profile_screen.dart)                     | Incorporación del botón de configuración (`Icons.settings_outlined`) en `AppBar.actions` con menú de tema, normas y TOTP.                                       |
+| Pruebas Unitarias     | [`discord_forum_test.dart`](file:///C:/Users/HP/Documents/Programacion/Flutter/Comunidad_USAC/comunidad_universitaria/test/discord_forum_test.dart)                                     | Verificación de persistencia de drawer al cambiar servidor, ocultamiento y reaparición del FAB al abrir/cerrar menú y títulos `#canal`.                         |
+| Pruebas de Shell      | [`app_shell_test.dart`](file:///C:/Users/HP/Documents/Programacion/Flutter/Comunidad_USAC/comunidad_universitaria/test/widgets/app_shell_test.dart)                                     | Verificación de píldora indicadora en `NavigationBar`, ocultamiento del FAB en drawer móvil y persistencia contextual.                                          |
 
 ---
 

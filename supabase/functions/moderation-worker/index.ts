@@ -1,4 +1,7 @@
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  createClient,
+  type SupabaseClient,
+} from "https://esm.sh/@supabase/supabase-js@2";
 
 export type ModerationLabel =
   | "IMPERSONATION"
@@ -61,13 +64,15 @@ export function evaluateLayer1Regex(text: string): ModerationVerdict | null {
   // CUI de 13 dígitos
   const cuiRegex = /\b\d{4}[-\s]?\d{5}[-\s]?\d{4}\b/;
   // Carné universitario USAC (5 a 10 dígitos)
-  const carnetWithContextRegex = /\b(?:carn[eé]|carnet|registro|cui|dpi|no\.?|id|padron)?\s*[:#-]?\s*\b\d{5,10}\b/i;
+  const carnetWithContextRegex =
+    /\b(?:carn[eé]|carnet|registro|cui|dpi|no\.?|id|padron)?\s*[:#-]?\s*\b\d{5,10}\b/i;
 
   if (phoneGtRegex.test(text)) {
     return {
       label: "DOXXING_PII",
       confidence: 0.95,
-      reason: "Capa 1: Detección determinista de número telefónico de Guatemala expuesto (PII)",
+      reason:
+        "Capa 1: Detección determinista de número telefónico de Guatemala expuesto (PII)",
     };
   }
 
@@ -75,18 +80,23 @@ export function evaluateLayer1Regex(text: string): ModerationVerdict | null {
     return {
       label: "DOXXING_PII",
       confidence: 0.95,
-      reason: "Capa 1: Detección determinista de CUI de 13 dígitos expuesto (PII)",
+      reason:
+        "Capa 1: Detección determinista de CUI de 13 dígitos expuesto (PII)",
     };
   }
 
   if (carnetWithContextRegex.test(text) && /\b\d{5,10}\b/.test(text)) {
-    const hasCarnetContext = /\b(?:carn[eé]|carnet|estudiante|registro|matricula|sancarlista)\b/i.test(text);
+    const hasCarnetContext =
+      /\b(?:carn[eé]|carnet|estudiante|registro|matricula|sancarlista)\b/i.test(
+        text,
+      );
     const hasYearFormat = /\b(19\d{2}|20\d{2})\d{5}\b/.test(text);
     if (hasCarnetContext || hasYearFormat) {
       return {
         label: "DOXXING_PII",
         confidence: 0.92,
-        reason: "Capa 1: Detección determinista de carné universitario expuesto",
+        reason:
+          "Capa 1: Detección determinista de carné universitario expuesto",
       };
     }
   }
@@ -98,16 +108,18 @@ export function evaluateLayer1Regex(text: string): ModerationVerdict | null {
     return {
       label: "ACCESS_ABUSE_PIRACY",
       confidence: 0.95,
-      reason: "Capa 1: Detección determinista de credenciales de acceso expuestas (Art. 13/16)",
+      reason:
+        "Capa 1: Detección determinista de credenciales de acceso expuestas (Art. 13/16)",
     };
   }
 
   // Enlaces a servicios de acortadores
-  const shortenersRegex = /\b(?:bit\.ly|tinyurl\.com|tinyurl|t\.co|goo\.gl|cutt\.ly)\/[a-zA-Z0-9_-]+/i;
+  const shortenersRegex =
+    /\b(?:bit\.ly|tinyurl\.com|tinyurl|t\.co|goo\.gl|cutt\.ly)\/[a-zA-Z0-9_-]+/i;
   if (shortenersRegex.test(text)) {
     return {
       label: "ACCESS_ABUSE_PIRACY",
-      confidence: 0.90,
+      confidence: 0.9,
       reason: "Capa 1: Enlace a acortador sospechoso detectado",
     };
   }
@@ -119,7 +131,8 @@ export function evaluateLayer1Regex(text: string): ModerationVerdict | null {
     return {
       label: "ACCESS_ABUSE_PIRACY",
       confidence: 0.95,
-      reason: "Capa 1: Detección de herramientas de explotación, acceso ilegal o piratería (Art. 13/16)",
+      reason:
+        "Capa 1: Detección de herramientas de explotación, acceso ilegal o piratería (Art. 13/16)",
     };
   }
 
@@ -134,7 +147,7 @@ async function queryLlmClassifier(
   url: string,
   apiKey: string,
 ): Promise<ModerationVerdict | null> {
-  const prompt = `Analiza el siguiente texto de una plataforma universitaria sancarlista (USAC) y clasifícalo en exactamente una de estas categorías:
+  const prompt = `Analiza el siguiente texto de una plataforma Zanate sancarlista (USAC) y clasifícalo en exactamente una de estas categorías:
 1. "IMPERSONATION": Suplantación de identidad de autoridades, docentes o estudiantes.
 2. "SEVERE_THREAT_FRAUD": Amenazas de violencia física, venta de cursos/exámenes, estafas económicas, extorsión.
 3. "DOXXING_PII": Publicación no consentida de información personal (teléfonos, CUI, carné, domicilios).
@@ -157,7 +170,8 @@ Texto:
       messages: [
         {
           role: "system",
-          content: "Eres un moderador de seguridad y cumplimiento legal para una comunidad universitaria.",
+          content:
+            "Eres un moderador de seguridad y cumplimiento legal para una comunidad universitaria.",
         },
         { role: "user", content: prompt },
       ],
@@ -189,7 +203,10 @@ Texto:
     "SAFE_CAMPUS_HUMOR",
   ];
 
-  if (validLabels.includes(parsed.label) && typeof parsed.confidence === "number") {
+  if (
+    validLabels.includes(parsed.label) &&
+    typeof parsed.confidence === "number"
+  ) {
     return {
       label: parsed.label,
       confidence: Math.max(0, Math.min(1, parsed.confidence)),
@@ -204,10 +221,16 @@ Texto:
  * Clasificador heurístico local determinista de respaldo cuando no hay LLM configurado o falla.
  */
 export function evaluateLocalHeuristic(text: string): ModerationVerdict {
-  const norm = text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const norm = text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
 
   // 1. Amenazas graves y fraudes
-  const threatMatches = /\b(te voy a matar|moriras|sicario|secuestro|bomba|atentado|balazos|plomo)\b/i.test(norm);
+  const threatMatches =
+    /\b(te voy a matar|moriras|sicario|secuestro|bomba|atentado|balazos|plomo)\b/i.test(
+      norm,
+    );
   const fraudMatches =
     /\b(vender examen|vendo examen|ganar curso pagando|tramite de titulo|titulo falso|clonar tarjeta|deposito por adelantado|gana dinero facil|estafa piramidal)\b/i.test(
       norm,
@@ -217,13 +240,14 @@ export function evaluateLocalHeuristic(text: string): ModerationVerdict {
     return {
       label: "SEVERE_THREAT_FRAUD",
       confidence: 0.95,
-      reason: "Capa 2 (Heurística): Detección de amenaza grave contra la integridad física",
+      reason:
+        "Capa 2 (Heurística): Detección de amenaza grave contra la integridad física",
     };
   }
   if (fraudMatches) {
     return {
       label: "SEVERE_THREAT_FRAUD",
-      confidence: 0.90,
+      confidence: 0.9,
       reason: "Capa 2 (Heurística): Detección de fraude académico o financiero",
     };
   }
@@ -237,7 +261,8 @@ export function evaluateLocalHeuristic(text: string): ModerationVerdict {
     return {
       label: "IMPERSONATION",
       confidence: 0.88,
-      reason: "Capa 2 (Heurística): Patrón de suplantación de identidad docente o institucional",
+      reason:
+        "Capa 2 (Heurística): Patrón de suplantación de identidad docente o institucional",
     };
   }
 
@@ -250,7 +275,8 @@ export function evaluateLocalHeuristic(text: string): ModerationVerdict {
     return {
       label: "ACCESS_ABUSE_PIRACY",
       confidence: 0.85,
-      reason: "Capa 2 (Heurística): Patrón de abuso de sistemas informáticos o hacking",
+      reason:
+        "Capa 2 (Heurística): Patrón de abuso de sistemas informáticos o hacking",
     };
   }
 
@@ -263,19 +289,22 @@ export function evaluateLocalHeuristic(text: string): ModerationVerdict {
     return {
       label: "DOXXING_PII",
       confidence: 0.85,
-      reason: "Capa 2 (Heurística): Divulgación no autorizada de datos personales",
+      reason:
+        "Capa 2 (Heurística): Divulgación no autorizada de datos personales",
     };
   }
 
   // 5. Señales ambiguas o sospechosas que requieren revisión humana (0.50 <= conf < 0.80)
-  const suspiciousMatches = /\b(examen resuelto|copia de parcial|hack|tramite sospechoso|pagar auxiliar)\b/i.test(
-    norm,
-  );
+  const suspiciousMatches =
+    /\b(examen resuelto|copia de parcial|hack|tramite sospechoso|pagar auxiliar)\b/i.test(
+      norm,
+    );
   if (suspiciousMatches) {
     return {
       label: "SEVERE_THREAT_FRAUD",
       confidence: 0.65,
-      reason: "Capa 2 (Heurística): Contenido potencialmente riesgoso para revisión humana",
+      reason:
+        "Capa 2 (Heurística): Contenido potencialmente riesgoso para revisión humana",
     };
   }
 
@@ -283,7 +312,8 @@ export function evaluateLocalHeuristic(text: string): ModerationVerdict {
   return {
     label: "SAFE_CAMPUS_HUMOR",
     confidence: 0.95,
-    reason: "Capa 2 (Heurística): Contenido clasificado como discurso estudiantil legítimo",
+    reason:
+      "Capa 2 (Heurística): Contenido clasificado como discurso estudiantil legítimo",
   };
 }
 
@@ -301,7 +331,10 @@ export async function evaluateLayer2(text: string): Promise<ModerationVerdict> {
         return verdict;
       }
     } catch (err) {
-      console.warn("Moderation LLM unreachable or failed, falling back to local heuristic:", err);
+      console.warn(
+        "Moderation LLM unreachable or failed, falling back to local heuristic:",
+        err,
+      );
     }
   }
 
@@ -311,7 +344,10 @@ export async function evaluateLayer2(text: string): Promise<ModerationVerdict> {
 /**
  * Pipeline de procesamiento individual por job de moderación.
  */
-async function processJob(supabase: SupabaseClient, job: ModerationJob): Promise<ModerationVerdict> {
+async function processJob(
+  supabase: SupabaseClient,
+  job: ModerationJob,
+): Promise<ModerationVerdict> {
   let text = "";
 
   if (job.entity_table === "posts") {
@@ -383,7 +419,7 @@ async function processJob(supabase: SupabaseClient, job: ModerationJob): Promise
   const layer1Verdict = evaluateLayer1Regex(text);
   let verdict: ModerationVerdict;
 
-  if (layer1Verdict && layer1Verdict.confidence >= 0.90) {
+  if (layer1Verdict && layer1Verdict.confidence >= 0.9) {
     verdict = layer1Verdict;
   } else {
     verdict = await evaluateLayer2(text);
@@ -396,11 +432,14 @@ async function processJob(supabase: SupabaseClient, job: ModerationJob): Promise
 
   if (verdict.label === "SAFE_CAMPUS_HUMOR") {
     newModerationStatus = 0;
-  } else if (verdict.confidence >= 0.50 && verdict.confidence < 0.80) {
+  } else if (verdict.confidence >= 0.5 && verdict.confidence < 0.8) {
     newModerationStatus = 1; // Cola de revisión humana
-  } else if (verdict.confidence >= 0.80) {
+  } else if (verdict.confidence >= 0.8) {
     newModerationStatus = 2; // Ocultado automático
-    if (verdict.label === "SEVERE_THREAT_FRAUD" || verdict.label === "ACCESS_ABUSE_PIRACY") {
+    if (
+      verdict.label === "SEVERE_THREAT_FRAUD" ||
+      verdict.label === "ACCESS_ABUSE_PIRACY"
+    ) {
       applyLegalHold = true;
     }
   } else {
@@ -431,7 +470,7 @@ async function processJob(supabase: SupabaseClient, job: ModerationJob): Promise
   }
 
   // Si confidence >= 0.80, registrar auditoría automática obligatoria
-  if (verdict.confidence >= 0.80 && verdict.label !== "SAFE_CAMPUS_HUMOR") {
+  if (verdict.confidence >= 0.8 && verdict.label !== "SAFE_CAMPUS_HUMOR") {
     const { error: auditErr } = await supabase
       .from("moderation_audit_log")
       .insert({
@@ -446,7 +485,10 @@ async function processJob(supabase: SupabaseClient, job: ModerationJob): Promise
       });
 
     if (auditErr) {
-      console.error("Error al registrar entrada en moderation_audit_log:", auditErr);
+      console.error(
+        "Error al registrar entrada en moderation_audit_log:",
+        auditErr,
+      );
     }
   }
 
@@ -505,7 +547,8 @@ Deno.serve(async (req: Request) => {
     return new Response("ok", {
       headers: {
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "authorization, x-worker-secret, content-type",
+        "Access-Control-Allow-Headers":
+          "authorization, x-worker-secret, content-type",
       },
     });
   }
@@ -523,7 +566,9 @@ Deno.serve(async (req: Request) => {
   // El endpoint nunca debe quedar abierto: sin secreto configurado no procesa.
   if (!expectedSecret) {
     return new Response(
-      JSON.stringify({ error: "WORKER_SECRET is not configured; worker disabled" }),
+      JSON.stringify({
+        error: "WORKER_SECRET is not configured; worker disabled",
+      }),
       { status: 500, headers: { "Content-Type": "application/json" } },
     );
   }
@@ -532,7 +577,8 @@ Deno.serve(async (req: Request) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
-  const isAuthorized = bearerToken === expectedSecret ||
+  const isAuthorized =
+    bearerToken === expectedSecret ||
     xSecretHeader === expectedSecret ||
     (supabaseKey.length > 0 && bearerToken === supabaseKey);
   if (!isAuthorized) {
@@ -543,7 +589,9 @@ Deno.serve(async (req: Request) => {
   }
   if (!supabaseUrl || !supabaseKey) {
     return new Response(
-      JSON.stringify({ error: "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY" }),
+      JSON.stringify({
+        error: "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY",
+      }),
       {
         status: 500,
         headers: { "Content-Type": "application/json" },
@@ -571,16 +619,25 @@ Deno.serve(async (req: Request) => {
   const workerId = `worker-${crypto.randomUUID()}`;
 
   // 4. Reclamar concurrentemente jobs pendientes
-  const { data: claimedJobs, error: claimErr } = await supabase.rpc("claim_moderation_jobs", {
-    p_worker_id: workerId,
-    p_limit: limit,
-  });
+  const { data: claimedJobs, error: claimErr } = await supabase.rpc(
+    "claim_moderation_jobs",
+    {
+      p_worker_id: workerId,
+      p_limit: limit,
+    },
+  );
 
   if (claimErr) {
-    return new Response(JSON.stringify({ error: "Failed to claim jobs", details: claimErr.message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({
+        error: "Failed to claim jobs",
+        details: claimErr.message,
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
   }
 
   const jobs = (claimedJobs || []) as ModerationJob[];

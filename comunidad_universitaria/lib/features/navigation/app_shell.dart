@@ -108,7 +108,7 @@ class _AppShellState extends State<AppShell> {
           ],
         ),
         content: const Text(
-          'Comunidad Universitaria es una plataforma estudiantil colaborativa, autónoma y sin fines de lucro. No representa formalmente a la administración ni a las autoridades de la Universidad de San Carlos de Guatemala. Los datos académicos, pensums y directorios son informativos y compartidos entre compañeros.',
+          'Comunidad Zanate es una plataforma estudiantil colaborativa, autónoma y sin fines de lucro. No representa formalmente a la administración ni a las autoridades de la Universidad de San Carlos de Guatemala. Los datos académicos, pensums y directorios son informativos y compartidos entre compañeros.',
           style: TextStyle(fontSize: 13, height: 1.4),
         ),
         actions: [
@@ -140,8 +140,9 @@ class _AppShellState extends State<AppShell> {
           : AppBar(
               toolbarHeight: 60,
               elevation: 0,
-              backgroundColor:
-                  widget.isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+              backgroundColor: widget.isDarkMode
+                  ? const Color(0xFF1E293B)
+                  : Colors.white,
               shape: Border(
                 bottom: BorderSide(
                   color: widget.isDarkMode
@@ -385,10 +386,7 @@ class _AppShellState extends State<AppShell> {
                           ],
                         ),
                       )
-                    : const SizedBox(
-                        width: double.infinity,
-                        height: 0,
-                      ),
+                    : const SizedBox(width: double.infinity, height: 0),
               ),
             ),
     );
@@ -405,8 +403,9 @@ class _AppShellState extends State<AppShell> {
     final isDark = widget.isDarkMode;
 
     final activeColor = isDark ? Colors.white : ZanateColors.zanateDark;
-    final inactiveColor =
-        isDark ? const Color(0xFF64748B) : Colors.blueGrey.shade400;
+    final inactiveColor = isDark
+        ? const Color(0xFF64748B)
+        : Colors.blueGrey.shade400;
 
     return Semantics(
       label: label,
@@ -429,8 +428,8 @@ class _AppShellState extends State<AppShell> {
           decoration: BoxDecoration(
             color: isSelected
                 ? (isDark
-                    ? ZanateColors.zanateAccent.withValues(alpha: 0.22)
-                    : ZanateColors.zanateDark.withValues(alpha: 0.08))
+                      ? ZanateColors.zanateAccent.withValues(alpha: 0.22)
+                      : ZanateColors.zanateDark.withValues(alpha: 0.08))
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(20),
           ),

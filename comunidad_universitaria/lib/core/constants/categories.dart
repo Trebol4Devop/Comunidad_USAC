@@ -29,7 +29,7 @@ class USACConstants {
   static const String appName = 'Comunidad Universitaria';
   static const String appSubtitle = 'Plataforma Estudiantil Independiente';
   static const String appDisclaimer =
-      'Comunidad Universitaria es una iniciativa estudiantil 100% independiente, autónoma y sin fines de lucro. No representa, no pertenece ni cuenta con afiliación oficial con las autoridades de la Universidad de San Carlos de Guatemala. Los datos académicos se recopilan con fines exclusivamente orientativos y de libre acceso.';
+      'Comunidad Zanate es una iniciativa estudiantil 100% independiente, autónoma y sin fines de lucro. No representa, no pertenece ni cuenta con afiliación oficial con las autoridades de la Universidad de San Carlos de Guatemala. Los datos académicos se recopilan con fines exclusivamente orientativos y de libre acceso.';
   static const String marketplaceDisclaimer =
       'Esta plataforma no interviene en las transacciones comerciales ni custodia fondos. Toda compra, venta o coordinación de tutoría se realiza de forma directa y bajo la responsabilidad mutua de los estudiantes participantes.';
 

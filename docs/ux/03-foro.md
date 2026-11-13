@@ -1,6 +1,6 @@
 # 03 — Foro estudiantil y comunidades académicas
 
-> Requisitos de experiencia de usuario para el foro de discusión académica estructurada por facultades y carreras de la plataforma **Comunidad Universitaria USAC**.  
+> Requisitos de experiencia de usuario para el foro de discusión académica estructurada por facultades y carreras de la plataforma **Comunidad Zanate USAC**.  
 > Convenciones, roles y plantilla en [`README.md`](README.md). Trazabilidad global en [`11-metricas-y-trazabilidad.md`](11-metricas-y-trazabilidad.md).
 
 ---
@@ -22,6 +22,7 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
 ```
 
 ### 1.1 Principios rectores del foro
+
 1. **Anonimato protector y constructivo:** La identidad pública por defecto es un seudónimo modificable (ej. `"Estudiante USAC #482"`), garantizando que los estudiantes puedan consultar sobre catedráticos, prerrequisitos y pensums sin temor a represalias académicas ([ver UX-PRF en `06-perfil-y-cuenta.md`](06-perfil-y-cuenta.md)).
 2. **Canales temáticos canónicos:** Se evitan los hilos caóticos generales mediante 5 canales canónicos fijos por carrera que resuelven los dolores cotidianos del estudiante USAC.
 3. **Descubrimiento sin fricción:** Navegación jerárquica clara entre campus central, facultades y carreras específicas, mitigando la dispersión informativa.
@@ -32,6 +33,7 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
 ## 2. Requisitos de experiencia (UX-FORO)
 
 ### UX-FORO-001 — Feed central y selector de canales temáticos canónicos
+
 - **Actor / rol:** Visitante, Estudiante, Verificado, Moderador, Admin
 - **Prioridad:** Must
 - **Estado objetivo:** El usuario visualiza un feed de publicaciones ordenadas cronológicamente de forma inversa (más recientes primero) filtradas por el servidor (facultad/carrera) y canal temático activo (`# todos-los-temas`, `# dudas-y-pensum`, `# catedraticos-opiniones`, `# apuntes-y-recursos`, `# horarios-y-secciones`). La cabecera muestra el nombre del canal, icono y descripción concisa. En dispositivos móviles, un selector de canales horizontal ("chip strip" o selector contextual) permite alternar canales sin obligar a abrir el drawer lateral.
@@ -40,12 +42,12 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
 - **UI / contenido:** Cabecera superior con `# nombre-canal`, icono representativo, descripción explicativa de una línea, indicador de facultad/carrera (`shortCode`), barra de desplazamiento vertical con scrollbar dedicada, y en móvil, cinta de chips desplazable con los canales temáticos canónicos.
 - **Interacciones:** Scroll vertical para leer publicaciones; pull-to-refresh (`RefreshIndicator`) para recargar; toque en chip o canal para cambiar de vista; toque en botón de publicar para abrir redacción.
 - **Estados:**
-  - *Inicial:* Renderiza los canales por defecto con carga optimista.
-  - *Carga:* Tarjetas de esqueleto animadas (`SkeletonCard` shimmer).
-  - *Vacío:* `EmptyStateWidget` con icono del canal, título "No hay mensajes en #nombre-canal", descripción orientadora y botón "Crear Primera Publicación".
-  - *Error:* Banner de error con botón "Reintentar".
-  - *Éxito:* Lista de tarjetas de posts renderizadas.
-  - *Sin conexión:* Banner ámbar "Sin conexión — Mostrando contenido guardado." cargado de caché local.
+  - _Inicial:_ Renderiza los canales por defecto con carga optimista.
+  - _Carga:_ Tarjetas de esqueleto animadas (`SkeletonCard` shimmer).
+  - _Vacío:_ `EmptyStateWidget` con icono del canal, título "No hay mensajes en #nombre-canal", descripción orientadora y botón "Crear Primera Publicación".
+  - _Error:_ Banner de error con botón "Reintentar".
+  - _Éxito:_ Lista de tarjetas de posts renderizadas.
+  - _Sin conexión:_ Banner ámbar "Sin conexión — Mostrando contenido guardado." cargado de caché local.
 - **Validaciones y reglas de negocio:** Las publicaciones con `moderation_status > 0` se ocultan a usuarios normales y solo se muestran a Moderadores/Admins con advertencia visual.
 - **Accesibilidad:** Etiquetas Semantics en cada canal ("Canal dudas y pensum"), contraste WCAG AA, foco accesible mediante teclado (tabulación y flechas).
 - **Responsive:** Móvil (<700px) con cinta de canales accesible en cabecera o drawer; Tablet/Desktop (>=700px) integrado en columna central de 3 o 4 columnas tipo Discord.
@@ -56,6 +58,7 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
 ---
 
 ### UX-FORO-002 — Rail lateral de servidores y navegación por facultades
+
 - **Actor / rol:** Visitante, Estudiante, Verificado, Moderador, Admin
 - **Prioridad:** Must
 - **Estado objetivo:** Rail vertical de 52-72px a la izquierda con accesos circulares a: Campus Central ("USAC"), Facultades oficiales (Ingeniería, Medicina, etc.), botón de Explorador (`+`) y acceso visual a Grupos. Cada servidor muestra un indicador tipo píldora (Discord pill) que se expande verticalmente al estar activo (24px) o al hacer hover (12px). Al pulsar una facultad con múltiples carreras, se despliega un menú táctil de carreras sin desbordarse de pantalla.
@@ -74,6 +77,7 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
 ---
 
 ### UX-FORO-003 — Explorador y buscador unificado de carreras universitarias
+
 - **Actor / rol:** Visitante, Estudiante, Verificado, Moderador, Admin
 - **Prioridad:** Should
 - **Estado objetivo:** Diálogo modal explorador (`ForumCarreraPickerDialog`) que permite al estudiante buscar y explorar todas las carreras de todas las facultades y escuelas no facultativas de la USAC mediante un campo de texto con filtro instantáneo en tiempo real (por nombre de carrera, facultad, sede o código).
@@ -92,6 +96,7 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
 ---
 
 ### UX-FORO-004 — Barra lateral de canales temáticos (Channel Sidebar)
+
 - **Actor / rol:** Visitante, Estudiante, Verificado, Moderador, Admin
 - **Prioridad:** Must
 - **Estado objetivo:** Sidebar de 240px que organiza los canales de texto de la facultad/carrera activa bajo secciones visuales: "CANALES DE DISCUSIÓN" (canales públicos canónicos) y "PERSONAL" (canal `# mis-guardados`). La cabecera muestra el nombre del servidor activo, badge de verificado institucional y flecha desplegable para cambiar de carrera.
@@ -110,6 +115,7 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
 ---
 
 ### UX-FORO-005 — Barra de estado de usuario e identidad estudiantil (User Bar)
+
 - **Actor / rol:** Visitante, Estudiante, Verificado, Moderador, Admin
 - **Prioridad:** Must
 - **Estado objetivo:** Barra fija inferior (54px) en el sidebar de canales con el avatar del usuario, su seudónimo público activo (ej. `"Estudiante USAC #482"`), un punto verde de presencia ("En línea") y botón de acceso rápido al perfil/ajustes (`Icons.settings`). Para usuarios no autenticados, muestra `"Modo Visitante"` con botón destacado `"Acceder"`.
@@ -128,6 +134,7 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
 ---
 
 ### UX-FORO-006 — Panel lateral de comunidades estudiantiles más populares
+
 - **Actor / rol:** Visitante, Estudiante, Verificado, Moderador, Admin
 - **Prioridad:** Should
 - **Estado objetivo:** Panel lateral derecho en resoluciones `>= 1100px` (o modal bottom sheet en móvil) con el ranking de las 5 comunidades/carreras más activas de la universidad basándose en actividad real reciente (conteo de publicaciones e interacciones).
@@ -140,12 +147,13 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
 - **Accesibilidad:** Anuncio accesible de lista ordenada ("Top 1: Ingeniería Civil, 45 publicaciones"); contraste suficiente en modo claro y oscuro.
 - **Responsive:** Desktop (>=1100px) fija a la derecha (ancho 220px); Tablet (700-1099px) oculta para priorizar lectura del feed; Móvil (<700px) accesible vía botón en cabecera abriendo Bottom Sheet.
 - **Criterios de aceptación (Gherkin):**
-  - **Given** un usuario en desktop con resolución de 1200px, **When** visualiza el panel lateral derecho, **Then** ve el ranking de las 5 carreras con mayor interacción universitaria con su respectivo conteo de temas recientes.
+  - **Given** un usuario en desktop con resolución de 1200px, **When** visualiza el panel lateral derecho, **Then** ve el ranking de las 5 carreras con mayor interacción Zanate con su respectivo conteo de temas recientes.
   - **Given** un usuario que hace clic en "Medicina (Campus Central)" dentro del panel de populares, **When** se procesa la acción, **Then** el foro navega directamente al servidor de Medicina y actualiza el feed con sus publicaciones.
 
 ---
 
 ### UX-FORO-007 — Búsqueda en tiempo real y filtrado de temas
+
 - **Actor / rol:** Visitante, Estudiante, Verificado, Moderador, Admin
 - **Prioridad:** Must
 - **Estado objetivo:** Campo de búsqueda integrado en la cabecera del feed que filtra publicaciones por coincidencia en título o contenido en tiempo real, respetando el canal y servidor activo. Incluye botón de limpiar búsqueda (`Icons.clear`) y debounce de 300 ms para optimizar peticiones de red y fluidez de teclado.
@@ -164,6 +172,7 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
 ---
 
 ### UX-FORO-008 — Tarjeta de publicación en el feed (Post Card)
+
 - **Actor / rol:** Visitante, Estudiante, Verificado, Moderador, Admin
 - **Prioridad:** Must
 - **Estado objetivo:** Tarjeta autocontenida que presenta la síntesis visual de una consulta académica: indicador de fijado si aplica, avatar de autor, seudónimo, chip de carrera/facultad, tiempo relativo (`timeAgo`), badge de categoría del canal, título en negrita (hasta 2 líneas), cuerpo de texto truncado (hasta 3 líneas), previsualización de multimedia (imagen o GIF), previsualización de encuesta interactiva (con barras de porcentaje), previsualización de post citado incrustado, y barra inferior con botones de acción (Me gusta con contador, Comentarios con contador, Citar con contador, Guardar marcador, y Reportar para moderación).
@@ -182,6 +191,7 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
 ---
 
 ### UX-FORO-009 — Pantalla de detalle de publicación y visualización extendida
+
 - **Actor / rol:** Visitante, Estudiante, Verificado, Moderador, Admin
 - **Prioridad:** Must
 - **Estado objetivo:** Pantalla dedicada (`PostDetailScreen`) que presenta el contenido íntegro y sin recortes de la consulta académica: título completo, texto extendido preservando párrafos y formato, visor de medios interactivo con capacidad de zoom a pantalla completa (`ImageViewerDialog`), tarjeta de post citado navegable, encuesta con desglose de votos, y la sección de debate con árbol de comentarios jerárquicos.
@@ -200,6 +210,7 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
 ---
 
 ### UX-FORO-010 — Árbol de comentarios jerárquicos y respuestas anidadas
+
 - **Actor / rol:** Visitante, Estudiante, Verificado, Moderador, Admin
 - **Prioridad:** Must
 - **Estado objetivo:** Visualización en árbol estructurado de respuestas (`CommentItemWidget`) con indentación visual progresiva (14px por nivel, limitada visualmente a un máximo de 4 niveles en móvil para no comprimir el texto). Cada comentario muestra el alias del autor, distintivo `"AUTOR"` si coincide con el creador del post, tiempo relativo (`timeAgo`), contenido del comentario, GIF adjunto si existe, botón `"Responder"` y botón de reporte.
@@ -210,7 +221,7 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
 - **Estados:** Lista vacía de comentarios, Comentarios raíz sin respuestas, Comentarios con árbol multianidado, Prevención de bucles infinitos (detecta referencias circulares en el árbol y las aísla en la raíz de forma segura sin colapsar la interfaz).
 - **Validaciones y reglas de negocio:** La prevención algorítmica de ciclos (`hasCycle`) descarta referencias circulares de `parent_id` hasta 15 saltos (`forum_service.dart:605-616`). No se permite que un comentario sea padre de sí mismo.
 - **Accesibilidad:** Jerarquía semántica clara de respuestas, botones de responder y reportar con etiquetas accesibles y tamaño de toque adecuado.
-- **Responsive:** Indentación visual acotada en móvil (14px * nivel, máx 4 niveles) para preservar legibilidad en pantallas de 360px de ancho.
+- **Responsive:** Indentación visual acotada en móvil (14px \* nivel, máx 4 niveles) para preservar legibilidad en pantallas de 360px de ancho.
 - **Criterios de aceptación (Gherkin):**
   - **Given** un comentario publicado por el mismo autor del post original, **When** se dibuja en la lista de respuestas, **Then** muestra una etiqueta visible "AUTOR" junto a su seudónimo con fondo tintado institucional.
   - **Given** una cadena de comentarios con 5 niveles de anidamiento en un teléfono móvil, **When** se renderiza la vista, **Then** la indentación se limita a 4 niveles visuales para evitar que el texto quede comprimido ilegiblemente contra el margen derecho.
@@ -218,6 +229,7 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
 ---
 
 ### UX-FORO-011 — Barra de redacción contextual de respuestas en el hilo
+
 - **Actor / rol:** Estudiante, Verificado, Moderador, Admin (Visitante interceptado con AuthModal)
 - **Prioridad:** Must
 - **Estado objetivo:** Barra fija en la parte inferior de la pantalla de detalle que permite responder a la consulta principal o a un comentario específico. Si hay un comentario objetivo seleccionado, se exhibe una barra superior que dice: `"Respondiendo a [alias]"` con un botón de cancelar (`Icons.close`). Incluye botón para adjuntar GIF (`GifPickerModal`), campo de texto multilínea y botón de envío con indicador de progreso.
@@ -236,6 +248,7 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
 ---
 
 ### UX-FORO-012 — Encuestas estudiantiles interactivas en publicaciones
+
 - **Actor / rol:** Estudiante, Verificado, Moderador, Admin (Visitante interceptado con AuthModal)
 - **Prioridad:** Must
 - **Estado objetivo:** Módulo interactivo dentro de la tarjeta del post y del detalle que muestra una pregunta académica y entre 2 y 5 opciones de votación. Permite al estudiante votar por una opción con un solo toque. Tras votar, la opción seleccionada se destaca con icono de verificación (`Icons.check_circle`), las demás opciones muestran barras horizontales de progreso proporcional al porcentaje de votos recibidos, y se muestra el conteo total de votos y porcentajes por opción.
@@ -254,6 +267,7 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
 ---
 
 ### UX-FORO-013 — Reacción de me gusta y valoración de utilidad
+
 - **Actor / rol:** Estudiante, Verificado, Moderador, Admin (Visitante interceptado con AuthModal)
 - **Prioridad:** Must
 - **Estado objetivo:** Mecanismo de valoración de consultas y respuestas útiles mediante botón de pulgar arriba ("Me gusta") con recuento dinámico. El estudiante puede dar o retirar su voto de utilidad con retroalimentación instantánea (actualización optimista en interfaz).
@@ -272,6 +286,7 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
 ---
 
 ### UX-FORO-014 — Marcadores y canal personal de guardados (# mis-guardados)
+
 - **Actor / rol:** Estudiante, Verificado, Moderador, Admin (Visitante interceptado con AuthModal)
 - **Prioridad:** Must
 - **Estado objetivo:** Capacidad de guardar cualquier publicación en marcadores personales para consulta rápida posterior. Las publicaciones guardadas se recopilan en el canal especial `# mis-guardados` del sidebar. Al alternar el guardado, se muestra feedback visual en el icono (color ámbar) y una notificación SnackBar temporal: `"Publicación guardada en marcadores."` o `"Publicación eliminada de marcadores."`.
@@ -290,6 +305,7 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
 ---
 
 ### UX-FORO-015 — Citación de publicaciones académicas (Repost con contexto)
+
 - **Actor / rol:** Estudiante, Verificado, Moderador, Admin (Visitante interceptado con AuthModal)
 - **Prioridad:** Should
 - **Estado objetivo:** Flujo que permite a un estudiante republicar o citar una consulta previa en un nuevo tema del foro para profundizar, contrastar o compartir aportes. Al pulsar el botón de citar (`Icons.repeat`), se abre el diálogo de creación de post (`CreatePostDialog`) con la referencia del post original precargada, su título prefijado con `"Re: [Título Original]"` y una vista previa incrustada de la consulta citada.
@@ -308,9 +324,10 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
 ---
 
 ### UX-FORO-016 — Denuncia comunitaria y reporte ético de contenido
+
 - **Actor / rol:** Estudiante, Verificado, Moderador, Admin (Visitante interceptado con AuthModal)
 - **Prioridad:** Must
-- **Estado objetivo:** Flujo de reporte seguro y ético accesible en posts, comentarios y usuarios. Al pulsar el icono de bandera (`Icons.flag_outlined`), se despliega `ReportDialog` con opciones claras de denuncia (*Acoso o discriminación*, *Spam o publicidad no autorizada*, *Venta o fraude ilegal*, *Información personal expuesta*, *Contenido ofensivo*, *Otro*), con campo opcional para detalles. Al confirmar, el reporte se envía a la tabla de moderación y se notifica al usuario con un SnackBar de agradecimiento.
+- **Estado objetivo:** Flujo de reporte seguro y ético accesible en posts, comentarios y usuarios. Al pulsar el icono de bandera (`Icons.flag_outlined`), se despliega `ReportDialog` con opciones claras de denuncia (_Acoso o discriminación_, _Spam o publicidad no autorizada_, _Venta o fraude ilegal_, _Información personal expuesta_, _Contenido ofensivo_, _Otro_), con campo opcional para detalles. Al confirmar, el reporte se envía a la tabla de moderación y se notifica al usuario con un SnackBar de agradecimiento.
 - **Problema actual [Mejora]:** En `post_card.dart:872-884`, el reporte de post desde la tarjeta invoca directamente `reportUser` sin abrir `ReportDialog` en algunos puntos, omitiendo la selección de motivo y privando al equipo de moderación de contexto sobre la infracción. Debe unificarse la apertura obligatoria de `ReportDialog`.
 - **Precondiciones:** Contenido visible que el usuario considera infractor.
 - **UI / contenido:** Diálogo modal con icono de escudo de alerta, título "Reportar Publicación / Comentario", subtítulo con el alias del autor, lista de radio buttons o chips con motivos de denuncia predefinidos, campo de texto multilínea opcional "Detalles adicionales", botón secundario "Cancelar" y primario "Enviar Reporte".
@@ -326,6 +343,7 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
 ---
 
 ### UX-FORO-017 — Creación y publicación de temas en el foro estudiantil
+
 - **Actor / rol:** Estudiante, Verificado, Moderador, Admin (Visitante interceptado con AuthModal)
 - **Prioridad:** Must
 - **Estado objetivo:** Diálogo modal adaptativo (`CreatePostDialog`) para redactar una nueva consulta o aporte. Permite definir: contexto de publicación (Facultad, Carrera y Canal temático), título claro (mínimo 3 caracteres, obligatorio), contenido detallado (obligatorio), adjunto multimedia opcional (1 imagen o 1 GIF animado del catálogo curado) y módulo opcional de encuesta. Al enviar, el post se crea con `moderation_status = 0` y se inserta inmediatamente en el tope del feed con feedback positivo.
@@ -344,6 +362,7 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
 ---
 
 ### UX-FORO-018 — Configuración de encuestas en el formulario de creación de post
+
 - **Actor / rol:** Estudiante, Verificado, Moderador, Admin
 - **Prioridad:** Should
 - **Estado objetivo:** Sección colapsable dentro de `CreatePostDialog` que permite incorporar una votación comunitaria a la publicación. Al activar el control "¿Agregar encuesta?", se despliegan: campo para la pregunta específica (con placeholder que por defecto toma el título de la publicación si se deja vacío), y campos para opciones de respuesta (inicialmente 2 opciones obligatorias, con capacidad de agregar dinámicamente hasta 5 opciones y eliminar opciones con un mínimo garantizado de 2).
@@ -362,13 +381,14 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
 ---
 
 ### UX-FORO-019 — Sistema integral de estados de carga, vacío, error y modo sin conexión
+
 - **Actor / rol:** Visitante, Estudiante, Verificado, Moderador, Admin
 - **Prioridad:** Must
 - **Estado objetivo:** El foro ofrece retroalimentación consistente en todas sus pantallas frente a contingencias de red y datos:
-  1. *Carga:* Tarjetas esqueleto animadas (`SkeletonCard` shimmer) que replican la anatomía del post en lugar de un spinner genérico.
-  2. *Vacío:* Componente `EmptyStateWidget` adaptativo al canal activo (ej. en `# catedraticos-opiniones` invita a comentar sobre docentes; en `# mis-guardados` explica cómo guardar).
-  3. *Error:* Mensaje en español con ilustración y botón "Reintentar conexión".
-  4. *Sin conexión (Offline):* Banner visible color ámbar `"Sin conexión — Mostrando contenido guardado."` que aprovecha la caché local de `CacheService` y deshabilita temporalmente acciones de escritura con mensajes formativos en lugar de bloqueos opacos.
+  1. _Carga:_ Tarjetas esqueleto animadas (`SkeletonCard` shimmer) que replican la anatomía del post en lugar de un spinner genérico.
+  2. _Vacío:_ Componente `EmptyStateWidget` adaptativo al canal activo (ej. en `# catedraticos-opiniones` invita a comentar sobre docentes; en `# mis-guardados` explica cómo guardar).
+  3. _Error:_ Mensaje en español con ilustración y botón "Reintentar conexión".
+  4. _Sin conexión (Offline):_ Banner visible color ámbar `"Sin conexión — Mostrando contenido guardado."` que aprovecha la caché local de `CacheService` y deshabilita temporalmente acciones de escritura con mensajes formativos en lugar de bloqueos opacos.
 - **Problema actual [Mejora]:** En `forum_screen.dart:824-831`, la carga muestra un `CircularProgressIndicator` básico en lugar de `SkeletonCard`, produciendo saltos visuales al renderizar la lista; y al perder la conexión, el botón de reintento no siempre revalida la caché de forma determinista.
 - **Precondiciones:** Acceso a la pantalla del foro en cualquier estado de red.
 - **UI / contenido:** Widgets unificados de `network_state_widgets.dart` y `empty_state_widget.dart`: tarjetas shimmer con formas rectangulares y circulares tenues; banner ámbar con icono `Icons.wifi_off`; botón primario "Reintentar".
@@ -384,6 +404,7 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
 ---
 
 ### UX-FORO-020 — Desacoplamiento y claridad en el descubrimiento de Grupos de Estudio
+
 - **Actor / rol:** Visitante, Estudiante, Verificado, Moderador, Admin
 - **Prioridad:** Should
 - **Estado objetivo:** El directorio de Grupos (`GroupsScreen`) es una sección independiente del Foro y cuenta con destino propio en la navegación principal. Además, el Foro debe ofrecer un acceso contextual claro al directorio desde su cabecera o canal activo; cuando se conozca la facultad o carrera actual, debe conservar ese contexto al abrir Grupos ([ver UX-GRP en `05-grupos.md`](05-grupos.md) y [`02-navegacion.md`](02-navegacion.md)).
@@ -402,6 +423,7 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
 ---
 
 ### UX-FORO-021 — Publicación patrocinada nativa en el feed
+
 - **Actor / rol:** Todos (visible); Patrocinador (origen del contenido)
 - **Prioridad:** Should
 - **Estado objetivo:** el feed puede intercalar **publicaciones patrocinadas** con la misma anatomía de las tarjetas del foro (avatar/logotipo, nombre, texto, imagen o GIF, CTA), etiquetadas obligatoriamente como **"Patrocinado"** y con el acento visual del sistema de patrocinios ([ver `UX-SPN-003` en `12-patrocinios.md`](12-patrocinios.md)). El patrocinio es una capa transversal, no un canal de discusión.
@@ -418,6 +440,7 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
   - **Given** un canal sin promociones relevantes, **When** se carga el feed, **Then** no aparece ningún espacio patrocinado ni hueco vacío.
 
 ### UX-FORO-022 — Interacciones de la publicación patrocinada
+
 - **Actor / rol:** Todos
 - **Prioridad:** Should
 - **Estado objetivo:** la publicación patrocinada prioriza un **llamado a la acción** en lugar del debate: muestra CTA primario ("Ver producto", "Contactar", "Ir al perfil"), permite **guardar** y ofrece las acciones de control **Ocultar / ¿Por qué veo esto? / Reportar**. Por defecto **no habilita hilos de comentarios**, para no confundir publicidad con conversación.
@@ -434,6 +457,7 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
   - **Given** una publicación patrocinada, **When** el usuario abre el menú y pulsa "Ocultar", **Then** la tarjeta desaparece y no vuelve a mostrarse en esa sesión.
 
 ### UX-FORO-023 — Espacio dedicado de promociones por facultad (opt-in)
+
 - **Actor / rol:** Todos; Patrocinador
 - **Prioridad:** Could
 - **Estado objetivo:** para no recargar el feed, existe un **espacio opcional** ("Promociones" o `# apoyos`) accesible desde la cabecera del canal o del servidor, que reúne todas las promociones activas del contexto activo. Es de lectura **voluntaria** y no se abre por defecto.
@@ -450,6 +474,7 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
   - **Given** que el usuario nunca abre el espacio de promociones, **When** usa el foro normalmente, **Then** su experiencia del feed no se ve alterada por el espacio opt-in.
 
 ### UX-FORO-024 — Convivencia, moderación y no intrusión en el feed
+
 - **Actor / rol:** Todos; Moderador
 - **Prioridad:** Must
 - **Estado objetivo:** las publicaciones patrocinadas conviven con el contenido de estudiantes sin degradarlo: no desplazan fijados, no alteran el orden cronológico orgánico (solo intercalan), y **toda** promoción pasa por moderación y puede reportarse como cualquier otro contenido.
@@ -469,29 +494,29 @@ El **Foro Estudiantil** es el núcleo de deliberación, consulta y colaboración
 
 ## 3. Matriz de trazabilidad de requisitos del Foro
 
-| ID | Título | Prioridad | Pantalla / Componente | Código relacionado |
-|---|---|:---:|---|---|
-| `UX-FORO-001` | Feed central y selector de canales temáticos | Must | `ForumScreen` | `forum_screen.dart:691-888` |
-| `UX-FORO-002` | Rail lateral de servidores y navegación | Must | `ForumServerRail` | `forum_server_rail.dart:25-160` |
-| `UX-FORO-003` | Explorador y buscador unificado de carreras | Should | `ForumCarreraPickerDialog` | `forum_carrera_picker_dialog.dart:27-142` |
-| `UX-FORO-004` | Barra lateral de canales temáticos | Must | `ForumChannelSidebar` | `forum_channel_sidebar.dart:27-164` |
-| `UX-FORO-005` | Barra de estado de usuario e identidad (User Bar) | Must | `ForumChannelSidebar` | `forum_channel_sidebar.dart:166-248`, `local_storage_service.dart:23-40` |
-| `UX-FORO-006` | Panel lateral de comunidades populares | Should | `PopularServersSidebar` | `popular_servers_sidebar.dart:24-90`, `forum_screen.dart:547-555` |
-| `UX-FORO-007` | Búsqueda en tiempo real y filtrado de temas | Must | `ForumScreen` | `forum_screen.dart:946-1004` |
-| `UX-FORO-008` | Tarjeta de publicación en el feed (Post Card) | Must | `PostCard` | `post_card.dart:36-576` |
-| `UX-FORO-009` | Detalle de publicación y visualización extendida | Must | `PostDetailScreen` | `post_detail_screen.dart:275-450` |
-| `UX-FORO-010` | Árbol de comentarios jerárquicos y anidados | Must | `CommentItemWidget` | `comment_item.dart:24-198`, `forum_service.dart:605-626` |
-| `UX-FORO-011` | Barra de redacción contextual de respuestas | Must | `PostDetailScreen` | `post_detail_screen.dart:220-267`, `post_detail_screen.dart:820-900` |
-| `UX-FORO-012` | Encuestas estudiantiles interactivas | Must | `PostCard`, `PostDetailScreen` | `post_card.dart:280-408`, `forum_screen.dart:360-405` |
-| `UX-FORO-013` | Reacción de me gusta y valoración | Must | `PostCard`, `PostDetailScreen` | `forum_screen.dart:283-316`, `post_detail_screen.dart:75-102` |
-| `UX-FORO-014` | Marcadores y canal `# mis-guardados` | Must | `ForumScreen`, `PostDetailScreen` | `forum_screen.dart:318-358`, `post_detail_screen.dart:104-135` |
-| `UX-FORO-015` | Citación de publicaciones (Repost) | Should | `PostCard`, `CreatePostDialog` | `forum_screen.dart:407-436`, `create_post_dialog.dart:142-145` |
-| `UX-FORO-016` | Denuncia comunitaria y reporte ético | Must | `ReportDialog`, `PostCard` | `report_dialog.dart:20-100`, `post_card.dart:872-884` |
-| `UX-FORO-017` | Creación y publicación de temas en el foro | Must | `CreatePostDialog` | `create_post_dialog.dart:50-300`, `storage_service.dart:16-107` |
-| `UX-FORO-018` | Configuración de encuestas en creación de post | Should | `CreatePostDialog` | `create_post_dialog.dart:102-108`, `create_post_dialog.dart:228-244` |
-| `UX-FORO-019` | Estados de carga, vacío, error y offline | Must | `ForumScreen`, `NetworkStateWidgets` | `forum_screen.dart:788-853`, `network_state_widgets.dart:1-92` |
-| `UX-FORO-020` | Acceso contextual al directorio independiente de Grupos | Should | `ForumScreen`, `AppShell` | `test/widgets/app_shell_test.dart` (destino raíz); `test/discord_forum_test.dart` (el rail no incluye Grupos); sin prueba del enlace contextual ni del traspaso de facultad/carrera |
-| `UX-FORO-021` | Publicación patrocinada nativa en el feed | Should | `ForumScreen`, nuevo `PromotedPostCard` | `forum_screen.dart`, `sponsor_carousel.dart` |
-| `UX-FORO-022` | Interacciones de la publicación patrocinada | Should | `PromotedPostCard` | `sponsor_carousel.dart`, `report_dialog.dart` |
-| `UX-FORO-023` | Espacio de promociones por facultad (opt-in) | Could | `ForumScreen` | `forum_screen.dart` |
-| `UX-FORO-024` | Convivencia, moderación y no intrusión | Must | `ForumScreen`, moderación | `forum_screen.dart`, `sponsor_carousel.dart` |
+| ID            | Título                                                  | Prioridad | Pantalla / Componente                   | Código relacionado                                                                                                                                                                  |
+| ------------- | ------------------------------------------------------- | :-------: | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `UX-FORO-001` | Feed central y selector de canales temáticos            |   Must    | `ForumScreen`                           | `forum_screen.dart:691-888`                                                                                                                                                         |
+| `UX-FORO-002` | Rail lateral de servidores y navegación                 |   Must    | `ForumServerRail`                       | `forum_server_rail.dart:25-160`                                                                                                                                                     |
+| `UX-FORO-003` | Explorador y buscador unificado de carreras             |  Should   | `ForumCarreraPickerDialog`              | `forum_carrera_picker_dialog.dart:27-142`                                                                                                                                           |
+| `UX-FORO-004` | Barra lateral de canales temáticos                      |   Must    | `ForumChannelSidebar`                   | `forum_channel_sidebar.dart:27-164`                                                                                                                                                 |
+| `UX-FORO-005` | Barra de estado de usuario e identidad (User Bar)       |   Must    | `ForumChannelSidebar`                   | `forum_channel_sidebar.dart:166-248`, `local_storage_service.dart:23-40`                                                                                                            |
+| `UX-FORO-006` | Panel lateral de comunidades populares                  |  Should   | `PopularServersSidebar`                 | `popular_servers_sidebar.dart:24-90`, `forum_screen.dart:547-555`                                                                                                                   |
+| `UX-FORO-007` | Búsqueda en tiempo real y filtrado de temas             |   Must    | `ForumScreen`                           | `forum_screen.dart:946-1004`                                                                                                                                                        |
+| `UX-FORO-008` | Tarjeta de publicación en el feed (Post Card)           |   Must    | `PostCard`                              | `post_card.dart:36-576`                                                                                                                                                             |
+| `UX-FORO-009` | Detalle de publicación y visualización extendida        |   Must    | `PostDetailScreen`                      | `post_detail_screen.dart:275-450`                                                                                                                                                   |
+| `UX-FORO-010` | Árbol de comentarios jerárquicos y anidados             |   Must    | `CommentItemWidget`                     | `comment_item.dart:24-198`, `forum_service.dart:605-626`                                                                                                                            |
+| `UX-FORO-011` | Barra de redacción contextual de respuestas             |   Must    | `PostDetailScreen`                      | `post_detail_screen.dart:220-267`, `post_detail_screen.dart:820-900`                                                                                                                |
+| `UX-FORO-012` | Encuestas estudiantiles interactivas                    |   Must    | `PostCard`, `PostDetailScreen`          | `post_card.dart:280-408`, `forum_screen.dart:360-405`                                                                                                                               |
+| `UX-FORO-013` | Reacción de me gusta y valoración                       |   Must    | `PostCard`, `PostDetailScreen`          | `forum_screen.dart:283-316`, `post_detail_screen.dart:75-102`                                                                                                                       |
+| `UX-FORO-014` | Marcadores y canal `# mis-guardados`                    |   Must    | `ForumScreen`, `PostDetailScreen`       | `forum_screen.dart:318-358`, `post_detail_screen.dart:104-135`                                                                                                                      |
+| `UX-FORO-015` | Citación de publicaciones (Repost)                      |  Should   | `PostCard`, `CreatePostDialog`          | `forum_screen.dart:407-436`, `create_post_dialog.dart:142-145`                                                                                                                      |
+| `UX-FORO-016` | Denuncia comunitaria y reporte ético                    |   Must    | `ReportDialog`, `PostCard`              | `report_dialog.dart:20-100`, `post_card.dart:872-884`                                                                                                                               |
+| `UX-FORO-017` | Creación y publicación de temas en el foro              |   Must    | `CreatePostDialog`                      | `create_post_dialog.dart:50-300`, `storage_service.dart:16-107`                                                                                                                     |
+| `UX-FORO-018` | Configuración de encuestas en creación de post          |  Should   | `CreatePostDialog`                      | `create_post_dialog.dart:102-108`, `create_post_dialog.dart:228-244`                                                                                                                |
+| `UX-FORO-019` | Estados de carga, vacío, error y offline                |   Must    | `ForumScreen`, `NetworkStateWidgets`    | `forum_screen.dart:788-853`, `network_state_widgets.dart:1-92`                                                                                                                      |
+| `UX-FORO-020` | Acceso contextual al directorio independiente de Grupos |  Should   | `ForumScreen`, `AppShell`               | `test/widgets/app_shell_test.dart` (destino raíz); `test/discord_forum_test.dart` (el rail no incluye Grupos); sin prueba del enlace contextual ni del traspaso de facultad/carrera |
+| `UX-FORO-021` | Publicación patrocinada nativa en el feed               |  Should   | `ForumScreen`, nuevo `PromotedPostCard` | `forum_screen.dart`, `sponsor_carousel.dart`                                                                                                                                        |
+| `UX-FORO-022` | Interacciones de la publicación patrocinada             |  Should   | `PromotedPostCard`                      | `sponsor_carousel.dart`, `report_dialog.dart`                                                                                                                                       |
+| `UX-FORO-023` | Espacio de promociones por facultad (opt-in)            |   Could   | `ForumScreen`                           | `forum_screen.dart`                                                                                                                                                                 |
+| `UX-FORO-024` | Convivencia, moderación y no intrusión                  |   Must    | `ForumScreen`, moderación               | `forum_screen.dart`, `sponsor_carousel.dart`                                                                                                                                        |

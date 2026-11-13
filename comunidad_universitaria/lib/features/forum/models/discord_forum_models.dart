@@ -35,8 +35,14 @@ class ForumServer {
   }
 
   /// Mapeo centralizado de logos y escudos oficiales de la USAC
-  static String? getLogoAssetFor({required String id, required String facultadId}) {
-    final normalized = id.toLowerCase().replaceAll('server_', '').replaceAll('08_', '');
+  static String? getLogoAssetFor({
+    required String id,
+    required String facultadId,
+  }) {
+    final normalized = id
+        .toLowerCase()
+        .replaceAll('server_', '')
+        .replaceAll('08_', '');
     switch (normalized) {
       case 'todas':
         return 'assets/images/facultades/USAC_General.png';
@@ -460,7 +466,7 @@ class ForumChannel {
           categoryId: id,
           icon: Icons.chat_bubble_outline,
           description:
-              'Cafetería estudiantil, avisos generales y vida universitaria en la carrera.',
+              'Cafetería estudiantil, avisos generales y vida Zanate en la carrera.',
         );
       default:
         final slug = id.replaceAll('_', '-').toLowerCase();

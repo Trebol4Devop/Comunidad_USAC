@@ -547,7 +547,7 @@ void main() {
         expect(find.text('Aviso Comunitario'), findsOneWidget);
         expect(
           find.textContaining(
-            'Comunidad Universitaria es una plataforma estudiantil colaborativa',
+            'Comunidad Zanate es una plataforma estudiantil colaborativa',
           ),
           findsOneWidget,
         );

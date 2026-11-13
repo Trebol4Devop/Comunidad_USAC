@@ -140,14 +140,19 @@ class _UnderConstructionScreenState extends State<UnderConstructionScreen> {
     final isDark = widget.isDarkMode;
     final isMobile = Responsive.isMobile(context);
 
-    final surfaceColor =
-        isDark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF);
-    final borderColor =
-        isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
-    final scaffoldBg = isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg;
+    final surfaceColor = isDark
+        ? const Color(0xFF1E293B)
+        : const Color(0xFFFFFFFF);
+    final borderColor = isDark
+        ? const Color(0xFF334155)
+        : const Color(0xFFE2E8F0);
+    final scaffoldBg = isDark
+        ? const Color(0xFF0F172A)
+        : ZanateColors.surfaceBg;
     final textPrimary = isDark ? Colors.white : ZanateColors.zanateDark;
-    final textSecondary =
-        isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+    final textSecondary = isDark
+        ? const Color(0xFF94A3B8)
+        : const Color(0xFF64748B);
 
     return Scaffold(
       backgroundColor: scaffoldBg,
@@ -213,7 +218,7 @@ class _UnderConstructionScreenState extends State<UnderConstructionScreen> {
 
                           // Subtítulo
                           Text(
-                            'Estamos trabajando para brindarte una mejor experiencia. Próximamente disponible para toda la comunidad universitaria.',
+                            'Estamos trabajando para brindarte una mejor experiencia. Próximamente disponible para toda la comunidad.',
                             textAlign: TextAlign.center,
                             style: GoogleFonts.inter(
                               fontSize: 13.5,
@@ -253,7 +258,7 @@ class _UnderConstructionScreenState extends State<UnderConstructionScreen> {
             Padding(
               padding: const EdgeInsets.only(bottom: 16, top: 8),
               child: Text(
-                '© 2026 Zanate — Comunidad Universitaria USAC',
+                '© 2026 Zanate — Comunidad Zanate USAC',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(fontSize: 11.5, color: textSecondary),
               ),
@@ -418,10 +423,7 @@ class _UnderConstructionScreenState extends State<UnderConstructionScreen> {
                 Text(
                   'Completa el inicio de sesión en Google en la ventana abierta.',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    fontSize: 12.5,
-                    color: textPrimary,
-                  ),
+                  style: GoogleFonts.inter(fontSize: 12.5, color: textPrimary),
                 ),
               ],
             ),
@@ -496,9 +498,7 @@ class _UnderConstructionScreenState extends State<UnderConstructionScreen> {
             color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF0FDF4),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: isDark
-                  ? const Color(0xFF065F46)
-                  : const Color(0xFFBBF7D0),
+              color: isDark ? const Color(0xFF065F46) : const Color(0xFFBBF7D0),
             ),
           ),
           child: Row(
@@ -554,10 +554,7 @@ class _UnderConstructionScreenState extends State<UnderConstructionScreen> {
         Text(
           'La plataforma estará disponible próximamente.',
           textAlign: TextAlign.center,
-          style: GoogleFonts.inter(
-            fontSize: 13,
-            color: textSecondary,
-          ),
+          style: GoogleFonts.inter(fontSize: 13, color: textSecondary),
         ),
 
         const SizedBox(height: 24),
@@ -580,10 +577,7 @@ class _UnderConstructionScreenState extends State<UnderConstructionScreen> {
                   height: 18,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : PhosphorIcon(
-                  PhosphorIconsRegular.signOut,
-                  size: 20,
-                ),
+              : PhosphorIcon(PhosphorIconsRegular.signOut, size: 20),
           label: Text(
             _isLoading ? 'Cerrando sesión...' : 'Cerrar sesión',
             style: GoogleFonts.inter(

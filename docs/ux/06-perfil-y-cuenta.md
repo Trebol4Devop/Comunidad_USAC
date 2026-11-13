@@ -82,6 +82,7 @@ flowchart TD
 ## 3. Requisitos de experiencia de usuario (UX-PRF)
 
 ### UX-PRF-001 — Cabecera de identidad visual (avatar, alias y rol de usuario)
+
 - **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
 - **Prioridad:** Must
 - **Estado objetivo:** La cabecera del perfil muestra de manera destacada y legible el avatar circular del usuario con su icono e insignia cromática seleccionada, su alias seudónimo público en tipografía destacada (`titleLarge`), la insignia oficial de rol (`Estudiante`, `Moderador` o `Administrador`), y un indicador del estado de autenticación de la cuenta ("Cuenta Verificada · correo" o "Perfil Estudiantil").
@@ -98,9 +99,9 @@ flowchart TD
   - Pulsar sobre el avatar o su icono de edición despliega `AvatarPickerModal`.
   - La cabecera responde visualmente sin parpadeos ni desplazamientos de contenido al cambiar el tema o actualizar datos.
 - **Estados:**
-  - *Inicial / Carga:* Indicador circular centrado mientras se obtienen los datos de perfil.
-  - *Éxito:* Cabecera renderizada con los valores actuales del usuario.
-  - *Sin conexión:* Presenta los datos cacheados en el cliente sin bloquear la navegación.
+  - _Inicial / Carga:_ Indicador circular centrado mientras se obtienen los datos de perfil.
+  - _Éxito:_ Cabecera renderizada con los valores actuales del usuario.
+  - _Sin conexión:_ Presenta los datos cacheados en el cliente sin bloquear la navegación.
 - **Validaciones y reglas de negocio:** El rol se obtiene mediante `SupabaseService.getUserRole()` desde la tabla `user_roles`. Los usuarios en modo visitante adoptan rol predeterminado de estudiante.
 - **Accesibilidad:** El avatar declara etiqueta semántica "Avatar de usuario, pulsa para personalizar". El rol y estado cuentan con contraste cromático superior a 4.5:1 respecto al fondo.
 - **Responsive:** En móvil, el alias se adapta al ancho disponible truncando con elipsis; en pantallas grandes (ancho máximo 1000px), los elementos se distribuyen en una fila horizontal espaciosa.
@@ -111,6 +112,7 @@ flowchart TD
 ---
 
 ### UX-PRF-002 — Edición de alias con generador de seudónimos aleatorios
+
 - **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
 - **Prioridad:** Must
 - **Estado objetivo:** El usuario puede modificar libremente su seudónimo público estudiantil mediante un campo de texto con límite de 35 caracteres, o bien pulsar un botón de aleatorización (`Icons.shuffle`) para generar al instante un identificador en formato `"Estudiante USAC #XXX"` (donde XXX es un número entre 100 y 999), garantizando anonimato inmediato sin esfuerzo cognitivo.
@@ -124,10 +126,10 @@ flowchart TD
   - Pulsar el botón de barajar genera un nuevo valor aleatorio `"Estudiante USAC #<num>"` y lo coloca de inmediato en el controlador del campo.
   - Al pulsar `"Guardar Perfil"`, el nuevo alias se persiste y notifica a las pantallas activas mediante el callback `onAliasChanged`.
 - **Estados:**
-  - *Inicial:* Campo poblado con el alias vigente.
-  - *Editando:* Texto en modificación sin pérdida de foco.
-  - *Error:* Borde rojo y SnackBar informativo si el usuario intenta guardar una cadena vacía o compuesta únicamente por espacios en blanco.
-  - *Guardado:* Mensaje emergente `"Perfil guardado exitosamente."` con fondo azul USAC.
+  - _Inicial:_ Campo poblado con el alias vigente.
+  - _Editando:_ Texto en modificación sin pérdida de foco.
+  - _Error:_ Borde rojo y SnackBar informativo si el usuario intenta guardar una cadena vacía o compuesta únicamente por espacios en blanco.
+  - _Guardado:_ Mensaje emergente `"Perfil guardado exitosamente."` con fondo azul USAC.
 - **Validaciones y reglas de negocio:**
   - Longitud permitida: entre 3 y 35 caracteres.
   - El alias no puede ser nulo ni contener solo espacios en blanco.
@@ -141,6 +143,7 @@ flowchart TD
 ---
 
 ### UX-PRF-003 — Persistencia y sincronización del alias en la nube [Mejora]
+
 - **Actor / rol:** Estudiante registrado, Estudiante verificado, Moderador, Administrador
 - **Prioridad:** Must
 - **Estado objetivo:** Cuando un usuario autenticado guarda su alias u otros datos de perfil, los cambios se persisten de manera simultánea en el almacenamiento local (`SharedPreferences`) y en la base de datos central de Supabase (`public.profiles`). Al iniciar sesión en otro dispositivo o en una ventana de incógnito, la aplicación descarga y restaura automáticamente el seudónimo remoto en lugar de sobreescribirlo con uno aleatorio local.
@@ -154,9 +157,9 @@ flowchart TD
   - Al presionar `"Guardar Perfil"`, se actualiza `LocalStorageService` e inmediatamente se envía un comando `UPDATE` a `public.profiles` con `alias`, `bio`, `avatar_color`, `avatar_icon`, `facultad_id`, `carrera_id` y `sede_id`.
   - Al completar un inicio de sesión en `AuthModal`, el servicio consulta la fila del usuario en `public.profiles` y actualiza la caché local del dispositivo.
 - **Estados:**
-  - *Sincronizando:* Botón de guardado deshabilitado temporalmente con spinner circular.
-  - *Éxito:* Datos confirmados en local y remoto.
-  - *Error de red:* Si no hay conexión o falla la nube, los datos se preservan en local con un aviso: `"Guardado localmente. Se sincronizará al conectar."` y se encola reintento.
+  - _Sincronizando:_ Botón de guardado deshabilitado temporalmente con spinner circular.
+  - _Éxito:_ Datos confirmados en local y remoto.
+  - _Error de red:_ Si no hay conexión o falla la nube, los datos se preservan en local con un aviso: `"Guardado localmente. Se sincronizará al conectar."` y se encola reintento.
 - **Validaciones y reglas de negocio:**
   - Respaldado por RLS en Postgres: solo el usuario autenticado puede actualizar su propia fila (`id = auth.uid()`, validado en `supabase/tests/profiles_rls_test.sql:55`).
   - Si existen diferencias entre local y remoto durante el inicio de sesión, prevalece el registro con el `updated_at` más reciente.
@@ -169,9 +172,10 @@ flowchart TD
 ---
 
 ### UX-PRF-004 — Personalización visual del avatar (color e icono estudiantil)
+
 - **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
 - **Prioridad:** Should
-- **Estado objetivo:** El estudiante puede personalizar la identidad gráfica de su avatar público seleccionando entre una paleta de 7 colores institucionales/estudiantiles y un catálogo de iconos representativos de la vida universitaria (academia, persona, libro, ciencia, tecnología, arte, deportes). La previsualización es instantánea.
+- **Estado objetivo:** El estudiante puede personalizar la identidad gráfica de su avatar público seleccionando entre una paleta de 7 colores institucionales/estudiantiles y un catálogo de iconos representativos de la vida Zanate (academia, persona, libro, ciencia, tecnología, arte, deportes). La previsualización es instantánea.
 - **Precondiciones:** Acceso a `ProfileScreen`.
 - **UI / contenido:**
   - Modal adaptativo `AvatarPickerModal` (`showModalBottomSheet` en móvil, `Dialog` en desktop) con título `"Personaliza tu Avatar Estudiantil"`.
@@ -191,8 +195,8 @@ flowchart TD
   - Pulsar un icono actualiza la silueta del avatar de forma inmediata.
   - Pulsar `"Listo"` o cerrar el modal conserva los valores seleccionados para ser persistidos con el formulario general.
 - **Estados:**
-  - *Modal abierto:* Elementos interactivos destacados.
-  - *Seleccionado:* Resaltado visual en el elemento activo.
+  - _Modal abierto:_ Elementos interactivos destacados.
+  - _Seleccionado:_ Resaltado visual en el elemento activo.
 - **Validaciones y reglas de negocio:** Los índices de color e icono se almacenan como enteros acotados mediante `.clamp(0, length - 1)`, garantizando que índices inválidos nunca rompan el renderizado.
 - **Accesibilidad:** Cada muestra de color e icono cuenta con etiqueta semántica de accesibilidad (p. ej. `"Color azul universitario seleccionado"`, `"Icono de libro de estudio"`). El objetivo táctil cumple la pauta mínima de 44x44px.
 - **Responsive:** Despliega hoja inferior con esquinas redondeadas (radio 20px) en dispositivos móviles; ventana modal centrada y restringida a 420px de ancho en pantallas de escritorio.
@@ -203,6 +207,7 @@ flowchart TD
 ---
 
 ### UX-PRF-005 — Biografía del estudiante (obsoleto)
+
 > Requisito retirado el 2026-10-08. El usuario no tendrá campo de biografía en su
 > perfil, por lo que se elimina esta funcionalidad de la especificación.
 > El ID `UX-PRF-005` se conserva marcado como `(obsoleto)` para no romper la
@@ -211,6 +216,7 @@ flowchart TD
 ---
 
 ### UX-PRF-006 — Selección de información académica (Facultad, Carrera y Sede)
+
 - **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
 - **Prioridad:** Must
 - **Estado objetivo:** El estudiante configura su contexto universitario seleccionando su Facultad o Unidad Académica, Carrera y Sede/Centro Universitario desde catálogos estandarizados de la USAC. Los selectores están interconectados: al cambiar de facultad, el catálogo de carreras se actualiza dinámicamente y la carrera seleccionada se reajusta automáticamente al primer elemento válido, evitando inconsistencias de datos.
@@ -225,8 +231,8 @@ flowchart TD
   - Seleccionar una nueva facultad filtra inmediatamente el desplegable de carreras; si la carrera previa no pertenece a la nueva facultad, el sistema selecciona automáticamente la primera carrera del listado.
   - Seleccionar sede ajusta el contexto geográfico por defecto para los puntos de encuentro en el Marketplace.
 - **Estados:**
-  - *Inicial:* Selectores configurados con los valores vigentes o predeterminados (`Facultad de Ingeniería`, `Ingeniería en Sistemas`, `Campus Central`).
-  - *Actualización en cascada:* Transición fluida al cambiar de unidad académica.
+  - _Inicial:_ Selectores configurados con los valores vigentes o predeterminados (`Facultad de Ingeniería`, `Ingeniería en Sistemas`, `Campus Central`).
+  - _Actualización en cascada:_ Transición fluida al cambiar de unidad académica.
 - **Validaciones y reglas de negocio:** No se permiten valores nulos. La combinación `(facultad, carrera)` debe existir en la estructura canónica de la base de datos de facultades.
 - **Accesibilidad:** Menús desplegables navegables con teclado físico (flechas arriba/abajo y Enter). Etiquetas asociadas para lectores de pantalla.
 - **Responsive:** En móvil se apilan verticalmente; en escritorio integran la columna izquierda del bloque de configuración.
@@ -237,6 +243,7 @@ flowchart TD
 ---
 
 ### UX-PRF-007 — Canales de contacto para Marketplace y tutorías
+
 - **Actor / rol:** Estudiante registrado, Estudiante verificado, Moderador, Administrador
 - **Prioridad:** Should
 - **Estado objetivo:** El estudiante puede registrar sus canales de contacto directo (WhatsApp, Instagram, Telegram) en su perfil para que se autocompleten de manera cómoda al crear publicaciones en el Marketplace o anunciar tutorías académicas, evitando la reescritura repetitiva de datos en cada anuncio.
@@ -252,8 +259,8 @@ flowchart TD
   - Edición libre de números y nombres de usuario.
   - Los canales guardados se asocian al perfil local y a la nube si el usuario está autenticado.
 - **Estados:**
-  - *Vacío:* Campos limpios sin validación obligatoria.
-  - *Lleno:* Canales almacenados listos para precarga en formularios de venta.
+  - _Vacío:_ Campos limpios sin validación obligatoria.
+  - _Lleno:_ Canales almacenados listos para precarga en formularios de venta.
 - **Validaciones y reglas de negocio:**
   - Los canales son opcionales en el perfil (ninguno es obligatorio para guardar el perfil).
   - Al ingresar el número de WhatsApp, se normaliza automáticamente eliminando guiones o espacios para su posterior codificación en enlaces `wa.me/502...`.
@@ -267,6 +274,7 @@ flowchart TD
 ---
 
 ### UX-PRF-008 — Historial de actividad: Gestión y eliminación de publicaciones del foro
+
 - **Actor / rol:** Estudiante registrado, Estudiante verificado, Moderador, Administrador
 - **Prioridad:** Must
 - **Estado objetivo:** La pestaña `"Mis Posts"` dentro de la sección de actividad lista en orden cronológico inverso todos los temas y preguntas creados por el estudiante en el Foro Estudiantil, mostrando su título, antigüedad relativa, recuento de votos y comentarios, permitiendo visualizarlos en detalle o eliminarlos de forma irreversible mediante confirmación explícita.
@@ -285,11 +293,11 @@ flowchart TD
   - Al pulsar `"Eliminar"` en el diálogo, se invoca `ProfileService.deletePost`, se remueve el elemento de la lista en memoria con animación, se decrementa el contador de la pestaña y se despliega un SnackBar `"Publicación eliminada."`.
   - Al pulsar `"Cancelar"` en el diálogo, este se cierra sin alterar los datos.
 - **Estados:**
-  - *Cargando:* Indicador circular en el contenedor de pestañas.
-  - *Con contenido:* Lista scrolleable con altura acotada (350px).
-  - *Vacío:* Ilustración y mensaje motivacional de participación.
-  - *Eliminando:* Deshabilitación momentánea mientras concluye la petición.
-  - *Error:* SnackBar notificando fallo en la eliminación.
+  - _Cargando:_ Indicador circular en el contenedor de pestañas.
+  - _Con contenido:_ Lista scrolleable con altura acotada (350px).
+  - _Vacío:_ Ilustración y mensaje motivacional de participación.
+  - _Eliminando:_ Deshabilitación momentánea mientras concluye la petición.
+  - _Error:_ SnackBar notificando fallo en la eliminación.
 - **Validaciones y reglas de negocio:** Respaldado por RLS: solo el autor legítimo del post o un administrador tienen permiso para borrar la fila en la tabla `posts`. La eliminación remueve en cascada los votos asociados.
 - **Accesibilidad:** Los botones de acción cuentan con etiquetas descriptivas para lectores de pantalla (`"Ver post: <título>"`, `"Eliminar post: <título>"`). El diálogo modal atrapa el foco del teclado.
 - **Responsive:** Altura contenida con scroll independiente que funciona de forma idéntica en pantallas táctiles y escritorios con rueda de ratón.
@@ -300,6 +308,7 @@ flowchart TD
 ---
 
 ### UX-PRF-009 — Historial de actividad: Gestión y retiro de grupos de estudio
+
 - **Actor / rol:** Estudiante registrado, Estudiante verificado, Moderador, Administrador
 - **Prioridad:** Must
 - **Estado objetivo:** La pestaña `"Mis Grupos"` lista todos los enlaces de grupos de WhatsApp, Telegram o Discord compartidos por el estudiante en el directorio colaborativo, indicando el curso, sección y votos de reputación, permitiendo retirar enlaces obsoletos o finalizados.
@@ -325,6 +334,7 @@ flowchart TD
 ---
 
 ### UX-PRF-010 — Historial de actividad: Gestión y retiro de anuncios del Marketplace
+
 - **Actor / rol:** Estudiante registrado, Estudiante verificado, Moderador, Administrador
 - **Prioridad:** Must
 - **Estado objetivo:** La pestaña `"Mis Anuncios"` exhibe los artículos, productos o servicios de tutoría publicados por el estudiante en el Marketplace, mostrando el precio formateado en Quetzales o la etiqueta "Gratuito", el edificio del campus y la antigüedad, facilitando la eliminación o retiro de artículos ya vendidos.
@@ -350,6 +360,7 @@ flowchart TD
 ---
 
 ### UX-PRF-011 — Transparencia de privacidad y uso de datos estudiantiles
+
 - **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
 - **Prioridad:** Must
 - **Estado objetivo:** La tarjeta `"Uso de Datos y Privacidad"` expone de forma abierta, didáctica y verificable los principios éticos y técnicos bajo los cuales se trata la información del estudiante, detallando el rol del seudónimo en el foro, el propósito de los datos académicos, el almacenamiento local de contactos y el compromiso estricto de no comercialización ni transferencia de datos a autoridades.
@@ -374,6 +385,7 @@ flowchart TD
 ---
 
 ### UX-PRF-012 — Preferencias de aplicación: Tema visual y acceso a normas
+
 - **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
 - **Prioridad:** Must
 - **Estado objetivo:** La sección `"Cuenta y Preferencias"` permite conmutar de inmediato el tema visual de la aplicación (Claro/Oscuro) mediante un switch persistente, y ofrece un punto de acceso directo y señalizado hacia las Normas de Convivencia y Descargo Legal de Responsabilidad (`RulesScreen`).
@@ -404,14 +416,15 @@ flowchart TD
 ---
 
 ### UX-PRF-013 — Verificación de identidad estudiantil con carné universitario
+
 - **Actor / rol:** Estudiante registrado (con correo personal o institucional), Visitante interceptado
 - **Prioridad:** Must
 - **Estado objetivo:** La verificación con carné universitario cumple un doble propósito: es obligatoria para vender en el Marketplace (aplica para cualquier estudiante) y es obligatoria para completar el acceso general si la cuenta se registró con un correo personal (UX-AUTH-016). Para correos institucionales, el uso general es libre, pero la verificación sigue siendo requisito para vender. La interfaz exhibe de forma transparente el estado actual (validado vs. pendiente), solicita consentimiento informado previo para la comprobación y, al validarse, muestra el distintivo verde `"Vendedor Verificado"` (o `"Estudiante Validado"`) junto al nombre oficial y número de carné.
 - **Precondiciones:** Acceso al perfil, intento de publicación en Marketplace, o flujo de inicio de sesión de un correo personal (UX-AUTH-016).
 - **UI / contenido:**
   - Tarjeta de validación en la cabecera:
-    - *Estado no verificado:* Borde azul cielo (`#0284C7` al 30%), fondo azul sutil, icono `Icons.verified_user_outlined`, título `"Validación con Carné Universitario"`, texto explicativo de privacidad (`"Solo consultaremos tu nombre y estado activo en Registro y Estadística. Tus notas y datos personales privados nunca son leídos ni almacenados."`) y botón azul `"Validar"`.
-    - *Estado verificado:* Borde verde esmeralda (`#059669` al 30%), fondo verde sutil, icono `Icons.verified`, título `"Estudiante Validado: <Nombre> · <Carné>"`, texto explicativo (`"Tu nombre y badge de verificado se muestran en Marketplace. En el Foro se mantiene tu perfil estudiantil."`).
+    - _Estado no verificado:_ Borde azul cielo (`#0284C7` al 30%), fondo azul sutil, icono `Icons.verified_user_outlined`, título `"Validación con Carné Universitario"`, texto explicativo de privacidad (`"Solo consultaremos tu nombre y estado activo en Registro y Estadística. Tus notas y datos personales privados nunca son leídos ni almacenados."`) y botón azul `"Validar"`.
+    - _Estado verificado:_ Borde verde esmeralda (`#059669` al 30%), fondo verde sutil, icono `Icons.verified`, título `"Estudiante Validado: <Nombre> · <Carné>"`, texto explicativo (`"Tu nombre y badge de verificado se muestran en Marketplace. En el Foro se mantiene tu perfil estudiantil."`).
   - Modal `CarneValidationModal`: cuadro de consentimiento obligatorio, campo de número de carné (mínimo 6 dígitos), campo de nombre completo del estudiante y botón de validación.
 - **Interacciones:**
   - Pulsar `"Validar"` o ser interceptado abre `CarneValidationModal`.
@@ -432,6 +445,7 @@ flowchart TD
 ---
 
 ### UX-PRF-014 — Administración de autenticación multifactor (MFA TOTP)
+
 - **Actor / rol:** Estudiante registrado, Estudiante verificado, Moderador, Administrador
 - **Prioridad:** Must
 - **Estado objetivo:** Todo estudiante autenticado cuenta con un acceso directo y permanente dentro de sus preferencias de perfil para configurar, administrar o dar de baja su autenticación de dos factores (MFA TOTP), visualizando el estado de su factor de seguridad. Los códigos de recuperación MFA están aplazados porque no están disponibles en el Auth alojado del proyecto.
@@ -460,6 +474,7 @@ flowchart TD
 ---
 
 ### UX-PRF-015 — Control de sesión: Inicio, vinculación y cierre de sesión (Logout)
+
 - **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
 - **Prioridad:** Must
 - **Estado objetivo:** La plataforma ofrece una experiencia clara y segura para el ciclo de vida de la sesión: a los visitantes les brinda una invitación clara a iniciar sesión o registrarse para sincronizar sus aportes entre dispositivos abriendo `AuthModal`; a los usuarios autenticados les permite cerrar su sesión con un botón visible y diferenciado, desvinculando credenciales de forma limpia y retornando al perfil en modo local sin bloqueos ni errores.
@@ -477,10 +492,10 @@ flowchart TD
   - Pulsar `"Acceder"` despliega `AuthModal` configurado para login/registro; tras autenticarse con éxito, se ejecuta `_loadFullProfile()` y la pantalla actualiza inmediatamente la cabecera y pestañas con la cuenta del usuario.
   - Pulsar `"Cerrar Sesión"` invoca `SupabaseService.signOut()`, limpia los tokens de autenticación en memoria, recarga el perfil con `_loadFullProfile()` pasando a modo visitante local, limpia las pestañas de actividad y muestra un SnackBar informativo: `"Sesión cerrada."`.
 - **Estados:**
-  - *No autenticado:* Opción de acceso visible.
-  - *Autenticado:* Opción de cierre de sesión visible con el correo del titular.
-  - *Cerrando sesión:* Operación asíncrona rápida con feedback visual.
-  - *Sesión cerrada:* Retorno reactivo a modo visitante sin recarga destructiva de la app.
+  - _No autenticado:_ Opción de acceso visible.
+  - _Autenticado:_ Opción de cierre de sesión visible con el correo del titular.
+  - _Cerrando sesión:_ Operación asíncrona rápida con feedback visual.
+  - _Sesión cerrada:_ Retorno reactivo a modo visitante sin recarga destructiva de la app.
 - **Validaciones y reglas de negocio:**
   - El cierre de sesión no borra las preferencias locales de conveniencia del dispositivo (tema seleccionado, sede activa).
   - Se purgan las credenciales en memoria para evitar accesos indebidos en terminales compartidas (laboratorios de cómputo del campus).
@@ -490,10 +505,10 @@ flowchart TD
   - **Given** un estudiante con sesión iniciada con su correo institucional, **When** presiona el botón "Cerrar Sesión", **Then** la sesión se cierra en Supabase, el perfil cambia a modo visitante y se despliega el mensaje "Sesión cerrada."
   - **Given** un visitante en la pantalla de perfil, **When** presiona el botón "Acceder" y se autentica mediante Google o correo en el modal AuthModal, **Then** el perfil se actualiza en tiempo real mostrando su correo, insignia de cuenta verificada y su actividad sincronizada.
 
-
 ---
 
 ### UX-PRF-016 — Menú inicial: bienvenida, pasos y opción "Omitir"
+
 - **Actor / rol:** Estudiante registrado (primer inicio de sesión exitoso)
 - **Prioridad:** Must
 - **Problema actual [Mejora]:** La plataforma no dispone de ningún flujo de incorporación guiada. Un usuario nuevo llega directamente al feed sin contexto académico ni intereses configurados, lo que produce un feed genérico y desorientación inicial (`profile_screen.dart`; ausencia de pantalla de onboarding).
@@ -528,6 +543,7 @@ flowchart TD
 ---
 
 ### UX-PRF-017 — Contexto académico en el primer uso: sede, facultad y carrera
+
 - **Actor / rol:** Estudiante registrado (primer inicio de sesión)
 - **Prioridad:** Must
 - **Precondiciones:** Menú inicial activo (UX-PRF-016). Catálogo `USACConstants.facultades` disponible en memoria.
@@ -554,6 +570,7 @@ flowchart TD
 ---
 
 ### UX-PRF-018 — Selección de intereses de contenido: canales de Foro, categorías de Marketplace y cursos de Grupos
+
 - **Actor / rol:** Estudiante registrado (primer inicio de sesión)
 - **Prioridad:** Must
 - **Precondiciones:** Menú inicial activo (UX-PRF-016). Paso 1 completado o saltado (UX-PRF-017).
@@ -584,6 +601,7 @@ flowchart TD
 ---
 
 ### UX-PRF-019 — Preferencias de notificaciones en el primer uso
+
 - **Actor / rol:** Estudiante registrado (primer inicio de sesión)
 - **Prioridad:** Should
 - **Precondiciones:** Menú inicial activo. Paso 2 completado o saltado (UX-PRF-018).
@@ -613,6 +631,7 @@ flowchart TD
 ---
 
 ### UX-PRF-020 — Identidad inicial: alias y avatar
+
 - **Actor / rol:** Estudiante registrado (primer inicio de sesión)
 - **Prioridad:** Should
 - **Precondiciones:** Menú inicial activo. Paso 3 completado o saltado (UX-PRF-019).
@@ -640,6 +659,7 @@ flowchart TD
 ---
 
 ### UX-PRF-021 — Cierre del menú inicial y primer feed personalizado
+
 - **Actor / rol:** Estudiante registrado (primer inicio de sesión)
 - **Prioridad:** Must
 - **Precondiciones:** Pasos UX-PRF-016 a UX-PRF-020 completados o saltados.
@@ -667,6 +687,7 @@ flowchart TD
 ---
 
 ### UX-PRF-022 — Centro de preferencias e intereses (hub unificado)
+
 - **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
 - **Prioridad:** Must
 - **Problema actual [Mejora]:** La sección "Cuenta y Preferencias" de `profile_screen.dart:1337` solo ofrece el conmutador de tema visual y el enlace a Normas de Convivencia. No existe un hub de intereses, silenciado ni preferencias de patrocinios, lo que obliga al usuario a saturarse con todo el contenido disponible sin forma de acotarlo.
@@ -695,6 +716,7 @@ flowchart TD
 ---
 
 ### UX-PRF-023 — Gestión de intereses: añadir, quitar, "Ver todo" y "Restablecer"
+
 - **Actor / rol:** Todos
 - **Prioridad:** Must
 - **Precondiciones:** `PreferencesScreen` (UX-PRF-022) activa.
@@ -722,6 +744,7 @@ flowchart TD
 ---
 
 ### UX-PRF-024 — Contenido silenciado y opción "Deshacer"
+
 - **Actor / rol:** Todos
 - **Prioridad:** Should
 - **Precondiciones:** `PreferencesScreen` (UX-PRF-022) activa. El estudiante ha silenciado al menos un elemento desde el feed.
@@ -747,6 +770,7 @@ flowchart TD
 ---
 
 ### UX-PRF-025 — Preferencias de patrocinios: frecuencia y transparencia
+
 - **Actor / rol:** Todos
 - **Prioridad:** Should
 - **Precondiciones:** `PreferencesScreen` (UX-PRF-022) activa.
@@ -773,6 +797,7 @@ flowchart TD
 ---
 
 ### UX-PRF-026 — Sincronización de preferencias (almacenamiento local + nube)
+
 - **Actor / rol:** Estudiante registrado, Estudiante verificado, Moderador, Administrador
 - **Prioridad:** Should
 - **Precondiciones:** `PreferencesScreen` (UX-PRF-022) activa. Usuario autenticado (`SupabaseService.isAuthenticated == true`).
@@ -801,6 +826,7 @@ flowchart TD
 ---
 
 ### UX-PRF-027 — Modelo de categorías personalizadas por pantalla (opt-in) [Mejora]
+
 - **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
 - **Prioridad:** Must
 - **Problema actual [Mejora]:** `forum_screen.dart`, `marketplace_screen.dart` y `groups_screen.dart` presentan todas las categorías o canales disponibles sin un modelo de personalización por superficie; el menú inicial partía de "ver todo" como valor por defecto, produciendo saturación de contenido.
@@ -830,6 +856,7 @@ flowchart TD
 ---
 
 ### UX-PRF-028 — Control "+ Categorías" y selector en cada pantalla [Mejora]
+
 - **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
 - **Prioridad:** Must
 - **Problema actual [Mejora]:** Los filtros de categorías y canales viven dispersos en cada pantalla (`forum_screen.dart`, `marketplace_screen.dart`, `groups_screen.dart`) sin un control común con contador ni un selector con búsqueda para añadir o quitar categorías.
@@ -857,6 +884,7 @@ flowchart TD
 ---
 
 ### UX-PRF-029 — Sugerencias contextuales de categorías [Mejora]
+
 - **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
 - **Prioridad:** Should
 - **Problema actual [Mejora]:** El selector de categorías no aprovecha el contexto académico del usuario (carrera y sede) para ayudarle a elegir; la lista se presenta completa y sin jerarquía.
@@ -884,6 +912,7 @@ flowchart TD
 ---
 
 ### UX-PRF-030 — Estado sin resultados en una pantalla filtrada [Mejora]
+
 - **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
 - **Prioridad:** Must
 - **Problema actual [Mejora]:** Cuando los filtros de categorías no arrojan contenido suficiente, las pantallas no ofrecen una salida explicativa; antes se recurría a un fallback que rellenaba con "Área común" alterando la percepción del filtro del usuario.
@@ -912,6 +941,7 @@ flowchart TD
 ---
 
 ### UX-PRF-031 — Tarjeta de presentación de perfil (acceso al tocar el avatar) [Mejora]
+
 - **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
 - **Prioridad:** Must
 - **Problema actual [Mejora]:** El avatar del autor no es interactivo en `post_card.dart` (avatar línea 132, `authorAlias` línea 148), `comment_item.dart` (avatar línea 62, `authorAlias` línea 79), `marketplace_card.dart` (avatar línea 406, `authorAlias` línea 423) ni en la fila de autoría de `group_card.dart` (línea 243, invocado desde `groups_screen.dart`). Tocar el avatar no despliega información del autor, de modo que no existe una tarjeta de presentación consistente y respetuosa del anonimato.
@@ -929,11 +959,11 @@ flowchart TD
   - "Silenciar" oculta de inmediato el contenido de ese autor en el feed activo y registra la acción; ofrece "Deshacer" mediante SnackBar ([ver UX-X-007](10-transversales.md)).
   - No se muestran botones de seguir, agregar ni de contacto salvo los canales aceptados en contexto Marketplace (UX-PRF-033). En contexto Marketplace, si el usuario tiene anuncios activos, la acción "Ver sus anuncios" abre la carta de presentación del vendedor ([ver UX-MKT-016 en `04-marketplace.md`](04-marketplace.md)).
 - **Estados:**
-  - *Abierta:* Tarjeta con datos mínimos (avatar, seudónimo, rol/insignias).
-  - *Con campos revelados:* Secciones adicionales visibles según consentimiento.
-  - *Perfil anónimo:* Solo datos mínimos más el texto "Este usuario mantiene su perfil anónimo".
-  - *Cargando:* Esqueleto del modal mientras se consulta la visibilidad.
-  - *Error:* Mensaje "No pudimos cargar este perfil. Inténtalo de nuevo." con acción "Reintentar".
+  - _Abierta:_ Tarjeta con datos mínimos (avatar, seudónimo, rol/insignias).
+  - _Con campos revelados:_ Secciones adicionales visibles según consentimiento.
+  - _Perfil anónimo:_ Solo datos mínimos más el texto "Este usuario mantiene su perfil anónimo".
+  - _Cargando:_ Esqueleto del modal mientras se consulta la visibilidad.
+  - _Error:_ Mensaje "No pudimos cargar este perfil. Inténtalo de nuevo." con acción "Reintentar".
 - **Validaciones y reglas de negocio:**
   - La tarjeta nunca muestra nombre real, carné, correo ni DPI en el Foro; respeta el seudónimo garantizado de [UX-X-015](10-transversales.md#ux-x-015--privacidad-de-datos-personales-disociación-de-identidad-y-consentimiento-informado) y la transparencia de [UX-PRF-011](#ux-prf-011--transparencia-de-privacidad-y-uso-de-datos-estudiantiles).
   - La tarjeta es de solo lectura; no permite seguir, agregar ni iniciar conversación.
@@ -947,6 +977,7 @@ flowchart TD
 ---
 
 ### UX-PRF-032 — Consentimiento por campo y visibilidad (default anónimo) [Mejora]
+
 - **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
 - **Prioridad:** Must
 - **Problema actual [Mejora]:** No existe un modelo de consentimiento por campo: `profile_screen.dart` guarda datos académicos y de contacto sin ningún control de qué se comparte con terceros, y no hay una tabla de visibilidad. Toda exposición adicional sería implícita e irreversible.
@@ -962,10 +993,10 @@ flowchart TD
   - Desactivar un interruptor revoca el consentimiento con efecto retroactivo inmediato; la tarjeta deja de mostrarlo.
   - La revocación no requiere confirmación adicional ni borra la configuración del perfil, solo su visibilidad en la tarjeta.
 - **Estados:**
-  - *Todo apagado (default):* Perfil anónimo; la tarjeta muestra el texto de anonimato.
-  - *Parcial:* Algunos campos visibles según consentimiento.
-  - *Revocando:* El campo desaparece de la tarjeta al confirmar.
-  - *Sin conexión:* Los cambios se guardan localmente y se sincronizan al reconectar (UX-PRF-026).
+  - _Todo apagado (default):_ Perfil anónimo; la tarjeta muestra el texto de anonimato.
+  - _Parcial:_ Algunos campos visibles según consentimiento.
+  - _Revocando:_ El campo desaparece de la tarjeta al confirmar.
+  - _Sin conexión:_ Los cambios se guardan localmente y se sincronizan al reconectar (UX-PRF-026).
 - **Validaciones y reglas de negocio:**
   - El valor por defecto de todo campo revelable es "no revelado" (opt-in).
   - La identidad base de la tarjeta (seudónimo, avatar, insignias y datos académicos) se lee de la tabla `profiles`; el consentimiento por campo se almacena en la tabla `profile_card_visibility` (nuevo) con `user_id` (clave foránea a `profiles.id`), `campo`, `visible` y `updated_at`; para visitantes se usa `SharedPreferences`.
@@ -980,6 +1011,7 @@ flowchart TD
 ---
 
 ### UX-PRF-033 — Campos revelables y límites por contexto [Mejora]
+
 - **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
 - **Prioridad:** Must
 - **Problema actual [Mejora]:** No existe una lista canónica de campos revelables ni distinción de contexto: el nombre verificado y los canales de contacto ya configurados en `profile_screen.dart` (tarjeta de contacto de UX-PRF-007) no tienen control de visibilidad en una tarjeta pública.
@@ -1010,6 +1042,7 @@ flowchart TD
 ---
 
 ### UX-PRF-034 — Control y previsualización de mi tarjeta [Mejora]
+
 - **Actor / rol:** Todos (Visitante, Estudiante registrado, Estudiante verificado, Moderador, Administrador)
 - **Prioridad:** Should
 - **Problema actual [Mejora]:** El hub de preferencias ([UX-PRF-022](#ux-prf-022--centro-de-preferencias-e-intereses-hub-unificado), `PreferencesScreen` (nuevo)) no incluye controles de privacidad de la tarjeta ni una previsualización de cómo la ven los demás; la sección "Cuenta y Preferencias" de `profile_screen.dart` tampoco.
@@ -1038,6 +1071,7 @@ flowchart TD
 ---
 
 ### UX-PRF-035 — Admisión de vendedor externo (no estudiante) (nuevo)
+
 - **Actor / rol:** Persona no estudiante aspirante a vendedor; Administrador (aprobador)
 - **Prioridad:** Must
 - **Estado objetivo:** una persona no estudiante que vende en la comunidad USAC solicita admisión identificándose con documentos personales; un administrador revisa y aprueba; al aprobarse queda catalogada como "Vendedor externo verificado" y puede vender en el Marketplace y postularse a patrocinador.
