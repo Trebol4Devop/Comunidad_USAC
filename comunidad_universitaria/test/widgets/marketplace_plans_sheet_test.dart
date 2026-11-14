@@ -137,5 +137,71 @@ void main() {
       // Y para los otros planes muestra el CTA correspondiente
       expect(find.text('Inicia sesión para solicitar'), findsNWidgets(2));
     });
+
+    testWidgets('RN-MKT-04: Simulación de error en fetchPlans muestra estado de error con retry y NO muestra precios inventados (Q25/Q75)', (tester) async {
+      tester.view.physicalSize = const Size(1200, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      // Caso 1: initialError explícito
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: const Scaffold(
+            body: MarketplacePlansSheet(
+              initialError: 'No pudimos cargar los planes desde el servidor. Revisa tu conexión e inténtalo de nuevo.',
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Debe mostrar el mensaje de error y el botón de reintentar
+      expect(
+        find.text('No pudimos cargar los planes desde el servidor. Revisa tu conexión e inténtalo de nuevo.'),
+        findsOneWidget,
+      );
+      expect(find.text('Reintentar'), findsOneWidget);
+
+      // NO deben aparecer precios inventados ni tarjetas de plan
+      expect(find.text('Q25.00'), findsNothing);
+      expect(find.text('Q75.00'), findsNothing);
+      expect(find.text('Q25'), findsNothing);
+      expect(find.text('Q75'), findsNothing);
+      expect(find.text('Emprendedor'), findsNothing);
+      expect(find.text('Comercio'), findsNothing);
+    });
+
+    testWidgets('RN-MKT-04: Lista vacía de planes activa estado de error y no renderiza precios inventados', (tester) async {
+      tester.view.physicalSize = const Size(1200, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      // Caso 2: initialPlans vacío
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: const Scaffold(
+            body: MarketplacePlansSheet(
+              initialPlans: [],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Debe mostrar mensaje de error de carga vacía y botón de reintento
+      expect(
+        find.text('No pudimos cargar los planes. Revisa tu conexión e inténtalo de nuevo.'),
+        findsOneWidget,
+      );
+      expect(find.text('Reintentar'), findsOneWidget);
+
+      // Verificamos ausencia total de precios inventados
+      expect(find.text('Q25.00'), findsNothing);
+      expect(find.text('Q75.00'), findsNothing);
+      expect(find.text('Q25'), findsNothing);
+      expect(find.text('Q75'), findsNothing);
+    });
   });
 }

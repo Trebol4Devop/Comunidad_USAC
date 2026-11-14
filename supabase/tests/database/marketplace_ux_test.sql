@@ -5,7 +5,7 @@
 -- =============================================================================
 begin;
 
-select plan(88);
+select plan(97);
 
 create extension if not exists pgtap;
 
@@ -1187,6 +1187,187 @@ select lives_ok(
       values
         ('Marca Propia Valida', '51000000-0000-0000-0000-000000000001', 'Dueño', '50255554444', 'Propuesta propia en estado pendiente', 'Primera Plana - Marketplace', 'pro_student', 'pending')$$,
     '88. Un usuario puede crear su propia solicitud en estado pending'
+);
+
+-- =============================================================================
+-- SECCIÓN 19: Cobertura adicional QA (Compatibilidad legacy, Legal Hold, Privacidad de Vistas y RLS)
+-- =============================================================================
+
+reset role;
+set role postgres;
+select set_config('request.jwt.claims', '', true);
+select set_config('request.jwt.claim.sub', '', true);
+
+-- Fixtures para compatibilidad de verificación legacy
+select tests.create_supabase_user('51000000-0000-0000-0000-000000000025');
+update public.profiles
+   set is_verified = false,
+       seller_verification_status = 'verified'
+ where id = '51000000-0000-0000-0000-000000000025';
+
+select tests.create_supabase_user('51000000-0000-0000-0000-000000000026');
+update public.profiles
+   set is_verified = true,
+       seller_verification_status = 'unverified'
+ where id = '51000000-0000-0000-0000-000000000026';
+
+-- Test 89: seller_verification_status='verified' permite publicar
+select ok(
+    public.is_verified_seller('51000000-0000-0000-0000-000000000025'::uuid),
+    '89. profiles.seller_verification_status=verified permite publicar (compatibilidad legacy)'
+);
+
+-- Test 90: is_verified=true también permite publicar
+select ok(
+    public.is_verified_seller('51000000-0000-0000-0000-000000000026'::uuid),
+    '90. profiles.is_verified=true permite publicar'
+);
+
+-- Test 91: Usuario con seller_verification_status='verified' inserta exitosamente en marketplace_items
+select tests.authenticate_as('51000000-0000-0000-0000-000000000025');
+select lives_ok(
+    $$insert into public.marketplace_items (
+        id, user_id, title, description, price, is_free, category, facultad, sede,
+        contact_whatsapp, author_alias, status
+    ) values (
+        '52000000-0000-0000-0000-000000000250',
+        '51000000-0000-0000-0000-000000000025',
+        'Item Vendedor Legacy Verified',
+        'Descripcion valida de diez o mas caracteres para test',
+        20.0, false, 'otros_articulos', '08', 'central',
+        '50255556666', 'Estudiante Anónimo', 'available'
+    )$$,
+    '91. Usuario con seller_verification_status=verified inserta exitosamente en marketplace_items'
+);
+
+-- Test 92: Item con is_legal_hold=true no es purgado por purge_expired_soft_deletes
+reset role;
+set role postgres;
+select set_config('request.jwt.claims', '', true);
+select set_config('request.jwt.claim.sub', '', true);
+
+select tests.create_supabase_user('51000000-0000-0000-0000-000000000029');
+insert into public.marketplace_items (
+    id, user_id, title, description, price, is_free, category, facultad, sede,
+    contact_whatsapp, author_alias, status, deleted_at
+) values (
+    '52000000-0000-0000-0000-000000000290',
+    '51000000-0000-0000-0000-000000000029',
+    'Item Legal Hold Expirado',
+    'Item bajo custodia judicial y eliminado logicamente hace 120 dias',
+    50.0, false, 'libros_materiales', '08', 'central',
+    '50255557777', 'Estudiante Anónimo', 'archived', now() - interval '120 days'
+);
+update public.marketplace_items set is_legal_hold = true where id = '52000000-0000-0000-0000-000000000290';
+
+select public.purge_expired_soft_deletes();
+
+select ok(
+    exists (
+        select 1 from public.marketplace_items
+        where id = '52000000-0000-0000-0000-000000000290'
+          and is_legal_hold = true
+    ),
+    '92. Item con is_legal_hold=true no es purgado por purge_expired_soft_deletes'
+);
+
+-- Test 93, 94, 95: safe_marketplace_items incluye propios en moderation_status 1 y 3, y excluye ajenos
+reset role;
+set role postgres;
+select set_config('request.jwt.claims', '', true);
+select set_config('request.jwt.claim.sub', '', true);
+
+select tests.create_supabase_user('51000000-0000-0000-0000-000000000027');
+select tests.create_supabase_user('51000000-0000-0000-0000-000000000028');
+
+update public.profiles set is_verified = true where id in ('51000000-0000-0000-0000-000000000027', '51000000-0000-0000-0000-000000000028');
+
+insert into public.marketplace_items (
+    id, user_id, title, description, price, is_free, category, facultad, sede,
+    contact_whatsapp, author_alias, status
+) values (
+    '52000000-0000-0000-0000-000000000271',
+    '51000000-0000-0000-0000-000000000027',
+    'Item Propio En Revision Mod 1',
+    'Descripcion valida de item en revision moderation_status 1',
+    15.0, false, 'otros_articulos', '08', 'central',
+    '50255558888', 'Estudiante Anónimo', 'available'
+), (
+    '52000000-0000-0000-0000-000000000273',
+    '51000000-0000-0000-0000-000000000027',
+    'Item Propio Rechazado Mod 3',
+    'Descripcion valida de item rechazado moderation_status 3',
+    15.0, false, 'otros_articulos', '08', 'central',
+    '50255558888', 'Estudiante Anónimo', 'available'
+);
+
+update public.marketplace_items set moderation_status = 1 where id = '52000000-0000-0000-0000-000000000271';
+update public.marketplace_items set moderation_status = 3 where id = '52000000-0000-0000-0000-000000000273';
+
+-- Autenticar como Usuario 27 (dueño)
+select tests.authenticate_as('51000000-0000-0000-0000-000000000027');
+
+select ok(
+    exists (
+        select 1 from public.safe_marketplace_items
+        where id = '52000000-0000-0000-0000-000000000271'
+    ),
+    '93. safe_marketplace_items incluye items propios en moderation_status=1'
+);
+
+select ok(
+    exists (
+        select 1 from public.safe_marketplace_items
+        where id = '52000000-0000-0000-0000-000000000273'
+    ),
+    '94. safe_marketplace_items incluye items propios en moderation_status=3'
+);
+
+-- Autenticar como Usuario 28 (observador ajeno)
+select tests.authenticate_as('51000000-0000-0000-0000-000000000028');
+
+select ok(
+    not exists (
+        select 1 from public.safe_marketplace_items
+        where id = '52000000-0000-0000-0000-000000000273'
+    ),
+    '95. safe_marketplace_items excluye items ajenos en moderation_status=3'
+);
+
+-- Test 96: get_marketplace_metrics no expone columna viewer_id (columna inexistente)
+select ok(
+    not exists (
+        select 1
+        from pg_proc p
+        join pg_namespace n on n.oid = p.pronamespace
+        where n.nspname = 'public'
+          and p.proname = 'get_marketplace_metrics'
+          and pg_get_function_result(p.oid) ilike '%viewer_id%'
+    ),
+    '96. get_marketplace_metrics no expone columna viewer_id (columna inexistente)'
+);
+
+-- Test 97: sponsor_requests UPDATE por no-admin falla 42501
+reset role;
+set role postgres;
+select set_config('request.jwt.claims', '', true);
+select set_config('request.jwt.claim.sub', '', true);
+
+insert into public.sponsor_requests (id, brand_name, contact_name, contact_phone, email, proposal_details, user_id, plan_id, status)
+values ('53000000-0000-0000-0000-000000000097', 'Brand Test 97', 'Carlos', '55551919', 'carlos@test.com', 'Proposal details here', '51000000-0000-0000-0000-000000000019', 'pro_student', 'pending')
+on conflict (id) do update set status = 'pending';
+
+-- Asegurar rol moderator para 18
+insert into public.user_roles (user_id, role)
+values ('51000000-0000-0000-0000-000000000018', 'moderator')
+on conflict (user_id) do update set role = 'moderator';
+
+select tests.authenticate_as_moderator('51000000-0000-0000-0000-000000000018');
+select throws_ok(
+    $$update public.sponsor_requests set status = 'approved' where id = '53000000-0000-0000-0000-000000000097'$$,
+    '42501',
+    null,
+    '97. sponsor_requests UPDATE por no-admin falla 42501'
 );
 
 -- -----------------------------------------------------------------------------

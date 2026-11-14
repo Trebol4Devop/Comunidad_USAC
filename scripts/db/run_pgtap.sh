@@ -122,16 +122,23 @@ if [ "$DO_RESET" = true ]; then
 fi
 
 # 5. Ejecución de pruebas pgTAP
-info "Ejecutando pruebas pgTAP con 'supabase test db'..."
+DB_URL="${SUPABASE_DB_URL:-postgresql://postgres:postgres@127.0.0.1:54322/postgres}"
 
 if [[ -n "$TARGET_FILE" ]]; then
-    info "Ejecutando archivo individual: $TARGET_FILE"
-    # supabase test db admite pasar archivos individuales o flags adicionales
-    supabase test db --debug || {
-        error "Las pruebas en $TARGET_FILE fallaron."
-        exit 1
-    }
+    info "Ejecutando archivo individual con psql: $TARGET_FILE"
+    info "Conectando a base de datos en: $DB_URL"
+    if [[ "$TARGET_FILE" == *"00_setup.sql" ]]; then
+        psql "$DB_URL" -v ON_ERROR_STOP=1 -f "$TARGET_FILE"
+    else
+        psql "$DB_URL" -v ON_ERROR_STOP=1 -f "supabase/tests/00_setup.sql" -f "$TARGET_FILE"
+    fi
+    PSQL_EXIT=$?
+    if [[ $PSQL_EXIT -ne 0 ]]; then
+        error "Las pruebas en $TARGET_FILE fallaron con código $PSQL_EXIT."
+        exit $PSQL_EXIT
+    fi
 else
+    info "Ejecutando suite completa de pruebas pgTAP con 'supabase test db'..."
     supabase test db || {
         error "Una o más pruebas de integración pgTAP fallaron."
         exit 1

@@ -10,11 +10,13 @@ import 'sponsor_request_dialog.dart';
 class MarketplacePlansSheet extends StatefulWidget {
   final List<MarketplacePlan>? initialPlans;
   final MarketplaceSellerStatus? initialStatus;
+  final String? initialError;
 
   const MarketplacePlansSheet({
     super.key,
     this.initialPlans,
     this.initialStatus,
+    this.initialError,
   });
 
   static Future<void> show(BuildContext context) {
@@ -56,10 +58,17 @@ class _MarketplacePlansSheetState extends State<MarketplacePlansSheet> {
   @override
   void initState() {
     super.initState();
-    if (widget.initialPlans != null) {
+    if (widget.initialError != null) {
+      _errorMessage = widget.initialError;
+      _isLoading = false;
+    } else if (widget.initialPlans != null) {
       _plans = widget.initialPlans!;
       _myStatus = widget.initialStatus;
       _isLoading = false;
+      if (_plans.isEmpty) {
+        _errorMessage =
+            'No pudimos cargar los planes. Revisa tu conexión e inténtalo de nuevo.';
+      }
     } else {
       _loadPlansAndStatus();
     }

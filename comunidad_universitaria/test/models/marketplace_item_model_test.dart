@@ -325,5 +325,60 @@ void main() {
         'https://wa.me/50255551234?text=${Uri.encodeComponent("Hola Carlos Ingeniero, vi tu publicación 'Calculadora Casio fx-991' en el Marketplace universitario. ¿Sigue disponible?")}',
       );
     });
+
+    test(
+      'Contrato de privacidad de modelos: fromJson con get_marketplace_feed produce userId == null y toInsertMap protege identidad y campos sensibles',
+      () {
+        final feedPayload = {
+          'id': '777e4567-e89b-12d3-a456-426614174000',
+          'title': 'Cuaderno Universitario USAC',
+          'description': '100 hojas cuadrícula',
+          'price': 25.0,
+          'is_free': false,
+          'category': 'libros_materiales',
+          'facultad': '08',
+          'sede': 'central',
+          'building_code': 'T-3',
+          'location_detail': 'Planta baja',
+          'author_alias': 'Estudiante Ingeniero',
+          'created_at': DateTime.now().toIso8601String(),
+          'seller_public_id': 'seller-pub-uuid-1',
+          'seller_plan_id': 'free',
+          'seller_plan_name': 'Estudiante',
+          'seller_is_verified': true,
+          'status': 'available',
+        };
+
+        // 1. Confirma que el payload del feed no expone user_id
+        expect(feedPayload.containsKey('user_id'), isFalse);
+
+        // 2. Confirma que fromJson produce userId == null
+        final item = MarketplaceItem.fromJson(feedPayload);
+        expect(item.userId, isNull, reason: 'MarketplaceItem.fromJson debe producir userId == null');
+
+        // 3. Confirma que aun si se inyecta un user_id malicioso o filtrado en el json, fromJson lo anula
+        final leakPayload = Map<String, dynamic>.from(feedPayload)
+          ..['user_id'] = 'malicious-leaked-user-uuid';
+        final sanitizedItem = MarketplaceItem.fromJson(leakPayload);
+        expect(
+          sanitizedItem.userId,
+          isNull,
+          reason: 'MarketplaceItem.fromJson debe ignorar siempre user_id para evitar doxxing',
+        );
+
+        // 4. Confirma que toInsertMap() no contiene user_id
+        final insertMap = item.toInsertMap();
+        expect(insertMap.containsKey('user_id'), isFalse, reason: 'toInsertMap no debe contener user_id');
+        expect(insertMap['user_id'], isNull);
+
+        // 5. Confirma que toInsertMap() no contiene campos internos de moderación de staff o legales
+        expect(insertMap.containsKey('moderated_by'), isFalse);
+        expect(insertMap.containsKey('moderated_at'), isFalse);
+        expect(insertMap.containsKey('moderation_reason'), isFalse);
+        expect(insertMap.containsKey('moderation_label'), isFalse);
+        expect(insertMap.containsKey('moderation_confidence'), isFalse);
+        expect(insertMap.containsKey('is_legal_hold'), isFalse);
+      },
+    );
   });
 }
