@@ -244,5 +244,141 @@ void main() {
         expect(updated.isMine, isFalse);
       },
     );
+
+    test('get_marketplace_feed RPC payload parsing y nuevos campos UX', () {
+      final now = DateTime.now();
+      final expires = now.add(const Duration(days: 10));
+
+      final rpcPayload = {
+        'id': '777e4567-e89b-12d3-a456-426614174000',
+        'title': 'Calculadora Casio fx-991',
+        'description': 'Ideal para Ingeniería',
+        'price': '350.00',
+        'is_free': false,
+        'category': 'otros_articulos',
+        'facultad': '08',
+        'sede': 'central',
+        'building_code': 'T-3',
+        'location_detail': 'Frente a biblioteca',
+        'contact_whatsapp': '50255551234',
+        'contact_telegram': '@ingeniero_usac',
+        'contact_instagram': 'casio_usac',
+        'contact_messenger': null,
+        'social_links': ['https://instagram.com/p/123'],
+        'image_urls': [
+          'https://example.com/img1.jpg',
+          'https://example.com/img2.jpg',
+        ],
+        'video_url': 'https://example.com/video.mp4',
+        'is_sponsored': true,
+        'sponsor_badge_text': 'Destacado',
+        'author_alias': 'Carlos Ingeniero',
+        'upvotes': 15,
+        'reported_count': 0,
+        'shares_count': 7,
+        'moderation_status': 0,
+        'status': 'available',
+        'created_at': now.subtract(const Duration(hours: 3)).toIso8601String(),
+        'updated_at': now.toIso8601String(),
+        'expires_at': expires.toIso8601String(),
+        'is_legal_hold': false,
+        'seller_public_id': 'seller-pub-123',
+        'seller_business_name': 'Tienda de Ingeniería',
+        'seller_plan_id': 'pro_student',
+        'seller_plan_name': 'Emprendedor',
+        'seller_badge_text': 'Emprendedor Verificado',
+        'seller_is_verified': true,
+        'seller_is_on_campus': true,
+        'seller_building_code': 'T-3',
+        'is_mine': false,
+        'is_upvoted_by_me': true,
+        'is_bookmarked_by_me': true,
+        'score': 12.456,
+        'is_hidden': false,
+        'user_id': 'leaked-user-id-that-must-be-ignored',
+      };
+
+      final item = MarketplaceItem.fromJson(rpcPayload);
+
+      expect(item.id, '777e4567-e89b-12d3-a456-426614174000');
+      expect(item.userId, isNull);
+      expect(item.sellerPublicId, 'seller-pub-123');
+      expect(item.sellerBusinessName, 'Tienda de Ingeniería');
+      expect(item.sellerPlanId, 'pro_student');
+      expect(item.sellerPlanName, 'Emprendedor');
+      expect(item.sellerBadgeText, 'Emprendedor Verificado');
+      expect(item.isSellerVerified, isTrue);
+      expect(item.sellerIsOnCampus, isTrue);
+      expect(item.sellerBuildingCode, 'T-3');
+      expect(item.isMine, isFalse);
+      expect(item.isUpvotedByMe, isTrue);
+      expect(item.isBookmarked, isTrue);
+      expect(item.score, 12.456);
+      expect(item.isHidden, isFalse);
+      expect(item.isHiddenFromFeed, isFalse);
+      expect(item.planBadge, 'Emprendedor Verificado');
+      expect(item.storeUrlId, 'seller-pub-123');
+      expect(item.venceEnDias, greaterThanOrEqualTo(9));
+      expect(item.formattedPrice, 'Q350.00');
+      expect(
+        item.whatsappUrl,
+        'https://wa.me/50255551234?text=${Uri.encodeComponent("Hola Carlos Ingeniero, vi tu publicación 'Calculadora Casio fx-991' en el Marketplace universitario. ¿Sigue disponible?")}',
+      );
+    });
+
+    test(
+      'Contrato de privacidad de modelos: fromJson con get_marketplace_feed produce userId == null y toInsertMap protege identidad y campos sensibles',
+      () {
+        final feedPayload = {
+          'id': '777e4567-e89b-12d3-a456-426614174000',
+          'title': 'Cuaderno Universitario USAC',
+          'description': '100 hojas cuadrícula',
+          'price': 25.0,
+          'is_free': false,
+          'category': 'libros_materiales',
+          'facultad': '08',
+          'sede': 'central',
+          'building_code': 'T-3',
+          'location_detail': 'Planta baja',
+          'author_alias': 'Estudiante Ingeniero',
+          'created_at': DateTime.now().toIso8601String(),
+          'seller_public_id': 'seller-pub-uuid-1',
+          'seller_plan_id': 'free',
+          'seller_plan_name': 'Estudiante',
+          'seller_is_verified': true,
+          'status': 'available',
+        };
+
+        // 1. Confirma que el payload del feed no expone user_id
+        expect(feedPayload.containsKey('user_id'), isFalse);
+
+        // 2. Confirma que fromJson produce userId == null
+        final item = MarketplaceItem.fromJson(feedPayload);
+        expect(item.userId, isNull, reason: 'MarketplaceItem.fromJson debe producir userId == null');
+
+        // 3. Confirma que aun si se inyecta un user_id malicioso o filtrado en el json, fromJson lo anula
+        final leakPayload = Map<String, dynamic>.from(feedPayload)
+          ..['user_id'] = 'malicious-leaked-user-uuid';
+        final sanitizedItem = MarketplaceItem.fromJson(leakPayload);
+        expect(
+          sanitizedItem.userId,
+          isNull,
+          reason: 'MarketplaceItem.fromJson debe ignorar siempre user_id para evitar doxxing',
+        );
+
+        // 4. Confirma que toInsertMap() no contiene user_id
+        final insertMap = item.toInsertMap();
+        expect(insertMap.containsKey('user_id'), isFalse, reason: 'toInsertMap no debe contener user_id');
+        expect(insertMap['user_id'], isNull);
+
+        // 5. Confirma que toInsertMap() no contiene campos internos de moderación de staff o legales
+        expect(insertMap.containsKey('moderated_by'), isFalse);
+        expect(insertMap.containsKey('moderated_at'), isFalse);
+        expect(insertMap.containsKey('moderation_reason'), isFalse);
+        expect(insertMap.containsKey('moderation_label'), isFalse);
+        expect(insertMap.containsKey('moderation_confidence'), isFalse);
+        expect(insertMap.containsKey('is_legal_hold'), isFalse);
+      },
+    );
   });
 }

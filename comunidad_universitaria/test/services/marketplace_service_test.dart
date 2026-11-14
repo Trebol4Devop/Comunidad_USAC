@@ -101,9 +101,10 @@ void main() {
         expect(insertedItem!['contact_whatsapp'], isNull);
         expect(insertedItem!['contact_instagram'], isNull);
         expect(insertedItem!['contact_telegram'], '@quimica_gratis');
-        expect(insertedItem!['upvotes'], 1);
-        expect(insertedItem!['is_sponsored'], isFalse);
-        expect(insertedItem!['sponsor_badge_text'], isNull);
+        expect(insertedItem!.containsKey('upvotes'), isFalse);
+        expect(insertedItem!.containsKey('is_sponsored'), isFalse);
+        expect(insertedItem!.containsKey('sponsor_badge_text'), isFalse);
+        expect(insertedItem!.containsKey('moderation_status'), isFalse);
       },
     );
   });
@@ -155,8 +156,10 @@ void main() {
   });
 
   group('MarketplaceService.fetchSponsoredListings', () {
-    test('obtiene anuncios patrocinados activos', () async {
-      fakeServer.onGet('/rest/v1/marketplace_items', (req) {
+    test('obtiene anuncios patrocinados activos vía RPC get_marketplace_feed', () async {
+      fakeServer.onPost('/rest/v1/rpc/get_marketplace_feed', (req) {
+        final body = jsonDecode(req.body) as Map<String, dynamic>;
+        expect(body['p_sponsored_only'], isTrue);
         return [
           TestFixtures.marketplaceItemMap(
             id: 'sponsor-1',
@@ -169,6 +172,27 @@ void main() {
       final sponsors = await MarketplaceService.fetchSponsoredListings();
       expect(sponsors.length, 1);
       expect(sponsors.first.id, 'sponsor-1');
+      expect(sponsors.first.isSponsored, isTrue);
+    });
+
+    test('obtiene anuncios patrocinados activos vía fallback si la RPC falla', () async {
+      fakeServer.onPost(
+        '/rest/v1/rpc/get_marketplace_feed',
+        (_) => http.Response('function not found', 404),
+      );
+      fakeServer.onGet('/rest/v1/marketplace_items', (req) {
+        return [
+          TestFixtures.marketplaceItemMap(
+            id: 'sponsor-fallback',
+            title: 'Café San Carlos Fallback',
+            isSponsored: true,
+          ),
+        ];
+      });
+
+      final sponsors = await MarketplaceService.fetchSponsoredListings();
+      expect(sponsors.length, 1);
+      expect(sponsors.first.id, 'sponsor-fallback');
       expect(sponsors.first.isSponsored, isTrue);
     });
   });

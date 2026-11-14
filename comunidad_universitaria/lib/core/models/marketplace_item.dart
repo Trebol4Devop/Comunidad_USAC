@@ -88,6 +88,20 @@ class MarketplaceItem {
   final bool isSellerVerified;
   final bool isMine;
 
+  // Nuevos campos UX-Marketplace
+  final String? sellerPublicId;
+  final String? sellerBusinessName;
+  final String sellerPlanId;
+  final String sellerPlanName;
+  final String? sellerBadgeText;
+  final bool sellerIsOnCampus;
+  final String? sellerBuildingCode;
+  final bool isBookmarked;
+  final DateTime? expiresAt;
+  final double score;
+  final bool isHiddenFromFeed;
+  final DateTime? bookmarkedAt;
+
   MarketplaceItem({
     required this.id,
     required this.title,
@@ -120,6 +134,18 @@ class MarketplaceItem {
     this.status = 'available',
     this.isSellerVerified = false,
     this.isMine = false,
+    this.sellerPublicId,
+    this.sellerBusinessName,
+    this.sellerPlanId = 'free',
+    this.sellerPlanName = 'Estudiante',
+    this.sellerBadgeText,
+    this.sellerIsOnCampus = false,
+    this.sellerBuildingCode,
+    this.isBookmarked = false,
+    this.expiresAt,
+    this.score = 0.0,
+    this.isHiddenFromFeed = false,
+    this.bookmarkedAt,
   });
 
   String get formattedPrice {
@@ -138,8 +164,16 @@ class MarketplaceItem {
     return name == null || name.isEmpty ? null : name;
   }
 
-  bool get isHidden => moderationStatus >= 2;
+  bool get isHidden => isHiddenFromFeed || moderationStatus >= 2;
   bool get isUnderReview => moderationStatus == 1;
+
+  int? get venceEnDias {
+    if (expiresAt == null) return null;
+    return expiresAt!.difference(DateTime.now()).inDays;
+  }
+
+  String? get planBadge => sellerBadgeText;
+  String? get storeUrlId => sellerPublicId;
 
   bool get hasAnyContact =>
       (contactWhatsapp != null && contactWhatsapp!.trim().isNotEmpty) ||
@@ -154,7 +188,7 @@ class MarketplaceItem {
         ? cleanPhone.substring(1)
         : (cleanPhone.length == 8 ? '502$cleanPhone' : cleanPhone);
     final msg = Uri.encodeComponent(
-      '¡Hola! Vi tu publicación en Comunidad USAC sobre "$title". ¿Sigue disponible?',
+      "Hola $authorAlias, vi tu publicación '$title' en el Marketplace universitario. ¿Sigue disponible?",
     );
     return 'https://wa.me/$phone?text=$msg';
   }
@@ -219,6 +253,18 @@ class MarketplaceItem {
     String? status,
     bool? isSellerVerified,
     bool? isMine,
+    String? sellerPublicId,
+    String? sellerBusinessName,
+    String? sellerPlanId,
+    String? sellerPlanName,
+    String? sellerBadgeText,
+    bool? sellerIsOnCampus,
+    String? sellerBuildingCode,
+    bool? isBookmarked,
+    DateTime? expiresAt,
+    double? score,
+    bool? isHiddenFromFeed,
+    DateTime? bookmarkedAt,
   }) {
     return MarketplaceItem(
       id: id ?? this.id,
@@ -252,8 +298,23 @@ class MarketplaceItem {
       status: status ?? this.status,
       isSellerVerified: isSellerVerified ?? this.isSellerVerified,
       isMine: isMine ?? this.isMine,
+      sellerPublicId: sellerPublicId ?? this.sellerPublicId,
+      sellerBusinessName: sellerBusinessName ?? this.sellerBusinessName,
+      sellerPlanId: sellerPlanId ?? this.sellerPlanId,
+      sellerPlanName: sellerPlanName ?? this.sellerPlanName,
+      sellerBadgeText: sellerBadgeText ?? this.sellerBadgeText,
+      sellerIsOnCampus: sellerIsOnCampus ?? this.sellerIsOnCampus,
+      sellerBuildingCode: sellerBuildingCode ?? this.sellerBuildingCode,
+      isBookmarked: isBookmarked ?? this.isBookmarked,
+      expiresAt: expiresAt ?? this.expiresAt,
+      score: score ?? this.score,
+      isHiddenFromFeed: isHiddenFromFeed ?? this.isHiddenFromFeed,
+      bookmarkedAt: bookmarkedAt ?? this.bookmarkedAt,
     );
   }
+
+  factory MarketplaceItem.fromJson(Map<String, dynamic> json) =>
+      MarketplaceItem.fromMap(json);
 
   factory MarketplaceItem.fromMap(
     Map<String, dynamic> map, {
@@ -277,6 +338,17 @@ class MarketplaceItem {
         ? rawPrice.toDouble()
         : double.tryParse(rawPrice?.toString() ?? '0') ?? 0.0;
     final isFreeVal = map['is_free'] == true || priceVal <= 0.0;
+
+    final modStatus = (map['moderation_status'] is int)
+        ? map['moderation_status'] as int
+        : int.tryParse(map['moderation_status']?.toString() ?? '0') ?? 0;
+
+    final rawScore = map['score'];
+    final scoreVal = (rawScore is num)
+        ? rawScore.toDouble()
+        : double.tryParse(rawScore?.toString() ?? '0') ?? 0.0;
+
+    final isHiddenFeed = map['is_hidden'] == true || modStatus >= 2;
 
     return MarketplaceItem(
       id: map['id']?.toString() ?? '',
@@ -308,9 +380,7 @@ class MarketplaceItem {
       createdAt: map['created_at'] != null
           ? DateTime.tryParse(map['created_at'].toString()) ?? DateTime.now()
           : DateTime.now(),
-      moderationStatus: (map['moderation_status'] is int)
-          ? map['moderation_status']
-          : int.tryParse(map['moderation_status']?.toString() ?? '0') ?? 0,
+      moderationStatus: modStatus,
       reportedCount: (map['reported_count'] is int)
           ? map['reported_count']
           : int.tryParse(map['reported_count']?.toString() ?? '0') ?? 0,
@@ -329,11 +399,29 @@ class MarketplaceItem {
         final localShares = ShareCountService.getCachedCount(itemId);
         return localShares > parsedShares ? localShares : parsedShares;
       }(),
-      isUpvotedByMe: isUpvotedByMe,
+      isUpvotedByMe: isUpvotedByMe || map['is_upvoted_by_me'] == true,
       status: map['status']?.toString() ?? 'available',
-      isSellerVerified:
-          map['is_seller_verified'] == true || map['is_verified'] == true,
+      isSellerVerified: map['seller_is_verified'] == true ||
+          map['is_seller_verified'] == true ||
+          map['is_verified'] == true,
       isMine: map['is_mine'] == true,
+      sellerPublicId: map['seller_public_id']?.toString(),
+      sellerBusinessName: map['seller_business_name']?.toString(),
+      sellerPlanId: map['seller_plan_id']?.toString() ?? 'free',
+      sellerPlanName: map['seller_plan_name']?.toString() ?? 'Estudiante',
+      sellerBadgeText: map['seller_badge_text']?.toString(),
+      sellerIsOnCampus: map['seller_is_on_campus'] == true,
+      sellerBuildingCode: map['seller_building_code']?.toString(),
+      isBookmarked: map['is_bookmarked_by_me'] == true ||
+          map['is_bookmarked'] == true,
+      expiresAt: map['expires_at'] != null
+          ? DateTime.tryParse(map['expires_at'].toString())
+          : null,
+      score: scoreVal,
+      isHiddenFromFeed: isHiddenFeed,
+      bookmarkedAt: map['bookmarked_at'] != null
+          ? DateTime.tryParse(map['bookmarked_at'].toString())
+          : null,
     );
   }
 
@@ -358,7 +446,6 @@ class MarketplaceItem {
       'is_sponsored': isSponsored,
       'sponsor_badge_text': sponsorBadgeText,
       'author_alias': authorAlias,
-      'user_id': userId,
       'moderation_status': moderationStatus,
       'reported_count': reportedCount,
       'upvotes': upvotes,

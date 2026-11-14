@@ -5,9 +5,20 @@ import '../../../core/services/marketplace_service.dart';
 import '../../../core/utils/responsive.dart';
 
 class SponsorRequestDialog extends StatefulWidget {
-  const SponsorRequestDialog({super.key});
+  final String? planId;
+  final String? planName;
 
-  static Future<void> show(BuildContext context) {
+  const SponsorRequestDialog({
+    super.key,
+    this.planId,
+    this.planName,
+  });
+
+  static Future<void> show(
+    BuildContext context, {
+    String? planId,
+    String? planName,
+  }) {
     if (Responsive.isMobile(context)) {
       return showModalBottomSheet(
         context: context,
@@ -16,12 +27,18 @@ class SponsorRequestDialog extends StatefulWidget {
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
-        builder: (ctx) => const SponsorRequestDialog(),
+        builder: (ctx) => SponsorRequestDialog(
+          planId: planId,
+          planName: planName,
+        ),
       );
     } else {
       return showDialog(
         context: context,
-        builder: (ctx) => const SponsorRequestDialog(),
+        builder: (ctx) => SponsorRequestDialog(
+          planId: planId,
+          planName: planName,
+        ),
       );
     }
   }
@@ -39,8 +56,33 @@ class _SponsorRequestDialogState extends State<SponsorRequestDialog> {
   final _proposalController = TextEditingController();
 
   String _placement = 'Primera Plana - Marketplace';
+  String? _selectedPlanId;
+  List<MarketplacePlan> _plans = [];
+  bool _isLoadingPlans = true;
+
   bool _isSubmitting = false;
   String? _submitError;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedPlanId = widget.planId;
+    _loadPlans();
+  }
+
+  Future<void> _loadPlans() async {
+    try {
+      final fetched = await MarketplaceService.fetchPlans();
+      if (!mounted) return;
+      setState(() {
+        _plans = fetched;
+        _isLoadingPlans = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isLoadingPlans = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -69,6 +111,9 @@ class _SponsorRequestDialogState extends State<SponsorRequestDialog> {
         email: _emailController.text.trim(),
         proposalDetails: _proposalController.text.trim(),
         expectedPlacement: _placement,
+        planId: (_selectedPlanId == null || _selectedPlanId == 'none')
+            ? null
+            : _selectedPlanId,
       );
     } catch (_) {
       success = false;
@@ -137,9 +182,11 @@ class _SponsorRequestDialogState extends State<SponsorRequestDialog> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const Text(
-                          'Anúnciate en primera plana con video y mayor alcance',
-                          style: TextStyle(
+                        Text(
+                          widget.planName != null
+                              ? 'Solicitud para Plan ${widget.planName}'
+                              : 'Anúnciate en primera plana con video y mayor alcance',
+                          style: const TextStyle(
                             fontSize: 12,
                             color: Color(0xFFD97706),
                           ),
@@ -211,6 +258,44 @@ class _SponsorRequestDialogState extends State<SponsorRequestDialog> {
 
               const SizedBox(height: 12),
 
+              // Plan Deseado Selector (leído de la BD)
+              if (!_isLoadingPlans && _plans.isNotEmpty) ...[
+                DropdownButtonFormField<String>(
+                  key: ValueKey(_selectedPlanId),
+                  initialValue: _selectedPlanId,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Plan Deseado',
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                  ),
+                  items: [
+                    const DropdownMenuItem<String>(
+                      value: 'none',
+                      child: Text(
+                        'Solo patrocinio (sin plan mensual)',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    ..._plans.map(
+                      (p) => DropdownMenuItem<String>(
+                        value: p.id,
+                        child: Text(
+                          '${p.name} (${p.formattedPrice}${p.priceMonthly > 0 ? "/mes" : ""})',
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ],
+                  onChanged: (val) {
+                    setState(() => _selectedPlanId = val);
+                  },
+                ),
+                const SizedBox(height: 12),
+              ],
+
               DropdownButtonFormField<String>(
                 initialValue: _placement,
                 isExpanded: true,
@@ -239,13 +324,14 @@ class _SponsorRequestDialogState extends State<SponsorRequestDialog> {
                   DropdownMenuItem(
                     value: 'Todos los Espacios',
                     child: Text(
-                      'Patrocinio Integral Multisección',
+                      'Presencia Integral (Marketplace + Foro)',
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
-                onChanged: (val) =>
-                    setState(() => _placement = val ?? _placement),
+                onChanged: (val) {
+                  if (val != null) setState(() => _placement = val);
+                },
               ),
 
               const SizedBox(height: 12),
@@ -257,39 +343,59 @@ class _SponsorRequestDialogState extends State<SponsorRequestDialog> {
                   labelText:
                       'Detalle de la propuesta o productos a promocionar',
                   hintText:
-                      'Describe qué productos o servicios ofreces a los estudiantes...',
+                      'Describe brevemente tus productos y el horario o ubicación de entrega...',
                 ),
-                validator: (val) => val == null || val.trim().length < 10
-                    ? 'Describe tu propuesta con al menos 10 caracteres.'
-                    : null,
+                validator: (val) {
+                  if (val == null || val.trim().length < 10) {
+                    return 'Describe tu propuesta con al menos 10 caracteres.';
+                  }
+                  if (val.trim().length > 500) {
+                    return 'El detalle no debe exceder 500 caracteres.';
+                  }
+                  return null;
+                },
+              ),
+
+              const SizedBox(height: 12),
+
+              // Nota obligatoria
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: ZanateColors.zanateAccent.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      size: 16,
+                      color: ZanateColors.zanateAccent,
+                    ),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'La plataforma no procesa pagos ni cobra comisiones por venta. '
+                        'La coordinación del plan se realiza con el equipo por WhatsApp.',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: ZanateColors.zanateAccent,
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
 
               if (_submitError != null) ...[
                 const SizedBox(height: 12),
-                Semantics(
-                  liveRegion: true,
-                  child: Text(
-                    _submitError!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
+                Text(
+                  _submitError!,
+                  style: TextStyle(color: theme.colorScheme.error, fontSize: 12),
                 ),
               ],
-
-              const SizedBox(height: 16),
-
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text(
-                  'Nota: Los patrocinios ayudan al sostenimiento autónomo de la plataforma estudiantil. No se admiten productos no autorizados por las normas comunitarias.',
-                  style: TextStyle(fontSize: 11, color: Color(0xFF475569)),
-                ),
-              ),
 
               const SizedBox(height: 20),
 
@@ -301,20 +407,25 @@ class _SponsorRequestDialogState extends State<SponsorRequestDialog> {
                   runSpacing: 8,
                   children: [
                     TextButton(
-                      onPressed: _isSubmitting
-                          ? null
-                          : () => Navigator.of(context).pop(),
+                      onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
                       child: const Text('Cancelar'),
                     ),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFD97706),
+                        backgroundColor: ZanateColors.zanateAccent,
                         foregroundColor: Colors.white,
                       ),
                       onPressed: _isSubmitting ? null : _submit,
-                      child: Text(
-                        _isSubmitting ? 'Enviando...' : 'Enviar Solicitud',
-                      ),
+                      child: _isSubmitting
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text('Enviar Solicitud'),
                     ),
                   ],
                 ),
@@ -334,14 +445,7 @@ class _SponsorRequestDialogState extends State<SponsorRequestDialog> {
       );
     } else {
       return Dialog(
-        backgroundColor: theme.brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(
-            color: theme.brightness == Brightness.dark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
-            width: 0.8,
-          ),
-        ),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
           child: content,
