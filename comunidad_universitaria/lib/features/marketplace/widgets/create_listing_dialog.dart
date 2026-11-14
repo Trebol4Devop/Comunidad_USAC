@@ -258,12 +258,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
         videoUrl: _videoUrlController.text.trim().isNotEmpty
             ? _videoUrlController.text.trim()
             : null,
-        authorAlias:
-            (_userProfile?.isCarneVerified == true &&
-                _userProfile?.studentName != null &&
-                _userProfile!.studentName!.isNotEmpty)
-            ? _userProfile!.studentName!
-            : widget.activeAlias,
+        authorAlias: widget.activeAlias,
       );
 
       if (mounted) {
@@ -383,12 +378,8 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
               // Selector visual drásticamente diferenciado (Identidad en Marketplace)
               IdentityBadgeChip(
                 mode: IdentityMode.marketplaceVerified,
-                displayName: _userProfile?.isCarneVerified == true
-                    ? _userProfile?.studentName ?? widget.activeAlias
-                    : widget.activeAlias,
-                carne: _userProfile?.isCarneVerified == true
-                    ? _userProfile?.carne
-                    : null,
+                displayName: widget.activeAlias,
+                carne: null,
                 isVerified: _userProfile?.isCarneVerified ?? false,
                 onSwitchIdentity: () {
                   if (_userProfile != null) {
