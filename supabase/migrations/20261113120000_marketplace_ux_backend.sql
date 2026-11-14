@@ -90,6 +90,15 @@ CREATE TABLE IF NOT EXISTS public.marketplace_bookmarks (
 ALTER TABLE public.marketplace_items ADD COLUMN IF NOT EXISTS expires_at timestamptz;
 ALTER TABLE public.marketplace_items ADD COLUMN IF NOT EXISTS shares_count integer NOT NULL DEFAULT 0;
 
+-- Compatibilidad con el modelo legacy de verificación de vendedores.
+-- En la base remota esta columna puede no existir; se crea y se backfillea
+-- desde profiles.is_verified para no romper a vendedores ya verificados.
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS seller_verification_status text NOT NULL DEFAULT 'unverified';
+UPDATE public.profiles
+SET seller_verification_status = 'verified'
+WHERE is_verified = true
+  AND seller_verification_status IS DISTINCT FROM 'verified';
+
 -- Plan y revisión administrativa en sponsor_requests
 ALTER TABLE public.sponsor_requests ADD COLUMN IF NOT EXISTS plan_id text REFERENCES public.marketplace_plans(id) ON UPDATE CASCADE;
 ALTER TABLE public.sponsor_requests ADD COLUMN IF NOT EXISTS reviewed_by uuid REFERENCES auth.users(id) ON DELETE SET NULL;
@@ -242,7 +251,7 @@ BEGIN
         SELECT 1
         FROM public.profiles p
         WHERE p.id = p_user_id
-          AND p.is_verified = true
+          AND (p.is_verified = true OR p.seller_verification_status = 'verified')
     ) OR EXISTS (
         SELECT 1
         FROM public.seller_profiles sp
@@ -573,6 +582,52 @@ SELECT DISTINCT mi.user_id
 FROM public.marketplace_items mi
 WHERE mi.user_id IS NOT NULL
 ON CONFLICT (user_id) DO NOTHING;
+
+-- 4.6.b Blindaje del flujo de solicitudes de patrocinio.
+-- En instalaciones limpias ya existe; se recrea para garantizar el mismo
+-- comportamiento en bases con drift. Un usuario solo puede crear su solicitud
+-- en estado pending y nunca puede revisarla.
+CREATE OR REPLACE FUNCTION public.guard_sponsor_request_workflow()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        IF auth.uid() IS NOT NULL AND auth.role() <> 'service_role' THEN
+            IF NEW.user_id IS NULL THEN
+                NEW.user_id := auth.uid();
+            ELSIF NEW.user_id IS DISTINCT FROM auth.uid() THEN
+                RAISE EXCEPTION 'No puedes crear una solicitud de patrocinio a nombre de otro usuario'
+                    USING ERRCODE = '42501';
+            END IF;
+
+            IF NEW.status IS DISTINCT FROM 'pending' THEN
+                RAISE EXCEPTION 'Las solicitudes de patrocinio solo pueden crearse en estado pending'
+                    USING ERRCODE = '42501';
+            END IF;
+        END IF;
+        RETURN NEW;
+    END IF;
+
+    IF auth.uid() IS NOT NULL
+       AND auth.role() IS DISTINCT FROM 'service_role'
+       AND NOT public.is_pemtree_admin(auth.uid())
+       AND (NEW.status IS DISTINCT FROM OLD.status OR NEW.user_id IS DISTINCT FROM OLD.user_id) THEN
+        RAISE EXCEPTION 'Only admins may review sponsor requests.'
+            USING ERRCODE = '42501';
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS guard_sponsor_request_workflow ON public.sponsor_requests;
+CREATE TRIGGER guard_sponsor_request_workflow
+    BEFORE INSERT OR UPDATE ON public.sponsor_requests
+    FOR EACH ROW
+    EXECUTE FUNCTION public.guard_sponsor_request_workflow();
 
 -- 4.6 Gestión de resolución de solicitudes de patrocinio / cuenta comercial
 CREATE OR REPLACE FUNCTION public.handle_sponsor_request_decision()
@@ -2391,6 +2446,21 @@ CREATE POLICY "Staff puede actualizar sponsor_requests"
     WITH CHECK (
         public.is_pemtree_admin(auth.uid())
         OR public.is_pemtree_moderator(auth.uid())
+    );
+
+-- 10.6 marketplace_items: la verificación se valida en RLS y en el trigger.
+-- Se alinea la política de INSERT con public.is_verified_seller (carné verificado
+-- o cuenta comercial aprobada) para no depender de columnas legacy.
+DROP POLICY IF EXISTS "Authenticated users can insert own marketplace items" ON public.marketplace_items;
+DROP POLICY IF EXISTS "Verified sellers can insert own marketplace items" ON public.marketplace_items;
+CREATE POLICY "Verified sellers can insert own marketplace items"
+    ON public.marketplace_items
+    FOR INSERT
+    TO authenticated
+    WITH CHECK (
+        auth.uid() IS NOT NULL
+        AND user_id = auth.uid()
+        AND public.is_verified_seller(auth.uid())
     );
 
 -- =============================================================================

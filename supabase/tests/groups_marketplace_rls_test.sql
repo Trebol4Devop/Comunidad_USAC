@@ -143,7 +143,8 @@ select throws_ok(
 select tests.authenticate_as('11111111-1111-1111-1111-111111111111');
 select lives_ok(
     $$insert into public.marketplace_items (
-        id, user_id, title, description, price, category, facultad, author_alias, status
+        id, user_id, title, description, price, category, facultad,
+        contact_whatsapp, author_alias, status
       ) values (
         '22222222-0000-0000-0000-000000000099',
         '11111111-1111-1111-1111-111111111111',
@@ -152,6 +153,7 @@ select lives_ok(
         85.0,
         'otros_articulos',
         '06',
+        '50255550101',
         'Compilador Desvelado',
         'available'
       )$$,
