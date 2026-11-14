@@ -17,6 +17,11 @@ class MarketplaceCard extends StatefulWidget {
   final VoidCallback? onSponsoredHide;
   final VoidCallback? onShare;
   final bool isOwner;
+  final VoidCallback? onTap;
+  final VoidCallback? onOpenStore;
+  final VoidCallback? onToggleBookmark;
+  final VoidCallback? onShowPlans;
+  final VoidCallback? onOpenMySales;
 
   const MarketplaceCard({
     super.key,
@@ -27,6 +32,11 @@ class MarketplaceCard extends StatefulWidget {
     this.onSponsoredHide,
     this.onShare,
     this.isOwner = false,
+    this.onTap,
+    this.onOpenStore,
+    this.onToggleBookmark,
+    this.onShowPlans,
+    this.onOpenMySales,
   });
 
   @override
@@ -90,7 +100,7 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
     final isDark = theme.brightness == Brightness.dark;
     final item = widget.item;
 
-    return Container(
+    final cardWidget = Container(
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF0F172A) : Colors.white,
         border: Border(
@@ -229,33 +239,61 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                   ),
                 ),
 
-              // Price badge (Top Right)
+              // Price badge & Bookmark (Top Right)
               Positioned(
                 top: 10,
                 right: 10,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF0F172A) : ZanateColors.zanateDark,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.15),
-                        blurRadius: 4,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (widget.onToggleBookmark != null)
+                      Container(
+                        margin: const EdgeInsets.only(right: 6),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? const Color(0xFF0F172A).withValues(alpha: 0.85)
+                              : Colors.white.withValues(alpha: 0.9),
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          iconSize: 18,
+                          padding: const EdgeInsets.all(5),
+                          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                          icon: Icon(
+                            item.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                            color: item.isBookmarked
+                                ? ZanateColors.zanateAccent
+                                : (isDark ? Colors.white70 : Colors.black87),
+                          ),
+                          tooltip: item.isBookmarked ? 'Guardado' : 'Guardar',
+                          onPressed: widget.onToggleBookmark,
+                        ),
                       ),
-                    ],
-                  ),
-                  child: Text(
-                    item.isSold ? 'VENDIDO' : item.formattedPrice,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF0F172A) : ZanateColors.zanateDark,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.15),
+                            blurRadius: 4,
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        item.isSold ? 'VENDIDO' : item.formattedPrice,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
 
@@ -320,47 +358,117 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Author and verification
-                Row(
-                  children: [
-                    Icon(
-                      PhosphorIconsRegular.userCircle,
-                      size: 16,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              item.authorAlias,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          if (item.isSellerVerified) ...[
-                            const SizedBox(width: 4),
-                            Tooltip(
-                              message: 'Vendedor verificado',
-                              child: Icon(
-                                Icons.verified_outlined,
-                                size: 14,
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ],
+                InkWell(
+                  onTap: widget.onOpenStore,
+                  borderRadius: BorderRadius.circular(6),
+                  child: Row(
+                    children: [
+                      Icon(
+                        PhosphorIconsRegular.userCircle,
+                        size: 16,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                       ),
-                    ),
-                    Text(
-                      TimeUtils.timeAgo(item.createdAt),
-                      style: theme.textTheme.bodySmall?.copyWith(fontSize: 10),
-                    ),
-                  ],
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                (item.sellerBusinessName != null && item.sellerBusinessName!.trim().isNotEmpty)
+                                    ? item.sellerBusinessName!
+                                    : item.authorAlias,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            if (item.isSellerVerified) ...[
+                              const SizedBox(width: 4),
+                              Tooltip(
+                                message: 'Vendedor verificado',
+                                child: Icon(
+                                  Icons.verified_outlined,
+                                  size: 14,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                            if (item.sellerBadgeText != null && item.sellerBadgeText!.isNotEmpty) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: ZanateColors.zanateAccent.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  item.sellerBadgeText!,
+                                  style: const TextStyle(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: ZanateColors.zanateAccent,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      Text(
+                        TimeUtils.timeAgo(item.createdAt),
+                        style: theme.textTheme.bodySmall?.copyWith(fontSize: 10),
+                      ),
+                    ],
+                  ),
                 ),
+
+                // Presence Chip & Expiration
+                if (item.sellerIsOnCampus || (item.expiresAt != null && item.sellerPlanId == 'free')) ...[
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      if (item.sellerIsOnCampus)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.location_on, size: 12, color: Color(0xFF059669)),
+                              const SizedBox(width: 3),
+                              Text(
+                                item.sellerBuildingCode != null && item.sellerBuildingCode!.isNotEmpty
+                                    ? 'Entregando ahora · ${item.sellerBuildingCode}'
+                                    : 'Entregando ahora en el campus',
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF059669),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      if (item.expiresAt != null && item.sellerPlanId == 'free' && item.venceEnDias != null)
+                        Text(
+                          'Vence en ${item.venceEnDias} días',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: item.venceEnDias! <= 3 ? const Color(0xFFDC2626) : Colors.grey.shade600,
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 8),
 
                 // Title
@@ -710,9 +818,21 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
 
                     // Contact icons / buttons
                     Expanded(
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
+                      child: item.isSold
+                          ? const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                              child: Text(
+                                'Este artículo ya fue vendido',
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            )
+                          : SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
                           children: [
                             // WhatsApp
                             if (item.whatsappUrl != null)
@@ -947,5 +1067,13 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
         ],
       ),
     );
+
+    if (widget.onTap != null) {
+      return InkWell(
+        onTap: widget.onTap,
+        child: cardWidget,
+      );
+    }
+    return cardWidget;
   }
 }

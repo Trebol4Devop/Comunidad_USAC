@@ -13,12 +13,17 @@ import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
 import '../widgets/create_listing_dialog.dart';
 import '../widgets/marketplace_card.dart';
+import '../widgets/marketplace_plans_sheet.dart';
 import '../widgets/sponsor_carousel.dart';
 import '../widgets/sponsor_request_dialog.dart';
 import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/empty_state_widget.dart';
 import '../../shared/widgets/network_state_widgets.dart';
 import '../../shared/widgets/settings_bottom_sheet.dart';
+import 'my_sales_screen.dart';
+import 'product_detail_screen.dart';
+import 'saved_listings_screen.dart';
+import 'store_profile_screen.dart';
 
 class MarketplaceScreen extends StatefulWidget {
   final String activeAlias;
@@ -47,6 +52,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   String _selectedCategory = 'todos';
   String _selectedSede = 'todas';
   String _selectedFacultad = 'todas';
+  String _selectedBuilding = 'todos';
   bool _onlyFree = false;
   String _searchQuery = '';
 
@@ -72,10 +78,13 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
           category: _selectedCategory,
           facultad: _selectedFacultad,
           sede: _selectedSede,
+          buildingCode: _selectedBuilding != 'todos' ? _selectedBuilding : null,
           onlyFree: _onlyFree,
           searchQuery: _searchQuery,
         ),
-        MarketplaceService.fetchSponsoredListings(),
+        MarketplaceService.fetchSponsoredListings(
+          sede: _selectedSede != 'todas' ? _selectedSede : null,
+        ),
       ]);
       final hiddenSponsoredIds =
           await SponsoredPreferencesService.hiddenItemIds();
@@ -125,7 +134,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     await ShareCountService.incrementShare(item.id);
 
     final shareText =
-        '${item.title} - ${item.isFree ? "GRATIS" : item.formattedPrice}\n\n${item.description}\n\nUbicación: ${item.locationDetail.isNotEmpty ? item.locationDetail : item.sede}\n— Publicado por ${item.authorAlias} en Comunidad USAC';
+        '${item.title} - ${item.formattedPrice}\n\n${item.description}\n\nUbicación: ${item.locationDetail.isNotEmpty ? item.locationDetail : item.sede}\n— Publicado por ${item.authorAlias} en Comunidad USAC';
     try {
       await SharePlus.instance.share(
         ShareParams(text: shareText, subject: item.title),
@@ -135,11 +144,12 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Publicación compartida ($newCount veces). El enlace se copió al portapapeles.'),
+          content: Text(
+            'Publicación compartida ($newCount veces). El enlace se copió al portapapeles.',
+          ),
           backgroundColor: ZanateColors.zanateAccent,
         ),
       );
-      return;
     }
   }
 
@@ -183,6 +193,47 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
         duration: const Duration(seconds: 2),
       ),
     );
+  }
+
+  Future<void> _handleToggleBookmark(MarketplaceItem item) async {
+    if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
+      AuthModal.show(
+        context,
+        title: 'Inicia sesión para guardar',
+        subtitle: 'Para guardar este producto en tus marcadores debes iniciar sesión.',
+        onAuthenticated: () => _handleToggleBookmark(item),
+      );
+      return;
+    }
+
+    final prev = item.isBookmarked;
+    setState(() {
+      final idx = _listings.indexWhere((l) => l.id == item.id);
+      if (idx != -1) {
+        _listings[idx] = item.copyWith(isBookmarked: !prev);
+      }
+    });
+
+    try {
+      final res = await MarketplaceService.toggleBookmark(item.id);
+      if (mounted && res != !prev) {
+        setState(() {
+          final idx = _listings.indexWhere((l) => l.id == item.id);
+          if (idx != -1) {
+            _listings[idx] = item.copyWith(isBookmarked: res);
+          }
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          final idx = _listings.indexWhere((l) => l.id == item.id);
+          if (idx != -1) {
+            _listings[idx] = item.copyWith(isBookmarked: prev);
+          }
+        });
+      }
+    }
   }
 
   Future<void> _handleToggleUpvote(MarketplaceItem item) async {
@@ -316,14 +367,53 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     final canCreate = await MarketplaceService.canCreateListing();
     if (!mounted) return;
     if (!canCreate) {
+      MarketplaceSellerStatus? status;
+      try {
+        status = await MarketplaceService.fetchMyStatus();
+      } catch (_) {
+        // En offline o sin conexión a Supabase, status será nulo.
+      }
+      if (!mounted) return;
+
+      final currentStatus = status;
+      if (currentStatus != null &&
+          !currentStatus.isUnlimited &&
+          currentStatus.activeItems >= currentStatus.maxActiveItems) {
+        await showDialog<void>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text('Límite de publicaciones alcanzado'),
+            content: Text(
+              'Has alcanzado el límite de ${currentStatus.maxActiveItems} publicaciones activas de tu plan ${currentStatus.planName}. Puedes mejorar tu plan para publicar más.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cerrar'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                  MarketplacePlansSheet.show(context);
+                },
+                child: const Text('Conocer planes'),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+
       await showDialog<void>(
         context: context,
         builder: (dialogContext) => AlertDialog(
           title: const Text('Verificación necesaria'),
-          content: const Text(
-            'Para publicar anuncios se requiere una verificación estudiantil real. '
-            'Esa conexión todavía no está disponible; no se guardará ningún anuncio '
-            'ni se marcará tu cuenta como verificada.',
+          content: Text(
+            (status != null && status.reason.isNotEmpty)
+                ? status.reason
+                : 'Para publicar anuncios se requiere una verificación institucional real. '
+                    'Esa conexión todavía no está disponible; no se guardará ningún anuncio '
+                    'ni se marcará tu cuenta como verificada.',
           ),
           actions: [
             TextButton(
@@ -348,44 +438,37 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     );
   }
 
-  // Uniform Category Visuals - Disciplined Monochromatic Palette (No Rainbow)
-  ({IconData icon, String subtitle}) _getCategoryVisuals(String catId) {
-    switch (catId) {
-      case 'comida_postres':
-        return (
-          icon: PhosphorIconsBold.bowlFood,
-          subtitle: 'Almuerzos & postres',
-        );
-      case 'tutorias_academica':
-        return (
-          icon: PhosphorIconsBold.graduationCap,
-          subtitle: 'Clases & asesorías',
-        );
-      case 'libros_materiales':
-        return (
-          icon: PhosphorIconsBold.books,
-          subtitle: 'Libros, batas y útiles',
-        );
-      case 'servicios_estudiantiles':
-        return (
-          icon: PhosphorIconsBold.briefcase,
-          subtitle: 'Impresiones y software',
-        );
-      case 'otros_articulos':
-        return (
-          icon: PhosphorIconsBold.tag,
-          subtitle: 'Tecnología y varios',
-        );
-      case 'todos':
-      default:
-        return (
-          icon: PhosphorIconsBold.squaresFour,
-          subtitle: 'Ver todo el catálogo',
-        );
+  void _openSavedListings() {
+    if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
+      AuthModal.show(
+        context,
+        title: 'Inicia sesión para ver tus guardados',
+        subtitle: 'Para acceder a tus productos guardados debes iniciar sesión.',
+        onAuthenticated: _openSavedListings,
+      );
+      return;
     }
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const SavedListingsScreen()),
+    );
   }
 
-  // 1. Squared Top Header: Clean, Simple, Centered Title without Symbol, Gear for Settings on Left
+  void _openMySales() {
+    if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
+      AuthModal.show(
+        context,
+        title: 'Inicia sesión para ver tus ventas',
+        subtitle: 'Para gestionar tus publicaciones y presencia debes iniciar sesión.',
+        onAuthenticated: _openMySales,
+      );
+      return;
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const MySalesScreen()),
+    );
+  }
+
+  // Top Squared Header with Settings, Navigation Actions & Publish
   Widget _buildSquaredHeader(bool isDark) {
     return Container(
       height: 56,
@@ -402,7 +485,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
       ),
       child: Row(
         children: [
-          // Left: Settings Button (Configuración y Perfil)
+          // Settings button
           IconButton(
             tooltip: 'Configuración y Perfil',
             onPressed: () => SettingsBottomSheet.show(
@@ -419,7 +502,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             splashRadius: 22,
           ),
 
-          // Center: Clean, simple, centered title (Matching Forum layout, no symbol box)
+          // Title
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -454,7 +537,31 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             ),
           ),
 
-          // Right: Minimalist + button to publish listing
+          // Saved Listings shortcut
+          IconButton(
+            tooltip: 'Productos guardados',
+            onPressed: _openSavedListings,
+            icon: Icon(
+              PhosphorIconsRegular.bookmarkSimple,
+              size: 20,
+              color: isDark ? Colors.white : ZanateColors.zanateDark,
+            ),
+            splashRadius: 22,
+          ),
+
+          // My Sales shortcut
+          IconButton(
+            tooltip: 'Mis ventas',
+            onPressed: _openMySales,
+            icon: Icon(
+              PhosphorIconsRegular.storefront,
+              size: 20,
+              color: isDark ? Colors.white : ZanateColors.zanateDark,
+            ),
+            splashRadius: 22,
+          ),
+
+          // Publish button
           IconButton(
             tooltip: 'Publicar Anuncio',
             onPressed: _handleCreateListingClick,
@@ -470,668 +577,314 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     );
   }
 
-  // 2. Search & Filters Bar (Search Query + Ubicación por Sede + Facultad)
-  Widget _buildSearchAndFilters(bool isDark, bool isDesktop) {
-    final containerBg = isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg;
-    final borderColor = isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
-    final textColor = isDark ? Colors.white : ZanateColors.zanateDark;
-
-    if (isDesktop) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
-          border: Border(
-            bottom: BorderSide(color: borderColor, width: 0.8),
-          ),
+  // Top Banner (UX-MKT-001)
+  Widget _buildTopBanner(bool isDark, bool isDesktop) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF004B87), Color(0xFF1E3A8A)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        child: Column(
-          children: [
-            // Row 1: Search Field
-            Container(
-              height: 40,
-              decoration: BoxDecoration(
-                color: containerBg,
-                border: Border.all(color: borderColor, width: 0.8),
-              ),
-              child: Row(
-                children: [
-                  const SizedBox(width: 12),
-                  const Icon(
-                    PhosphorIconsRegular.magnifyingGlass,
-                    size: 16,
-                    color: ZanateColors.zanateAccent,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: const InputDecoration(
-                        hintText: 'Buscar en Marketplace (postres, tutorías, libros, cálculo...)',
-                        hintStyle: TextStyle(fontSize: 12.5, color: Color(0xFF94A3B8)),
-                        border: InputBorder.none,
-                        isDense: true,
-                        contentPadding: EdgeInsets.symmetric(vertical: 10),
-                      ),
-                      style: TextStyle(fontSize: 13, color: textColor),
-                      onSubmitted: (val) {
-                        setState(() => _searchQuery = val.trim());
-                        _loadData();
-                      },
-                    ),
-                  ),
-                  if (_searchQuery.isNotEmpty)
-                    IconButton(
-                      icon: const Icon(PhosphorIconsRegular.x, size: 14),
-                      splashRadius: 14,
-                      onPressed: () {
-                        _searchController.clear();
-                        setState(() => _searchQuery = '');
-                        _loadData();
-                      },
-                    ),
-                  TextButton.icon(
-                    style: TextButton.styleFrom(
-                      backgroundColor: ZanateColors.zanateAccent,
-                      foregroundColor: Colors.white,
-                      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      minimumSize: const Size(0, 40),
-                    ),
-                    icon: const Icon(PhosphorIconsBold.magnifyingGlass, size: 15),
-                    label: const Text(
-                      'Buscar',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-                    ),
-                    onPressed: () {
-                      setState(() => _searchQuery = _searchController.text.trim());
-                      _loadData();
-                    },
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            // Row 2: Filters (Sede / Ubicación, Facultad)
-            Row(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Sede / Ubicación
-                Expanded(
-                  child: Container(
-                    height: 38,
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    decoration: BoxDecoration(
-                      color: containerBg,
-                      border: Border.all(color: borderColor, width: 0.8),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: _selectedSede,
-                        isExpanded: true,
-                        icon: const Icon(PhosphorIconsRegular.caretDown, size: 13),
-                        items: USACConstants.sedes
-                            .map(
-                              (s) => DropdownMenuItem<String>(
-                                value: s['id']!,
-                                child: Text(
-                                  s['nombre']!,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(fontSize: 11.5, color: textColor),
-                                ),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (val) {
-                          setState(() => _selectedSede = val ?? 'todas');
-                          _loadData();
-                        },
-                      ),
+                Semantics(
+                  header: true,
+                  child: const Text(
+                    'Marketplace & Tutorías Estudiantiles',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                // Facultad
-                Expanded(
-                  child: Container(
-                    height: 38,
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    decoration: BoxDecoration(
-                      color: containerBg,
-                      border: Border.all(color: borderColor, width: 0.8),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: _selectedFacultad,
-                        isExpanded: true,
-                        icon: const Icon(PhosphorIconsRegular.caretDown, size: 13),
-                        items: USACConstants.facultades
-                            .map(
-                              (f) => DropdownMenuItem<String>(
-                                value: f['id'].toString(),
-                                child: Text(
-                                  f['nombre'].toString(),
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(fontSize: 11.5, color: textColor),
-                                ),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (val) {
-                          setState(() => _selectedFacultad = val ?? 'todas');
-                          _loadData();
-                        },
-                      ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Espacio libre para emprendimientos sancarlistas: comidas, postres, tutorías de cursos y materiales universitarios. Trato directo, sin comisiones.',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                    height: 1.3,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                InkWell(
+                  onTap: () => MarketplacePlansSheet.show(context),
+                  child: const Text(
+                    'Conocer planes',
+                    style: TextStyle(
+                      color: Color(0xFFFDE68A),
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      decoration: TextDecoration.underline,
+                      decorationColor: Color(0xFFFDE68A),
                     ),
                   ),
                 ),
               ],
             ),
-          ],
-        ),
-      );
-    }
-
-    // Mobile layout
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        border: Border(
-          bottom: BorderSide(color: borderColor, width: 0.8),
-        ),
-      ),
-      child: Column(
-        children: [
-          // Search Field
-          Container(
-            height: 38,
-            decoration: BoxDecoration(
-              color: containerBg,
-              border: Border.all(color: borderColor, width: 0.8),
+          ),
+          if (isDesktop) ...[
+            const SizedBox(width: 16),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFEAB308),
+                foregroundColor: Colors.black87,
+                elevation: 1,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+              onPressed: _handleCreateListingClick,
+              icon: const Icon(Icons.add_shopping_cart, size: 18),
+              label: const Text(
+                'Publicar Anuncio',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
             ),
-            child: Row(
-              children: [
-                const SizedBox(width: 10),
-                const Icon(
-                  PhosphorIconsRegular.magnifyingGlass,
-                  size: 15,
-                  color: ZanateColors.zanateAccent,
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: const InputDecoration(
-                      hintText: 'Buscar en Marketplace...',
-                      hintStyle: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
-                      border: InputBorder.none,
-                      isDense: true,
-                      contentPadding: EdgeInsets.symmetric(vertical: 9),
-                    ),
-                    style: TextStyle(fontSize: 12, color: textColor),
-                    onSubmitted: (val) {
-                      setState(() => _searchQuery = val.trim());
-                      _loadData();
-                    },
-                  ),
-                ),
-                if (_searchQuery.isNotEmpty)
-                  IconButton(
-                    icon: const Icon(PhosphorIconsRegular.x, size: 14),
-                    splashRadius: 14,
+          ],
+        ],
+      ),
+    );
+  }
+
+  // Search and Faceted Filters (UX-MKT-004)
+  Widget _buildSearchAndFilters(bool isDark, bool isDesktop) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Search Input
+        TextField(
+          controller: _searchController,
+          decoration: InputDecoration(
+            hintText: 'Buscar postres, almuerzos, tutorías o libros...',
+            prefixIcon: const Icon(Icons.search, size: 20),
+            suffixIcon: _searchQuery.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear, size: 18),
                     onPressed: () {
                       _searchController.clear();
                       setState(() => _searchQuery = '');
                       _loadData();
                     },
-                  ),
-                IconButton(
-                  tooltip: 'Buscar',
-                  icon: const Icon(PhosphorIconsBold.magnifyingGlass, size: 16, color: ZanateColors.zanateAccent),
-                  onPressed: () {
-                    setState(() => _searchQuery = _searchController.text.trim());
-                    _loadData();
-                  },
-                ),
-              ],
+                  )
+                : null,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 12,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(
+                color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+              ),
             ),
           ),
-          const SizedBox(height: 6),
-          // Sede / Ubicación & Facultad Row
+          onSubmitted: (val) {
+            setState(() => _searchQuery = val.trim());
+            _loadData();
+          },
+        ),
+        const SizedBox(height: 10),
+
+        // Dropdowns: Sede, Facultad, Edificio
+        if (isDesktop)
           Row(
             children: [
-              Expanded(
-                child: Container(
-                  height: 34,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  decoration: BoxDecoration(
-                    color: containerBg,
-                    border: Border.all(color: borderColor, width: 0.8),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _selectedSede,
-                      isExpanded: true,
-                      icon: const Icon(PhosphorIconsRegular.caretDown, size: 12),
-                      items: USACConstants.sedes
-                          .map(
-                            (s) => DropdownMenuItem<String>(
-                              value: s['id']!,
-                              child: Text(
-                                s['nombre']!,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: 10.5, color: textColor),
-                              ),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (val) {
-                        setState(() => _selectedSede = val ?? 'todas');
-                        _loadData();
-                      },
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Container(
-                  height: 34,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  decoration: BoxDecoration(
-                    color: containerBg,
-                    border: Border.all(color: borderColor, width: 0.8),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _selectedFacultad,
-                      isExpanded: true,
-                      icon: const Icon(PhosphorIconsRegular.caretDown, size: 12),
-                      items: USACConstants.facultades
-                          .map(
-                            (f) => DropdownMenuItem<String>(
-                              value: f['id'].toString(),
-                              child: Text(
-                                f['nombre'].toString(),
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: 10.5, color: textColor),
-                              ),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (val) {
-                        setState(() => _selectedFacultad = val ?? 'todas');
-                        _loadData();
-                      },
-                    ),
-                  ),
-                ),
-              ),
+              Expanded(child: _buildSedeDropdown()),
+              const SizedBox(width: 10),
+              Expanded(child: _buildFacultadDropdown()),
+              const SizedBox(width: 10),
+              Expanded(child: _buildBuildingDropdown()),
+              const SizedBox(width: 10),
+              _buildFreeChip(isDark),
             ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // 3. eBay-Style "Compra por Categorías" Visual Section
-  Widget _buildEbayCategoriesSection(bool isDark) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
-            width: 0.8,
-          ),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          )
+        else
+          Column(
             children: [
-              Text(
-                'Compra por Categorías',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.2,
-                  color: isDark ? Colors.white : ZanateColors.zanateDark,
-                ),
-              ),
-              if (_selectedCategory != 'todos')
-                InkWell(
-                  onTap: () {
-                    setState(() => _selectedCategory = 'todos');
-                    _loadData();
-                  },
-                  child: const Text(
-                    'Ver todas',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: ZanateColors.zanateAccent,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: Row(
-              children: USACConstants.marketplaceCategories.map((cat) {
-                final isSelected = _selectedCategory == cat.id;
-                final visuals = _getCategoryVisuals(cat.id);
-
-                return Padding(
-                  padding: const EdgeInsets.only(right: 10),
-                  child: InkWell(
-                    onTap: () {
-                      setState(() => _selectedCategory = cat.id);
-                      _loadData();
-                    },
-                    borderRadius: BorderRadius.circular(8),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      width: 130,
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? ZanateColors.zanateAccent.withValues(alpha: isDark ? 0.25 : 0.08)
-                            : (isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: isSelected
-                              ? ZanateColors.zanateAccent
-                              : (isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder),
-                          width: isSelected ? 1.5 : 0.8,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            visuals.icon,
-                            size: 20,
-                            color: isSelected
-                                ? ZanateColors.zanateAccent
-                                : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            cat.label,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
-                              color: isSelected
-                                  ? ZanateColors.zanateAccent
-                                  : (isDark ? Colors.white : ZanateColors.zanateDark),
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            visuals.subtitle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // 4. eBay-Style "Ofertas y Aportes del Día" Spotlight Carousel
-  Widget _buildEbayDealsSection(bool isDark) {
-    final deals = _listings.where((item) => item.isFree || item.upvotes > 0).take(8).toList();
-
-    if (deals.isEmpty) return const SizedBox.shrink();
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
-            width: 0.8,
-          ),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(
-                PhosphorIconsBold.lightning,
-                size: 16,
-                color: Color(0xFFF59E0B),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                'Ofertas y Aportes del Día',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.2,
-                  color: isDark ? Colors.white : ZanateColors.zanateDark,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: const Text(
-                  'GRATIS & DESTACADOS',
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF059669),
-                    letterSpacing: 0.4,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 130,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              itemCount: deals.length,
-              separatorBuilder: (context, index) => const SizedBox(width: 10),
-              itemBuilder: (context, idx) {
-                final item = deals[idx];
-                final visuals = _getCategoryVisuals(item.category);
-
-                return Container(
-                  width: 240,
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg,
-                    border: Border.all(
-                      color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
-                      width: 0.8,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 76,
-                        height: 106,
-                        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                        child: item.imageUrls.isNotEmpty
-                            ? Image.network(
-                                item.imageUrls.first,
-                                fit: BoxFit.cover,
-                                errorBuilder: (ctx, err, stack) => Center(
-                                  child: Icon(visuals.icon, size: 24, color: const Color(0xFF94A3B8)),
-                                ),
-                              )
-                            : Center(
-                                child: Icon(visuals.icon, size: 24, color: const Color(0xFF94A3B8)),
-                              ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: item.isFree ? const Color(0xFF059669) : ZanateColors.zanateAccent,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                item.isFree ? 'GRATIS' : item.formattedPrice,
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                              item.title,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: isDark ? Colors.white : ZanateColors.zanateDark,
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            Row(
-                              children: [
-                                const Icon(
-                                  PhosphorIconsRegular.mapPin,
-                                  size: 11,
-                                  color: Color(0xFF94A3B8),
-                                ),
-                                const SizedBox(width: 3),
-                                Expanded(
-                                  child: Text(
-                                    item.locationDetail.isNotEmpty ? item.locationDetail : item.sede,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8)),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // 5. Feed Header Row
-  Widget _buildFeedFilterHeader(bool isDark) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
-            width: 0.8,
-          ),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            '${_listings.length} publicaciones disponibles',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-            ),
-          ),
-          InkWell(
-            onTap: () {
-              setState(() => _onlyFree = !_onlyFree);
-              _loadData();
-            },
-            borderRadius: BorderRadius.circular(6),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: _onlyFree
-                    ? ZanateColors.zanateAccent
-                    : (isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color: _onlyFree
-                      ? ZanateColors.zanateAccent
-                      : (isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder),
-                  width: 0.8,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+              Row(
                 children: [
-                  Icon(
-                    _onlyFree ? PhosphorIconsFill.checkCircle : PhosphorIconsRegular.gift,
-                    size: 13,
-                    color: _onlyFree ? Colors.white : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Solo Gratis',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: _onlyFree ? FontWeight.w700 : FontWeight.w500,
-                      color: _onlyFree ? Colors.white : (isDark ? const Color(0xFFE2E8F0) : ZanateColors.zanateDark),
-                    ),
-                  ),
+                  Expanded(child: _buildSedeDropdown()),
+                  const SizedBox(width: 8),
+                  Expanded(child: _buildFacultadDropdown()),
                 ],
               ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(child: _buildBuildingDropdown()),
+                  const SizedBox(width: 8),
+                  _buildFreeChip(isDark),
+                ],
+              ),
+            ],
+          ),
+      ],
+    );
+  }
+
+  Widget _buildSedeDropdown() {
+    return DropdownButtonFormField<String>(
+      key: ValueKey('sede_$_selectedSede'),
+      initialValue: _selectedSede,
+      isExpanded: true,
+      decoration: const InputDecoration(
+        labelText: 'Sede / Campus',
+        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      ),
+      items: USACConstants.sedes
+          .map(
+            (s) => DropdownMenuItem<String>(
+              value: s['id']!,
+              child: Text(
+                s['nombre']!,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 11),
+              ),
+            ),
+          )
+          .toList(),
+      onChanged: (val) {
+        setState(() {
+          _selectedSede = val ?? 'todas';
+          if (_selectedBuilding != 'todos' && _selectedSede != 'todas') {
+            final validBuildings = USACConstants.campusBuildings
+                .where((b) => b['sede_id'] == _selectedSede)
+                .map((b) => b['building_code']?.toString());
+            if (!validBuildings.contains(_selectedBuilding)) {
+              _selectedBuilding = 'todos';
+            }
+          }
+        });
+        _loadData();
+      },
+    );
+  }
+
+  Widget _buildFacultadDropdown() {
+    return DropdownButtonFormField<String>(
+      key: ValueKey('facultad_$_selectedFacultad'),
+      initialValue: _selectedFacultad,
+      isExpanded: true,
+      decoration: const InputDecoration(
+        labelText: 'Facultad / Unidad',
+        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      ),
+      items: USACConstants.facultades
+          .map(
+            (f) => DropdownMenuItem<String>(
+              value: f['id'].toString(),
+              child: Text(
+                f['nombre'].toString(),
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 11),
+              ),
+            ),
+          )
+          .toList(),
+      onChanged: (val) {
+        setState(() => _selectedFacultad = val ?? 'todas');
+        _loadData();
+      },
+    );
+  }
+
+  Widget _buildBuildingDropdown() {
+    final buildings = USACConstants.campusBuildings
+        .where((b) => _selectedSede == 'todas' || b['sede_id'] == _selectedSede)
+        .toList();
+
+    return DropdownButtonFormField<String>(
+      key: ValueKey('building_${_selectedSede}_$_selectedBuilding'),
+      initialValue: _selectedBuilding,
+      isExpanded: true,
+      decoration: const InputDecoration(
+        labelText: 'Edificio / Inmueble',
+        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      ),
+      items: [
+        const DropdownMenuItem<String>(
+          value: 'todos',
+          child: Text('Todos los edificios', style: TextStyle(fontSize: 11)),
+        ),
+        ...buildings.map(
+          (b) => DropdownMenuItem<String>(
+            value: b['building_code']?.toString() ?? '',
+            child: Text(
+              '${b['building_code']} · ${b['nombre']}',
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 11),
             ),
           ),
-        ],
+        ),
+      ],
+      onChanged: (val) {
+        setState(() => _selectedBuilding = val ?? 'todos');
+        _loadData();
+      },
+    );
+  }
+
+  Widget _buildFreeChip(bool isDark) {
+    return FilterChip(
+      selected: _onlyFree,
+      avatar: Icon(
+        _onlyFree ? Icons.check_circle : Icons.volunteer_activism_outlined,
+        size: 16,
+        color: _onlyFree ? Colors.white : const Color(0xFF16A34A),
+      ),
+      label: const Text('Solo Gratuitos'),
+      labelStyle: TextStyle(
+        color: _onlyFree ? Colors.white : (isDark ? Colors.white : ZanateColors.zanateDark),
+        fontWeight: _onlyFree ? FontWeight.bold : FontWeight.normal,
+        fontSize: 12,
+      ),
+      selectedColor: const Color(0xFF16A34A),
+      onSelected: (val) {
+        setState(() => _onlyFree = val);
+        _loadData();
+      },
+    );
+  }
+
+  // Category Filter Chips
+  Widget _buildCategoryChips(bool isDark) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: USACConstants.marketplaceCategories.map((cat) {
+          final isSelected = _selectedCategory == cat.id;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: FilterChip(
+              selected: isSelected,
+              label: Text(cat.label),
+              labelStyle: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected
+                    ? Colors.white
+                    : (isDark ? Colors.white70 : Colors.black87),
+              ),
+              selectedColor: ZanateColors.zanateAccent,
+              onSelected: (_) {
+                setState(() => _selectedCategory = cat.id);
+                _loadData();
+              },
+            ),
+          );
+        }).toList(),
       ),
     );
   }
@@ -1148,23 +901,27 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
 
     if (_listings.isEmpty) {
       return ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-        children: const [
+        children: [
           EmptyStateWidget(
             icon: PhosphorIconsRegular.storefront,
-            title: 'No hay publicaciones para estas preferencias',
+            title: 'No hay publicaciones en esta categoría aún',
             description:
-                'Prueba ajustando tus preferencias de búsqueda o usa el botón + superior para publicar un anuncio.',
+                'Prueba ajustando tus preferencias de búsqueda o usa el botón para publicar un anuncio.',
+            buttonText: 'Crear Primera Publicación',
+            onButtonPressed: _handleCreateListingClick,
           ),
         ],
       );
     }
 
-    return ListView.builder(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.zero,
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       itemCount: _listings.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (ctx, i) {
         final item = _listings[i];
         return MarketplaceCard(
@@ -1173,6 +930,30 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
           isOwner: item.isMine ||
               (item.userId != null &&
                   item.userId == SupabaseService.currentUserId),
+          onTap: () async {
+            await Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => ProductDetailScreen(
+                  itemId: item.id,
+                  initialItem: item,
+                ),
+              ),
+            );
+            _loadData();
+          },
+          onOpenStore: item.sellerPublicId != null
+              ? () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => StoreProfileScreen(
+                        sellerPublicId: item.sellerPublicId!,
+                      ),
+                    ),
+                  );
+                }
+              : null,
+          onToggleBookmark: () => _handleToggleBookmark(item),
+          onShowPlans: () => MarketplacePlansSheet.show(context),
           onUpvote: () => _handleToggleUpvote(item),
           onStatusChanged: (newStatus) =>
               _handleUpdateItemStatus(item, newStatus),
@@ -1186,53 +967,83 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final isDesktop = Responsive.isDesktop(context);
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+      backgroundColor: isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg,
       body: Column(
         children: [
-          // 1. Squared Top Header: Clean, Simple, Centered Title without symbol box, Gear for Settings on Left
+          // Squared Header
           _buildSquaredHeader(isDark),
 
-          // 2. Search & Filters Bar (Ubicación por Sede + Facultad + Carrera)
-          _buildSearchAndFilters(isDark, isDesktop),
-
-          // 3. eBay "Compra por categorías"
-          _buildEbayCategoriesSection(isDark),
-
-          // 4. eBay "Ofertas y Aportes del Día"
-          _buildEbayDealsSection(isDark),
-
-          // Sponsor VIP Showcase (if any)
-          if (_sponsoredListings.isNotEmpty) ...[
-            SponsorCarousel(
-              sponsoredItems: _sponsoredListings,
-              onRequestSponsor: _openSponsorRequestDialog,
-              onHideSponsored: _hideSponsoredItem,
-              onReportSponsored: _handleReportItem,
-            ),
-          ],
-
-          // 5. Feed Filter Header
-          _buildFeedFilterHeader(isDark),
-
-          // Offline Banner if degraded network
-          if (_isOffline) ...[
-            OfflineBanner(onRetry: _loadData),
-          ],
-
-          // 6. Squared Full-Width Feed (ListView with 1px border dividers)
+          // Main Scrollable Area
           Expanded(
             child: RefreshIndicator(
               onRefresh: _loadData,
-              child: _buildPostsFeed(isDark),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: MaxWidthContainer(
+                  maxWidth: 1100,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Top Banner (UX-MKT-001)
+                      _buildTopBanner(isDark, isDesktop),
+                      const SizedBox(height: 16),
+
+                      // Sponsor Carousel (UX-MKT-002)
+                      SponsorCarousel(
+                        sponsoredItems: _sponsoredListings,
+                        onRequestSponsor: _openSponsorRequestDialog,
+                        onHideSponsored: _hideSponsoredItem,
+                        onReportSponsored: _handleReportItem,
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Search and Faceted Filters (UX-MKT-004)
+                      _buildSearchAndFilters(isDark, isDesktop),
+                      const SizedBox(height: 12),
+
+                      // Category Filters
+                      _buildCategoryChips(isDark),
+                      const SizedBox(height: 14),
+
+                      // Offline notice if applicable
+                      if (_isOffline) ...[
+                        OfflineBanner(onRetry: _loadData),
+                        const SizedBox(height: 12),
+                      ],
+
+                      // Feed
+                      _buildPostsFeed(isDark),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
         ],
       ),
-      floatingActionButton: null,
+      floatingActionButton: widget.showFloatingActionButton
+          ? FloatingActionButton.extended(
+              heroTag: 'marketplace_fab',
+              onPressed: _handleCreateListingClick,
+              backgroundColor: ZanateColors.zanateAccent,
+              foregroundColor: Colors.white,
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              icon: const Icon(PhosphorIconsBold.plus, size: 18),
+              label: const Text(
+                'Publicar Anuncio',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+              ),
+            )
+          : null,
     );
   }
 }

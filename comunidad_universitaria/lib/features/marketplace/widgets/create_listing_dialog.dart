@@ -11,6 +11,7 @@ import '../../../core/utils/responsive.dart';
 import '../../profile/widgets/carne_validation_modal.dart';
 import '../../shared/widgets/identity_badge_chip.dart';
 import '../../../core/models/user_profile.dart';
+import 'marketplace_plans_sheet.dart';
 
 class CreateListingDialog extends StatefulWidget {
   final String activeAlias;
@@ -96,11 +97,22 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
   bool _isSubmitting = false;
   bool _isUploadingImage = false;
   UserProfile? _userProfile;
+  MarketplaceSellerStatus? _sellerStatus;
 
   @override
   void initState() {
     super.initState();
     _loadUserProfile();
+    _loadSellerStatus();
+  }
+
+  Future<void> _loadSellerStatus() async {
+    try {
+      final status = await MarketplaceService.fetchMyStatus();
+      if (mounted && status != null) {
+        setState(() => _sellerStatus = status);
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadUserProfile() async {
@@ -137,7 +149,13 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
     super.dispose();
   }
 
-  int get _maxImages => widget.isSponsored ? 3 : 1;
+  int get _maxImages =>
+      _sellerStatus?.maxImagesPerItem ?? (widget.isSponsored ? 3 : 2);
+
+  bool get _isQuotaExceeded =>
+      _sellerStatus != null &&
+      !_sellerStatus!.isUnlimited &&
+      _sellerStatus!.activeItems >= _sellerStatus!.maxActiveItems;
 
   Future<void> _pickAndUploadImage() async {
     if (_imageUrls.length >= _maxImages) {
@@ -270,12 +288,25 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
           );
         }
       }
+    } on MarketplaceException catch (e) {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            backgroundColor: Colors.red.shade700,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         setState(() => _isSubmitting = false);
         final msg = e is StateError
             ? e.toString().replaceFirst('Bad state: ', '')
-            : 'No se pudo publicar el anuncio. Revisa tu conexión e inténtalo de nuevo.';
+            : (e.toString().startsWith('Exception: ')
+                ? e.toString().replaceFirst('Exception: ', '')
+                : 'No se pudo publicar el anuncio. Revisa tu conexión e inténtalo de nuevo.');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(msg),
@@ -373,6 +404,102 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                   }
                 },
               ),
+
+              // Tarjeta de límites del plan (UX-MKT-012)
+              if (_sellerStatus != null) ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: _isQuotaExceeded
+                        ? const Color(0xFFEF4444).withValues(alpha: 0.1)
+                        : (theme.brightness == Brightness.dark
+                            ? const Color(0xFF1E293B)
+                            : const Color(0xFFF1F5F9)),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: _isQuotaExceeded
+                          ? const Color(0xFFEF4444)
+                          : (theme.brightness == Brightness.dark
+                              ? const Color(0xFF334155)
+                              : ZanateColors.subtleBorder),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _isQuotaExceeded
+                            ? PhosphorIconsBold.warning
+                            : PhosphorIconsRegular.sparkle,
+                        size: 16,
+                        color: _isQuotaExceeded
+                            ? const Color(0xFFEF4444)
+                            : ZanateColors.zanateAccent,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _isQuotaExceeded
+                              ? 'Alcanzaste el máximo de ${_sellerStatus!.maxActiveItems} publicaciones activas de tu plan.'
+                              : 'Plan ${_sellerStatus!.planName} · ${_sellerStatus!.isUnlimited ? "Publicaciones ilimitadas" : "${_sellerStatus!.activeItems}/${_sellerStatus!.maxActiveItems} publicaciones"} · hasta $_maxImages imágenes',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: _isQuotaExceeded
+                                ? const Color(0xFFDC2626)
+                                : (theme.brightness == Brightness.dark
+                                    ? Colors.white
+                                    : ZanateColors.zanateDark),
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          minimumSize: const Size(0, 32),
+                        ),
+                        onPressed: () => MarketplacePlansSheet.show(context),
+                        child: Text(
+                          _isQuotaExceeded ? 'Mejorar plan' : 'Planes',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: ZanateColors.zanateAccent,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              // Aviso de vigencia de 14 días en plan free
+              if (_sellerStatus == null || _sellerStatus!.planId == 'free') ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(
+                      PhosphorIconsRegular.clockCountdown,
+                      size: 13,
+                      color: Color(0xFFF59E0B),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Esta publicación se pausará automáticamente a los 14 días.',
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          color: theme.brightness == Brightness.dark
+                              ? const Color(0xFFFDE68A)
+                              : const Color(0xFFB45309),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
 
               Container(height: 0.8, color: theme.brightness == Brightness.dark ? const Color(0xFF334155) : ZanateColors.subtleBorder),
 
@@ -857,8 +984,8 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                 ),
               ],
 
-              // Video URL (Exclusive for sponsors)
-              if (widget.isSponsored) ...[
+              // Video URL (if allowVideo or sponsored)
+              if (_sellerStatus?.allowVideo == true || widget.isSponsored) ...[
                 const SizedBox(height: 14),
                 TextFormField(
                   controller: _videoUrlController,
@@ -909,7 +1036,9 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                     ),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: ZanateColors.zanateAccent,
+                        backgroundColor: _isQuotaExceeded
+                            ? const Color(0xFFF59E0B)
+                            : ZanateColors.zanateAccent,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
@@ -920,7 +1049,11 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                           vertical: 11,
                         ),
                       ),
-                      onPressed: _isSubmitting ? null : _submit,
+                      onPressed: _isSubmitting
+                          ? null
+                          : (_isQuotaExceeded
+                              ? () => MarketplacePlansSheet.show(context)
+                              : _submit),
                       icon: _isSubmitting
                           ? const SizedBox(
                               width: 16,
@@ -930,9 +1063,18 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Icon(PhosphorIconsBold.paperPlaneTilt, size: 16),
+                          : Icon(
+                              _isQuotaExceeded
+                                  ? PhosphorIconsBold.sparkle
+                                  : PhosphorIconsBold.paperPlaneTilt,
+                              size: 16,
+                            ),
                       label: Text(
-                        _isSubmitting ? 'Publicando...' : 'Publicar Anuncio',
+                        _isSubmitting
+                            ? 'Publicando...'
+                            : (_isQuotaExceeded
+                                ? 'Mejorar plan'
+                                : 'Publicar Anuncio'),
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),
