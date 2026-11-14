@@ -153,7 +153,7 @@ class _MarketplacePlansSheetState extends State<MarketplacePlansSheet> {
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: ZanateColors.zanateAccent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(4),
                 ),
                 child: const Icon(
                   PhosphorIconsBold.sparkle,
@@ -264,7 +264,7 @@ class _MarketplacePlansSheetState extends State<MarketplacePlansSheet> {
                         color: isDark
                             ? const Color(0xFF1E293B)
                             : const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(4),
                         border: Border.all(
                           color: isDark
                               ? const Color(0xFF334155)
@@ -322,7 +322,7 @@ class _MarketplacePlansSheetState extends State<MarketplacePlansSheet> {
     return Container(
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF0F172A) : Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: borderColor,
           width: isCurrentPlan || isRecommended ? 1.5 : 0.8,
@@ -484,7 +484,7 @@ class _MarketplacePlansSheetState extends State<MarketplacePlansSheet> {
                   isCurrentPlan ? (isDark ? Colors.white70 : Colors.black87) : Colors.white,
               elevation: isCurrentPlan ? 0 : 1,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(4),
               ),
               padding: const EdgeInsets.symmetric(vertical: 12),
             ),

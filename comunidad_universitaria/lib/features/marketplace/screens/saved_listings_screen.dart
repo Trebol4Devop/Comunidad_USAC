@@ -5,6 +5,7 @@ import '../../../core/models/marketplace_item.dart';
 import '../../../core/services/marketplace_service.dart';
 import '../../../core/utils/responsive.dart';
 import '../../shared/widgets/empty_state_widget.dart';
+import '../marketplace_theme.dart';
 import '../widgets/marketplace_card.dart';
 import 'product_detail_screen.dart';
 import 'store_profile_screen.dart';
@@ -90,7 +91,9 @@ class _SavedListingsScreenState extends State<SavedListingsScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final isDesktop = Responsive.isDesktop(context);
 
-    return Scaffold(
+    return MarketplaceTheme.wrap(
+      context,
+      Scaffold(
       backgroundColor: isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg,
       appBar: AppBar(
         title: const Text(
@@ -139,7 +142,7 @@ class _SavedListingsScreenState extends State<SavedListingsScreen> {
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
                                 itemCount: _savedItems.length,
-                                separatorBuilder: (_, _) => const SizedBox(height: 12),
+                                separatorBuilder: (_, _) => const SizedBox.shrink(),
                                 itemBuilder: (ctx, i) {
                                   final item = _savedItems[i];
                                   return MarketplaceCard(
@@ -178,6 +181,7 @@ class _SavedListingsScreenState extends State<SavedListingsScreen> {
                       ),
                     ),
             ),
+      ),
     );
   }
 }

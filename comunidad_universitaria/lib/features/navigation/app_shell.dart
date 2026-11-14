@@ -9,6 +9,7 @@ import '../../core/constants/zanate_colors.dart';
 import '../../core/utils/responsive.dart';
 import '../forum/screens/forum_screen.dart';
 import '../groups/screens/groups_screen.dart';
+import '../marketplace/marketplace_theme.dart';
 import '../marketplace/screens/marketplace_screen.dart';
 import '../map/screens/campus_map_screen.dart';
 import '../rules/screens/rules_screen.dart';
@@ -512,11 +513,14 @@ class _AppShellState extends State<AppShell> {
         _visitedTabs.contains(1)
             ? ExcludeSemantics(
                 excluding: _currentIndex != 1,
-                child: MarketplaceScreen(
-                  activeAlias: widget.activeAlias,
-                  onAliasChanged: widget.onAliasChanged,
-                  onToggleTheme: widget.onToggleTheme,
-                  showFloatingActionButton: !isMobile,
+                child: MarketplaceTheme.wrap(
+                  context,
+                  MarketplaceScreen(
+                    activeAlias: widget.activeAlias,
+                    onAliasChanged: widget.onAliasChanged,
+                    onToggleTheme: widget.onToggleTheme,
+                    showFloatingActionButton: !isMobile,
+                  ),
                 ),
               )
             : const SizedBox.shrink(),

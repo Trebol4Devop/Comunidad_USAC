@@ -10,6 +10,7 @@ import '../../../core/utils/business_hours_helper.dart';
 import '../../../core/utils/responsive.dart';
 import '../../shared/widgets/empty_state_widget.dart';
 import '../../shared/widgets/report_dialog.dart';
+import '../marketplace_theme.dart';
 import 'product_detail_screen.dart';
 
 class StoreProfileScreen extends StatefulWidget {
@@ -213,7 +214,9 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
         ? prof.businessName!
         : prof.displayName;
 
-    return Scaffold(
+    return MarketplaceTheme.wrap(
+      context,
+      Scaffold(
       backgroundColor: isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg,
       appBar: AppBar(
         title: Text(
@@ -341,6 +344,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
             ),
           ),
         ),
+      ),
       ),
     );
   }
@@ -584,11 +588,11 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
           ),
         );
       },
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(4),
       child: Container(
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E293B) : Colors.white,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(4),
           border: Border.all(
             color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
             width: 0.8,

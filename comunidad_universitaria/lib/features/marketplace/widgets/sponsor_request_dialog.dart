@@ -163,7 +163,7 @@ class _SponsorRequestDialogState extends State<SponsorRequestDialog> {
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(4),
                     ),
                     child: const Icon(
                       PhosphorIconsBold.sparkle,
