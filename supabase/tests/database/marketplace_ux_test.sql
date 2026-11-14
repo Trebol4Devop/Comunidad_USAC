@@ -5,7 +5,7 @@
 -- =============================================================================
 begin;
 
-select plan(84);
+select plan(88);
 
 create extension if not exists pgtap;
 
@@ -1130,6 +1130,63 @@ select is(
     (select count(*) from public.marketplace_item_events where item_id = '52000000-0000-0000-0000-000000000220'),
     0::bigint,
     '84. Usuario 23 ve 0 eventos ajenos en marketplace_item_events'
+);
+
+-- =============================================================================
+-- SECCIÓN 18: Anti-evasión de vigencia y suplantación en sponsor_requests
+-- =============================================================================
+
+reset role;
+set role postgres;
+select set_config('request.jwt.claims', '', true);
+select set_config('request.jwt.claim.sub', '', true);
+
+select tests.create_supabase_user('51000000-0000-0000-0000-000000000024');
+
+insert into public.marketplace_items (id, user_id, title, description, price, is_free, category, facultad, sede, contact_whatsapp, author_alias, status, expires_at)
+values ('52000000-0000-0000-0000-000000000230', '51000000-0000-0000-0000-000000000024', 'Item Vigencia Inmutable', 'Descripcion valida para probar la vigencia inmutable del plan', 10, false, 'libros_materiales', 'todas', 'central', '50255553333', 'Estudiante Anónimo', 'available', now() + interval '14 days');
+
+-- Test 85: el cliente no puede extender expires_at de una publicación free
+select tests.authenticate_as('51000000-0000-0000-0000-000000000024');
+select throws_ok(
+    $$update public.marketplace_items
+         set expires_at = now() + interval '365 days'
+       where id = '52000000-0000-0000-0000-000000000230'$$,
+    '42501',
+    null,
+    '85. Un usuario free no puede extender expires_at por UPDATE directo'
+);
+
+-- Test 86: no se puede insertar una solicitud de patrocinio suplantando a otro usuario
+select tests.authenticate_as('51000000-0000-0000-0000-000000000001');
+select throws_ok(
+    $$insert into public.sponsor_requests
+        (brand_name, user_id, contact_name, contact_phone, proposal_details, expected_placement, plan_id, status)
+      values
+        ('Marca Suplantada', '51000000-0000-0000-0000-000000000002', 'Suplantador', '50255554444', 'Propuesta suplantada', 'Primera Plana - Marketplace', 'pro_student', 'pending')$$,
+    '42501',
+    null,
+    '86. Un usuario no puede insertar sponsor_requests con user_id ajeno'
+);
+
+-- Test 87: no se puede autoaprobar una solicitud al insertarla
+select throws_ok(
+    $$insert into public.sponsor_requests
+        (brand_name, user_id, contact_name, contact_phone, proposal_details, expected_placement, plan_id, status)
+      values
+        ('Marca Propia', '51000000-0000-0000-0000-000000000001', 'Dueño', '50255554444', 'Propuesta propia valida', 'Primera Plana - Marketplace', 'pro_student', 'approved')$$,
+    '42501',
+    null,
+    '87. Un usuario no puede autoaprobar su solicitud de patrocinio en el INSERT'
+);
+
+-- Test 88: la solicitud propia en estado pending sí se permite
+select lives_ok(
+    $$insert into public.sponsor_requests
+        (brand_name, user_id, contact_name, contact_phone, proposal_details, expected_placement, plan_id, status)
+      values
+        ('Marca Propia Valida', '51000000-0000-0000-0000-000000000001', 'Dueño', '50255554444', 'Propuesta propia en estado pendiente', 'Primera Plana - Marketplace', 'pro_student', 'pending')$$,
+    '88. Un usuario puede crear su propia solicitud en estado pending'
 );
 
 -- -----------------------------------------------------------------------------

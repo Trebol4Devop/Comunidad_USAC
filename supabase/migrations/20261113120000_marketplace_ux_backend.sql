@@ -417,6 +417,10 @@ BEGIN
     IF NEW.status IN ('available', 'reserved') THEN
         IF TG_OP = 'INSERT' OR (OLD.status NOT IN ('available', 'reserved')) OR (NEW.user_id IS DISTINCT FROM OLD.user_id) THEN
             IF v_plan.max_active_items > 0 THEN
+                -- Serializa inserciones concurrentes del mismo vendedor para que
+                -- el conteo de cupo no sufra carreras en READ COMMITTED.
+                PERFORM pg_advisory_xact_lock(hashtext('marketplace_quota_' || NEW.user_id::text));
+
                 SELECT count(*)
                 INTO v_active_count
                 FROM public.marketplace_items
@@ -439,6 +443,9 @@ BEGIN
         IF TG_OP = 'INSERT'
            OR (NEW.status IN ('available', 'reserved') AND OLD.status NOT IN ('available', 'reserved')) THEN
             NEW.expires_at := now() + interval '14 days';
+        ELSIF TG_OP = 'UPDATE' THEN
+            -- La vigencia es inmutable para el cliente: no puede extenderse a mano.
+            NEW.expires_at := OLD.expires_at;
         END IF;
     ELSE
         NEW.expires_at := NULL;
@@ -1985,6 +1992,153 @@ BEGIN
 END;
 $$;
 
+-- 7.8 Inventario propio para "Mis ventas" (incluye vendidos, pausados y en revisión)
+CREATE OR REPLACE FUNCTION public.get_my_marketplace_items(
+    p_status text DEFAULT NULL,
+    p_limit integer DEFAULT 50,
+    p_offset integer DEFAULT 0
+)
+RETURNS TABLE (
+    id uuid,
+    title text,
+    description text,
+    price numeric,
+    is_free boolean,
+    category text,
+    facultad text,
+    sede text,
+    building_code text,
+    location_detail text,
+    contact_whatsapp text,
+    contact_telegram text,
+    contact_instagram text,
+    contact_messenger text,
+    social_links text[],
+    image_urls text[],
+    video_url text,
+    is_sponsored boolean,
+    sponsor_badge_text text,
+    author_alias text,
+    upvotes integer,
+    reported_count integer,
+    shares_count integer,
+    moderation_status integer,
+    status text,
+    created_at timestamptz,
+    updated_at timestamptz,
+    expires_at timestamptz,
+    is_legal_hold boolean,
+    seller_public_id uuid,
+    seller_business_name text,
+    seller_plan_id text,
+    seller_plan_name text,
+    seller_badge_text text,
+    seller_is_verified boolean,
+    seller_is_on_campus boolean,
+    seller_building_code text,
+    is_mine boolean,
+    is_upvoted_by_me boolean,
+    is_bookmarked_by_me boolean,
+    score numeric,
+    is_hidden boolean
+)
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+    v_caller uuid;
+    v_limit integer;
+    v_offset integer;
+BEGIN
+    v_caller := auth.uid();
+    IF v_caller IS NULL THEN
+        RETURN;
+    END IF;
+
+    v_limit := LEAST(GREATEST(COALESCE(p_limit, 50), 1), 100);
+    v_offset := GREATEST(COALESCE(p_offset, 0), 0);
+
+    RETURN QUERY
+    SELECT
+        mi.id,
+        mi.title,
+        mi.description,
+        mi.price,
+        mi.is_free,
+        mi.category,
+        mi.facultad,
+        mi.sede,
+        mi.building_code,
+        mi.location_detail,
+        mi.contact_whatsapp,
+        mi.contact_telegram,
+        mi.contact_instagram,
+        mi.contact_messenger,
+        mi.social_links,
+        mi.image_urls,
+        mi.video_url,
+        (mi.is_sponsored OR COALESCE(plan.auto_sponsor_items, false)) AS is_sponsored,
+        mi.sponsor_badge_text,
+        mi.author_alias,
+        mi.upvotes,
+        mi.reported_count,
+        mi.shares_count,
+        mi.moderation_status,
+        mi.status,
+        mi.created_at,
+        mi.updated_at,
+        mi.expires_at,
+        mi.is_legal_hold,
+        sp.public_id AS seller_public_id,
+        sp.business_name AS seller_business_name,
+        COALESCE(plan.id, 'free') AS seller_plan_id,
+        COALESCE(plan.name, 'Estudiante') AS seller_plan_name,
+        CASE WHEN public.is_verified_seller(mi.user_id) THEN COALESCE(plan.default_badge_text, mi.sponsor_badge_text) ELSE NULL END AS seller_badge_text,
+        public.is_verified_seller(mi.user_id) AS seller_is_verified,
+        COALESCE(sp.is_currently_on_campus, false) AS seller_is_on_campus,
+        sp.current_building_code AS seller_building_code,
+        true AS is_mine,
+        (EXISTS (
+            SELECT 1 FROM public.marketplace_upvotes mu
+            WHERE mu.item_id = mi.id AND mu.user_id = v_caller
+        )) AS is_upvoted_by_me,
+        (EXISTS (
+            SELECT 1 FROM public.marketplace_bookmarks mb
+            WHERE mb.item_id = mi.id AND mb.user_id = v_caller
+        )) AS is_bookmarked_by_me,
+        ROUND(
+            (
+                mi.upvotes
+                + CASE WHEN (mi.is_sponsored OR COALESCE(plan.auto_sponsor_items, false)) THEN 15.0 ELSE 0.0 END
+                + CASE WHEN COALESCE(sp.is_currently_on_campus, false) THEN 8.0 ELSE 0.0 END
+            )::numeric
+            / POWER(
+                GREATEST(EXTRACT(EPOCH FROM (now() - mi.created_at)) / 3600.0, 0.5) + 2.0,
+                1.5
+            )::numeric,
+            6
+        ) AS score,
+        (mi.moderation_status IN (2, 3) OR (mi.expires_at IS NOT NULL AND mi.expires_at <= now())) AS is_hidden
+    FROM public.marketplace_items mi
+    LEFT JOIN public.seller_profiles sp ON sp.user_id = mi.user_id
+    LEFT JOIN public.marketplace_plans plan ON plan.id = (
+        CASE
+            WHEN sp.user_id IS NULL THEN 'free'
+            WHEN sp.plan_expires_at IS NOT NULL AND sp.plan_expires_at <= now() THEN 'free'
+            ELSE sp.plan_id
+        END
+    )
+    WHERE mi.user_id = v_caller
+      AND mi.deleted_at IS NULL
+      AND (p_status IS NULL OR mi.status = p_status)
+    ORDER BY mi.created_at DESC, mi.id DESC
+    LIMIT v_limit
+    OFFSET v_offset;
+END;
+$$;
+
 -- Vista segura de perfiles comerciales (excluye user_id)
 DROP VIEW IF EXISTS public.safe_seller_profiles;
 CREATE VIEW public.safe_seller_profiles
@@ -2202,6 +2356,18 @@ CREATE POLICY "Gestionar mis propios marcadores de marketplace"
     WITH CHECK (auth.uid() IS NOT NULL AND user_id = auth.uid());
 
 -- 10.5 sponsor_requests
+DROP POLICY IF EXISTS "Anyone can insert sponsor requests" ON public.sponsor_requests;
+DROP POLICY IF EXISTS "Permitir crear solicitud propia de patrocinio" ON public.sponsor_requests;
+CREATE POLICY "Permitir crear solicitud propia de patrocinio"
+    ON public.sponsor_requests
+    FOR INSERT
+    TO authenticated
+    WITH CHECK (
+        auth.uid() IS NOT NULL
+        AND user_id = auth.uid()
+        AND status = 'pending'
+    );
+
 DROP POLICY IF EXISTS "Dueño y staff pueden leer sponsor_requests" ON public.sponsor_requests;
 CREATE POLICY "Dueño y staff pueden leer sponsor_requests"
     ON public.sponsor_requests
@@ -2237,6 +2403,10 @@ REVOKE ALL ON TABLE public.seller_profiles FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON TABLE public.marketplace_item_events FROM PUBLIC;
 REVOKE ALL ON TABLE public.marketplace_bookmarks FROM PUBLIC;
 REVOKE UPDATE, DELETE ON TABLE public.sponsor_requests FROM anon;
+REVOKE ALL ON TABLE public.sponsor_requests FROM anon;
+REVOKE DELETE ON TABLE public.sponsor_requests FROM authenticated;
+-- La vigencia y los contadores del sistema no se editan a mano.
+REVOKE UPDATE (expires_at, shares_count) ON TABLE public.marketplace_items FROM anon, authenticated;
 
 -- 11.2 Concesiones a postgres y service_role
 GRANT ALL ON TABLE public.marketplace_plans TO postgres, service_role;
@@ -2272,6 +2442,7 @@ GRANT UPDATE (
 GRANT INSERT, SELECT ON TABLE public.marketplace_item_events TO anon, authenticated;
 GRANT SELECT, INSERT, DELETE ON TABLE public.marketplace_bookmarks TO authenticated;
 GRANT SELECT ON TABLE public.sponsor_requests TO authenticated;
+GRANT INSERT ON TABLE public.sponsor_requests TO authenticated;
 GRANT UPDATE (status, plan_id, reviewed_by, reviewed_at, admin_note) ON TABLE public.sponsor_requests TO authenticated;
 
 -- 11.4 Concesiones de vistas seguras
@@ -2293,6 +2464,7 @@ GRANT EXECUTE ON FUNCTION public.get_marketplace_metrics(integer) TO authenticat
 GRANT EXECUTE ON FUNCTION public.get_my_marketplace_status() TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.toggle_marketplace_bookmark(uuid) TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.get_my_bookmarked_items(integer, integer) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.get_my_marketplace_items(text, integer, integer) TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.pause_expired_marketplace_items() TO postgres, service_role;
 GRANT EXECUTE ON FUNCTION public.reconcile_seller_plan_limits(uuid) TO postgres, service_role;
 
