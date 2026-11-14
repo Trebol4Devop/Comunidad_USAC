@@ -11,6 +11,7 @@ import '../../../core/services/share_count_service.dart';
 import '../../../core/services/sponsored_preferences_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
+import '../marketplace_theme.dart';
 import '../widgets/create_listing_dialog.dart';
 import '../widgets/marketplace_card.dart';
 import '../widgets/marketplace_plans_sheet.dart';
@@ -200,7 +201,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
       AuthModal.show(
         context,
         title: 'Inicia sesión para guardar',
-        subtitle: 'Para guardar este producto en tus marcadores debes iniciar sesión.',
+        subtitle:
+            'Para guardar este producto en tus marcadores debes iniciar sesión.',
         onAuthenticated: () => _handleToggleBookmark(item),
       );
       return;
@@ -412,8 +414,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             (status != null && status.reason.isNotEmpty)
                 ? status.reason
                 : 'Para publicar anuncios se requiere una verificación institucional real. '
-                    'Esa conexión todavía no está disponible; no se guardará ningún anuncio '
-                    'ni se marcará tu cuenta como verificada.',
+                      'Esa conexión todavía no está disponible; no se guardará ningún anuncio '
+                      'ni se marcará tu cuenta como verificada.',
           ),
           actions: [
             TextButton(
@@ -443,14 +445,15 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
       AuthModal.show(
         context,
         title: 'Inicia sesión para ver tus guardados',
-        subtitle: 'Para acceder a tus productos guardados debes iniciar sesión.',
+        subtitle:
+            'Para acceder a tus productos guardados debes iniciar sesión.',
         onAuthenticated: _openSavedListings,
       );
       return;
     }
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const SavedListingsScreen()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const SavedListingsScreen()));
   }
 
   void _openMySales() {
@@ -458,14 +461,15 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
       AuthModal.show(
         context,
         title: 'Inicia sesión para ver tus ventas',
-        subtitle: 'Para gestionar tus publicaciones y presencia debes iniciar sesión.',
+        subtitle:
+            'Para gestionar tus publicaciones y presencia debes iniciar sesión.',
         onAuthenticated: _openMySales,
       );
       return;
     }
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const MySalesScreen()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const MySalesScreen()));
   }
 
   // Top Squared Header with Settings, Navigation Actions & Publish
@@ -577,160 +581,216 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     );
   }
 
-  // Top Banner (UX-MKT-001)
+  // Franja promocional superior (UX-MKT-001) con la estética cuadrada del
+  // catálogo: superficie plana, borde inferior de 0.8px y sin degradados.
   Widget _buildTopBanner(bool isDark, bool isDesktop) {
+    final textColor = isDark ? Colors.white : ZanateColors.zanateDark;
+    final mutedColor = isDark
+        ? const Color(0xFF94A3B8)
+        : const Color(0xFF64748B);
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF004B87), Color(0xFF1E3A8A)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            width: 0.8,
+          ),
         ),
-        borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
+          Container(width: 4, height: 34, color: ZanateColors.zanateAccent),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Semantics(
                   header: true,
-                  child: const Text(
+                  child: Text(
                     'Marketplace & Tutorías Estudiantiles',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 14,
                       fontWeight: FontWeight.w800,
-                      color: Colors.white,
+                      letterSpacing: -0.2,
+                      color: textColor,
                     ),
                   ),
                 ),
-                const SizedBox(height: 6),
-                const Text(
+                const SizedBox(height: 2),
+                Text(
                   'Espacio libre para emprendimientos sancarlistas: comidas, postres, tutorías de cursos y materiales universitarios. Trato directo, sin comisiones.',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 12,
-                    height: 1.3,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                InkWell(
-                  onTap: () => MarketplacePlansSheet.show(context),
-                  child: const Text(
-                    'Conocer planes',
-                    style: TextStyle(
-                      color: Color(0xFFFDE68A),
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      decoration: TextDecoration.underline,
-                      decorationColor: Color(0xFFFDE68A),
-                    ),
+                    color: mutedColor,
+                    fontSize: 11.5,
+                    height: 1.25,
                   ),
                 ),
               ],
             ),
           ),
           if (isDesktop) ...[
-            const SizedBox(width: 16),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFEAB308),
-                foregroundColor: Colors.black87,
-                elevation: 1,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+            TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: ZanateColors.zanateAccent,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.zero,
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
               ),
-              onPressed: _handleCreateListingClick,
-              icon: const Icon(Icons.add_shopping_cart, size: 18),
-              label: const Text(
-                'Publicar Anuncio',
-                style: TextStyle(fontWeight: FontWeight.w800),
+              onPressed: () => MarketplacePlansSheet.show(context),
+              child: const Text(
+                'Conocer planes',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
               ),
             ),
-          ],
+            const SizedBox(width: 8),
+            TextButton.icon(
+              style: TextButton.styleFrom(
+                backgroundColor: ZanateColors.zanateAccent,
+                foregroundColor: Colors.white,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.zero,
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 11,
+                ),
+              ),
+              onPressed: _handleCreateListingClick,
+              icon: const Icon(Icons.add_shopping_cart, size: 16),
+              label: const Text(
+                'Publicar Anuncio',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+              ),
+            ),
+          ] else
+            InkWell(
+              onTap: () => MarketplacePlansSheet.show(context),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                child: Text(
+                  'Ver planes',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                    color: ZanateColors.zanateAccent,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  // Search and Faceted Filters (UX-MKT-004)
+  // Barra de búsqueda y filtros facetados (UX-MKT-004) con la estética
+  // cuadrada y plana del catálogo.
   Widget _buildSearchAndFilters(bool isDark, bool isDesktop) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // Search Input
-        TextField(
-          controller: _searchController,
-          decoration: InputDecoration(
-            hintText: 'Buscar postres, almuerzos, tutorías o libros...',
-            prefixIcon: const Icon(Icons.search, size: 20),
-            suffixIcon: _searchQuery.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.clear, size: 18),
-                    onPressed: () {
-                      _searchController.clear();
-                      setState(() => _searchQuery = '');
-                      _loadData();
-                    },
-                  )
-                : null,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 12,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(
-                color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
-              ),
-            ),
-          ),
-          onSubmitted: (val) {
-            setState(() => _searchQuery = val.trim());
-            _loadData();
-          },
-        ),
-        const SizedBox(height: 10),
+    final containerBg = isDark
+        ? const Color(0xFF0F172A)
+        : ZanateColors.surfaceBg;
+    final borderColor = isDark
+        ? const Color(0xFF334155)
+        : ZanateColors.subtleBorder;
+    final textColor = isDark ? Colors.white : ZanateColors.zanateDark;
 
-        // Dropdowns: Sede, Facultad, Edificio
-        if (isDesktop)
-          Row(
-            children: [
-              Expanded(child: _buildSedeDropdown()),
-              const SizedBox(width: 10),
-              Expanded(child: _buildFacultadDropdown()),
-              const SizedBox(width: 10),
-              Expanded(child: _buildBuildingDropdown()),
-              const SizedBox(width: 10),
-              _buildFreeChip(isDark),
-            ],
-          )
-        else
-          Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(child: _buildSedeDropdown()),
-                  const SizedBox(width: 8),
-                  Expanded(child: _buildFacultadDropdown()),
-                ],
+    OutlineInputBorder squareBorder(Color color, [double width = 0.8]) {
+      return OutlineInputBorder(
+        borderRadius: BorderRadius.zero,
+        borderSide: BorderSide(color: color, width: width),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        border: Border(bottom: BorderSide(color: borderColor, width: 0.8)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Campo de búsqueda
+          TextField(
+            controller: _searchController,
+            style: TextStyle(fontSize: 13, color: textColor),
+            decoration: InputDecoration(
+              hintText: 'Buscar postres, almuerzos, tutorías o libros...',
+              hintStyle: const TextStyle(
+                fontSize: 12.5,
+                color: Color(0xFF94A3B8),
               ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(child: _buildBuildingDropdown()),
-                  const SizedBox(width: 8),
-                  _buildFreeChip(isDark),
-                ],
+              prefixIcon: const Icon(Icons.search, size: 18),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, size: 16),
+                      splashRadius: 16,
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() => _searchQuery = '');
+                        _loadData();
+                      },
+                    )
+                  : null,
+              filled: true,
+              fillColor: containerBg,
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 12,
               ),
-            ],
+              border: squareBorder(borderColor),
+              enabledBorder: squareBorder(borderColor),
+              focusedBorder: squareBorder(ZanateColors.zanateAccent, 1.2),
+            ),
+            onSubmitted: (val) {
+              setState(() => _searchQuery = val.trim());
+              _loadData();
+            },
           ),
-      ],
+          const SizedBox(height: 8),
+
+          // Filtros: Sede, Facultad y Edificio
+          if (isDesktop)
+            Row(
+              children: [
+                Expanded(child: _buildSedeDropdown()),
+                const SizedBox(width: 8),
+                Expanded(child: _buildFacultadDropdown()),
+                const SizedBox(width: 8),
+                Expanded(child: _buildBuildingDropdown()),
+              ],
+            )
+          else
+            Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(child: _buildSedeDropdown()),
+                    const SizedBox(width: 8),
+                    Expanded(child: _buildFacultadDropdown()),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                _buildBuildingDropdown(),
+              ],
+            ),
+        ],
+      ),
     );
   }
 
@@ -739,9 +799,38 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
       key: ValueKey('sede_$_selectedSede'),
       initialValue: _selectedSede,
       isExpanded: true,
-      decoration: const InputDecoration(
-        labelText: 'Sede / Campus',
-        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: InputDecoration(
+        hintText: 'Sede / Campus',
+        hintStyle: const TextStyle(fontSize: 11),
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 10,
+          vertical: 12,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.zero,
+          borderSide: BorderSide(
+            color: Theme.of(context).dividerColor,
+            width: 0.8,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.zero,
+          borderSide: BorderSide(
+            color: Theme.of(context).dividerColor,
+            width: 0.8,
+          ),
+        ),
+        focusedBorder: const OutlineInputBorder(
+          borderRadius: BorderRadius.zero,
+          borderSide: BorderSide(color: ZanateColors.zanateAccent, width: 1.2),
+        ),
+      ),
+      style: TextStyle(
+        fontSize: 11,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Colors.white
+            : ZanateColors.zanateDark,
       ),
       items: USACConstants.sedes
           .map(
@@ -777,9 +866,38 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
       key: ValueKey('facultad_$_selectedFacultad'),
       initialValue: _selectedFacultad,
       isExpanded: true,
-      decoration: const InputDecoration(
-        labelText: 'Facultad / Unidad',
-        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: InputDecoration(
+        hintText: 'Facultad / Unidad',
+        hintStyle: const TextStyle(fontSize: 11),
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 10,
+          vertical: 12,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.zero,
+          borderSide: BorderSide(
+            color: Theme.of(context).dividerColor,
+            width: 0.8,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.zero,
+          borderSide: BorderSide(
+            color: Theme.of(context).dividerColor,
+            width: 0.8,
+          ),
+        ),
+        focusedBorder: const OutlineInputBorder(
+          borderRadius: BorderRadius.zero,
+          borderSide: BorderSide(color: ZanateColors.zanateAccent, width: 1.2),
+        ),
+      ),
+      style: TextStyle(
+        fontSize: 11,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Colors.white
+            : ZanateColors.zanateDark,
       ),
       items: USACConstants.facultades
           .map(
@@ -809,9 +927,38 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
       key: ValueKey('building_${_selectedSede}_$_selectedBuilding'),
       initialValue: _selectedBuilding,
       isExpanded: true,
-      decoration: const InputDecoration(
-        labelText: 'Edificio / Inmueble',
-        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: InputDecoration(
+        hintText: 'Edificio / Inmueble',
+        hintStyle: const TextStyle(fontSize: 11),
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 10,
+          vertical: 12,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.zero,
+          borderSide: BorderSide(
+            color: Theme.of(context).dividerColor,
+            width: 0.8,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.zero,
+          borderSide: BorderSide(
+            color: Theme.of(context).dividerColor,
+            width: 0.8,
+          ),
+        ),
+        focusedBorder: const OutlineInputBorder(
+          borderRadius: BorderRadius.zero,
+          borderSide: BorderSide(color: ZanateColors.zanateAccent, width: 1.2),
+        ),
+      ),
+      style: TextStyle(
+        fontSize: 11,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Colors.white
+            : ZanateColors.zanateDark,
       ),
       items: [
         const DropdownMenuItem<String>(
@@ -836,55 +983,467 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     );
   }
 
-  Widget _buildFreeChip(bool isDark) {
-    return FilterChip(
-      selected: _onlyFree,
-      avatar: Icon(
-        _onlyFree ? Icons.check_circle : Icons.volunteer_activism_outlined,
-        size: 16,
-        color: _onlyFree ? Colors.white : const Color(0xFF16A34A),
+  // Uniform Category Visuals - Disciplined Monochromatic Palette (No Rainbow)
+  ({IconData icon, String subtitle}) _getCategoryVisuals(String catId) {
+    switch (catId) {
+      case 'comida_postres':
+        return (
+          icon: PhosphorIconsBold.bowlFood,
+          subtitle: 'Almuerzos & postres',
+        );
+      case 'tutorias_academica':
+        return (
+          icon: PhosphorIconsBold.graduationCap,
+          subtitle: 'Clases & asesorías',
+        );
+      case 'libros_materiales':
+        return (
+          icon: PhosphorIconsBold.books,
+          subtitle: 'Libros, batas y útiles',
+        );
+      case 'servicios_estudiantiles':
+        return (
+          icon: PhosphorIconsBold.briefcase,
+          subtitle: 'Impresiones y software',
+        );
+      case 'otros_articulos':
+        return (icon: PhosphorIconsBold.tag, subtitle: 'Tecnología y varios');
+      case 'todos':
+      default:
+        return (
+          icon: PhosphorIconsBold.squaresFour,
+          subtitle: 'Ver todo el catálogo',
+        );
+    }
+  }
+
+  // Sección "Compra por Categorías" con tiles cuadrados.
+  Widget _buildEbayCategoriesSection(bool isDark) {
+    final categories = <({String id, String label})>[
+      (id: 'todos', label: 'Todos'),
+      ...USACConstants.marketplaceCategories.map(
+        (c) => (id: c.id, label: c.label),
       ),
-      label: const Text('Solo Gratuitos'),
-      labelStyle: TextStyle(
-        color: _onlyFree ? Colors.white : (isDark ? Colors.white : ZanateColors.zanateDark),
-        fontWeight: _onlyFree ? FontWeight.bold : FontWeight.normal,
-        fontSize: 12,
+    ];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            width: 0.8,
+          ),
+        ),
       ),
-      selectedColor: const Color(0xFF16A34A),
-      onSelected: (val) {
-        setState(() => _onlyFree = val);
-        _loadData();
-      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Compra por Categorías',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.2,
+                  color: isDark ? Colors.white : ZanateColors.zanateDark,
+                ),
+              ),
+              if (_selectedCategory != 'todos')
+                InkWell(
+                  onTap: () {
+                    setState(() => _selectedCategory = 'todos');
+                    _loadData();
+                  },
+                  child: const Text(
+                    'Ver todas',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: ZanateColors.zanateAccent,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: categories.map((cat) {
+                final isSelected = _selectedCategory == cat.id;
+                final visuals = _getCategoryVisuals(cat.id);
+
+                return Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: InkWell(
+                    onTap: () {
+                      setState(() => _selectedCategory = cat.id);
+                      _loadData();
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      width: 130,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? ZanateColors.zanateAccent.withValues(
+                                alpha: isDark ? 0.25 : 0.08,
+                              )
+                            : (isDark
+                                  ? const Color(0xFF0F172A)
+                                  : ZanateColors.surfaceBg),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isSelected
+                              ? ZanateColors.zanateAccent
+                              : (isDark
+                                    ? const Color(0xFF334155)
+                                    : ZanateColors.subtleBorder),
+                          width: isSelected ? 1.5 : 0.8,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            visuals.icon,
+                            size: 20,
+                            color: isSelected
+                                ? ZanateColors.zanateAccent
+                                : (isDark
+                                      ? const Color(0xFF94A3B8)
+                                      : const Color(0xFF64748B)),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            cat.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: isSelected
+                                  ? FontWeight.w800
+                                  : FontWeight.w700,
+                              color: isSelected
+                                  ? ZanateColors.zanateAccent
+                                  : (isDark
+                                        ? Colors.white
+                                        : ZanateColors.zanateDark),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            visuals.subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: isDark
+                                  ? const Color(0xFF94A3B8)
+                                  : const Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  // Category Filter Chips
-  Widget _buildCategoryChips(bool isDark) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: USACConstants.marketplaceCategories.map((cat) {
-          final isSelected = _selectedCategory == cat.id;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: FilterChip(
-              selected: isSelected,
-              label: Text(cat.label),
-              labelStyle: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected
-                    ? Colors.white
-                    : (isDark ? Colors.white70 : Colors.black87),
+  // Sección "Ofertas y Aportes del Día" con carrusel horizontal.
+  Widget _buildEbayDealsSection(bool isDark) {
+    final deals = _listings
+        .where((item) => item.isFree || item.upvotes > 0)
+        .take(8)
+        .toList();
+
+    if (deals.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            width: 0.8,
+          ),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                PhosphorIconsBold.lightning,
+                size: 16,
+                color: Color(0xFFF59E0B),
               ),
-              selectedColor: ZanateColors.zanateAccent,
-              onSelected: (_) {
-                setState(() => _selectedCategory = cat.id);
-                _loadData();
+              const SizedBox(width: 6),
+              Text(
+                'Ofertas y Aportes del Día',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.2,
+                  color: isDark ? Colors.white : ZanateColors.zanateDark,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text(
+                  'GRATIS & DESTACADOS',
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF059669),
+                    letterSpacing: 0.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 130,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: deals.length,
+              separatorBuilder: (context, index) => const SizedBox(width: 10),
+              itemBuilder: (context, idx) {
+                final item = deals[idx];
+                final visuals = _getCategoryVisuals(item.category);
+
+                return Container(
+                  width: 240,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(0xFF0F172A)
+                        : ZanateColors.surfaceBg,
+                    border: Border.all(
+                      color: isDark
+                          ? const Color(0xFF334155)
+                          : ZanateColors.subtleBorder,
+                      width: 0.8,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 76,
+                        height: 106,
+                        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                        child: item.imageUrls.isNotEmpty
+                            ? Image.network(
+                                item.imageUrls.first,
+                                fit: BoxFit.cover,
+                                errorBuilder: (ctx, err, stack) => Center(
+                                  child: Icon(
+                                    visuals.icon,
+                                    size: 24,
+                                    color: const Color(0xFF94A3B8),
+                                  ),
+                                ),
+                              )
+                            : Center(
+                                child: Icon(
+                                  visuals.icon,
+                                  size: 24,
+                                  color: const Color(0xFF94A3B8),
+                                ),
+                              ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: item.isFree
+                                    ? const Color(0xFF059669)
+                                    : ZanateColors.zanateAccent,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                item.isFree ? 'GRATIS' : item.formattedPrice,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              item.title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: isDark
+                                    ? Colors.white
+                                    : ZanateColors.zanateDark,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Row(
+                              children: [
+                                const Icon(
+                                  PhosphorIconsRegular.mapPin,
+                                  size: 11,
+                                  color: Color(0xFF94A3B8),
+                                ),
+                                const SizedBox(width: 3),
+                                Expanded(
+                                  child: Text(
+                                    item.locationDetail.isNotEmpty
+                                        ? item.locationDetail
+                                        : item.sede,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      color: Color(0xFF94A3B8),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
               },
             ),
-          );
-        }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Encabezado del feed: conteo de publicaciones y filtro de gratuitos.
+  Widget _buildFeedFilterHeader(bool isDark) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            width: 0.8,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              '${_listings.length} publicaciones disponibles',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: isDark
+                    ? const Color(0xFF94A3B8)
+                    : const Color(0xFF64748B),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          InkWell(
+            onTap: () {
+              setState(() => _onlyFree = !_onlyFree);
+              _loadData();
+            },
+            borderRadius: BorderRadius.circular(6),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: _onlyFree
+                    ? ZanateColors.zanateAccent
+                    : (isDark
+                          ? const Color(0xFF0F172A)
+                          : ZanateColors.surfaceBg),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: _onlyFree
+                      ? ZanateColors.zanateAccent
+                      : (isDark
+                            ? const Color(0xFF334155)
+                            : ZanateColors.subtleBorder),
+                  width: 0.8,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _onlyFree
+                        ? PhosphorIconsFill.checkCircle
+                        : PhosphorIconsRegular.gift,
+                    size: 13,
+                    color: _onlyFree
+                        ? Colors.white
+                        : (isDark
+                              ? const Color(0xFF94A3B8)
+                              : const Color(0xFF64748B)),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Solo Gratuitos',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: _onlyFree ? FontWeight.w700 : FontWeight.w500,
+                      color: _onlyFree
+                          ? Colors.white
+                          : (isDark
+                                ? const Color(0xFFE2E8F0)
+                                : ZanateColors.zanateDark),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -921,22 +1480,21 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: _listings.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 12),
+      separatorBuilder: (_, _) => const SizedBox.shrink(),
       itemBuilder: (ctx, i) {
         final item = _listings[i];
         return MarketplaceCard(
           key: ValueKey(item.id),
           item: item,
-          isOwner: item.isMine ||
+          isOwner:
+              item.isMine ||
               (item.userId != null &&
                   item.userId == SupabaseService.currentUserId),
           onTap: () async {
             await Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (_) => ProductDetailScreen(
-                  itemId: item.id,
-                  initialItem: item,
-                ),
+                builder: (_) =>
+                    ProductDetailScreen(itemId: item.id, initialItem: item),
               ),
             );
             _loadData();
@@ -971,79 +1529,78 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final isDesktop = Responsive.isDesktop(context);
 
-    return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg,
-      body: Column(
-        children: [
-          // Squared Header
-          _buildSquaredHeader(isDark),
+    return MarketplaceTheme.wrap(
+      context,
+      Scaffold(
+        backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+        body: Column(
+          children: [
+            // 1. Cabecera cuadrada
+            _buildSquaredHeader(isDark),
 
-          // Main Scrollable Area
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: _loadData,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: MaxWidthContainer(
-                  maxWidth: 1100,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            // 2. Búsqueda y filtros (fijos, como en el catálogo eBay)
+            _buildSearchAndFilters(isDark, isDesktop),
+
+            // 3. Contenido desplazable: franja promocional, categorías,
+            // ofertas, patrocinios y feed a ancho completo.
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _loadData,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Top Banner (UX-MKT-001)
+                      // Franja promocional (UX-MKT-001)
                       _buildTopBanner(isDark, isDesktop),
-                      const SizedBox(height: 16),
 
-                      // Sponsor Carousel (UX-MKT-002)
+                      // Compra por categorías (estilo eBay)
+                      _buildEbayCategoriesSection(isDark),
+
+                      // Ofertas y aportes del día (estilo eBay)
+                      _buildEbayDealsSection(isDark),
+
+                      // Carrusel de patrocinadores (UX-MKT-002)
                       SponsorCarousel(
                         sponsoredItems: _sponsoredListings,
                         onRequestSponsor: _openSponsorRequestDialog,
                         onHideSponsored: _hideSponsoredItem,
                         onReportSponsored: _handleReportItem,
                       ),
-                      const SizedBox(height: 12),
 
-                      // Search and Faceted Filters (UX-MKT-004)
-                      _buildSearchAndFilters(isDark, isDesktop),
-                      const SizedBox(height: 12),
+                      // Aviso de modo offline
+                      if (_isOffline) OfflineBanner(onRetry: _loadData),
 
-                      // Category Filters
-                      _buildCategoryChips(isDark),
-                      const SizedBox(height: 14),
+                      // Encabezado del feed con conteo y filtro de gratuitos
+                      _buildFeedFilterHeader(isDark),
 
-                      // Offline notice if applicable
-                      if (_isOffline) ...[
-                        OfflineBanner(onRetry: _loadData),
-                        const SizedBox(height: 12),
-                      ],
-
-                      // Feed
+                      // Feed de publicaciones
                       _buildPostsFeed(isDark),
                     ],
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
+        floatingActionButton: widget.showFloatingActionButton
+            ? FloatingActionButton.extended(
+                heroTag: 'marketplace_fab',
+                onPressed: _handleCreateListingClick,
+                backgroundColor: ZanateColors.zanateAccent,
+                foregroundColor: Colors.white,
+                elevation: 2,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.zero,
+                ),
+                icon: const Icon(PhosphorIconsBold.plus, size: 18),
+                label: const Text(
+                  'Publicar Anuncio',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                ),
+              )
+            : null,
       ),
-      floatingActionButton: widget.showFloatingActionButton
-          ? FloatingActionButton.extended(
-              heroTag: 'marketplace_fab',
-              onPressed: _handleCreateListingClick,
-              backgroundColor: ZanateColors.zanateAccent,
-              foregroundColor: Colors.white,
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              icon: const Icon(PhosphorIconsBold.plus, size: 18),
-              label: const Text(
-                'Publicar Anuncio',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-              ),
-            )
-          : null,
     );
   }
 }

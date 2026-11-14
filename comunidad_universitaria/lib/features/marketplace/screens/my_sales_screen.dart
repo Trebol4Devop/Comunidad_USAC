@@ -6,6 +6,7 @@ import '../../../core/models/marketplace_item.dart';
 import '../../../core/services/marketplace_service.dart';
 import '../../../core/utils/responsive.dart';
 import '../../shared/widgets/empty_state_widget.dart';
+import '../marketplace_theme.dart';
 import '../widgets/marketplace_plans_sheet.dart';
 import 'product_detail_screen.dart';
 
@@ -211,7 +212,9 @@ class _MySalesScreenState extends State<MySalesScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final isDesktop = Responsive.isDesktop(context);
 
-    return Scaffold(
+    return MarketplaceTheme.wrap(
+      context,
+      Scaffold(
       backgroundColor: isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg,
       appBar: AppBar(
         title: const Text(
@@ -277,7 +280,7 @@ class _MySalesScreenState extends State<MySalesScreen> {
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: _listings.length,
-                            separatorBuilder: (_, _) => const SizedBox(height: 10),
+                            separatorBuilder: (_, _) => const SizedBox.shrink(),
                             itemBuilder: (ctx, i) => _buildInventoryRow(_listings[i], isDark),
                           ),
                         const SizedBox(height: 32),
@@ -287,6 +290,7 @@ class _MySalesScreenState extends State<MySalesScreen> {
                 ),
               ),
             ),
+      ),
     );
   }
 
@@ -301,7 +305,7 @@ class _MySalesScreenState extends State<MySalesScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
           width: 0.8,
@@ -314,7 +318,7 @@ class _MySalesScreenState extends State<MySalesScreen> {
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: ZanateColors.zanateAccent.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(4),
             ),
             child: const Icon(PhosphorIconsBold.sparkle, color: ZanateColors.zanateAccent, size: 22),
           ),
@@ -357,7 +361,7 @@ class _MySalesScreenState extends State<MySalesScreen> {
               foregroundColor: Colors.white,
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
             ),
             onPressed: () => MarketplacePlansSheet.show(context),
             child: const Text('Mejorar plan', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
@@ -372,7 +376,7 @@ class _MySalesScreenState extends State<MySalesScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
           width: 0.8,
@@ -457,7 +461,7 @@ class _MySalesScreenState extends State<MySalesScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
           width: 0.8,
@@ -625,7 +629,7 @@ class _MySalesScreenState extends State<MySalesScreen> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(4),
         border: Border.all(
           color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
           width: 0.8,

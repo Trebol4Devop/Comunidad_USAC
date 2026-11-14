@@ -337,7 +337,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: ZanateColors.zanateAccent.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(4),
                     ),
                     child: const Icon(
                       PhosphorIconsBold.storefront,
@@ -1033,7 +1033,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(4),
                         ),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 18,

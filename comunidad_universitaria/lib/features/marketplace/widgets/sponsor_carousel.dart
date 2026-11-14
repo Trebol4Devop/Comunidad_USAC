@@ -30,7 +30,7 @@ class SponsorCarousel extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E293B) : const Color(0xFFFFFBEB),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isDark ? const Color(0xFF334155) : const Color(0xFFFDE68A),
             width: 0.8,
@@ -42,7 +42,7 @@ class SponsorCarousel extends StatelessWidget {
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(4),
               ),
               child: const Icon(
                 PhosphorIconsBold.megaphoneSimple,
@@ -83,7 +83,7 @@ class SponsorCarousel extends StatelessWidget {
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(4),
                 ),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 14,
@@ -113,7 +113,7 @@ class SponsorCarousel extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: const Color(0xFFF59E0B), width: 1.5),
         boxShadow: [
           BoxShadow(
@@ -171,7 +171,7 @@ class SponsorCarousel extends StatelessWidget {
                 // Thumbnail or gallery preview
                 if (item.imageUrls.isNotEmpty)
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(4),
                     child: Container(
                       width: 100,
                       height: 100,
@@ -310,7 +310,7 @@ class SponsorCarousel extends StatelessWidget {
                               ),
                               minimumSize: const Size(0, 30),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(4),
                               ),
                               elevation: 0,
                             ),

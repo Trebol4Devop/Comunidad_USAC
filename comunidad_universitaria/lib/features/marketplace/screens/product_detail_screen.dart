@@ -10,6 +10,7 @@ import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/utils/time_utils.dart';
 import '../../../core/utils/url_utils.dart';
+import '../marketplace_theme.dart';
 import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/image_viewer_dialog.dart';
 import '../../shared/widgets/report_dialog.dart';
@@ -345,7 +346,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
     final item = _item!;
 
-    return Scaffold(
+    return MarketplaceTheme.wrap(
+      context,
+      Scaffold(
       backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
       appBar: AppBar(
         title: Text(
@@ -490,6 +493,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
         ),
       ),
+      ),
     );
   }
 
@@ -500,7 +504,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         height: 200,
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(4),
         ),
         child: const Center(
           child: Icon(PhosphorIconsRegular.image, size: 56, color: Color(0xFF94A3B8)),
@@ -513,7 +517,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       children: [
         if (item.imageUrls.isNotEmpty)
           ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(4),
             child: Stack(
               children: [
                 AspectRatio(
@@ -551,7 +555,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.65),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         '${_currentImageIndex + 1}/${item.imageUrls.length}',
@@ -573,7 +577,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
               minimumSize: const Size(double.infinity, 48),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
               side: const BorderSide(color: ZanateColors.zanateAccent, width: 1),
             ),
             icon: const Icon(PhosphorIconsFill.playCircle, color: ZanateColors.zanateAccent, size: 20),
@@ -745,7 +749,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(4),
         border: Border.all(
           color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
           width: 0.8,
@@ -886,7 +890,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(4),
         ),
         child: const Center(
           child: Text(
@@ -914,7 +918,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               foregroundColor: Colors.white,
               elevation: 1,
               minimumSize: const Size(double.infinity, 50),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
             ),
             icon: const Icon(PhosphorIconsFill.whatsappLogo, size: 22),
             label: const Text(
@@ -1211,7 +1215,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               child: Container(
                 decoration: BoxDecoration(
                   color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(4),
                   border: Border.all(
                     color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
                     width: 0.8,
