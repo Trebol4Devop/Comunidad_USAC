@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../core/constants/zanate_colors.dart';
+import '../../../core/services/local_storage_service.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../onboarding/state/session_controller.dart';
 import '../../profile/screens/profile_screen.dart';
 import '../../profile/widgets/alias_modal.dart';
 import '../../rules/screens/rules_screen.dart';
@@ -193,7 +195,13 @@ class SettingsBottomSheet {
                     ),
                     onTap: () async {
                       Navigator.of(ctx).pop();
-                      await SupabaseService.signOut();
+                      final sessionCtrl = SessionController.maybeOf(context);
+                      if (sessionCtrl != null) {
+                        await sessionCtrl.signOut();
+                      } else {
+                        await LocalStorageService.setGuestMode(false);
+                        await SupabaseService.signOut();
+                      }
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(

@@ -10,16 +10,19 @@ import 'institutional_email_step.dart';
 /// Presenta la elección entre Camino A (Correo Institucional) y Camino B (Documento con OCR).
 class VerificationFlowScreen extends StatefulWidget {
   final VerificationController controller;
+  final int initialTab;
 
   const VerificationFlowScreen({
     super.key,
     required this.controller,
+    this.initialTab = 0,
   });
 
   /// Muestra el flujo en modal bottom sheet para móviles o en diálogo para pantallas grandes.
   static Future<void> show(
     BuildContext context, {
     VerificationController? controller,
+    int initialTab = 0,
   }) {
     final effectiveController =
         controller ?? VerificationGate.maybeOf(context) ?? VerificationController();
@@ -33,7 +36,10 @@ class VerificationFlowScreen extends StatefulWidget {
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
-        builder: (ctx) => VerificationFlowScreen(controller: effectiveController),
+        builder: (ctx) => VerificationFlowScreen(
+          controller: effectiveController,
+          initialTab: initialTab,
+        ),
       );
     } else {
       return showDialog(
@@ -42,7 +48,10 @@ class VerificationFlowScreen extends StatefulWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 620, maxHeight: 720),
-            child: VerificationFlowScreen(controller: effectiveController),
+            child: VerificationFlowScreen(
+              controller: effectiveController,
+              initialTab: initialTab,
+            ),
           ),
         ),
       );
@@ -60,7 +69,11 @@ class _VerificationFlowScreenState extends State<VerificationFlowScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(
+      length: 2,
+      vsync: this,
+      initialIndex: widget.initialTab.clamp(0, 1),
+    );
   }
 
   @override

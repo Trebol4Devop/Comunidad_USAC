@@ -5,8 +5,9 @@ import 'package:flutter/material.dart';
 import 'core/config/app_theme.dart';
 import 'core/config/supabase_config.dart';
 import 'core/services/local_storage_service.dart';
-import 'core/services/supabase_service.dart';
 import 'features/navigation/app_shell.dart';
+import 'features/onboarding/state/session_controller.dart';
+import 'features/onboarding/widgets/auth_gate.dart';
 import 'features/sso/screens/sso_authorize_screen.dart';
 import 'features/verification/state/verification_controller.dart';
 import 'features/verification/widgets/verification_gate.dart';
@@ -16,9 +17,6 @@ void main() async {
 
   // Initialize Supabase client
   await SupabaseConfig.initialize();
-
-  // Ensure active session (anonymous or auth user)
-  await SupabaseService.ensureSession();
 
   // Load or generate default student pseudonym
   final initialAlias = await LocalStorageService.getOrGenerateAlias();
@@ -49,6 +47,7 @@ class ComunidadUSACApp extends StatefulWidget {
 class _ComunidadUSACAppState extends State<ComunidadUSACApp> {
   late String _activeAlias;
   late ThemeMode _themeMode;
+  late final SessionController _sessionController;
   late final VerificationController _verificationController;
 
   @override
@@ -56,11 +55,13 @@ class _ComunidadUSACAppState extends State<ComunidadUSACApp> {
     super.initState();
     _activeAlias = widget.initialAlias;
     _themeMode = widget.initialIsDarkMode ? ThemeMode.dark : ThemeMode.light;
+    _sessionController = SessionController()..bootstrap();
     _verificationController = VerificationController()..loadStatus();
   }
 
   @override
   void dispose() {
+    _sessionController.dispose();
     _verificationController.dispose();
     super.dispose();
   }
@@ -134,13 +135,17 @@ class _ComunidadUSACAppState extends State<ComunidadUSACApp> {
     }
 
     return MaterialPageRoute(
-      builder: (_) => VerificationGate(
-        controller: _verificationController,
-        child: AppShell(
-          activeAlias: _activeAlias,
-          onAliasChanged: _updateAlias,
-          onToggleTheme: _toggleTheme,
-          isDarkMode: _themeMode == ThemeMode.dark,
+      builder: (_) => AuthGate(
+        sessionController: _sessionController,
+        verificationController: _verificationController,
+        child: VerificationGate(
+          controller: _verificationController,
+          child: AppShell(
+            activeAlias: _activeAlias,
+            onAliasChanged: _updateAlias,
+            onToggleTheme: _toggleTheme,
+            isDarkMode: _themeMode == ThemeMode.dark,
+          ),
         ),
       ),
       settings: settings,
