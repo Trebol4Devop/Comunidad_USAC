@@ -364,9 +364,17 @@ Flujo:
 
 - **Aprobado:** llama a `admin_create_verification_request(..., p_auto_approved => true)`
   **sin subir a R2**. Responde `{"status":"verified","request_id":...}`.
-- **Dudoso:** sube a R2 con clave `pending/${userId}/${requestId}.${ext}` y llama
-  a `admin_create_verification_request(..., p_auto_approved => false)` con
-  `p_r2_object_key`. Responde `{"status":"manual_review","request_id":...}`.
+- **Dudoso (dos pasos, por ese orden):**
+  1. Llama a `admin_create_verification_request(..., p_r2_object_key => NULL,
+     p_auto_approved => false)` y obtiene `request_id`.
+  2. Sube el archivo a R2 con la clave `pending/${userId}/${request_id}.${ext}`
+     y luego actualiza con el cliente service_role
+     `verification_requests.r2_object_key = key` y
+     `moderation_jobs.has_image = true` (fila con
+     `entity_id = request_id`).
+  Si la subida falla, elimina la fila recién creada y responde
+  `500 {"status":"error","code":"upload_failed"}`.
+  Responde `{"status":"manual_review","request_id":...}`.
 
 Errores:
 
