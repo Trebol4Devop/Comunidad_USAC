@@ -28,6 +28,20 @@ describe('runCleanup handler', () => {
     // Faux Supabase Client
     const fakeSupabase = {
       from: vi.fn((table: string) => {
+        if (table === 'merchant_verification_requests') {
+          return {
+            select: vi.fn(() => ({
+              or: vi.fn(() => ({
+                or: vi.fn(() => ({
+                  limit: vi.fn(async () => ({
+                    data: [],
+                    error: null,
+                  })),
+                })),
+              })),
+            })),
+          };
+        }
         expect(table).toBe('verification_requests');
         return {
           select: vi.fn(() => ({
@@ -88,18 +102,34 @@ describe('runCleanup handler', () => {
     } as unknown as R2Bucket;
 
     const fakeSupabase = {
-      from: vi.fn(() => ({
-        select: vi.fn(() => ({
-          not: vi.fn(() => ({
-            or: vi.fn(() => ({
-              limit: vi.fn(async () => ({
-                data: null,
-                error: { message: 'Database connection error' },
+      from: vi.fn((table: string) => {
+        if (table === 'merchant_verification_requests') {
+          return {
+            select: vi.fn(() => ({
+              or: vi.fn(() => ({
+                or: vi.fn(() => ({
+                  limit: vi.fn(async () => ({
+                    data: null,
+                    error: { message: 'Database connection error' },
+                  })),
+                })),
+              })),
+            })),
+          };
+        }
+        return {
+          select: vi.fn(() => ({
+            not: vi.fn(() => ({
+              or: vi.fn(() => ({
+                limit: vi.fn(async () => ({
+                  data: null,
+                  error: { message: 'Database connection error' },
+                })),
               })),
             })),
           })),
-        })),
-      })),
+        };
+      }),
     } as unknown as SupabaseClient;
 
     const stats = await runCleanup(fakeBucket, fakeSupabase);
