@@ -78,7 +78,10 @@ void main() {
       expect(loaded.contactWhatsapp, '50211112222');
       expect(loaded.contactTelegram, 'tele_destacado');
       expect(loaded.contactInstagram, 'insta_destacado');
-      expect(loaded.carne, '202112345');
+      // Privacidad: el carné nunca se persiste en texto claro.
+      expect(loaded.carne, isNull);
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.containsKey('usac_student_carne'), isFalse);
       expect(loaded.studentName, 'Ana Lucía Gómez');
       expect(loaded.isCarneVerified, isFalse);
     });

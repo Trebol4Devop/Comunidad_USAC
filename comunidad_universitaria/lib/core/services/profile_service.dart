@@ -12,7 +12,17 @@ class ProfileService {
   static const String termsVersion = 'v1.0-2026';
 
   static Future<UserProfile> loadProfile() async {
-    return await LocalStorageService.getUserProfile();
+    final local = await LocalStorageService.getUserProfile();
+    try {
+      final statusMap = await fetchVerificationStatus();
+      if (statusMap != null) {
+        final isVerified = statusMap['is_verified'] == true;
+        return local.copyWith(isCarneVerified: isVerified);
+      }
+    } catch (e) {
+      debugPrint('Aviso best-effort cargando verificación en profile: $e');
+    }
+    return local;
   }
 
   static Future<void> saveProfile(UserProfile profile) async {
@@ -69,7 +79,7 @@ class ProfileService {
     try {
       final res = await SupabaseService.client
           .from('profiles')
-          .select('is_verified, verified_at, cui_hash, carne_hash')
+          .select('is_verified, verified_at, cui_hash, carne_hash, verification_status, verification_method')
           .eq('id', uid)
           .maybeSingle();
 
@@ -78,6 +88,39 @@ class ProfileService {
     } catch (e) {
       debugPrint('Error al obtener estado de verificación: $e');
       return null;
+    }
+  }
+
+  /// Reclama credenciales de estudiante mediante la función RPC `claim_student_credentials`.
+  static Future<Map<String, dynamic>> claimStudentCredentials(
+    String carne, [
+    String? cui,
+  ]) async {
+    if (!SupabaseConfig.isConfigured) {
+      return {'ok': false, 'code': 'offline'};
+    }
+    final uid = SupabaseService.currentUserId;
+    if (uid == null || !SupabaseService.isAuthenticated) {
+      return {'ok': false, 'code': 'not_authenticated'};
+    }
+    try {
+      final params = <String, dynamic>{
+        'p_carne': carne.trim(),
+      };
+      if (cui != null && cui.trim().isNotEmpty) {
+        params['p_cui'] = cui.trim();
+      }
+      final dynamic res = await SupabaseService.client.rpc(
+        'claim_student_credentials',
+        params: params,
+      );
+      if (res is Map) {
+        return Map<String, dynamic>.from(res);
+      }
+      return {'ok': false, 'code': 'unexpected_response'};
+    } catch (e) {
+      debugPrint('Error en claimStudentCredentials: $e');
+      return {'ok': false, 'code': 'network_error', 'message': e.toString()};
     }
   }
 

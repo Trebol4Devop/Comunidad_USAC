@@ -50,7 +50,11 @@ class LocalStorageService {
     final whatsapp = prefs.getString(_keyWhatsapp);
     final telegram = prefs.getString(_keyTelegram);
     final instagram = prefs.getString(_keyInstagram);
-    final carne = prefs.getString(_keyCarne);
+    // Anti-doxxing: el carné no se persiste en claro. Limpiar si existe valor previo.
+    if (prefs.containsKey(_keyCarne)) {
+      await prefs.remove(_keyCarne);
+    }
+    const String? carne = null;
     final studentName = prefs.getString(_keyStudentName);
     if (prefs.getBool(_keyCarneVerified) == true) {
       await prefs.setBool(_keyCarneVerified, false);
@@ -90,11 +94,8 @@ class LocalStorageService {
     await prefs.setInt(_keyAvatarColor, profile.avatarColorIndex);
     await prefs.setInt(_keyAvatarIcon, profile.avatarIconIndex);
 
-    if (profile.carne != null && profile.carne!.trim().isNotEmpty) {
-      await prefs.setString(_keyCarne, profile.carne!.trim());
-    } else {
-      await prefs.remove(_keyCarne);
-    }
+    // Anti-doxxing: el carné no se persiste en claro en shared_preferences.
+    await prefs.remove(_keyCarne);
 
     if (profile.studentName != null && profile.studentName!.trim().isNotEmpty) {
       await prefs.setString(_keyStudentName, profile.studentName!.trim());

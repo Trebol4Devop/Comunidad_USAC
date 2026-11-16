@@ -21,6 +21,7 @@ import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/empty_state_widget.dart';
 import '../../shared/widgets/network_state_widgets.dart';
 import '../../shared/widgets/settings_bottom_sheet.dart';
+import '../../verification/screens/verification_flow_screen.dart';
 import 'my_sales_screen.dart';
 import 'product_detail_screen.dart';
 import 'saved_listings_screen.dart';
@@ -421,6 +422,13 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
               child: const Text('Entendido'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                VerificationFlowScreen.show(context);
+              },
+              child: const Text('Verificar mi cuenta'),
             ),
           ],
         ),
