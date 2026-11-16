@@ -89,7 +89,7 @@ class _CarneValidationModalState extends State<CarneValidationModal> {
       setState(() {
         _isSavingDraft = false;
         _statusMessage =
-            'Borrador guardado en este dispositivo. No hay una fuente institucional conectada: no se consultó Registro y Estadística y tu condición estudiantil no está verificada. Podrás reintentar cuando la verificación auténtica esté disponible.';
+            'Borrador guardado solo para esta sesión. No hay una fuente institucional conectada: no se consultó Registro y Estadística y tu condición estudiantil no está verificada. Podrás reintentar cuando la verificación auténtica esté disponible.';
       });
     } catch (_) {
       if (mounted) {
@@ -296,7 +296,7 @@ class _CarneValidationModalState extends State<CarneValidationModal> {
                           ),
                           Expanded(
                             child: Text(
-                              'Autorizo guardar mi carné y nombre en este dispositivo para reintentar. Entiendo que esto no verifica mi condición estudiantil.',
+                              'Autorizo usar mi carné y nombre solo en esta sesión. No se guardan en el dispositivo y esto no verifica mi condición estudiantil.',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500,

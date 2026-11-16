@@ -192,7 +192,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(
-          find.textContaining('Borrador guardado en este dispositivo.'),
+          find.textContaining('Borrador guardado solo para esta sesión.'),
           findsOneWidget,
         );
         expect(
@@ -213,10 +213,13 @@ void main() {
         );
 
         final savedProfile = await ProfileService.loadProfile();
-        expect(savedProfile.carne, '202100123');
+        // Privacidad: el carné no se guarda en el dispositivo; solo vive en memoria.
+        expect(savedProfile.carne, isNull);
         expect(savedProfile.studentName, 'Carlos Estudiante');
         expect(savedProfile.isCarneVerified, isFalse);
 
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pumpAndSettle();
         await tester.pumpWidget(buildTestModal(currentProfile: savedProfile));
         await tester.pumpAndSettle();
 
@@ -230,7 +233,7 @@ void main() {
         );
         expect(
           tester.widget<TextFormField>(retriedCarneField).controller!.text,
-          '202100123',
+          isEmpty,
         );
         expect(
           tester.widget<TextFormField>(retriedNameField).controller!.text,

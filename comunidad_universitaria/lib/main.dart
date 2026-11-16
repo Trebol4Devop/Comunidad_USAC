@@ -8,6 +8,8 @@ import 'core/services/local_storage_service.dart';
 import 'core/services/supabase_service.dart';
 import 'features/navigation/app_shell.dart';
 import 'features/sso/screens/sso_authorize_screen.dart';
+import 'features/verification/state/verification_controller.dart';
+import 'features/verification/widgets/verification_gate.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,12 +49,20 @@ class ComunidadUSACApp extends StatefulWidget {
 class _ComunidadUSACAppState extends State<ComunidadUSACApp> {
   late String _activeAlias;
   late ThemeMode _themeMode;
+  late final VerificationController _verificationController;
 
   @override
   void initState() {
     super.initState();
     _activeAlias = widget.initialAlias;
     _themeMode = widget.initialIsDarkMode ? ThemeMode.dark : ThemeMode.light;
+    _verificationController = VerificationController()..loadStatus();
+  }
+
+  @override
+  void dispose() {
+    _verificationController.dispose();
+    super.dispose();
   }
 
   void _updateAlias(String newAlias) {
@@ -124,11 +134,14 @@ class _ComunidadUSACAppState extends State<ComunidadUSACApp> {
     }
 
     return MaterialPageRoute(
-      builder: (_) => AppShell(
-        activeAlias: _activeAlias,
-        onAliasChanged: _updateAlias,
-        onToggleTheme: _toggleTheme,
-        isDarkMode: _themeMode == ThemeMode.dark,
+      builder: (_) => VerificationGate(
+        controller: _verificationController,
+        child: AppShell(
+          activeAlias: _activeAlias,
+          onAliasChanged: _updateAlias,
+          onToggleTheme: _toggleTheme,
+          isDarkMode: _themeMode == ThemeMode.dark,
+        ),
       ),
       settings: settings,
     );
