@@ -44,6 +44,7 @@ void main() {
         'CARRERA DE INGENIERÍA EN CIENCIAS Y SISTEMAS\n'
         'Carné 201901234\n'
         'CUI 1234567890101\n'
+        'EN CASO DE EMERGENCIA MARQUE AL 1592\n'
         'DEPARTAMENTO DE REGISTRO Y ESTADÍSTICA';
 
     test('aprueba un carné coherente con carné, facultad y carrera', () {
@@ -117,7 +118,7 @@ void main() {
 
       expect(result.passed, isTrue);
       expect(
-        result.items.any((i) => i.label == 'Código de barras'),
+        result.items.any((i) => i.label == 'Código de barras del frente'),
         isTrue,
       );
     });
@@ -148,7 +149,7 @@ void main() {
       expect(result.passed, isFalse);
       expect(
         result.items.any(
-          (i) => i.label == 'Lectura del carné' && i.isError,
+          (i) => i.label == 'Lectura del frente' && i.isError,
         ),
         isTrue,
       );
@@ -171,4 +172,92 @@ void main() {
       expect(bad.items.any((i) => i.label == 'CUI' && i.isError), isTrue);
     });
   });
+
+  group('CarnetPhotoValidator.validateBack', () {
+    const reversoValido =
+        'JUAN PÉREZ GÓMEZ\n'
+        'USAC TRICENTENARIA\n'
+        'ESTUDIANTE UNIVERSITARIO\n'
+        'Departamento de Registro y Estadística';
+
+    test('aprueba el reverso con leyendas y QR de Registro y Estadística', () {
+      final result = CarnetPhotoValidator.validateBack(
+        ocrText: reversoValido,
+        qrUrl: 'https://registro.usac.edu.gt/estudiante/201901234',
+        expectedCarne: '201901234',
+      );
+
+      expect(result.passed, isTrue);
+      expect(
+        result.items.any((i) => i.label == 'QR vinculado al carné'),
+        isTrue,
+      );
+    });
+
+    test('falla si no hay QR en el reverso', () {
+      final result = CarnetPhotoValidator.validateBack(ocrText: reversoValido);
+
+      expect(result.passed, isFalse);
+      expect(
+        result.items.any(
+          (i) => i.label == 'QR de Registro y Estadística' && i.isError,
+        ),
+        isTrue,
+      );
+    });
+
+    test('falla si el QR no es de Registro y Estadística', () {
+      final result = CarnetPhotoValidator.validateBack(
+        ocrText: reversoValido,
+        qrUrl: 'https://evil.com/x',
+      );
+
+      expect(result.passed, isFalse);
+      expect(
+        result.items.any(
+          (i) => i.label == 'QR de Registro y Estadística' && i.isError,
+        ),
+        isTrue,
+      );
+    });
+
+    test('falla si el reverso no tiene las leyendas USAC', () {
+      final result = CarnetPhotoValidator.validateBack(
+        ocrText: 'JUAN PEREZ\nDepartamento de Registro y Estadistica',
+        qrUrl: 'https://registro.usac.edu.gt/estudiante/201901234',
+      );
+
+      expect(result.passed, isFalse);
+      expect(
+        result.items.any(
+          (i) => i.label == 'Leyendas USAC del reverso' && i.isError,
+        ),
+        isTrue,
+      );
+    });
+
+    test('el QR sin carné/CUI es advertencia, no bloqueo', () {
+      final result = CarnetPhotoValidator.validateBack(
+        ocrText: reversoValido,
+        qrUrl: 'https://registro.usac.edu.gt/verificar/token-abc',
+        expectedCarne: '201901234',
+      );
+
+      expect(result.passed, isTrue);
+      expect(
+        result.items.any((i) => i.label == 'Datos del QR' && i.isWarning),
+        isTrue,
+      );
+    });
+
+    test('un código de barras no es válido en el reverso', () {
+      final result = CarnetPhotoValidator.validateBack(
+        ocrText: reversoValido,
+        qrUrl: '2019012340001',
+      );
+
+      expect(result.passed, isFalse);
+    });
+  });
+
 }

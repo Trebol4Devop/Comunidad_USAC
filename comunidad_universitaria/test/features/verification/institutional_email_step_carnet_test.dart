@@ -14,29 +14,54 @@ final _pngBytes = base64Decode(
 );
 
 class _FakeOcrService implements OcrService {
-  _FakeOcrService(this.result);
+  _FakeOcrService(this.results);
 
-  final OcrScanResult result;
+  final List<OcrScanResult> results;
+  int _calls = 0;
 
   @override
   bool get isSupported => true;
 
   @override
-  Future<OcrScanResult> scanDocument(String filePath) async => result;
+  Future<OcrScanResult> scanDocument(String filePath) async {
+    final index = _calls < results.length ? _calls : results.length - 1;
+    _calls++;
+    return results[index];
+  }
 
   @override
   void dispose() {}
 }
 
-const _textoValido =
+const _frenteValido =
     'UNIVERSIDAD DE SAN CARLOS DE GUATEMALA\n'
     'FACULTAD DE INGENIERÍA\n'
     'CARRERA DE INGENIERÍA EN CIENCIAS Y SISTEMAS\n'
     'Carné 201901234\n'
+    'CUI 1234567890101\n'
+    'EN CASO DE EMERGENCIA MARQUE AL 1592\n'
     'DEPARTAMENTO DE REGISTRO Y ESTADÍSTICA';
 
+const _reversoValido =
+    'JUAN PÉREZ GÓMEZ\n'
+    'USAC TRICENTENARIA\n'
+    'ESTUDIANTE UNIVERSITARIO\n'
+    'Departamento de Registro y Estadística';
+
+const _frenteResult = OcrScanResult(
+  text: _frenteValido,
+  qrUrl: '2019012340001',
+  isSupported: true,
+);
+
+const _reversoResult = OcrScanResult(
+  text: _reversoValido,
+  qrUrl: 'https://registro.usac.edu.gt/estudiante/201901234',
+  isSupported: true,
+);
+
 Widget _buildStep({
-  required OcrScanResult ocrResult,
+  required List<OcrScanResult> ocrResults,
   required VoidCallback onSuccess,
 }) {
   return MaterialApp(
@@ -45,7 +70,7 @@ Widget _buildStep({
         controller: VerificationController(listenToAuthChanges: false),
         onSelectDocumentPath: () {},
         onSuccess: onSuccess,
-        ocrService: _FakeOcrService(ocrResult),
+        ocrService: _FakeOcrService(ocrResults),
         imagePickerFn: (_) async => XFile.fromData(
           _pngBytes,
           name: 'carne.png',
@@ -60,19 +85,15 @@ void main() {
   setupTestLifecycle();
 
   testWidgets(
-    'La foto coherente habilita el correo institucional y el cambio de carné lo invalida',
+    'Frente y reverso coherentes habilitan el correo, y cambiar datos lo invalida',
     (tester) async {
-      tester.view.physicalSize = const Size(900, 1800);
+      tester.view.physicalSize = const Size(900, 2200);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
 
       await tester.pumpWidget(
         _buildStep(
-          ocrResult: const OcrScanResult(
-            text: _textoValido,
-            qrUrl: 'https://registro.usac.edu.gt/verificar/201901234',
-            isSupported: true,
-          ),
+          ocrResults: const [_frenteResult, _reversoResult],
           onSuccess: () {},
         ),
       );
@@ -88,16 +109,26 @@ void main() {
         find.widgetWithText(TextFormField, 'Número de Carné USAC (9 dígitos)'),
         '201901234',
       );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'CUI (opcional, 13 dígitos)'),
+        '1234567890101',
+      );
       await tester.pumpAndSettle();
 
-      await tester.ensureVisible(find.text('Tomar foto'));
-      await tester.tap(find.text('Tomar foto'));
+      await tester.ensureVisible(
+        find.byKey(const Key('carnet_front_camera')),
+      );
+      await tester.tap(find.byKey(const Key('carnet_front_camera')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Verificación local aprobada'), findsOneWidget);
+      await tester.ensureVisible(find.byKey(const Key('carnet_back_camera')));
+      await tester.tap(find.byKey(const Key('carnet_back_camera')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Verificación local aprobada'), findsNWidgets(2));
       expect(tester.widget<ElevatedButton>(googleButton).onPressed, isNotNull);
 
-      // Cambiar el carné invalida la foto: debe volver a verificarse.
+      // Cambiar el carné invalida ambas caras.
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Número de Carné USAC (9 dígitos)'),
         '201999999',
@@ -109,19 +140,16 @@ void main() {
     },
   );
 
-  testWidgets('Un carné que no coincide bloquea el correo institucional', (
+  testWidgets('Un frente con carné distinto bloquea el correo institucional', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(900, 1800);
+    tester.view.physicalSize = const Size(900, 2200);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() => tester.view.resetPhysicalSize());
 
     await tester.pumpWidget(
       _buildStep(
-        ocrResult: const OcrScanResult(
-          text: _textoValido,
-          isSupported: true,
-        ),
+        ocrResults: const [_frenteResult, _reversoResult],
         onSuccess: () {},
       ),
     );
@@ -133,8 +161,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('Tomar foto'));
-    await tester.tap(find.text('Tomar foto'));
+    await tester.ensureVisible(find.byKey(const Key('carnet_front_camera')));
+    await tester.tap(find.byKey(const Key('carnet_front_camera')));
     await tester.pumpAndSettle();
 
     expect(find.text('Revisa la foto de tu carné'), findsOneWidget);
