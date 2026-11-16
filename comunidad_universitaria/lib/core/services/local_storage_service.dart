@@ -19,6 +19,21 @@ class LocalStorageService {
   static const String _keyStudentName = 'usac_student_name';
   static const String _keyCarneVerified = 'usac_carne_verified';
   static const String _keyCleanupDismissed = 'usac_cleanup_dismissed';
+  static const String _keyGuestMode = 'usac_guest_mode';
+
+  static Future<bool> isGuestMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyGuestMode) ?? false;
+  }
+
+  static Future<void> setGuestMode(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (value) {
+      await prefs.setBool(_keyGuestMode, true);
+    } else {
+      await prefs.remove(_keyGuestMode);
+    }
+  }
 
   static Future<String> getOrGenerateAlias() async {
     final prefs = await SharedPreferences.getInstance();
