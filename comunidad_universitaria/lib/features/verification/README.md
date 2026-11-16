@@ -6,16 +6,23 @@ Este módulo implementa el flujo normativo de verificación de identidad estudia
 
 ### Camino A: Correo Institucional + Carné
 - **Identidad**: Validación mediante cuenta oficial de Google Workspace o mediante código OTP enviado al correo del estudiante.
-- **Foto del carné + verificación local (Android/iOS)**:
-  - El estudiante adjunta una foto del frente de su carné con cámara o galería.
-  - La app ejecuta OCR y detección de QR/código de barras **en el dispositivo**, y comprueba coherencia antes de habilitar el correo institucional:
+- **Fotos del carné + verificación local (Android/iOS)**:
+  - El estudiante adjunta el **frente** y el **reverso** de su carné con cámara o galería.
+  - **Frente** (CUI, Facultad, Carrera, Foto, Carné, "Departamento de Registro y Estadística", "En caso de emergencia marque al 1592", código de barras):
     - el número de carné escrito aparece en la foto (bloqueante);
     - se detecta una leyenda institucional USAC (bloqueante);
+    - el CUI escrito aparece en la foto (bloqueante si se proporcionó);
     - la facultad y la carrera seleccionadas aparecen en el texto (advertencia);
-    - si hay QR, pertenece a `usac.edu.gt` o a un subdominio (bloqueante si es un dominio ajeno);
-    - el código de barras del frente se acepta como código detectado.
-  - La foto **no se sube ni se persiste**: vive en memoria y se descarta al cerrar el flujo.
+    - se detecta la leyenda "En caso de emergencia marque al 1592" (advertencia);
+    - el código de barras del frente se acepta como código detectado (advertencia si falta).
+  - **Reverso** (Nombre completo, "USAC TRICENTENARIA", "ESTUDIANTE UNIVERSITARIO", QR de Registro y Estadística):
+    - se detectan las leyendas "USAC TRICENTENARIA" y "ESTUDIANTE UNIVERSITARIO" (bloqueante si no hay ninguna);
+    - el QR debe ser una URL de `usac.edu.gt` (bloqueante si falta o es de otro dominio);
+    - si el QR contiene el carné o el CUI, se refuerza la coherencia entre ambas caras; si no, se valida el dominio (advertencia).
+  - La app ejecuta OCR y detección de QR/código de barras **en el dispositivo** y no habilita el correo institucional hasta que ambas caras pasan.
+  - Las fotos **no se suben ni se persisten**: viven en memoria y se descartan al cerrar el flujo.
   - En **web/desktop** no hay OCR nativo: se muestra un aviso y se mantiene el correo institucional como prueba principal.
+- **CUI opcional**: el formulario acepta el CUI de 13 dígitos y lo pasa a `claim_student_credentials(p_carne, p_cui)`; también se usa para validar el frente y el QR del reverso.
 - **Dominios permitidos**: `@usac.edu.gt`, `@*.usac.edu.gt` (ej. `@ingenieria.usac.edu.gt`, `@medicina.usac.edu.gt`, `@derecho.usac.edu.gt`, `@economicas.usac.edu.gt`), y autorizados en facultades (`@fausac.gt`, `@ecys.org`).
 - **Requisito en Supabase Auth**:
   > **IMPORTANTE**: La plantilla de correo de confirmación y OTP de Supabase debe contener explícitamente el tag `{{ .Token }}` para que el usuario reciba el código de 6 dígitos en su bandeja de entrada.

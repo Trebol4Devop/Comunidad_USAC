@@ -38,6 +38,7 @@ class InstitutionalEmailStep extends StatefulWidget {
 class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
   final _formKey = GlobalKey<FormState>();
   final _carneController = TextEditingController();
+  final _cuiController = TextEditingController();
   final _emailController = TextEditingController();
   final _otpController = TextEditingController();
 
@@ -49,11 +50,17 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
   String? _selectedCarreraId;
   bool _loadingCarreras = true;
 
-  Uint8List? _carnePhotoBytes;
-  String? _carnePhotoName;
-  bool _isScanningCarne = false;
-  CarnetPhotoValidation? _carnePhotoValidation;
-  String? _carnePhotoNotice;
+  Uint8List? _frontBytes;
+  String? _frontName;
+  bool _isScanningFront = false;
+  CarnetPhotoValidation? _frontValidation;
+  String? _frontNotice;
+
+  Uint8List? _backBytes;
+  String? _backName;
+  bool _isScanningBack = false;
+  CarnetPhotoValidation? _backValidation;
+  String? _backNotice;
 
   bool _isBusy = false;
   bool _otpSent = false;
@@ -68,7 +75,9 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
   /// disponible (Android/iOS). En web/desktop se mantiene el correo
   /// institucional como prueba principal.
   bool get _canRequestEmail =>
-      !_ocrService.isSupported || (_carnePhotoValidation?.passed ?? false);
+      !_ocrService.isSupported ||
+      ((_frontValidation?.passed ?? false) &&
+          (_backValidation?.passed ?? false));
 
   @override
   void initState() {
@@ -105,6 +114,7 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
     _authSubscription?.cancel();
     _ocrService.dispose();
     _carneController.dispose();
+    _cuiController.dispose();
     _emailController.dispose();
     _otpController.dispose();
     super.dispose();
@@ -147,20 +157,41 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
     return null;
   }
 
-  /// Si el estudiante corrige el carné o la carrera, la foto deja de ser
-  /// válida y debe volver a analizarse.
+  /// Si el estudiante corrige el carné, el CUI o la carrera, ambas caras
+  /// dejan de ser válidas y deben volver a analizarse.
   void _invalidateCarnePhotoCheck() {
-    if (_carnePhotoValidation != null) {
+    if (_frontValidation != null || _backValidation != null) {
       setState(() {
-        _carnePhotoValidation = null;
-        _carnePhotoNotice = null;
+        _frontValidation = null;
+        _backValidation = null;
+        _frontNotice = null;
+        _backNotice = null;
       });
     }
   }
 
-  /// Captura/elige la foto del carné y la analiza localmente (OCR + QR).
-  /// La imagen solo vive en memoria; no se sube ni se guarda.
-  Future<void> _pickCarnePhoto(ImageSource source) async {
+  void _clearCarnetSide({required bool isFront}) {
+    setState(() {
+      if (isFront) {
+        _frontBytes = null;
+        _frontName = null;
+        _frontValidation = null;
+        _frontNotice = null;
+      } else {
+        _backBytes = null;
+        _backName = null;
+        _backValidation = null;
+        _backNotice = null;
+      }
+    });
+  }
+
+  /// Captura/elige una cara del carné y la analiza localmente (OCR + QR).
+  /// Las imágenes solo viven en memoria; no se suben ni se guardan.
+  Future<void> _pickCarneSide(
+    ImageSource source, {
+    required bool isFront,
+  }) async {
     try {
       final file = widget.imagePickerFn != null
           ? await widget.imagePickerFn!(source)
@@ -176,46 +207,92 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
       if (!mounted) return;
 
       setState(() {
-        _carnePhotoBytes = bytes;
-        _carnePhotoName = file.name;
-        _carnePhotoValidation = null;
-        _carnePhotoNotice = null;
+        if (isFront) {
+          _frontBytes = bytes;
+          _frontName = file.name;
+          _frontValidation = null;
+          _frontNotice = null;
+        } else {
+          _backBytes = bytes;
+          _backName = file.name;
+          _backValidation = null;
+          _backNotice = null;
+        }
         _inlineError = null;
       });
 
       if (!_ocrService.isSupported) {
         setState(() {
-          _carnePhotoNotice =
-              'La verificación local del carné no está disponible en este dispositivo. La foto se mantiene solo en memoria.';
+          if (isFront) {
+            _frontNotice =
+                'La verificación local no está disponible en este dispositivo. La foto se mantiene solo en memoria.';
+          } else {
+            _backNotice =
+                'La verificación local no está disponible en este dispositivo. La foto se mantiene solo en memoria.';
+          }
         });
         return;
       }
 
-      setState(() => _isScanningCarne = true);
+      setState(() {
+        if (isFront) {
+          _isScanningFront = true;
+        } else {
+          _isScanningBack = true;
+        }
+      });
+
       try {
         final result = await _ocrService.scanDocument(file.path);
-        final carrera = _findCarrera(_selectedCarreraId);
-        final validation = CarnetPhotoValidator.validate(
-          ocrText: result.text,
-          qrUrl: result.qrUrl,
-          carne: _carneController.text.trim(),
-          carreraNombre: carrera?['nombre'],
-          facultadNombre: _selectedFacultadNombre,
-        );
+        final carne = _carneController.text.trim();
+        final cui = _cuiController.text.trim();
+        final validation = isFront
+            ? CarnetPhotoValidator.validateFront(
+                ocrText: result.text,
+                qrUrl: result.qrUrl,
+                carne: carne,
+                carreraNombre: _findCarrera(_selectedCarreraId)?['nombre'],
+                facultadNombre: _selectedFacultadNombre,
+                cui: cui.isEmpty ? null : cui,
+              )
+            : CarnetPhotoValidator.validateBack(
+                ocrText: result.text,
+                qrUrl: result.qrUrl,
+                expectedCarne: carne,
+                expectedCui: cui.isEmpty ? null : cui,
+              );
         if (!mounted) return;
         setState(() {
-          _carnePhotoValidation = validation;
-          _carnePhotoNotice = result.message;
+          if (isFront) {
+            _frontValidation = validation;
+            _frontNotice = result.message;
+          } else {
+            _backValidation = validation;
+            _backNotice = result.message;
+          }
         });
       } catch (e) {
         if (mounted) {
           setState(() {
-            _carnePhotoNotice =
-                'No se pudo analizar la foto del carné. Inténtalo de nuevo con mejor luz.';
+            if (isFront) {
+              _frontNotice =
+                  'No se pudo analizar el frente del carné. Inténtalo de nuevo con mejor luz.';
+            } else {
+              _backNotice =
+                  'No se pudo analizar el reverso del carné. Inténtalo de nuevo con mejor luz.';
+            }
           });
         }
       } finally {
-        if (mounted) setState(() => _isScanningCarne = false);
+        if (mounted) {
+          setState(() {
+            if (isFront) {
+              _isScanningFront = false;
+            } else {
+              _isScanningBack = false;
+            }
+          });
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -232,7 +309,7 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
     if (!_canRequestEmail) {
       setState(() {
         _inlineError =
-            'Adjunta una foto legible de tu carné y espera la verificación local antes de continuar.';
+            'Adjunta el frente y el reverso de tu carné y espera la verificación local antes de continuar.';
       });
       return;
     }
@@ -290,7 +367,7 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
     if (!_canRequestEmail) {
       setState(() {
         _inlineError =
-            'Adjunta una foto legible de tu carné y espera la verificación local antes de enviar el código.';
+            'Adjunta el frente y el reverso de tu carné y espera la verificación local antes de enviar el código.';
       });
       return;
     }
@@ -384,7 +461,11 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
     _isClaiming = true;
     try {
       final carne = _carneController.text.trim();
-      final ok = await widget.controller.claimCredentials(carne: carne);
+      final cui = _cuiController.text.trim();
+      final ok = await widget.controller.claimCredentials(
+        carne: carne,
+        cui: cui.isEmpty ? null : cui,
+      );
 
       if (!mounted) return;
 
@@ -420,39 +501,25 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
     }
   }
 
-  /// Sección de foto del carné + verificación local de coherencia.
+  /// Sección de las dos caras del carné + verificación local de coherencia.
   Widget _buildCarnePhotoSection(bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
+        const Row(
           children: [
-            const Icon(
+            Icon(
               Icons.photo_camera_outlined,
               size: 20,
               color: ZanateColors.zanateAccent,
             ),
-            const SizedBox(width: 8),
-            const Expanded(
+            SizedBox(width: 8),
+            Expanded(
               child: Text(
-                'Foto de tu carné (verificación local)',
+                'Fotos del carné (verificación local)',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
               ),
             ),
-            if (_carnePhotoBytes != null)
-              TextButton(
-                onPressed: _isScanningCarne
-                    ? null
-                    : () {
-                        setState(() {
-                          _carnePhotoBytes = null;
-                          _carnePhotoName = null;
-                          _carnePhotoValidation = null;
-                          _carnePhotoNotice = null;
-                        });
-                      },
-                child: const Text('Quitar', style: TextStyle(fontSize: 11)),
-              ),
           ],
         ),
         const SizedBox(height: 8),
@@ -463,9 +530,7 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
               color: isDark ? const Color(0xFF2D2415) : const Color(0xFFFEFCE8),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: isDark
-                    ? const Color(0xFF78350F)
-                    : const Color(0xFFFEF08A),
+                color: isDark ? const Color(0xFF78350F) : const Color(0xFFFEF08A),
               ),
             ),
             child: const Row(
@@ -482,21 +547,120 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
             ),
           )
         else ...[
-          if (_carnePhotoBytes != null) ...[
+          _buildCarnetSideCard(
+            isDark: isDark,
+            title: 'Frente del carné',
+            subtitle:
+                'CUI, facultad, carrera, carné, "En caso de emergencia marque al 1592" y código de barras.',
+            bytes: _frontBytes,
+            fileName: _frontName,
+            isScanning: _isScanningFront,
+            validation: _frontValidation,
+            notice: _frontNotice,
+            cameraKey: const Key('carnet_front_camera'),
+            galleryKey: const Key('carnet_front_gallery'),
+            onCamera: () => _pickCarneSide(ImageSource.camera, isFront: true),
+            onGallery: () => _pickCarneSide(ImageSource.gallery, isFront: true),
+            onClear: () => _clearCarnetSide(isFront: true),
+          ),
+          const SizedBox(height: 14),
+          _buildCarnetSideCard(
+            isDark: isDark,
+            title: 'Reverso del carné',
+            subtitle:
+                'Nombre completo, "USAC TRICENTENARIA", "ESTUDIANTE UNIVERSITARIO" y QR de Registro y Estadística.',
+            bytes: _backBytes,
+            fileName: _backName,
+            isScanning: _isScanningBack,
+            validation: _backValidation,
+            notice: _backNotice,
+            cameraKey: const Key('carnet_back_camera'),
+            galleryKey: const Key('carnet_back_gallery'),
+            onCamera: () => _pickCarneSide(ImageSource.camera, isFront: false),
+            onGallery: () => _pickCarneSide(ImageSource.gallery, isFront: false),
+            onClear: () => _clearCarnetSide(isFront: false),
+          ),
+          if (!_canRequestEmail) ...[
+            const SizedBox(height: 8),
+            const Text(
+              'Adjunta y valida el frente y el reverso para habilitar el correo institucional.',
+              style: TextStyle(fontSize: 11, color: Color(0xFFB45309)),
+            ),
+          ],
+        ],
+      ],
+    );
+  }
+
+  Widget _buildCarnetSideCard({
+    required bool isDark,
+    required String title,
+    required String subtitle,
+    required Uint8List? bytes,
+    required String? fileName,
+    required bool isScanning,
+    required CarnetPhotoValidation? validation,
+    required String? notice,
+    required Key cameraKey,
+    required Key galleryKey,
+    required VoidCallback onCamera,
+    required VoidCallback onGallery,
+    required VoidCallback onClear,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+        ),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12.5,
+                  ),
+                ),
+              ),
+              if (bytes != null)
+                TextButton(
+                  onPressed: isScanning ? null : onClear,
+                  child: const Text('Quitar', style: TextStyle(fontSize: 11)),
+                ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            style: TextStyle(
+              fontSize: 11,
+              height: 1.3,
+              color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (bytes != null) ...[
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.memory(
-                _carnePhotoBytes!,
-                height: 150,
+                bytes,
+                height: 130,
                 width: double.infinity,
                 fit: BoxFit.cover,
               ),
             ),
-            if (_carnePhotoName != null)
+            if (fileName != null)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
-                  _carnePhotoName!,
+                  fileName,
                   style: TextStyle(
                     fontSize: 10.5,
                     color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
@@ -504,42 +668,14 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-          ] else
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: isDark
-                      ? const Color(0xFF334155)
-                      : const Color(0xFFE2E8F0),
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Row(
-                children: [
-                  Icon(
-                    Icons.badge_outlined,
-                    size: 30,
-                    color: ZanateColors.zanateAccent,
-                  ),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Adjunta una foto legible del frente de tu carné. Se analiza en tu dispositivo y no se envía al servidor.',
-                      style: TextStyle(fontSize: 11.5, height: 1.35),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          ],
           const SizedBox(height: 8),
           Row(
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: _isScanningCarne
-                      ? null
-                      : () => _pickCarnePhoto(ImageSource.camera),
+                  key: cameraKey,
+                  onPressed: isScanning ? null : onCamera,
                   icon: const Icon(Icons.camera_alt_outlined, size: 18),
                   label: const Text('Tomar foto'),
                 ),
@@ -547,16 +683,15 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
               const SizedBox(width: 8),
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: _isScanningCarne
-                      ? null
-                      : () => _pickCarnePhoto(ImageSource.gallery),
+                  key: galleryKey,
+                  onPressed: isScanning ? null : onGallery,
                   icon: const Icon(Icons.photo_library_outlined, size: 18),
                   label: const Text('Galería'),
                 ),
               ),
             ],
           ),
-          if (_isScanningCarne) ...[
+          if (isScanning) ...[
             const SizedBox(height: 10),
             const Row(
               children: [
@@ -575,19 +710,19 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
               ],
             ),
           ],
-          if (_carnePhotoNotice != null) ...[
+          if (notice != null) ...[
             const SizedBox(height: 8),
             Text(
-              _carnePhotoNotice!,
+              notice,
               style: const TextStyle(fontSize: 11.5, color: Color(0xFFB45309)),
             ),
           ],
-          if (_carnePhotoValidation != null) ...[
+          if (validation != null) ...[
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: _carnePhotoValidation!.passed
+                color: validation.passed
                     ? (isDark
                         ? const Color(0xFF14301F)
                         : const Color(0xFFECFDF5))
@@ -596,7 +731,7 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
                         : const Color(0xFFFEF2F2)),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: _carnePhotoValidation!.passed
+                  color: validation.passed
                       ? const Color(0xFF10B981)
                       : const Color(0xFFEF4444),
                 ),
@@ -605,19 +740,19 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _carnePhotoValidation!.passed
+                    validation.passed
                         ? 'Verificación local aprobada'
                         : 'Revisa la foto de tu carné',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 12.5,
-                      color: _carnePhotoValidation!.passed
+                      color: validation.passed
                           ? const Color(0xFF059669)
                           : const Color(0xFFB91C1C),
                     ),
                   ),
                   const SizedBox(height: 6),
-                  ..._carnePhotoValidation!.items.map((item) {
+                  ...validation.items.map((item) {
                     final color = item.level == CarnetCheckLevel.ok
                         ? const Color(0xFF059669)
                         : item.level == CarnetCheckLevel.warning
@@ -655,15 +790,8 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
               ),
             ),
           ],
-          if (!_canRequestEmail) ...[
-            const SizedBox(height: 6),
-            const Text(
-              'Adjunta una foto legible del carné para habilitar el correo institucional.',
-              style: TextStyle(fontSize: 11, color: Color(0xFFB45309)),
-            ),
-          ],
         ],
-      ],
+      ),
     );
   }
 
@@ -726,6 +854,23 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
                 counterText: '',
               ),
               validator: VerificationValidators.validateCarne,
+              onChanged: (_) => _invalidateCarnePhotoCheck(),
+            ),
+            const SizedBox(height: 14),
+
+            // Campo CUI opcional (aparece en el frente del carné)
+            TextFormField(
+              controller: _cuiController,
+              keyboardType: TextInputType.number,
+              maxLength: 13,
+              decoration: const InputDecoration(
+                labelText: 'CUI (opcional, 13 dígitos)',
+                hintText: 'Ej. 1234567890101',
+                prefixIcon: Icon(Icons.credit_card_outlined),
+                border: OutlineInputBorder(),
+                counterText: '',
+              ),
+              validator: VerificationValidators.validateCui,
               onChanged: (_) => _invalidateCarnePhotoCheck(),
             ),
             const SizedBox(height: 14),
