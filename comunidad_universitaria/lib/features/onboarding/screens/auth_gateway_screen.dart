@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/config/supabase_config.dart';
+import '../../../core/services/local_storage_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
 import '../../verification/screens/verification_flow_screen.dart';
@@ -228,6 +229,7 @@ class _AuthGatewayScreenState extends State<AuthGatewayScreen> {
     });
 
     try {
+      await LocalStorageService.setPendingAuthIntent('auto');
       final redirectUrl = SupabaseService.oauthRedirectUrl;
       bool launched = false;
       if (widget.authApi != null) {

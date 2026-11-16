@@ -21,7 +21,9 @@ import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/empty_state_widget.dart';
 import '../../shared/widgets/network_state_widgets.dart';
 import '../../shared/widgets/settings_bottom_sheet.dart';
+import '../../onboarding/screens/merchant_verification_screen.dart';
 import '../../verification/screens/verification_flow_screen.dart';
+import '../../verification/widgets/verification_gate.dart';
 import 'my_sales_screen.dart';
 import 'product_detail_screen.dart';
 import 'saved_listings_screen.dart';
@@ -370,6 +372,64 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     final canCreate = await MarketplaceService.canCreateListing();
     if (!mounted) return;
     if (!canCreate) {
+      final vCtrl = VerificationGate.maybeOf(context);
+
+      // Comerciante en revisión
+      if (vCtrl != null && vCtrl.isMerchantPending) {
+        await showDialog<void>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text('Solicitud en revisión'),
+            content: const Text(
+              'Tu solicitud de comerciante está en revisión. Podrás publicar cuando sea aprobada.',
+            ),
+            actions: [
+              ElevatedButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Entendido'),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+
+      // Comerciante rechazado
+      if (vCtrl != null && vCtrl.isMerchantRejected) {
+        final reason = vCtrl.merchantRejectionReason;
+        final contentText = (reason != null && reason.trim().isNotEmpty)
+            ? 'Tu solicitud de comerciante fue rechazada: $reason'
+            : 'Tu solicitud de comerciante fue rechazada.';
+
+        await showDialog<void>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text('Verificación rechazada'),
+            content: Text(contentText),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cerrar'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => MerchantVerificationScreen(
+                        verificationController: vCtrl,
+                      ),
+                    ),
+                  );
+                },
+                child: const Text('Reintentar verificación de comerciante'),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+
       MarketplaceSellerStatus? status;
       try {
         status = await MarketplaceService.fetchMyStatus();
@@ -410,25 +470,66 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
       await showDialog<void>(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          title: const Text('Verificación necesaria'),
-          content: Text(
-            (status != null && status.reason.isNotEmpty)
-                ? status.reason
-                : 'Para publicar anuncios se requiere una verificación institucional real. '
-                      'Esa conexión todavía no está disponible; no se guardará ningún anuncio '
-                      'ni se marcará tu cuenta como verificada.',
+          title: const Text('Verifica tu cuenta para publicar'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  (status != null && status.reason.isNotEmpty)
+                      ? '${status.reason}\n\nElige cómo quieres verificar tu cuenta:'
+                      : 'Para publicar en el Marketplace necesitas verificar que perteneces a la comunidad USAC. Elige una opción:',
+                  style: const TextStyle(fontSize: 13, height: 1.4),
+                ),
+                const SizedBox(height: 16),
+                _VerificationPathOption(
+                  icon: Icons.school_outlined,
+                  title: 'Estudiante USAC',
+                  subtitle:
+                      'Constancia de inscripción, carné físico o boleta. OCR automático o revisión manual.',
+                  onTap: () {
+                    Navigator.of(dialogContext).pop();
+                    VerificationFlowScreen.show(
+                      context,
+                      controller: vCtrl,
+                      initialTab: 1,
+                    );
+                  },
+                ),
+                const SizedBox(height: 10),
+                _VerificationPathOption(
+                  icon: Icons.storefront_outlined,
+                  title: 'Comerciante del campus',
+                  subtitle:
+                      'DPI frente y reverso + foto del establecimiento. Aprobación manual.',
+                  onTap: () {
+                    Navigator.of(dialogContext).pop();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => MerchantVerificationScreen(
+                          verificationController: vCtrl,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  'Si tienes correo @usac.edu.gt, cierra sesión e inicia con Google institucional: tu correo verifica la cuenta automáticamente.',
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    height: 1.3,
+                    color: Theme.of(context).hintColor,
+                  ),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Entendido'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                VerificationFlowScreen.show(context);
-              },
-              child: const Text('Verificar mi cuenta'),
+              child: const Text('Ahora no'),
             ),
           ],
         ),
@@ -1608,6 +1709,69 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                 ),
               )
             : null,
+      ),
+    );
+  }
+}
+
+/// Opción de verificación dentro de la ventana de Marketplace.
+/// Mantiene la misma terminología y estructura que el onboarding
+/// (estudiante vs. comerciante) sin abrir directamente un solo camino.
+class _VerificationPathOption extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _VerificationPathOption({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          border: Border.all(color: theme.dividerColor),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 22, color: ZanateColors.zanateAccent),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      height: 1.3,
+                      color: theme.hintColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, size: 18),
+          ],
+        ),
       ),
     );
   }

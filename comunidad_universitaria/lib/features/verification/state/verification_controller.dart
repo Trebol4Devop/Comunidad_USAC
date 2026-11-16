@@ -4,16 +4,21 @@ import '../../../core/config/supabase_config.dart';
 import '../../../core/services/supabase_service.dart';
 import '../models/verification_result.dart';
 import '../models/verification_status.dart';
+import '../services/merchant_verification_service.dart';
 import '../services/verification_service.dart';
 import '../utils/verification_validators.dart';
 
-/// Controlador central del estado de verificación estudiantil.
+/// Controlador central del estado de verificación estudiantil y de comerciantes.
 /// Extiende [ChangeNotifier] para integrarse reactivamente mediante [ListenableBuilder].
 class VerificationController extends ChangeNotifier {
   final VerificationService _service;
+  final MerchantVerificationService _merchantService;
   StreamSubscription? _authSubscription;
 
   StudentVerificationStatus _status = StudentVerificationStatus.unverified;
+  String? sellerVerificationStatus; // unverified|pending|verified|rejected
+  String? merchantRejectionReason;
+
   bool _isLoading = false;
   String? _errorMessage;
   String? _rejectionReason;
@@ -22,8 +27,10 @@ class VerificationController extends ChangeNotifier {
 
   VerificationController({
     VerificationService? service,
+    MerchantVerificationService? merchantService,
     bool listenToAuthChanges = true,
-  }) : _service = service ?? VerificationService() {
+  })  : _service = service ?? VerificationService(),
+        _merchantService = merchantService ?? MerchantVerificationService() {
     if (listenToAuthChanges && SupabaseConfig.isConfigured) {
       try {
         _authSubscription = SupabaseService.client.auth.onAuthStateChange.listen((_) {
@@ -35,7 +42,7 @@ class VerificationController extends ChangeNotifier {
     }
   }
 
-  // Getters de estado
+  // Getters de estado estudiantil
   StudentVerificationStatus get status => _status;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -49,6 +56,27 @@ class VerificationController extends ChangeNotifier {
   bool get isPendingReview => _status == StudentVerificationStatus.pendingReview;
   bool get isRejected => _status == StudentVerificationStatus.rejected;
   bool get isUnverified => _status == StudentVerificationStatus.unverified;
+
+  // Getters y acciones de comerciante
+  bool get isMerchantPending => sellerVerificationStatus == 'pending';
+  bool get isMerchantVerified => sellerVerificationStatus == 'verified';
+  bool get isMerchantRejected => sellerVerificationStatus == 'rejected';
+
+  void markMerchantPending() {
+    sellerVerificationStatus = 'pending';
+    merchantRejectionReason = null;
+    notifyListeners();
+  }
+
+  /// Permite establecer directamente el estado de comerciante (útil para pruebas unitarias).
+  void setMerchantStatus(String newStatus, {String? reason}) {
+    sellerVerificationStatus = newStatus;
+    if (reason != null) {
+      merchantRejectionReason = reason;
+    }
+    _errorMessage = null;
+    notifyListeners();
+  }
 
   /// Permite establecer directamente el estado (útil para pruebas unitarias).
   void setStatus(StudentVerificationStatus newStatus, {String? reason}) {
@@ -90,10 +118,32 @@ class VerificationController extends ChangeNotifier {
 
         _verificationMethod = data['verification_method']?.toString();
         _rejectionReason = data['rejection_reason']?.toString();
+
+        final rawSellerStatus = data['seller_verification_status']?.toString();
+        sellerVerificationStatus = rawSellerStatus ?? 'unverified';
+
+        if (sellerVerificationStatus == 'rejected') {
+          try {
+            final latestMerchantReq =
+                await _merchantService.fetchLatestMerchantRequest();
+            if (latestMerchantReq != null) {
+              merchantRejectionReason =
+                  latestMerchantReq['rejection_reason']?.toString();
+            }
+          } catch (e) {
+            debugPrint(
+                '[VerificationController] Error consultando motivo rechazo comerciante: $e');
+          }
+        } else {
+          merchantRejectionReason = null;
+        }
       } else {
         // En offline o sesión sin perfil persistido, mantener estado seguro
         if (_status != StudentVerificationStatus.verified) {
           _status = StudentVerificationStatus.unverified;
+        }
+        if (sellerVerificationStatus != 'verified') {
+          sellerVerificationStatus ??= 'unverified';
         }
       }
     } catch (e) {

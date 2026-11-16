@@ -4,11 +4,13 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../core/constants/zanate_colors.dart';
+import '../../../core/services/local_storage_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../verification/screens/verification_flow_screen.dart';
 import '../../verification/state/verification_controller.dart';
 import '../../verification/widgets/verification_gate.dart';
 import '../state/session_controller.dart';
+import 'merchant_verification_screen.dart';
 
 /// Pantalla que se presenta a usuarios sin correo institucional (@usac.edu.gt),
 /// permitiendo elegir entre el camino de estudiante (Camino B con documento)
@@ -74,12 +76,13 @@ class _NoInstitutionalEmailScreenState
       widget.onMerchantSelected!();
       return;
     }
-    // EXTENSION POINT: La rama de UI de comerciante sustituirá este SnackBar
-    // por la navegación a MerchantVerificationScreen.
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'El registro de comerciante estará disponible en la siguiente actualización',
+    final ctrl = widget.verificationController ??
+        VerificationGate.maybeOf(context);
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => MerchantVerificationScreen(
+          verificationController: ctrl,
+          sessionController: widget.sessionController,
         ),
       ),
     );
@@ -100,7 +103,10 @@ class _NoInstitutionalEmailScreenState
     final sCtrl =
         widget.sessionController ?? SessionController.maybeOf(context);
 
-    // Si no hay sesión real, primero lanzamos Google OAuth
+    // Si no hay sesión real, primero guardamos la intención y lanzamos Google OAuth
+    final intent = isStudent ? 'student' : 'merchant';
+    await LocalStorageService.setPendingAuthIntent(intent);
+
     setState(() {
       _isBusy = true;
       _waitingForGoogle = true;

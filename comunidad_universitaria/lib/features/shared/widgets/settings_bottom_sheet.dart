@@ -3,10 +3,12 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../core/constants/zanate_colors.dart';
 import '../../../core/services/local_storage_service.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../onboarding/screens/merchant_verification_screen.dart';
 import '../../onboarding/state/session_controller.dart';
 import '../../profile/screens/profile_screen.dart';
 import '../../profile/widgets/alias_modal.dart';
 import '../../rules/screens/rules_screen.dart';
+import '../../verification/widgets/verification_gate.dart';
 import 'auth_modal.dart';
 
 class SettingsBottomSheet {
@@ -172,6 +174,39 @@ class SettingsBottomSheet {
                     );
                   },
                 ),
+
+                // 5. Quiero vender (para usuarios autenticados no verificados como comerciante)
+                if (isAuthenticated &&
+                    !(VerificationGate.maybeOf(context)?.isMerchantVerified ??
+                        false))
+                  ListTile(
+                    leading: const Icon(
+                      PhosphorIconsRegular.storefront,
+                      size: 24,
+                      color: ZanateColors.zanateAccent,
+                    ),
+                    title: const Text(
+                      'Quiero vender',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: const Text(
+                      'Verifícate como comerciante del campus',
+                    ),
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.zero,
+                    ),
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      final vCtrl = VerificationGate.maybeOf(context);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => MerchantVerificationScreen(
+                            verificationController: vCtrl,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
 
                 const Divider(height: 16),
 
