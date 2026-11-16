@@ -118,7 +118,9 @@ void main() {
 
       expect(result.passed, isTrue);
       expect(
-        result.items.any((i) => i.label == 'Código de barras del frente'),
+        result.items.any(
+          (i) => i.label == 'Código de barras vinculado al carné',
+        ),
         isTrue,
       );
     });
@@ -194,13 +196,13 @@ void main() {
       );
     });
 
-    test('falla si no hay QR en el reverso', () {
+    test('sin QR en el reverso es advertencia, no bloqueo', () {
       final result = CarnetPhotoValidator.validateBack(ocrText: reversoValido);
 
-      expect(result.passed, isFalse);
+      expect(result.passed, isTrue);
       expect(
         result.items.any(
-          (i) => i.label == 'QR de Registro y Estadística' && i.isError,
+          (i) => i.label == 'QR de Registro y Estadística' && i.isWarning,
         ),
         isTrue,
       );
@@ -250,13 +252,70 @@ void main() {
       );
     });
 
-    test('un código de barras no es válido en el reverso', () {
+    test('un código que no es URL en el reverso es advertencia', () {
       final result = CarnetPhotoValidator.validateBack(
         ocrText: reversoValido,
         qrUrl: '2019012340001',
       );
 
-      expect(result.passed, isFalse);
+      expect(result.passed, isTrue);
+      expect(
+        result.items.any(
+          (i) => i.label == 'QR de Registro y Estadística' && i.isWarning,
+        ),
+        isTrue,
+      );
+    });
+  });
+
+
+  group('CarnetPhotoValidator con el layout real del carné USAC', () {
+    const frenteEjemplo =
+        'Departamento de Registro y Estadistica\n'
+        'CUI: 1234567890101\n'
+        'FACULTAD DE INGENIERÍA\n'
+        'INGENIERÍA EN CIENCIAS Y SISTEMAS\n'
+        '202312345\n'
+        'En caso de emergencia marca 1592';
+
+    const reversoEjemplo =
+        'USAC TRICENTENARIA\n'
+        'Universidad de San Carlos de Guatemala\n'
+        'JUAN PÉREZ GÓMEZ\n'
+        'ESTUDIANTE UNIVERSITARIO';
+
+    test('frente con el layout real: carné, CUI, facultad, carrera y barcode del CUI', () {
+      final result = CarnetPhotoValidator.validateFront(
+        ocrText: frenteEjemplo,
+        qrUrl: '1234567890101',
+        carne: '202312345',
+        cui: '1234567890101',
+        facultadNombre: 'Facultad de Ingeniería',
+        carreraNombre: 'Ingeniería en Ciencias y Sistemas',
+      );
+
+      expect(result.passed, isTrue);
+      expect(
+        result.items.any(
+          (i) => i.label == 'Código de barras vinculado al CUI',
+        ),
+        isTrue,
+      );
+    });
+
+    test('reverso con el layout real: leyendas y QR de Registro y Estadística', () {
+      final result = CarnetPhotoValidator.validateBack(
+        ocrText: reversoEjemplo,
+        qrUrl: 'https://registro.usac.edu.gt/estudiante/202312345',
+        expectedCarne: '202312345',
+        expectedCui: '1234567890101',
+      );
+
+      expect(result.passed, isTrue);
+      expect(
+        result.items.any((i) => i.label == 'QR vinculado al carné'),
+        isTrue,
+      );
     });
   });
 

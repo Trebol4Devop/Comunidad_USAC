@@ -232,7 +232,7 @@ class CarnetPhotoValidator {
         const CarnetCheckItem(
           'Leyenda de emergencia',
           CarnetCheckLevel.warning,
-          detail: 'No se detectó "En caso de emergencia marque al 1592".',
+          detail: 'No se detectó "En caso de emergencia marca 1592".',
         ),
       );
     }
@@ -251,12 +251,33 @@ class CarnetPhotoValidator {
           );
         }
       } else {
-        items.add(
-          const CarnetCheckItem(
-            'Código de barras del frente',
-            CarnetCheckLevel.ok,
-          ),
-        );
+        final barcode = qrUrl.trim();
+        if (cleanCui != null &&
+            cleanCui.isNotEmpty &&
+            barcode.contains(cleanCui)) {
+          items.add(
+            const CarnetCheckItem(
+              'Código de barras vinculado al CUI',
+              CarnetCheckLevel.ok,
+            ),
+          );
+        } else if (cleanCarne.isNotEmpty && barcode.contains(cleanCarne)) {
+          items.add(
+            const CarnetCheckItem(
+              'Código de barras vinculado al carné',
+              CarnetCheckLevel.ok,
+            ),
+          );
+        } else {
+          items.add(
+            const CarnetCheckItem(
+              'Código de barras del frente',
+              CarnetCheckLevel.warning,
+              detail:
+                  'Se detectó un código que no coincide con el carné/CUI escritos.',
+            ),
+          );
+        }
       }
     } else {
       items.add(
@@ -360,16 +381,18 @@ class CarnetPhotoValidator {
       items.add(
         const CarnetCheckItem(
           'QR de Registro y Estadística',
-          CarnetCheckLevel.error,
-          detail: 'No se detectó el QR del reverso.',
+          CarnetCheckLevel.warning,
+          detail:
+              'No se pudo leer el QR del reverso. Asegúrate de que se vea completo; el correo institucional sigue siendo la prueba principal.',
         ),
       );
     } else if (!_looksLikeUrl(cleanQr)) {
       items.add(
         const CarnetCheckItem(
           'QR de Registro y Estadística',
-          CarnetCheckLevel.error,
-          detail: 'El reverso debe incluir un QR, no un código de barras.',
+          CarnetCheckLevel.warning,
+          detail:
+              'Se detectó un código en el reverso que no es una URL. Si hay un QR, acerca la cámara y vuelve a intentarlo.',
         ),
       );
     } else if (!isValidUsacQr(cleanQr)) {
