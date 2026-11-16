@@ -80,3 +80,42 @@ export interface VerificationRequestRow {
   created_at: string;
   updated_at: string;
 }
+
+export type MerchantVerificationStatus = 'pending' | 'approved' | 'rejected';
+
+export type MerchantDocType = 'front' | 'back' | 'establishment';
+
+export interface VerifyMerchantSuccessResponse {
+  status: 'manual_review';
+  request_id: string;
+}
+
+export interface AdminMerchantReviewPayload {
+  request_id: string;
+  decision: ReviewDecision;
+  reason?: string;
+}
+
+export interface AdminMerchantReviewSuccessResponse {
+  status: ReviewDecision;
+  request_id: string;
+}
+
+export interface MerchantVerificationRequestRow {
+  id: string;
+  user_id: string | null;
+  business_name: string;
+  dpi_hash: string;
+  dpi_front_key: string | null;
+  dpi_back_key: string | null;
+  establishment_key: string | null;
+  establishment_note: string | null;
+  status: MerchantVerificationStatus;
+  rejection_reason: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  expires_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
