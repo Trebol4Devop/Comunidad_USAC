@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../onboarding/screens/auth_gateway_screen.dart';
+import '../../onboarding/state/session_controller.dart';
+import '../../verification/widgets/verification_gate.dart';
 
 /// Modal contextual de autenticación.
 /// Delega en [AuthGatewayScreen] y ejecuta [onAuthenticated] únicamente
@@ -27,6 +29,8 @@ class AuthModal extends StatelessWidget {
   }) async {
     final success = await AuthGatewayScreen.show(
       context,
+      verificationController: VerificationGate.maybeOf(context),
+      sessionController: SessionController.maybeOf(context),
       title: title,
       subtitle: subtitle,
       modal: true,

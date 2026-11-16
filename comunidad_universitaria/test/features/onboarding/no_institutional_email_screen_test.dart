@@ -1,0 +1,138 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:comunidad_universitaria/core/services/local_storage_service.dart';
+import 'package:comunidad_universitaria/features/onboarding/screens/merchant_verification_screen.dart';
+import 'package:comunidad_universitaria/features/onboarding/screens/no_institutional_email_screen.dart';
+import 'package:comunidad_universitaria/features/onboarding/state/session_controller.dart';
+import 'package:comunidad_universitaria/features/verification/screens/verification_flow_screen.dart';
+import 'package:comunidad_universitaria/features/verification/state/verification_controller.dart';
+import '../../helpers/test_setup.dart';
+import 'session_controller_test.dart';
+
+void main() {
+  setUpAll(() {
+    GoogleFonts.config.allowRuntimeFetching = false;
+  });
+
+  setupTestLifecycle();
+
+  Widget buildTestScreen({
+    required SessionController sessionController,
+    VerificationController? verificationController,
+    FakeAuthApi? authApi,
+  }) {
+    return MaterialApp(
+      home: SessionScope(
+        controller: sessionController,
+        child: NoInstitutionalEmailScreen(
+          sessionController: sessionController,
+          verificationController: verificationController,
+          authApi: authApi,
+        ),
+      ),
+    );
+  }
+
+  group('NoInstitutionalEmailScreen Tests', () {
+    late FakeAuthApi fakeApi;
+    late SessionController sessionCtrl;
+    late VerificationController verificationCtrl;
+
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+      fakeApi = FakeAuthApi();
+      sessionCtrl = SessionController(api: fakeApi);
+      verificationCtrl = VerificationController(listenToAuthChanges: false);
+    });
+
+    testWidgets('Usuario autenticado: la tarjeta de comerciante navega a MerchantVerificationScreen', (tester) async {
+      tester.view.physicalSize = const Size(800, 1200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final user = createFakeUser(id: 'u-auth-1', email: 'personal@gmail.com');
+      fakeApi.currentUser = user;
+      sessionCtrl.setAuthenticated(user);
+
+      await tester.pumpWidget(
+        buildTestScreen(
+          sessionController: sessionCtrl,
+          verificationController: verificationCtrl,
+          authApi: fakeApi,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final merchantBtn = find.widgetWithText(
+        ElevatedButton,
+        'Solicitar acceso de Comerciante',
+      );
+      expect(merchantBtn, findsOneWidget);
+
+      await tester.ensureVisible(merchantBtn);
+      await tester.tap(merchantBtn);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(MerchantVerificationScreen), findsOneWidget);
+    });
+
+    testWidgets('Usuario no autenticado: tarjeta de comerciante persiste intención merchant y lanza Google', (tester) async {
+      tester.view.physicalSize = const Size(800, 1200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        buildTestScreen(
+          sessionController: sessionCtrl,
+          verificationController: verificationCtrl,
+          authApi: fakeApi,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final merchantBtn = find.widgetWithText(
+        ElevatedButton,
+        'Solicitar acceso de Comerciante',
+      );
+      expect(merchantBtn, findsOneWidget);
+
+      await tester.ensureVisible(merchantBtn);
+      await tester.tap(merchantBtn);
+      await tester.pump();
+
+      expect(fakeApi.signInWithGoogleCalled, isTrue);
+      final savedIntent = await LocalStorageService.getPendingAuthIntent();
+      expect(savedIntent, 'merchant');
+    });
+
+    testWidgets('Usuario autenticado: tarjeta de estudiante navega a VerificationFlowScreen tab 1', (tester) async {
+      final user = createFakeUser(id: 'u-auth-2', email: 'estudiante@gmail.com');
+      fakeApi.currentUser = user;
+      sessionCtrl.setAuthenticated(user);
+
+      await tester.pumpWidget(
+        buildTestScreen(
+          sessionController: sessionCtrl,
+          verificationController: verificationCtrl,
+          authApi: fakeApi,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final studentBtn = find.widgetWithText(
+        ElevatedButton,
+        'Verificar como Estudiante',
+      );
+      expect(studentBtn, findsOneWidget);
+
+      await tester.tap(studentBtn);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(VerificationFlowScreen), findsOneWidget);
+    });
+  });
+}

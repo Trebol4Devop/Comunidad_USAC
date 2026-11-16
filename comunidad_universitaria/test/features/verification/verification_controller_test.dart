@@ -2,8 +2,18 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:comunidad_universitaria/features/verification/models/verification_result.dart';
 import 'package:comunidad_universitaria/features/verification/models/verification_status.dart';
+import 'package:comunidad_universitaria/features/verification/services/merchant_verification_service.dart';
 import 'package:comunidad_universitaria/features/verification/services/verification_service.dart';
 import 'package:comunidad_universitaria/features/verification/state/verification_controller.dart';
+
+class FakeMerchantService extends MerchantVerificationService {
+  Map<String, dynamic>? latestRequestToReturn;
+
+  @override
+  Future<Map<String, dynamic>?> fetchLatestMerchantRequest() async {
+    return latestRequestToReturn;
+  }
+}
 
 /// Fake de [VerificationService] sin llamadas de red ni dependencias externas.
 class FakeVerificationService extends VerificationService {
@@ -42,13 +52,16 @@ class FakeVerificationService extends VerificationService {
 void main() {
   group('VerificationController Unit Tests', () {
     late FakeVerificationService fakeService;
+    late FakeMerchantService fakeMerchantService;
     late VerificationController controller;
 
     setUp(() {
       fakeService = FakeVerificationService();
+      fakeMerchantService = FakeMerchantService();
       // Inicializar sin suscripción a auth real para aislar el test
       controller = VerificationController(
         service: fakeService,
+        merchantService: fakeMerchantService,
         listenToAuthChanges: false,
       );
     });
@@ -168,6 +181,67 @@ void main() {
       expect(result.isSuccess, isTrue);
       expect(controller.status, StudentVerificationStatus.verified);
       expect(controller.isVerified, isTrue);
+    });
+
+    test('Merchant status: markMerchantPending y estados reactivos', () {
+      expect(controller.sellerVerificationStatus, isNull);
+      expect(controller.isMerchantPending, isFalse);
+      expect(controller.isMerchantVerified, isFalse);
+      expect(controller.isMerchantRejected, isFalse);
+
+      controller.markMerchantPending();
+
+      expect(controller.sellerVerificationStatus, 'pending');
+      expect(controller.isMerchantPending, isTrue);
+      expect(controller.isMerchantVerified, isFalse);
+      expect(controller.isMerchantRejected, isFalse);
+    });
+
+    test('Merchant status: carga seller_verification_status pending y verified desde profiles', () async {
+      fakeService.statusToReturn = {
+        'is_verified': true,
+        'verification_status': 'verified',
+        'seller_verification_status': 'pending',
+      };
+
+      await controller.loadStatus();
+
+      expect(controller.sellerVerificationStatus, 'pending');
+      expect(controller.isMerchantPending, isTrue);
+      expect(controller.isMerchantVerified, isFalse);
+      expect(controller.isMerchantRejected, isFalse);
+
+      // Ahora pasa a verified
+      fakeService.statusToReturn = {
+        'is_verified': true,
+        'verification_status': 'verified',
+        'seller_verification_status': 'verified',
+      };
+
+      await controller.loadStatus();
+
+      expect(controller.sellerVerificationStatus, 'verified');
+      expect(controller.isMerchantVerified, isTrue);
+      expect(controller.isMerchantPending, isFalse);
+      expect(controller.isMerchantRejected, isFalse);
+    });
+
+    test('Merchant status: rejected consulta fetchLatestMerchantRequest para obtener el motivo', () async {
+      fakeService.statusToReturn = {
+        'is_verified': true,
+        'verification_status': 'verified',
+        'seller_verification_status': 'rejected',
+      };
+      fakeMerchantService.latestRequestToReturn = {
+        'status': 'rejected',
+        'rejection_reason': 'DPI vencido',
+      };
+
+      await controller.loadStatus();
+
+      expect(controller.sellerVerificationStatus, 'rejected');
+      expect(controller.isMerchantRejected, isTrue);
+      expect(controller.merchantRejectionReason, 'DPI vencido');
     });
   });
 }

@@ -20,6 +20,22 @@ class LocalStorageService {
   static const String _keyCarneVerified = 'usac_carne_verified';
   static const String _keyCleanupDismissed = 'usac_cleanup_dismissed';
   static const String _keyGuestMode = 'usac_guest_mode';
+  static const String _keyPendingAuthIntent = 'usac_pending_auth_intent';
+
+  static Future<String?> getPendingAuthIntent() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyPendingAuthIntent);
+  }
+
+  static Future<void> setPendingAuthIntent(String intent) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyPendingAuthIntent, intent);
+  }
+
+  static Future<void> clearPendingAuthIntent() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyPendingAuthIntent);
+  }
 
   static Future<bool> isGuestMode() async {
     final prefs = await SharedPreferences.getInstance();
