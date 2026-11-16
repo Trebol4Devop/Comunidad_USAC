@@ -6,6 +6,16 @@ Este módulo implementa el flujo normativo de verificación de identidad estudia
 
 ### Camino A: Correo Institucional + Carné
 - **Identidad**: Validación mediante cuenta oficial de Google Workspace o mediante código OTP enviado al correo del estudiante.
+- **Foto del carné + verificación local (Android/iOS)**:
+  - El estudiante adjunta una foto del frente de su carné con cámara o galería.
+  - La app ejecuta OCR y detección de QR/código de barras **en el dispositivo**, y comprueba coherencia antes de habilitar el correo institucional:
+    - el número de carné escrito aparece en la foto (bloqueante);
+    - se detecta una leyenda institucional USAC (bloqueante);
+    - la facultad y la carrera seleccionadas aparecen en el texto (advertencia);
+    - si hay QR, pertenece a `usac.edu.gt` o a un subdominio (bloqueante si es un dominio ajeno);
+    - el código de barras del frente se acepta como código detectado.
+  - La foto **no se sube ni se persiste**: vive en memoria y se descarta al cerrar el flujo.
+  - En **web/desktop** no hay OCR nativo: se muestra un aviso y se mantiene el correo institucional como prueba principal.
 - **Dominios permitidos**: `@usac.edu.gt`, `@*.usac.edu.gt` (ej. `@ingenieria.usac.edu.gt`, `@medicina.usac.edu.gt`, `@derecho.usac.edu.gt`, `@economicas.usac.edu.gt`), y autorizados en facultades (`@fausac.gt`, `@ecys.org`).
 - **Requisito en Supabase Auth**:
   > **IMPORTANTE**: La plantilla de correo de confirmación y OTP de Supabase debe contener explícitamente el tag `{{ .Token }}` para que el usuario reciba el código de 6 dígitos en su bandeja de entrada.
