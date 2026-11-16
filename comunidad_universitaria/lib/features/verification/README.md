@@ -8,12 +8,12 @@ Este módulo implementa el flujo normativo de verificación de identidad estudia
 - **Identidad**: Validación mediante cuenta oficial de Google Workspace o mediante código OTP enviado al correo del estudiante.
 - **Fotos del carné + verificación local (Android/iOS)**:
   - El estudiante adjunta el **frente** y el **reverso** de su carné con cámara o galería.
-  - **Frente** (CUI, Facultad, Carrera, Foto, Carné, "Departamento de Registro y Estadística", "En caso de emergencia marque al 1592", código de barras):
+  - **Frente** (CUI, Facultad, Carrera, Foto, Carné, "Departamento de Registro y Estadística", "En caso de emergencia marca 1592", código de barras):
     - el número de carné escrito aparece en la foto (bloqueante);
     - se detecta una leyenda institucional USAC (bloqueante);
     - el CUI escrito aparece en la foto (bloqueante si se proporcionó);
     - la facultad y la carrera seleccionadas aparecen en el texto (advertencia);
-    - se detecta la leyenda "En caso de emergencia marque al 1592" (advertencia);
+    - se detecta la leyenda "En caso de emergencia marca 1592" (advertencia);
     - el código de barras del frente se acepta como código detectado (advertencia si falta).
   - **Reverso** (Nombre completo, "USAC TRICENTENARIA", "ESTUDIANTE UNIVERSITARIO", QR de Registro y Estadística):
     - se detectan las leyendas "USAC TRICENTENARIA" y "ESTUDIANTE UNIVERSITARIO" (bloqueante si no hay ninguna);

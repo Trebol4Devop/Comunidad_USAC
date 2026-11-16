@@ -551,7 +551,7 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
             isDark: isDark,
             title: 'Frente del carné',
             subtitle:
-                'CUI, facultad, carrera, carné, "En caso de emergencia marque al 1592" y código de barras.',
+                'CUI, facultad, carrera, carné, "En caso de emergencia marca 1592" y código de barras.',
             bytes: _frontBytes,
             fileName: _frontName,
             isScanning: _isScanningFront,
