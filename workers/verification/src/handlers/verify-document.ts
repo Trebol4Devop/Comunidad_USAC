@@ -4,7 +4,6 @@ import {
   detectImageType,
   evaluateApproval,
   validateCarne,
-  validateCui,
   validateDocumentType,
   validateQrUrl,
 } from '../validators';
@@ -26,11 +25,6 @@ export function mapRpcErrorCode(code?: string): { status: number; message: strin
       return {
         status: 422,
         message: 'Carne format is invalid or year out of range',
-      };
-    case 'invalid_cui':
-      return {
-        status: 422,
-        message: 'CUI format is invalid',
       };
     case 'invalid_document_type':
       return {
@@ -95,12 +89,12 @@ export async function handleVerifyDocument(
 
   const user = authData.user;
 
-  // Las sesiones anónimas no pueden verificar identidad: se exige cuenta real.
+  // Las sesiones anónimas no pueden verificar identidad: se exige cuenta real (403 anonymous_not_allowed)
   if (user.is_anonymous === true) {
     return new Response(
       JSON.stringify({
         status: 'error',
-        code: 'unauthorized',
+        code: 'anonymous_not_allowed',
         message: 'Anonymous sessions cannot submit verification documents',
       }),
       { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
@@ -125,7 +119,6 @@ export async function handleVerifyDocument(
   const fileEntry = formData.get('file');
   const carneEntry = formData.get('carne');
   const docTypeEntry = formData.get('document_type');
-  const cuiEntry = formData.get('cui');
   const clientOcrEntry = formData.get('client_ocr_text');
   const qrUrlEntry = formData.get('qr_url');
 
@@ -190,21 +183,6 @@ export async function handleVerifyDocument(
     );
   }
 
-  let cleanCui: string | null = null;
-  if (cuiEntry != null && typeof cuiEntry === 'string' && cuiEntry.trim() !== '') {
-    cleanCui = cuiEntry.trim();
-    if (!validateCui(cleanCui)) {
-      return new Response(
-        JSON.stringify({
-          status: 'error',
-          code: 'invalid_cui',
-          message: 'CUI must be 13 digits with a valid Guatemala department code (01-22)',
-        }),
-        { status: 422, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
-    }
-  }
-
   if (!validateDocumentType(documentTypeStr)) {
     return new Response(
       JSON.stringify({
@@ -232,13 +210,14 @@ export async function handleVerifyDocument(
     }
   }
 
+  // El texto OCR vive estrictamente en memoria: nunca se persiste ni se loguea
   const clientOcrText =
     clientOcrEntry != null && typeof clientOcrEntry === 'string'
       ? clientOcrEntry.slice(0, 20_000)
       : null;
 
-  // 4 & 5. Evaluar reglas de aprobación automática
-  const isAutoApproved = evaluateApproval({
+  // 4 & 5. Evaluar reglas de aprobación automática y banderas en memoria
+  const evalResult = evaluateApproval({
     ocrText: clientOcrText,
     carne,
     documentType,
@@ -247,20 +226,19 @@ export async function handleVerifyDocument(
 
   const supabaseService = createServiceClient(env);
 
-  // 6. Flujo de aprobación o revisión manual
-  if (isAutoApproved) {
-    // Caso Aprobado: No subir a R2
+  // 6. Caso Auto-Aprobado: No subir a R2, descartar imagen en memoria
+  if (evalResult.approved) {
     const { data: rpcData, error: rpcErr } = await supabaseService.rpc(
       'admin_create_verification_request',
       {
         p_user_id: user.id,
         p_carne: carne,
-        p_cui: cleanCui,
         p_document_type: documentType,
         p_r2_object_key: null,
-        p_ocr_text: clientOcrText,
         p_qr_url: cleanQrUrl,
-        p_ocr_confidence: null,
+        p_matched_keywords: evalResult.matched_keywords,
+        p_matched_carne: evalResult.matched_carne,
+        p_matched_current_year: evalResult.matched_current_year,
         p_auto_approved: true,
       }
     );
@@ -298,36 +276,65 @@ export async function handleVerifyDocument(
     );
   }
 
-  // Caso Dudoso / Manual Review:
-  // Paso 1: RPC con p_auto_approved: false y p_r2_object_key: null
-  const { data: rpcData, error: rpcErr } = await supabaseService.rpc(
-    'admin_create_verification_request',
-    {
-      p_user_id: user.id,
-      p_carne: carne,
-      p_cui: cleanCui,
-      p_document_type: documentType,
-      p_r2_object_key: null,
-      p_ocr_text: clientOcrText,
-      p_qr_url: cleanQrUrl,
-      p_ocr_confidence: null,
-      p_auto_approved: false,
-    }
-  );
+  // 7. Caso Revisión Manual (Dudoso):
+  // Subir imagen a R2 con clave pending/<userId>/<requestId>.<ext>
+  const requestId = crypto.randomUUID();
+  const objectKey = `pending/${user.id}/${requestId}.${detectedImage.ext}`;
 
-  if (rpcErr) {
-    console.error(`[verify-document] rpc error code=${rpcErr.code ?? 'unknown'}`);
+  try {
+    await uploadVerificationDocument(
+      env.VERIFICATION_BUCKET,
+      objectKey,
+      bytes,
+      detectedImage.mime
+    );
+  } catch {
     return new Response(
       JSON.stringify({
         status: 'error',
-        code: 'rpc_error',
-        message: 'Verification service unavailable. Please retry.',
+        code: 'upload_failed',
+        message: 'Failed to upload document image to storage',
       }),
       { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
   }
 
-  if (!rpcData?.ok) {
+  // Invocar RPC con la clave R2 ya generada y las 3 banderas calculadas
+  const { data: rpcData, error: rpcErr } = await supabaseService.rpc(
+    'admin_create_verification_request',
+    {
+      p_user_id: user.id,
+      p_carne: carne,
+      p_document_type: documentType,
+      p_r2_object_key: objectKey,
+      p_qr_url: cleanQrUrl,
+      p_matched_keywords: evalResult.matched_keywords,
+      p_matched_carne: evalResult.matched_carne,
+      p_matched_current_year: evalResult.matched_current_year,
+      p_auto_approved: false,
+    }
+  );
+
+  // Si el RPC falla o devuelve ok:false -> Compensación: eliminar de R2 antes de responder
+  if (rpcErr || !rpcData?.ok) {
+    try {
+      await deleteVerificationDocument(env.VERIFICATION_BUCKET, objectKey);
+    } catch {
+      console.error(`[verify-document] compensation delete failed for request: ${requestId}`);
+    }
+
+    if (rpcErr) {
+      console.error(`[verify-document] rpc error code=${rpcErr.code ?? 'unknown'}`);
+      return new Response(
+        JSON.stringify({
+          status: 'error',
+          code: 'rpc_error',
+          message: 'Verification service unavailable. Please retry.',
+        }),
+        { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
     const mapped = mapRpcErrorCode(rpcData?.code);
     return new Response(
       JSON.stringify({
@@ -339,103 +346,10 @@ export async function handleVerifyDocument(
     );
   }
 
-  const requestId = rpcData.request_id as string;
-  const objectKey = `pending/${user.id}/${requestId}.${detectedImage.ext}`;
-
-  // Paso 2: Subir archivo a R2
-  try {
-    await uploadVerificationDocument(
-      env.VERIFICATION_BUCKET,
-      objectKey,
-      bytes,
-      detectedImage.mime
-    );
-  } catch {
-    // Si la subida falla, borra la fila recién creada y responde 500 upload_failed
-    await supabaseService
-      .from('moderation_jobs')
-      .delete()
-      .match({
-        entity_table: 'verification_requests',
-        entity_id: requestId,
-      });
-
-    await supabaseService
-      .from('verification_requests')
-      .delete()
-      .eq('id', requestId);
-
-    return new Response(
-      JSON.stringify({
-        status: 'error',
-        code: 'upload_failed',
-        message: 'Failed to upload document image to storage',
-      }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
-  }
-
-  // Paso 3: Actualizar r2_object_key y moderation_jobs.has_image
-  try {
-    const nowIso = new Date().toISOString();
-
-    const { error: reqUpdateErr } = await supabaseService
-      .from('verification_requests')
-      .update({
-        r2_object_key: objectKey,
-        updated_at: nowIso,
-      })
-      .eq('id', requestId);
-
-    if (reqUpdateErr) throw reqUpdateErr;
-
-    const { error: jobUpdateErr } = await supabaseService
-      .from('moderation_jobs')
-      .update({
-        has_image: true,
-        updated_at: nowIso,
-      })
-      .match({
-        entity_table: 'verification_requests',
-        entity_id: requestId,
-      });
-
-    if (jobUpdateErr) throw jobUpdateErr;
-  } catch {
-    // Si falla la actualización en BD, limpiar R2 y registros para consistencia
-    try {
-      await deleteVerificationDocument(env.VERIFICATION_BUCKET, objectKey);
-    } catch {
-      // Ignorar fallo de borrado compensatorio
-    }
-
-    await supabaseService
-      .from('moderation_jobs')
-      .delete()
-      .match({
-        entity_table: 'verification_requests',
-        entity_id: requestId,
-      });
-
-    await supabaseService
-      .from('verification_requests')
-      .delete()
-      .eq('id', requestId);
-
-    return new Response(
-      JSON.stringify({
-        status: 'error',
-        code: 'upload_failed',
-        message: 'Failed to record document metadata',
-      }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
-  }
-
   return new Response(
     JSON.stringify({
       status: 'manual_review',
-      request_id: requestId,
+      request_id: rpcData.request_id || requestId,
     }),
     { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
   );

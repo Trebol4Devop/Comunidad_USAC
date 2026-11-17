@@ -1,4 +1,4 @@
-import type { DocumentType, ImageTypeResult } from './types';
+import type { DocumentType, ImageTypeResult, ApprovalEvaluationResult } from './types';
 
 const VALID_DOCUMENT_TYPES: readonly DocumentType[] = [
   'constancia_inscripcion',
@@ -135,49 +135,85 @@ export interface ApprovalEvaluationParams {
 }
 
 /**
- * Evalúa reglas obligatorias de aprobación automática (§6.1):
- * a) contiene UNIVERSIDAD DE SAN CARLOS | REGISTRO Y ESTADISTICA | USAC TRICENTENARIA | ESTUDIANTE UNIVERSITARIO
- * b) contiene el carné exacto
- * c) si es constancia_inscripcion o boleta_asignacion, contiene el año actual
- * d) si viene qr_url, debe pasar la validación de host
+ * Evalúa en memoria las banderas de aprobación automática y el veredicto general (§6.1):
+ * - matched_keywords: al menos una palabra clave institucional
+ * - matched_carne: el texto contiene el carné exacto
+ * - matched_current_year: para constancia_inscripcion y boleta_asignacion, contiene el año actual.
+ *                         Para carne_fisico, false (el carné físico no evalúa año de ciclo lectivo).
+ * - qrUrl: si viene, debe pertenecer al host autorizado de la USAC.
+ *
+ * Retorna un objeto con { approved, matched_keywords, matched_carne, matched_current_year }.
  */
-export function evaluateApproval(params: ApprovalEvaluationParams): boolean {
+export function evaluateApproval(params: ApprovalEvaluationParams): ApprovalEvaluationResult {
+  // Si no hay texto de OCR, todas las banderas son falsas
   if (!params.ocrText || typeof params.ocrText !== 'string') {
-    return false;
+    return {
+      approved: false,
+      matched_keywords: false,
+      matched_carne: false,
+      matched_current_year: false,
+    };
   }
 
-  // d) Si viene qr_url, validar host
+  // Validación de URL QR si se provee
+  let validQr = true;
   if (params.qrUrl != null && params.qrUrl.trim() !== '') {
-    if (!validateQrUrl(params.qrUrl)) {
-      return false;
-    }
+    validQr = validateQrUrl(params.qrUrl);
   }
 
   const norm = normalizeOcrText(params.ocrText);
-  if (!norm) return false;
+  if (!norm) {
+    return {
+      approved: false,
+      matched_keywords: false,
+      matched_carne: false,
+      matched_current_year: false,
+    };
+  }
 
   // a) Contiene al menos una de las palabras clave institucionales
-  const hasKeyword = REQUIRED_KEYWORDS.some((kw) => norm.includes(kw));
-  if (!hasKeyword) {
-    return false;
-  }
+  const matched_keywords = REQUIRED_KEYWORDS.some((kw) => norm.includes(kw));
 
   // b) Contiene el carné exacto
   const cleanCarne = params.carne.trim();
-  if (!cleanCarne || !norm.includes(cleanCarne)) {
-    return false;
-  }
+  const matched_carne = Boolean(cleanCarne && norm.includes(cleanCarne));
 
-  // c) Si document_type es constancia_inscripcion o boleta_asignacion, contiene el año actual
+  // c) Si document_type es constancia_inscripcion o boleta_asignacion, contiene el año actual.
+  // Para carne_fisico, false ya que no aplica vigencia anual al carné físico civil/universitario.
+  let matched_current_year = false;
   if (
     params.documentType === 'constancia_inscripcion' ||
     params.documentType === 'boleta_asignacion'
   ) {
     const year = params.currentYear ?? new Date().getUTCFullYear();
-    if (!norm.includes(String(year))) {
-      return false;
-    }
+    matched_current_year = norm.includes(String(year));
+  } else {
+    // carne_fisico no evalúa año actual en el documento
+    matched_current_year = false;
   }
 
-  return true;
+  // Regla de aprobación:
+  // - Palabras clave obligatorias
+  // - Carné exacto obligatorio
+  // - Año actual obligatorio para constancia y boleta (no requerido para carné físico)
+  // - QR válido si fue proporcionado
+  const yearRequirementMet =
+    params.documentType === 'carne_fisico' ? true : matched_current_year;
+
+  const approved = matched_keywords && matched_carne && yearRequirementMet && validQr;
+
+  return {
+    approved,
+    matched_keywords,
+    matched_carne,
+    matched_current_year,
+  };
+}
+
+/**
+ * Envoltura booleana para conveniencia o compatibilidad si un llamador
+ * únicamente requiere el veredicto de aprobación.
+ */
+export function isAutoApproved(params: ApprovalEvaluationParams): boolean {
+  return evaluateApproval(params).approved;
 }

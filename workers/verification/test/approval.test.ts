@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { evaluateApproval } from '../src/validators';
+import { evaluateApproval, isAutoApproved } from '../src/validators';
 import { mapRpcErrorCode } from '../src/handlers/verify-document';
 
 describe('evaluateApproval', () => {
@@ -24,7 +24,17 @@ describe('evaluateApproval', () => {
       qrUrl,
     });
 
-    expect(result).toBe(true);
+    expect(result.approved).toBe(true);
+    expect(result.matched_keywords).toBe(true);
+    expect(result.matched_carne).toBe(true);
+    expect(result.matched_current_year).toBe(true);
+    expect(isAutoApproved({
+      ocrText: text,
+      carne,
+      documentType: 'constancia_inscripcion',
+      currentYear,
+      qrUrl,
+    })).toBe(true);
   });
 
   it('approves with any of the 4 valid keywords', () => {
@@ -37,13 +47,16 @@ describe('evaluateApproval', () => {
 
     for (const kw of keywords) {
       const text = `${kw} CARNE: ${carne} ANO: ${currentYear}`;
-      const approved = evaluateApproval({
+      const result = evaluateApproval({
         ocrText: text,
         carne,
         documentType: 'constancia_inscripcion',
         currentYear,
       });
-      expect(approved).toBe(true);
+      expect(result.approved).toBe(true);
+      expect(result.matched_keywords).toBe(true);
+      expect(result.matched_carne).toBe(true);
+      expect(result.matched_current_year).toBe(true);
     }
   });
 
@@ -55,7 +68,10 @@ describe('evaluateApproval', () => {
       documentType: 'constancia_inscripcion',
       currentYear,
     });
-    expect(result).toBe(false);
+    expect(result.approved).toBe(false);
+    expect(result.matched_keywords).toBe(false);
+    expect(result.matched_carne).toBe(true);
+    expect(result.matched_current_year).toBe(true);
   });
 
   it('rejects if carne does not match', () => {
@@ -66,7 +82,10 @@ describe('evaluateApproval', () => {
       documentType: 'constancia_inscripcion',
       currentYear,
     });
-    expect(result).toBe(false);
+    expect(result.approved).toBe(false);
+    expect(result.matched_keywords).toBe(true);
+    expect(result.matched_carne).toBe(false);
+    expect(result.matched_current_year).toBe(true);
   });
 
   it('rejects if current year is missing in constancia_inscripcion', () => {
@@ -77,7 +96,10 @@ describe('evaluateApproval', () => {
       documentType: 'constancia_inscripcion',
       currentYear,
     });
-    expect(result).toBe(false);
+    expect(result.approved).toBe(false);
+    expect(result.matched_keywords).toBe(true);
+    expect(result.matched_carne).toBe(true);
+    expect(result.matched_current_year).toBe(false);
   });
 
   it('rejects if current year is missing in boleta_asignacion', () => {
@@ -88,7 +110,10 @@ describe('evaluateApproval', () => {
       documentType: 'boleta_asignacion',
       currentYear,
     });
-    expect(result).toBe(false);
+    expect(result.approved).toBe(false);
+    expect(result.matched_keywords).toBe(true);
+    expect(result.matched_carne).toBe(true);
+    expect(result.matched_current_year).toBe(false);
   });
 
   it('allows carne_fisico even if current year is not present', () => {
@@ -99,7 +124,10 @@ describe('evaluateApproval', () => {
       documentType: 'carne_fisico',
       currentYear,
     });
-    expect(result).toBe(true);
+    expect(result.approved).toBe(true);
+    expect(result.matched_keywords).toBe(true);
+    expect(result.matched_carne).toBe(true);
+    expect(result.matched_current_year).toBe(false); // carne_fisico sets matched_current_year to false
   });
 
   it('rejects if qr_url has an invalid or spoofed host', () => {
@@ -113,25 +141,29 @@ describe('evaluateApproval', () => {
       currentYear,
       qrUrl: evilQr,
     });
-    expect(result).toBe(false);
+    expect(result.approved).toBe(false);
   });
 
   it('rejects if ocrText is empty or null', () => {
-    expect(
-      evaluateApproval({
-        ocrText: null,
-        carne,
-        documentType: 'constancia_inscripcion',
-      })
-    ).toBe(false);
+    const resNull = evaluateApproval({
+      ocrText: null,
+      carne,
+      documentType: 'constancia_inscripcion',
+    });
+    expect(resNull.approved).toBe(false);
+    expect(resNull.matched_keywords).toBe(false);
+    expect(resNull.matched_carne).toBe(false);
+    expect(resNull.matched_current_year).toBe(false);
 
-    expect(
-      evaluateApproval({
-        ocrText: '   ',
-        carne,
-        documentType: 'constancia_inscripcion',
-      })
-    ).toBe(false);
+    const resEmpty = evaluateApproval({
+      ocrText: '   ',
+      carne,
+      documentType: 'constancia_inscripcion',
+    });
+    expect(resEmpty.approved).toBe(false);
+    expect(resEmpty.matched_keywords).toBe(false);
+    expect(resEmpty.matched_carne).toBe(false);
+    expect(resEmpty.matched_current_year).toBe(false);
   });
 });
 
@@ -146,7 +178,6 @@ describe('mapRpcErrorCode', () => {
       message: 'Too many verification attempts in the last 24 hours. Please wait.',
     });
     expect(mapRpcErrorCode('invalid_carne').status).toBe(422);
-    expect(mapRpcErrorCode('invalid_cui').status).toBe(422);
     expect(mapRpcErrorCode('invalid_document_type').status).toBe(422);
     expect(mapRpcErrorCode('not_authorized').status).toBe(403);
     expect(mapRpcErrorCode('other_error').status).toBe(500);

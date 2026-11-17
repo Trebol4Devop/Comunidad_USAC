@@ -16,8 +16,6 @@ interface MerchantCleanupCandidate {
   user_id: string | null;
   status: string;
   expires_at: string;
-  dpi_front_key: string | null;
-  dpi_back_key: string | null;
   establishment_key: string | null;
 }
 
@@ -94,13 +92,13 @@ export async function cleanStudentRequests(
 }
 
 /**
- * Limpieza de solicitudes de verificación de comerciantes (Fase 2):
- * - Filas con alguna clave no nula y (status in ('approved','rejected') o expires_at < now() o user_id IS NULL)
+ * Limpieza de solicitudes de verificación de comerciantes (Zero-PII):
+ * - Filas con establishment_key no nulo y (status in ('approved','rejected') o expires_at < now() o user_id IS NULL)
  * - Límite 100
- * - Expiración de pendientes: status='rejected', rejection_reason='expired', y si profiles.seller_verification_status sigue en 'pending' -> 'rejected'
- * - Borrar las 3 claves de R2; si todas OK -> admin_clear_merchant_keys
- * - Si alguna falla -> no limpiar (el cron reintenta)
- * - Lotes de 5, idempotente, sin logging de claves/DPI (solo request_id)
+ * - Expiración de pendientes: status='rejected', rejection_reason='expired', y seller_verification_status='rejected' en profiles
+ * - Borrar establishment_key de R2; si OK -> admin_clear_merchant_keys
+ * - Si falla R2 -> no limpiar clave en BD (el cron reintenta en la siguiente ejecución)
+ * - Lotes de 5, idempotente, sin logging de claves (solo request_id)
  */
 export async function cleanMerchantRequests(
   bucket: R2Bucket,
@@ -116,8 +114,8 @@ export async function cleanMerchantRequests(
 
   const { data, error } = await supabase
     .from('merchant_verification_requests')
-    .select('id, user_id, status, expires_at, dpi_front_key, dpi_back_key, establishment_key')
-    .or('dpi_front_key.not.is.null,dpi_back_key.not.is.null,establishment_key.not.is.null')
+    .select('id, user_id, status, expires_at, establishment_key')
+    .not('establishment_key', 'is', null)
     .or(`status.in.(approved,rejected),expires_at.lt.${nowIso},user_id.is.null`)
     .limit(100);
 
@@ -178,37 +176,23 @@ export async function cleanMerchantRequests(
             });
         }
 
-        // 2. Extraer claves no nulas
-        const keysToDelete = [
-          row.dpi_front_key,
-          row.dpi_back_key,
-          row.establishment_key,
-        ].filter((k): k is string => Boolean(k));
-
-        if (keysToDelete.length === 0) {
+        // 2. Si no tiene clave, no hay nada que borrar en R2
+        if (!row.establishment_key) {
           return;
         }
 
-        // 3. Borrar todas las claves de R2
-        let allDeleted = true;
-        for (const key of keysToDelete) {
-          try {
-            await bucket.delete(key);
-          } catch {
-            allDeleted = false;
-            console.error(
-              `[cleanup-merchant] Failed to delete R2 object for request id: ${row.id}`
-            );
-          }
-        }
-
-        // 4. Si alguna falló, no limpiar claves en BD para permitir reintento posterior
-        if (!allDeleted) {
+        // 3. Borrar la clave de R2
+        try {
+          await bucket.delete(row.establishment_key);
+        } catch {
           stats.failed++;
+          console.error(
+            `[cleanup-merchant] Failed to delete R2 object for request id: ${row.id}`
+          );
           return;
         }
 
-        // 5. Si todas fueron eliminadas de R2 con éxito, limpiar claves en BD
+        // 4. Si fue eliminada de R2 con éxito, limpiar clave en BD
         const { error: clearErr } = await supabase.rpc('admin_clear_merchant_keys', {
           p_request_id: row.id,
         });
@@ -218,8 +202,6 @@ export async function cleanMerchantRequests(
           const { error: updateErr } = await supabase
             .from('merchant_verification_requests')
             .update({
-              dpi_front_key: null,
-              dpi_back_key: null,
               establishment_key: null,
               updated_at: new Date().toISOString(),
             })
@@ -228,7 +210,7 @@ export async function cleanMerchantRequests(
           if (updateErr) {
             stats.failed++;
             console.error(
-              `[cleanup-merchant] Failed to clear keys for request id: ${row.id}`
+              `[cleanup-merchant] Failed to clear key for request id: ${row.id}`
             );
             return;
           }

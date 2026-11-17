@@ -155,60 +155,37 @@ export async function handleAdminReviewMerchant(
     );
   }
 
-  // 5. Si ok: leer las 3 claves de la solicitud
+  // 5. Si ok: leer establishment_key de la solicitud
   const { data: reqRecord, error: fetchErr } = await supabaseService
     .from('merchant_verification_requests')
-    .select('dpi_front_key, dpi_back_key, establishment_key')
+    .select('establishment_key')
     .eq('id', request_id)
     .maybeSingle();
 
   if (fetchErr) {
-    console.error(`[merchant-review] error reading merchant keys for request id: ${request_id}`);
+    console.error(`[merchant-review] error reading merchant key for request id: ${request_id}`);
   }
 
-  const keysToDelete = [
-    reqRecord?.dpi_front_key,
-    reqRecord?.dpi_back_key,
-    reqRecord?.establishment_key,
-  ].filter((key): key is string => Boolean(key));
-
-  let deleteFailed = false;
-  for (const key of keysToDelete) {
+  if (reqRecord?.establishment_key) {
     try {
-      await deleteVerificationDocument(env.VERIFICATION_BUCKET, key);
+      await deleteVerificationDocument(env.VERIFICATION_BUCKET, reqRecord.establishment_key);
+      const { error: clearErr } = await supabaseService.rpc('admin_clear_merchant_keys', {
+        p_request_id: request_id,
+      });
+      if (clearErr) {
+        console.error(
+          `[merchant-review] error calling admin_clear_merchant_keys for request id: ${request_id}`
+        );
+      }
     } catch {
-      deleteFailed = true;
+      // Si R2 falla, no fallar la revisión ya aplicada: registrar código y dejar que el cron reintente
       console.error(
         `[merchant-review] Failed to delete R2 object for request id: ${request_id}`
       );
     }
   }
 
-  // Si alguna falló: no limpiar y responder 502 r2_delete_failed (cron reintentará)
-  if (deleteFailed) {
-    return new Response(
-      JSON.stringify({
-        status: 'error',
-        code: 'r2_delete_failed',
-        message: 'Merchant verification reviewed but failed to delete files from storage',
-      }),
-      { status: 502, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
-  }
-
-  // Solo si todas las operaciones de borrado tuvieron éxito:
-  if (keysToDelete.length > 0) {
-    const { error: clearErr } = await supabaseService.rpc('admin_clear_merchant_keys', {
-      p_request_id: request_id,
-    });
-    if (clearErr) {
-      console.error(
-        `[merchant-review] error calling admin_clear_merchant_keys for request id: ${request_id}`
-      );
-    }
-  }
-
-  // 6. Respuesta 200
+  // 6. Respuesta 200 con la decisión aplicada
   return new Response(
     JSON.stringify({
       status: decision,
