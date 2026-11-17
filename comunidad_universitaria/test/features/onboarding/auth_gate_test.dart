@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:comunidad_universitaria/features/onboarding/screens/merchant_verification_screen.dart';
+import 'package:comunidad_universitaria/features/onboarding/screens/merchant_support_screen.dart';
 import 'package:comunidad_universitaria/features/onboarding/screens/no_institutional_email_screen.dart';
 import 'package:comunidad_universitaria/features/onboarding/screens/welcome_screen.dart';
 import 'package:comunidad_universitaria/features/onboarding/state/session_controller.dart';
@@ -99,7 +99,7 @@ void main() {
         expect(find.byType(VerificationFlowScreen), findsOneWidget);
       });
 
-      testWidgets('Intención merchant navega a MerchantVerificationScreen y limpia intención', (tester) async {
+      testWidgets('Intención merchant navega a MerchantSupportScreen y limpia intención', (tester) async {
         String? currentIntent = 'merchant';
         bool clearCalled = false;
 
@@ -125,7 +125,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(clearCalled, isTrue);
-        expect(find.byType(MerchantVerificationScreen), findsOneWidget);
+        expect(find.byType(MerchantSupportScreen), findsOneWidget);
       });
 
       testWidgets('Intención auto con correo institucional no verificado abre verificación automática (tab 0)', (tester) async {

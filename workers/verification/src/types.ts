@@ -9,12 +9,6 @@ export interface Env {
 
 export type ReviewDecision = 'approved' | 'rejected';
 
-export interface ApiErrorResponse {
-  status: 'error';
-  code: string;
-  message: string;
-}
-
 export interface AdminReviewPayload {
   request_id: string;
   decision: ReviewDecision;
@@ -23,27 +17,6 @@ export interface AdminReviewPayload {
 
 export interface AdminReviewSuccessResponse {
   status: ReviewDecision;
-  request_id: string;
-}
-
-export interface ImageTypeResult {
-  mime: 'image/jpeg' | 'image/png' | 'image/webp';
-  ext: 'jpg' | 'png' | 'webp';
-}
-
-export interface AdminReviewVerificationRpcResult {
-  ok: boolean;
-  status?: ReviewDecision;
-  request_id?: string;
-  code?: string;
-}
-
-export type MerchantVerificationStatus = 'pending' | 'approved' | 'rejected';
-
-export type MerchantDocType = 'establishment';
-
-export interface VerifyMerchantSuccessResponse {
-  status: 'manual_review';
   request_id: string;
 }
 
@@ -56,21 +29,4 @@ export interface AdminMerchantReviewPayload {
 export interface AdminMerchantReviewSuccessResponse {
   status: ReviewDecision;
   request_id: string;
-}
-
-export interface MerchantVerificationRequestRow {
-  id: string;
-  user_id: string | null;
-  business_name: string;
-  contact_phone_hash: string;
-  campus_zone?: string | null;
-  establishment_key: string | null;
-  establishment_note: string | null;
-  status: MerchantVerificationStatus;
-  rejection_reason: string | null;
-  reviewed_by: string | null;
-  reviewed_at: string | null;
-  expires_at: string;
-  created_at: string;
-  updated_at: string;
 }

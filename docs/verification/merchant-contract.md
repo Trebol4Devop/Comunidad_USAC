@@ -1,5 +1,20 @@
 # Contrato — Acceso inicial y verificación de comerciante
 
+> **Actualización 2026-11-17 (alta por soporte):** la solicitud de comerciante en la app
+> fue reemplazada por un correo a **soporte** (`mailto:trebol4devop@proton.me`). La app
+> no sube fotos ni crea `merchant_verification_requests`; soporte revisa el correo y da
+> de alta el comercio manualmente en `seller_profiles`.
+
+## Flujo vigente (2026-11-17)
+
+1. El comerciante elige **Contactar con soporte** en la app.
+2. Completa nombre del negocio, WhatsApp, ubicación en el campus, categoría y descripción.
+3. La app abre su cliente de correo con un mensaje prellenado a
+   `trebol4devop@proton.me`; no sube fotos ni crea filas en Supabase.
+4. Soporte revisa el correo, solicita información adicional si hace falta y da de alta
+   el comercio manualmente en `seller_profiles`/`profiles.seller_verification_status`.
+5. El comerciante puede publicar cuando su perfil quede verificado.
+
 > **Actualización 2026-11-17:** el Camino B de documentos fue retirado de la app.
 > El flujo estudiantil ahora se llama **Verificación automática** y la alternativa es
 > **Contactar con soporte** (`mailto:trebol4devop@proton.me`). Las referencias a

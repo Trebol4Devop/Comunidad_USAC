@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:comunidad_universitaria/core/services/local_storage_service.dart';
-import 'package:comunidad_universitaria/features/onboarding/screens/merchant_verification_screen.dart';
+import 'package:comunidad_universitaria/features/onboarding/screens/merchant_support_screen.dart';
 import 'package:comunidad_universitaria/features/onboarding/screens/no_institutional_email_screen.dart';
 import 'package:comunidad_universitaria/features/onboarding/state/session_controller.dart';
 import 'package:comunidad_universitaria/features/verification/screens/verification_flow_screen.dart';
@@ -47,7 +47,7 @@ void main() {
       verificationCtrl = VerificationController(listenToAuthChanges: false);
     });
 
-    testWidgets('Usuario autenticado: la tarjeta de comerciante navega a MerchantVerificationScreen', (tester) async {
+    testWidgets('Usuario autenticado: la tarjeta de comerciante navega a MerchantSupportScreen', (tester) async {
       tester.view.physicalSize = const Size(800, 1200);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -66,17 +66,14 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final merchantBtn = find.widgetWithText(
-        ElevatedButton,
-        'Solicitar acceso de Comerciante',
-      );
+      final merchantBtn = find.byKey(const Key('merchant_support_button'));
       expect(merchantBtn, findsOneWidget);
 
       await tester.ensureVisible(merchantBtn);
       await tester.tap(merchantBtn);
       await tester.pumpAndSettle();
 
-      expect(find.byType(MerchantVerificationScreen), findsOneWidget);
+      expect(find.byType(MerchantSupportScreen), findsOneWidget);
     });
 
     testWidgets('Usuario no autenticado: tarjeta de comerciante persiste intención merchant y lanza Google', (tester) async {
@@ -94,10 +91,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final merchantBtn = find.widgetWithText(
-        ElevatedButton,
-        'Solicitar acceso de Comerciante',
-      );
+      final merchantBtn = find.byKey(const Key('merchant_support_button'));
       expect(merchantBtn, findsOneWidget);
 
       await tester.ensureVisible(merchantBtn);
@@ -123,10 +117,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final studentBtn = find.widgetWithText(
-        ElevatedButton,
-        'Contactar con soporte',
-      );
+      final studentBtn = find.byKey(const Key('student_support_button'));
       expect(studentBtn, findsOneWidget);
 
       await tester.tap(studentBtn);

@@ -12,4 +12,7 @@ class SupportConfig {
 
   static const String subjectPrefix =
       'Soporte — Verificación automática Comunidad USAC';
+
+  static const String merchantSubjectPrefix =
+      'Alta de comercio — Comunidad USAC';
 }

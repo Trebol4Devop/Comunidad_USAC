@@ -3,7 +3,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../core/constants/zanate_colors.dart';
 import '../../../core/services/local_storage_service.dart';
 import '../../../core/services/supabase_service.dart';
-import '../../onboarding/screens/merchant_verification_screen.dart';
+import '../../onboarding/screens/merchant_support_screen.dart';
 import '../../onboarding/state/session_controller.dart';
 import '../../profile/screens/profile_screen.dart';
 import '../../profile/widgets/alias_modal.dart';
@@ -190,19 +190,16 @@ class SettingsBottomSheet {
                       style: TextStyle(fontWeight: FontWeight.w600),
                     ),
                     subtitle: const Text(
-                      'Verifícate como comerciante del campus',
+                      'Contacta con soporte para registrar tu negocio.',
                     ),
                     shape: const RoundedRectangleBorder(
                       borderRadius: BorderRadius.zero,
                     ),
                     onTap: () {
                       Navigator.of(ctx).pop();
-                      final vCtrl = VerificationGate.maybeOf(context);
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => MerchantVerificationScreen(
-                            verificationController: vCtrl,
-                          ),
+                          builder: (_) => const MerchantSupportScreen(),
                         ),
                       );
                     },

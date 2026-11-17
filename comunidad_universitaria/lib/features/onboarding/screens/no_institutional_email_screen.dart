@@ -10,7 +10,7 @@ import '../../verification/screens/verification_flow_screen.dart';
 import '../../verification/state/verification_controller.dart';
 import '../../verification/widgets/verification_gate.dart';
 import '../state/session_controller.dart';
-import 'merchant_verification_screen.dart';
+import 'merchant_support_screen.dart';
 
 /// Pantalla que se presenta a usuarios sin correo institucional (@usac.edu.gt).
 /// Ofrece contactar con soporte para estudiantes y el flujo de comerciante del campus.
@@ -75,14 +75,9 @@ class _NoInstitutionalEmailScreenState
       widget.onMerchantSelected!();
       return;
     }
-    final ctrl = widget.verificationController ??
-        VerificationGate.maybeOf(context);
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => MerchantVerificationScreen(
-          verificationController: ctrl,
-          sessionController: widget.sessionController,
-        ),
+        builder: (_) => const MerchantSupportScreen(),
       ),
     );
   }
@@ -271,6 +266,7 @@ class _NoInstitutionalEmailScreenState
                     isDark: isDark,
                     isBusy: _isBusy,
                     buttonLabel: 'Contactar con soporte',
+                    buttonKey: const Key('student_support_button'),
                     onTap: () => _handleSelection(isStudent: true),
                   ),
 
@@ -279,15 +275,16 @@ class _NoInstitutionalEmailScreenState
                   // Tarjeta 2: Comerciante
                   _VerificationOptionCard(
                     title: 'Comerciante del Campus',
-                    subtitle: 'Tengo un negocio dentro del campus',
+                    subtitle: 'Quiero registrar mi negocio en el campus',
                     description:
-                        'Para propietarios y encargados de locales o puestos comerciales dentro del campus central o sedes. Requiere teléfono de contacto y fotografía del establecimiento.',
-                    badgeText: 'Comercio Local',
+                        'Contacta con soporte por correo para revisar tu caso y darte de alta como comerciante. Sin fotos ni trámites dentro de la app.',
+                    badgeText: 'Alta de comercio',
                     icon: PhosphorIconsRegular.storefront,
                     accentColor: merchantColor,
                     isDark: isDark,
                     isBusy: _isBusy,
-                    buttonLabel: 'Solicitar acceso de Comerciante',
+                    buttonLabel: 'Contactar con soporte',
+                    buttonKey: const Key('merchant_support_button'),
                     onTap: () => _handleSelection(isStudent: false),
                   ),
 
@@ -320,6 +317,7 @@ class _VerificationOptionCard extends StatelessWidget {
   final bool isDark;
   final bool isBusy;
   final String buttonLabel;
+  final Key? buttonKey;
   final VoidCallback onTap;
 
   const _VerificationOptionCard({
@@ -332,6 +330,7 @@ class _VerificationOptionCard extends StatelessWidget {
     required this.isDark,
     required this.isBusy,
     required this.buttonLabel,
+    this.buttonKey,
     required this.onTap,
   });
 
@@ -444,6 +443,7 @@ class _VerificationOptionCard extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
+                    key: buttonKey,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: accentColor,
                       foregroundColor: isDark ? Colors.black : Colors.white,
