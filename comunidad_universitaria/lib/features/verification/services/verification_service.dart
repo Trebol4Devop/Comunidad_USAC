@@ -52,11 +52,10 @@ class VerificationService {
     }
   }
 
-  /// Reclama credenciales estudiantiles (carné y opcionalmente CUI) invocando
-  /// la función RPC `claim_student_credentials` en PostgreSQL.
+  /// Reclama credenciales estudiantiles (carné) invocando la función RPC
+  /// `claim_student_credentials` en PostgreSQL (Zero-PII: sin CUI).
   Future<Map<String, dynamic>> claimCredentials({
     required String carne,
-    String? cui,
   }) async {
     if (!SupabaseConfig.isConfigured) {
       return {
@@ -79,9 +78,6 @@ class VerificationService {
       final params = <String, dynamic>{
         'p_carne': carne.trim(),
       };
-      if (cui != null && cui.trim().isNotEmpty) {
-        params['p_cui'] = cui.trim();
-      }
 
       final dynamic response = await SupabaseService.client.rpc(
         'claim_student_credentials',
@@ -119,7 +115,6 @@ class VerificationService {
     required String fileName,
     required String carne,
     required VerificationDocumentType documentType,
-    String? cui,
     String? clientOcrText,
     String? qrUrl,
   }) async {
@@ -157,9 +152,6 @@ class VerificationService {
       request.fields['carne'] = normalizedCarne;
       request.fields['document_type'] = documentType.toDb();
 
-      if (cui != null && cui.trim().isNotEmpty) {
-        request.fields['cui'] = cui.trim();
-      }
       if (clientOcrText != null && clientOcrText.trim().isNotEmpty) {
         request.fields['client_ocr_text'] = clientOcrText.trim();
       }

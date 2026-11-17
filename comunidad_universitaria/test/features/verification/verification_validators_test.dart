@@ -142,6 +142,42 @@ void main() {
           VerificationValidators.mapErrorCode('invalid_qr_host'),
           contains('usac.edu.gt'),
         );
+        expect(
+          VerificationValidators.mapErrorCode('invalid_phone'),
+          'El teléfono debe tener 8 dígitos (Guatemala).',
+        );
+        expect(
+          VerificationValidators.mapErrorCode('invalid_business_name'),
+          'El nombre del negocio debe tener entre 2 y 80 caracteres.',
+        );
+      });
+    });
+
+    group('Validación y Normalización de Teléfono Comercial de Guatemala', () {
+      test('Normaliza prefijo +502 y espacios a exactamente 8 dígitos', () {
+        expect(VerificationValidators.normalizePhone('+502 2345 6789'), '23456789');
+        expect(VerificationValidators.normalizePhone('+50223456789'), '23456789');
+        expect(VerificationValidators.normalizePhone('50223456789'), '23456789');
+        expect(VerificationValidators.normalizePhone('2345-6789'), '23456789');
+        expect(VerificationValidators.normalizePhone('2345 6789'), '23456789');
+        expect(VerificationValidators.normalizePhone('23456789'), '23456789');
+      });
+
+      test('Valida correctamente teléfonos de 8 dígitos de Guatemala', () {
+        expect(VerificationValidators.isValidPhone('23456789'), isTrue);
+        expect(VerificationValidators.isValidPhone('+502 2345 6789'), isTrue);
+        expect(VerificationValidators.isValidPhone('1234567'), isFalse); // 7 dígitos
+        expect(VerificationValidators.isValidPhone('123456789'), isFalse); // 9 dígitos
+        expect(VerificationValidators.isValidPhone(''), isFalse);
+        expect(VerificationValidators.isValidPhone(null), isFalse);
+      });
+
+      test('validatePhone validador de formulario para comerciantes', () {
+        expect(VerificationValidators.validatePhone(''), isNotNull);
+        expect(VerificationValidators.validatePhone('123'), isNotNull);
+        expect(VerificationValidators.validatePhone('1234567'), isNotNull);
+        expect(VerificationValidators.validatePhone('23456789'), isNull);
+        expect(VerificationValidators.validatePhone('+502 2345 6789'), isNull);
       });
     });
 

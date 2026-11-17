@@ -159,7 +159,7 @@ void main() {
       // Tarjeta Comerciante
       expect(find.text('Comerciante del Campus'), findsOneWidget);
       expect(
-        find.text('Tengo un negocio dentro del campus (DPI + local)'),
+        find.text('Tengo un negocio dentro del campus'),
         findsOneWidget,
       );
     });

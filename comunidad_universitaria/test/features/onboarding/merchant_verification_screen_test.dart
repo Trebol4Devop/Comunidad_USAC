@@ -15,7 +15,7 @@ class FakeMerchantVerificationService extends MerchantVerificationService {
   MerchantVerificationResult resultToReturn;
   bool submitCalled = false;
   String? lastBusinessName;
-  String? lastDpiNumber;
+  String? lastContactPhone;
 
   FakeMerchantVerificationService({
     this.resultToReturn =
@@ -24,16 +24,14 @@ class FakeMerchantVerificationService extends MerchantVerificationService {
 
   @override
   Future<MerchantVerificationResult> submitMerchantVerification({
-    required Uint8List dpiFront,
-    required Uint8List dpiBack,
-    required Uint8List establishment,
+    required Uint8List establishmentPhoto,
     required String businessName,
-    required String dpiNumber,
+    required String contactPhone,
     String? establishmentNote,
   }) async {
     submitCalled = true;
     lastBusinessName = businessName;
-    lastDpiNumber = dpiNumber;
+    lastContactPhone = contactPhone;
     return resultToReturn;
   }
 }
@@ -75,7 +73,7 @@ void main() {
     );
   }
 
-  group('MerchantVerificationScreen Widget Tests', () {
+  group('MerchantVerificationScreen Widget Tests (Zero-PII)', () {
     late FakeAuthApi fakeApi;
     late SessionController sessionCtrl;
     late VerificationController verificationCtrl;
@@ -119,7 +117,7 @@ void main() {
       expect(find.text('Enviar Solicitud de Comerciante'), findsNothing);
     });
 
-    testWidgets('Renderiza los 3 selectores de fotos y el aviso de privacidad', (tester) async {
+    testWidgets('Renderiza el selector de foto de establecimiento y aviso de privacidad', (tester) async {
       tester.view.physicalSize = const Size(800, 1400);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -139,18 +137,19 @@ void main() {
 
       // Campos de formulario
       expect(find.text('Nombre del negocio *'), findsOneWidget);
-      expect(find.text('Número de DPI (13 dígitos) *'), findsOneWidget);
+      expect(find.text('Teléfono comercial / WhatsApp *'), findsOneWidget);
       expect(find.text('Nota de ubicación en el campus (opcional)'), findsOneWidget);
 
-      // 3 selectores de fotografías obligatorias
-      expect(find.text('1. DPI — Frente'), findsOneWidget);
-      expect(find.text('2. DPI — Reverso'), findsOneWidget);
-      expect(find.text('3. Establecimiento en el campus'), findsOneWidget);
+      // No debe existir selector ni campo de DPI
+      expect(find.textContaining('DPI'), findsNothing);
 
-      // Aviso de privacidad normativo
+      // Selector de fotografía del puesto/local
+      expect(find.text('Fotografía del puesto o local *'), findsOneWidget);
+
+      // Aviso de privacidad Zero-PII
       expect(
         find.text(
-          'Tus documentos se guardan de forma privada y se eliminan después de la revisión.',
+          'Tus datos se guardan de forma privada y la fotografía se elimina después de la revisión.',
         ),
         findsOneWidget,
       );
@@ -159,7 +158,7 @@ void main() {
       expect(find.text('Enviar Solicitud de Comerciante'), findsOneWidget);
     });
 
-    testWidgets('El botón de enviar está deshabilitado sin las 3 fotos', (tester) async {
+    testWidgets('El botón de enviar está deshabilitado sin la foto del establecimiento', (tester) async {
       tester.view.physicalSize = const Size(800, 1400);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -187,18 +186,16 @@ void main() {
       expect(btn.onPressed, isNull); // Deshabilitado
     });
 
-    testWidgets('Validaciones de errores en nombre de negocio y DPI', (tester) async {
+    testWidgets('Validaciones de errores en nombre de negocio y teléfono', (tester) async {
       tester.view.physicalSize = const Size(800, 1400);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      int pickerCallCount = 0;
       Future<XFile?> fakePicker(ImageSource source) async {
-        pickerCallCount++;
         return XFile.fromData(
           Uint8List.fromList([1, 2, 3]),
-          name: 'doc_$pickerCallCount.jpg',
+          name: 'local.jpg',
         );
       }
 
@@ -215,12 +212,10 @@ void main() {
       await tester.tap(find.text('Abrir Pantalla'));
       await tester.pumpAndSettle();
 
-      // Seleccionar las 3 fotos para habilitar el botón
-      for (int i = 0; i < 3; i++) {
-        final btnFinder = find.widgetWithText(OutlinedButton, 'Cámara').first;
-        await tester.tap(btnFinder);
-        await tester.pumpAndSettle();
-      }
+      // Seleccionar la foto para habilitar el botón
+      final btnFinder = find.widgetWithText(OutlinedButton, 'Cámara').first;
+      await tester.tap(btnFinder);
+      await tester.pumpAndSettle();
 
       // Ahora el botón debe estar habilitado
       final submitBtnFinder = find.widgetWithText(ElevatedButton, 'Enviar Solicitud de Comerciante');
@@ -232,9 +227,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Ingresa el nombre del negocio.'), findsOneWidget);
-      expect(find.text('Ingresa tu número de DPI.'), findsOneWidget);
+      expect(find.text('Ingresa tu teléfono comercial.'), findsOneWidget);
 
-      // Ingresar nombre inválido (< 2 chars) y DPI inválido (no 13 dígitos)
+      // Ingresar nombre inválido (< 2 chars) y teléfono inválido (no 8 dígitos)
       await tester.enterText(find.byType(TextFormField).at(0), 'A');
       await tester.enterText(find.byType(TextFormField).at(1), '12345');
       await tester.tap(submitBtnFinder);
@@ -245,12 +240,12 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.text('El DPI debe tener 13 dígitos y un código departamental válido (01-22).'),
+        find.text('El teléfono debe tener 8 dígitos (Guatemala).'),
         findsOneWidget,
       );
     });
 
-    testWidgets('Error 409 muestra el mensaje genérico normativo', (tester) async {
+    testWidgets('Error 409 muestra el mensaje genérico normativo de teléfono', (tester) async {
       tester.view.physicalSize = const Size(800, 1400);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -258,15 +253,13 @@ void main() {
 
       fakeService.resultToReturn = const MerchantVerificationResult.error(
         code: 'credential_unavailable',
-        message: 'No pudimos registrar este DPI. Si crees que es un error, contacta soporte.',
+        message: 'No pudimos registrar este teléfono de contacto. Si crees que es un error, contacta soporte.',
       );
 
-      int pickerCallCount = 0;
       Future<XFile?> fakePicker(ImageSource source) async {
-        pickerCallCount++;
         return XFile.fromData(
           Uint8List.fromList([1, 2, 3]),
-          name: 'doc_$pickerCallCount.jpg',
+          name: 'local.jpg',
         );
       }
 
@@ -283,16 +276,14 @@ void main() {
       await tester.tap(find.text('Abrir Pantalla'));
       await tester.pumpAndSettle();
 
-      // Adjuntar las 3 fotos
-      for (int i = 0; i < 3; i++) {
-        final btnFinder = find.widgetWithText(OutlinedButton, 'Cámara').first;
-        await tester.tap(btnFinder);
-        await tester.pumpAndSettle();
-      }
+      // Adjuntar foto
+      final btnFinder = find.widgetWithText(OutlinedButton, 'Cámara').first;
+      await tester.tap(btnFinder);
+      await tester.pumpAndSettle();
 
-      // Llenar campos válidos (DPI con departamento 01 a 22, ej. 2501123450101)
+      // Llenar campos válidos (acepta +502 y espacios)
       await tester.enterText(find.byType(TextFormField).at(0), 'Comedor El Ingeniero');
-      await tester.enterText(find.byType(TextFormField).at(1), '2501123450101');
+      await tester.enterText(find.byType(TextFormField).at(1), '+502 2345 6789');
       await tester.pumpAndSettle();
 
       // Enviar
@@ -301,8 +292,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(fakeService.submitCalled, isTrue);
+      expect(fakeService.lastContactPhone, '23456789'); // Normalizado a 8 dígitos
       expect(
-        find.text('No pudimos registrar este DPI. Si crees que es un error, contacta soporte.'),
+        find.text('No pudimos registrar este teléfono de contacto. Si crees que es un error, contacta soporte.'),
         findsOneWidget,
       );
     });
@@ -317,12 +309,10 @@ void main() {
         requestId: 'req-success-123',
       );
 
-      int pickerCallCount = 0;
       Future<XFile?> fakePicker(ImageSource source) async {
-        pickerCallCount++;
         return XFile.fromData(
           Uint8List.fromList([1, 2, 3]),
-          name: 'doc_$pickerCallCount.jpg',
+          name: 'local.jpg',
         );
       }
 
@@ -339,16 +329,14 @@ void main() {
       await tester.tap(find.text('Abrir Pantalla'));
       await tester.pumpAndSettle();
 
-      // Adjuntar fotos
-      for (int i = 0; i < 3; i++) {
-        final btnFinder = find.widgetWithText(OutlinedButton, 'Cámara').first;
-        await tester.tap(btnFinder);
-        await tester.pumpAndSettle();
-      }
+      // Adjuntar foto
+      final btnFinder = find.widgetWithText(OutlinedButton, 'Cámara').first;
+      await tester.tap(btnFinder);
+      await tester.pumpAndSettle();
 
       // Llenar datos válidos
       await tester.enterText(find.byType(TextFormField).at(0), 'Librería Universitaria');
-      await tester.enterText(find.byType(TextFormField).at(1), '2501123450101');
+      await tester.enterText(find.byType(TextFormField).at(1), '23456789');
       await tester.enterText(find.byType(TextFormField).at(2), 'Edificio T-1');
       await tester.pumpAndSettle();
 
@@ -359,6 +347,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(fakeService.submitCalled, isTrue);
+      expect(fakeService.lastContactPhone, '23456789');
       expect(verificationCtrl.isMerchantPending, isTrue);
       expect(
         find.text('Solicitud de comerciante enviada. Tu cuenta entrará en revisión manual.'),

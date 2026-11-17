@@ -502,7 +502,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                   icon: Icons.storefront_outlined,
                   title: 'Comerciante del campus',
                   subtitle:
-                      'DPI frente y reverso + foto del establecimiento. Aprobación manual.',
+                      'Foto del establecimiento y contacto comercial. Aprobación manual.',
                   onTap: () {
                     Navigator.of(dialogContext).pop();
                     Navigator.of(context).push(

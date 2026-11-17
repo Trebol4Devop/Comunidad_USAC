@@ -38,7 +38,6 @@ class InstitutionalEmailStep extends StatefulWidget {
 class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
   final _formKey = GlobalKey<FormState>();
   final _carneController = TextEditingController();
-  final _cuiController = TextEditingController();
   final _emailController = TextEditingController();
   final _otpController = TextEditingController();
 
@@ -114,7 +113,6 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
     _authSubscription?.cancel();
     _ocrService.dispose();
     _carneController.dispose();
-    _cuiController.dispose();
     _emailController.dispose();
     _otpController.dispose();
     super.dispose();
@@ -157,7 +155,7 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
     return null;
   }
 
-  /// Si el estudiante corrige el carné, el CUI o la carrera, ambas caras
+  /// Si el estudiante corrige el carné o la carrera, ambas caras
   /// dejan de ser válidas y deben volver a analizarse.
   void _invalidateCarnePhotoCheck() {
     if (_frontValidation != null || _backValidation != null) {
@@ -245,7 +243,6 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
       try {
         final result = await _ocrService.scanDocument(file.path);
         final carne = _carneController.text.trim();
-        final cui = _cuiController.text.trim();
         final validation = isFront
             ? CarnetPhotoValidator.validateFront(
                 ocrText: result.text,
@@ -253,13 +250,11 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
                 carne: carne,
                 carreraNombre: _findCarrera(_selectedCarreraId)?['nombre'],
                 facultadNombre: _selectedFacultadNombre,
-                cui: cui.isEmpty ? null : cui,
               )
             : CarnetPhotoValidator.validateBack(
                 ocrText: result.text,
                 qrUrl: result.qrUrl,
                 expectedCarne: carne,
-                expectedCui: cui.isEmpty ? null : cui,
               );
         if (!mounted) return;
         setState(() {
@@ -461,10 +456,8 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
     _isClaiming = true;
     try {
       final carne = _carneController.text.trim();
-      final cui = _cuiController.text.trim();
       final ok = await widget.controller.claimCredentials(
         carne: carne,
-        cui: cui.isEmpty ? null : cui,
       );
 
       if (!mounted) return;
@@ -551,7 +544,7 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
             isDark: isDark,
             title: 'Frente del carné',
             subtitle:
-                'CUI, facultad, carrera, carné, "En caso de emergencia marca 1592" y código de barras.',
+                'Facultad, carrera, carné, "En caso de emergencia marca 1592" y código de barras.',
             bytes: _frontBytes,
             fileName: _frontName,
             isScanning: _isScanningFront,
@@ -856,22 +849,39 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
               validator: VerificationValidators.validateCarne,
               onChanged: (_) => _invalidateCarnePhotoCheck(),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 8),
 
-            // Campo CUI opcional (aparece en el frente del carné)
-            TextFormField(
-              controller: _cuiController,
-              keyboardType: TextInputType.number,
-              maxLength: 13,
-              decoration: const InputDecoration(
-                labelText: 'CUI (opcional, 13 dígitos)',
-                hintText: 'Ej. 1234567890101',
-                prefixIcon: Icon(Icons.credit_card_outlined),
-                border: OutlineInputBorder(),
-                counterText: '',
+            // Aviso de privacidad Zero-PII
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                ),
               ),
-              validator: VerificationValidators.validateCui,
-              onChanged: (_) => _invalidateCarnePhotoCheck(),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Icons.lock_outline,
+                    size: 16,
+                    color: Color(0xFF10B981),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Tu carné se convierte en un código cifrado irreversible para evitar cuentas duplicadas. Nunca guardamos tu número real.',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: isDark ? Colors.grey.shade300 : const Color(0xFF475569),
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 14),
 

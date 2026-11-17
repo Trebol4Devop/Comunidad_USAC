@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../core/constants/zanate_colors.dart';
@@ -14,8 +13,9 @@ import '../state/session_controller.dart';
 import 'auth_gateway_screen.dart';
 
 /// Pantalla de solicitud de verificación para comerciantes del campus USAC.
-/// Requiere sesión autenticada real, tres fotografías obligatorias (DPI frente,
-/// DPI reverso, foto del establecimiento en el campus) y datos comerciales.
+/// Política Zero-PII: No solicita CUI, DPI ni fotos de documentos de identidad civil.
+/// Requiere sesión autenticada real, nombre comercial, teléfono de contacto (WhatsApp),
+/// ubicación opcional y una fotografía obligatoria del puesto/local dentro del campus.
 ///
 /// Especificación normativa: docs/verification/merchant-contract.md §1.3, §3.1, §4.1.
 class MerchantVerificationScreen extends StatefulWidget {
@@ -43,40 +43,29 @@ class _MerchantVerificationScreenState
     extends State<MerchantVerificationScreen> {
   final _formKey = GlobalKey<FormState>();
   final _businessNameController = TextEditingController();
-  final _dpiController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _establishmentNoteController = TextEditingController();
 
   late final MerchantVerificationService _merchantService;
-  late final OcrService _ocrService;
   final ImagePicker _defaultPicker = ImagePicker();
-
-  Uint8List? _dpiFrontBytes;
-  String? _dpiFrontFileName;
-
-  Uint8List? _dpiBackBytes;
-  String? _dpiBackFileName;
 
   Uint8List? _establishmentBytes;
   String? _establishmentFileName;
 
   bool _isSubmitting = false;
-  bool _isOcrScanning = false;
   String? _submissionError;
-  String? _ocrNotice;
 
   @override
   void initState() {
     super.initState();
     _merchantService = widget.service ?? MerchantVerificationService();
-    _ocrService = widget.ocrService ?? OcrService();
   }
 
   @override
   void dispose() {
     _businessNameController.dispose();
-    _dpiController.dispose();
+    _phoneController.dispose();
     _establishmentNoteController.dispose();
-    _ocrService.dispose();
     super.dispose();
   }
 
@@ -94,10 +83,7 @@ class _MerchantVerificationScreenState
         !(SupabaseService.currentUser?.isAnonymous ?? true);
   }
 
-  Future<void> _pickImage(
-    ImageSource source, {
-    required int docIndex, // 0: frente, 1: reverso, 2: establecimiento
-  }) async {
+  Future<void> _pickImage(ImageSource source) async {
     try {
       XFile? file;
       if (widget.imagePickerFn != null) {
@@ -116,72 +102,30 @@ class _MerchantVerificationScreenState
       final bytes = await file.readAsBytes();
       final name = file.name;
 
+      if (!mounted) return;
       setState(() {
         _submissionError = null;
-        if (docIndex == 0) {
-          _dpiFrontBytes = bytes;
-          _dpiFrontFileName = name;
-        } else if (docIndex == 1) {
-          _dpiBackBytes = bytes;
-          _dpiBackFileName = name;
-        } else {
-          _establishmentBytes = bytes;
-          _establishmentFileName = name;
-        }
+        _establishmentBytes = bytes;
+        _establishmentFileName = name;
       });
-
-      // Si es el frente de DPI, intentar OCR inteligente en plataformas móviles soportadas
-      if (docIndex == 0) {
-        await _runOcrDpiExtraction(file.path);
-      }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _submissionError = 'No se pudo seleccionar la imagen: $e';
+          _submissionError = 'No se pudo seleccionar la imagen.';
         });
       }
     }
   }
 
-  Future<void> _runOcrDpiExtraction(String filePath) async {
-    if (!_ocrService.isSupported) {
-      if (mounted) {
-        setState(() {
-          _ocrNotice =
-              'El escaneo automático de DPI no está disponible en este dispositivo; ingresa el número manualmente.';
-        });
-      }
-      return;
-    }
-
-    setState(() => _isOcrScanning = true);
-    try {
-      final res = await _ocrService.scanDocument(filePath);
-      if (mounted && res.text.isNotEmpty && _dpiController.text.trim().isEmpty) {
-        final match = VerificationValidators.cuiPattern.firstMatch(res.text);
-        if (match != null) {
-          _dpiController.text = match.group(0)!;
-        }
-      }
-    } catch (e) {
-      debugPrint('[MerchantVerification] Fallo en OCR prellenado: $e');
-    } finally {
-      if (mounted) setState(() => _isOcrScanning = false);
-    }
-  }
-
-  bool get _hasAllPhotos =>
-      _dpiFrontBytes != null &&
-      _dpiBackBytes != null &&
-      _establishmentBytes != null;
+  bool get _hasPhoto => _establishmentBytes != null;
 
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (!_hasAllPhotos) {
+    if (!_hasPhoto) {
       setState(() {
         _submissionError =
-            'Debes adjuntar las 3 fotografías obligatorias para continuar.';
+            'Debes adjuntar la fotografía del establecimiento para continuar.';
       });
       return;
     }
@@ -192,18 +136,17 @@ class _MerchantVerificationScreenState
     });
 
     final businessName = _businessNameController.text.trim();
-    final dpiNumber = _dpiController.text.trim();
+    final contactPhone =
+        VerificationValidators.normalizePhone(_phoneController.text);
     final note = _establishmentNoteController.text.trim().isNotEmpty
         ? _establishmentNoteController.text.trim()
         : null;
 
     try {
       final result = await _merchantService.submitMerchantVerification(
-        dpiFront: _dpiFrontBytes!,
-        dpiBack: _dpiBackBytes!,
-        establishment: _establishmentBytes!,
+        establishmentPhoto: _establishmentBytes!,
         businessName: businessName,
-        dpiNumber: dpiNumber,
+        contactPhone: contactPhone,
         establishmentNote: note,
       );
 
@@ -246,7 +189,6 @@ class _MerchantVerificationScreenState
     required String description,
     required Uint8List? bytes,
     required String? fileName,
-    required int docIndex,
     required bool isDark,
   }) {
     final hasFile = bytes != null;
@@ -374,16 +316,8 @@ class _MerchantVerificationScreenState
                         ? null
                         : () {
                             setState(() {
-                              if (docIndex == 0) {
-                                _dpiFrontBytes = null;
-                                _dpiFrontFileName = null;
-                              } else if (docIndex == 1) {
-                                _dpiBackBytes = null;
-                                _dpiBackFileName = null;
-                              } else {
-                                _establishmentBytes = null;
-                                _establishmentFileName = null;
-                              }
+                              _establishmentBytes = null;
+                              _establishmentFileName = null;
                             });
                           },
                   ),
@@ -403,7 +337,7 @@ class _MerchantVerificationScreenState
                     ),
                     onPressed: _isSubmitting
                         ? null
-                        : () => _pickImage(ImageSource.camera, docIndex: docIndex),
+                        : () => _pickImage(ImageSource.camera),
                     icon: const Icon(Icons.camera_alt_outlined, size: 18),
                     label: const Text('Cámara', style: TextStyle(fontSize: 12)),
                   ),
@@ -419,7 +353,7 @@ class _MerchantVerificationScreenState
                     ),
                     onPressed: _isSubmitting
                         ? null
-                        : () => _pickImage(ImageSource.gallery, docIndex: docIndex),
+                        : () => _pickImage(ImageSource.gallery),
                     icon: const Icon(Icons.photo_library_outlined, size: 18),
                     label: const Text('Galería', style: TextStyle(fontSize: 12)),
                   ),
@@ -550,8 +484,8 @@ class _MerchantVerificationScreenState
                                     : const Color(0xFFF1F5F9),
                                 border: Border.all(
                                   color: isDark
-                                      ? const Color(0xFF334155)
-                                      : const Color(0xFFE2E8F0),
+                                  ? const Color(0xFF334155)
+                                  : const Color(0xFFE2E8F0),
                                 ),
                               ),
                               child: Row(
@@ -618,38 +552,21 @@ class _MerchantVerificationScreenState
                             ),
                             const SizedBox(height: 14),
 
-                            // Campo 2: DPI (13 dígitos)
+                            // Campo 2: Teléfono comercial / WhatsApp (8 dígitos Guatemala)
                             TextFormField(
-                              controller: _dpiController,
-                              keyboardType: TextInputType.number,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                                LengthLimitingTextInputFormatter(13),
-                              ],
-                              maxLength: 13,
-                              decoration: InputDecoration(
-                                labelText: 'Número de DPI (13 dígitos) *',
-                                hintText: 'Ej. 2501123450101',
-                                prefixIcon: const Icon(PhosphorIconsRegular.identificationCard),
-                                border: const OutlineInputBorder(
+                              controller: _phoneController,
+                              keyboardType: TextInputType.phone,
+                              decoration: const InputDecoration(
+                                labelText: 'Teléfono comercial / WhatsApp *',
+                                hintText: 'Ej. +502 2345 6789 o 23456789',
+                                prefixIcon: Icon(PhosphorIconsRegular.phone),
+                                border: OutlineInputBorder(
                                   borderRadius: BorderRadius.zero,
                                 ),
-                                helperText: _isOcrScanning
-                                    ? 'Extrayendo DPI con OCR inteligente...'
-                                    : null,
+                                helperText:
+                                    'Identificador único cifrado para evitar cuentas duplicadas; no se muestra públicamente.',
                               ),
-                              validator: (val) {
-                                if (val == null || val.trim().isEmpty) {
-                                  return 'Ingresa tu número de DPI.';
-                                }
-                                final clean = val.trim();
-                                if (clean.length != 13 ||
-                                    !VerificationValidators.cuiPattern
-                                        .hasMatch(clean)) {
-                                  return 'El DPI debe tener 13 dígitos y un código departamental válido (01-22).';
-                                }
-                                return null;
-                              },
+                              validator: VerificationValidators.validatePhone,
                             ),
                             const SizedBox(height: 14),
 
@@ -674,84 +591,24 @@ class _MerchantVerificationScreenState
                             ),
                             const SizedBox(height: 16),
 
-                            // Sección de 3 fotos obligatorias
+                            // Sección de 1 fotografía obligatoria
                             Text(
-                              'Documentación requerida (3 fotografías obligatorias):',
+                              'Documentación requerida (fotografía obligatoria):',
                               style: theme.textTheme.titleSmall?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             const SizedBox(height: 10),
 
-                            // Foto 1: DPI Frente
+                            // Foto: Establecimiento en el campus
                             _buildPhotoSelector(
-                              title: '1. DPI — Frente',
-                              description:
-                                  'Fotografía nítida del frente de tu documento de identidad.',
-                              bytes: _dpiFrontBytes,
-                              fileName: _dpiFrontFileName,
-                              docIndex: 0,
-                              isDark: isDark,
-                            ),
-
-                            // Foto 2: DPI Reverso
-                            _buildPhotoSelector(
-                              title: '2. DPI — Reverso',
-                              description:
-                                  'Fotografía nítida de la parte posterior de tu DPI.',
-                              bytes: _dpiBackBytes,
-                              fileName: _dpiBackFileName,
-                              docIndex: 1,
-                              isDark: isDark,
-                            ),
-
-                            // Foto 3: Establecimiento en el campus
-                            _buildPhotoSelector(
-                              title: '3. Establecimiento en el campus',
+                              title: 'Fotografía del puesto o local *',
                               description:
                                   'Fotografía del local, puesto o puesto móvil dentro del campus USAC.',
                               bytes: _establishmentBytes,
                               fileName: _establishmentFileName,
-                              docIndex: 2,
                               isDark: isDark,
                             ),
-
-                            // Aviso de OCR
-                            if (_ocrNotice != null) ...[
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                margin: const EdgeInsets.only(bottom: 14),
-                                decoration: BoxDecoration(
-                                  color: isDark
-                                      ? const Color(0xFF1E293B)
-                                      : const Color(0xFFF1F5F9),
-                                  border: Border.all(
-                                    color: isDark
-                                        ? const Color(0xFF334155)
-                                        : const Color(0xFFCBD5E1),
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.info_outline,
-                                      size: 16,
-                                      color: ZanateColors.zanateAccent,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        _ocrNotice!,
-                                        style: const TextStyle(
-                                          fontSize: 11.5,
-                                          color: ZanateColors.zanateAccent,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
 
                             // Aviso de privacidad
                             Container(
@@ -777,7 +634,7 @@ class _MerchantVerificationScreenState
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: Text(
-                                      'Tus documentos se guardan de forma privada y se eliminan después de la revisión.',
+                                      'Tus datos se guardan de forma privada y la fotografía se elimina después de la revisión.',
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: isDark
@@ -845,7 +702,7 @@ class _MerchantVerificationScreenState
                                     borderRadius: BorderRadius.zero,
                                   ),
                                 ),
-                                onPressed: (_isSubmitting || !_hasAllPhotos)
+                                onPressed: (_isSubmitting || !_hasPhoto)
                                     ? null
                                     : _handleSubmit,
                                 child: _isSubmitting

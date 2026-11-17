@@ -31,8 +31,6 @@ void main() {
     late MockMultipartClient mockClient;
     late MerchantVerificationService service;
 
-    final dummyFront = Uint8List.fromList([1, 2, 3]);
-    final dummyBack = Uint8List.fromList([4, 5, 6]);
     final dummyEstablishment = Uint8List.fromList([7, 8, 9]);
 
     setUp(() {
@@ -45,7 +43,7 @@ void main() {
       );
     });
 
-    test('Envía multipart con los 3 archivos y campos requeridos', () async {
+    test('Envía multipart con el archivo de establecimiento y campos requeridos', () async {
       mockClient.handler = (req) {
         expect(req, isA<http.MultipartRequest>());
         final multiReq = req as http.MultipartRequest;
@@ -55,11 +53,12 @@ void main() {
         expect(multiReq.headers['Authorization'], 'Bearer valid-bearer-token');
 
         expect(multiReq.fields['business_name'], 'Librería Central');
-        expect(multiReq.fields['dpi_number'], '2501123450101');
+        expect(multiReq.fields['contact_phone'], '23456789');
         expect(multiReq.fields['establishment_note'], 'Frente al T-3');
 
         final fileNames = multiReq.files.map((f) => f.field).toList();
-        expect(fileNames, containsAll(['dpi_front', 'dpi_back', 'establishment']));
+        expect(fileNames, contains('establishment_photo'));
+        expect(fileNames.length, 1);
 
         return http.StreamedResponse(
           Stream.value(utf8.encode(jsonEncode({
@@ -72,11 +71,9 @@ void main() {
       };
 
       final result = await service.submitMerchantVerification(
-        dpiFront: dummyFront,
-        dpiBack: dummyBack,
-        establishment: dummyEstablishment,
+        establishmentPhoto: dummyEstablishment,
         businessName: 'Librería Central',
-        dpiNumber: '2501123450101',
+        contactPhone: '23456789',
         establishmentNote: 'Frente al T-3',
       );
 
@@ -95,11 +92,9 @@ void main() {
       );
 
       final result = await anonService.submitMerchantVerification(
-        dpiFront: dummyFront,
-        dpiBack: dummyBack,
-        establishment: dummyEstablishment,
+        establishmentPhoto: dummyEstablishment,
         businessName: 'Librería',
-        dpiNumber: '2501123450101',
+        contactPhone: '23456789',
       );
 
       expect(mockClient.callCount, 0); // No toca la red
@@ -116,11 +111,9 @@ void main() {
       );
 
       final result = await noTokenService.submitMerchantVerification(
-        dpiFront: dummyFront,
-        dpiBack: dummyBack,
-        establishment: dummyEstablishment,
+        establishmentPhoto: dummyEstablishment,
         businessName: 'Librería',
-        dpiNumber: '2501123450101',
+        contactPhone: '23456789',
       );
 
       expect(mockClient.callCount, 0);
@@ -128,30 +121,28 @@ void main() {
       expect(result.code, 'unauthorized');
     });
 
-    test('Mapeo de error 409 credential_unavailable con mensaje genérico', () async {
+    test('Mapeo de error 409 credential_unavailable con mensaje genérico de teléfono', () async {
       mockClient.handler = (_) => http.StreamedResponse(
         Stream.value(utf8.encode(jsonEncode({
           'status': 'error',
           'code': 'credential_unavailable',
-          'message': 'DPI claimed',
+          'message': 'Phone claimed',
         }))),
         409,
         headers: {'content-type': 'application/json'},
       );
 
       final result = await service.submitMerchantVerification(
-        dpiFront: dummyFront,
-        dpiBack: dummyBack,
-        establishment: dummyEstablishment,
+        establishmentPhoto: dummyEstablishment,
         businessName: 'Café',
-        dpiNumber: '2501123450101',
+        contactPhone: '23456789',
       );
 
       expect(result.isError, isTrue);
       expect(result.code, 'credential_unavailable');
       expect(
         result.message,
-        'No pudimos registrar este DPI. Si crees que es un error, contacta soporte.',
+        'No pudimos registrar este teléfono de contacto. Si crees que es un error, contacta soporte.',
       );
     });
 
@@ -166,11 +157,9 @@ void main() {
       );
 
       final result = await service.submitMerchantVerification(
-        dpiFront: dummyFront,
-        dpiBack: dummyBack,
-        establishment: dummyEstablishment,
+        establishmentPhoto: dummyEstablishment,
         businessName: 'Café',
-        dpiNumber: '2501123450101',
+        contactPhone: '23456789',
       );
 
       expect(result.isError, isTrue);
@@ -189,11 +178,9 @@ void main() {
       );
 
       final result = await service.submitMerchantVerification(
-        dpiFront: dummyFront,
-        dpiBack: dummyBack,
-        establishment: dummyEstablishment,
+        establishmentPhoto: dummyEstablishment,
         businessName: 'Café',
-        dpiNumber: '2501123450101',
+        contactPhone: '23456789',
       );
 
       expect(result.isError, isTrue);
@@ -212,11 +199,9 @@ void main() {
       );
 
       final result = await service.submitMerchantVerification(
-        dpiFront: dummyFront,
-        dpiBack: dummyBack,
-        establishment: dummyEstablishment,
+        establishmentPhoto: dummyEstablishment,
         businessName: 'Café',
-        dpiNumber: '2501123450101',
+        contactPhone: '23456789',
       );
 
       expect(result.isError, isTrue);
@@ -227,29 +212,51 @@ void main() {
       );
     });
 
-    test('Mapeo de error 422 con validaciones específicas', () async {
+    test('Mapeo de error 422 invalid_phone', () async {
       mockClient.handler = (_) => http.StreamedResponse(
         Stream.value(utf8.encode(jsonEncode({
           'status': 'error',
-          'code': 'invalid_dpi',
+          'code': 'invalid_phone',
         }))),
         422,
         headers: {'content-type': 'application/json'},
       );
 
       final result = await service.submitMerchantVerification(
-        dpiFront: dummyFront,
-        dpiBack: dummyBack,
-        establishment: dummyEstablishment,
+        establishmentPhoto: dummyEstablishment,
         businessName: 'Café',
-        dpiNumber: '123',
+        contactPhone: '123',
       );
 
       expect(result.isError, isTrue);
-      expect(result.code, 'invalid_dpi');
+      expect(result.code, 'invalid_phone');
       expect(
         result.message,
-        'El número de DPI debe tener 13 dígitos y un código departamental válido (01-22).',
+        'El teléfono debe tener 8 dígitos (Guatemala).',
+      );
+    });
+
+    test('Mapeo de error 422 invalid_business_name', () async {
+      mockClient.handler = (_) => http.StreamedResponse(
+        Stream.value(utf8.encode(jsonEncode({
+          'status': 'error',
+          'code': 'invalid_business_name',
+        }))),
+        422,
+        headers: {'content-type': 'application/json'},
+      );
+
+      final result = await service.submitMerchantVerification(
+        establishmentPhoto: dummyEstablishment,
+        businessName: 'A',
+        contactPhone: '23456789',
+      );
+
+      expect(result.isError, isTrue);
+      expect(result.code, 'invalid_business_name');
+      expect(
+        result.message,
+        'El nombre del negocio debe tener entre 2 y 80 caracteres.',
       );
     });
 
@@ -264,11 +271,9 @@ void main() {
       );
 
       final result = await service.submitMerchantVerification(
-        dpiFront: dummyFront,
-        dpiBack: dummyBack,
-        establishment: dummyEstablishment,
+        establishmentPhoto: dummyEstablishment,
         businessName: 'Café',
-        dpiNumber: '2501123450101',
+        contactPhone: '23456789',
       );
 
       expect(result.isError, isTrue);
@@ -287,11 +292,9 @@ void main() {
       );
 
       final result = await service.submitMerchantVerification(
-        dpiFront: dummyFront,
-        dpiBack: dummyBack,
-        establishment: dummyEstablishment,
+        establishmentPhoto: dummyEstablishment,
         businessName: 'Café',
-        dpiNumber: '2501123450101',
+        contactPhone: '23456789',
       );
 
       expect(result.isError, isTrue);
@@ -304,11 +307,9 @@ void main() {
       };
 
       final result = await service.submitMerchantVerification(
-        dpiFront: dummyFront,
-        dpiBack: dummyBack,
-        establishment: dummyEstablishment,
+        establishmentPhoto: dummyEstablishment,
         businessName: 'Café',
-        dpiNumber: '2501123450101',
+        contactPhone: '23456789',
       );
 
       expect(result.isError, isTrue);
