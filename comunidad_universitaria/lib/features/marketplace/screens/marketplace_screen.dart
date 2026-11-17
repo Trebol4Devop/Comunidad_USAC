@@ -21,7 +21,7 @@ import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/empty_state_widget.dart';
 import '../../shared/widgets/network_state_widgets.dart';
 import '../../shared/widgets/settings_bottom_sheet.dart';
-import '../../onboarding/screens/merchant_verification_screen.dart';
+import '../../onboarding/screens/merchant_support_screen.dart';
 import '../../verification/screens/verification_flow_screen.dart';
 import '../../verification/widgets/verification_gate.dart';
 import 'my_sales_screen.dart';
@@ -416,9 +416,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                   Navigator.of(dialogContext).pop();
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => MerchantVerificationScreen(
-                        verificationController: vCtrl,
-                      ),
+                      builder: (_) => const MerchantSupportScreen(),
                     ),
                   );
                 },
@@ -517,14 +515,12 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                   icon: Icons.storefront_outlined,
                   title: 'Comerciante del campus',
                   subtitle:
-                      'Foto del establecimiento y contacto comercial. Aprobación manual.',
+                      'Contacta con soporte para registrar tu negocio.',
                   onTap: () {
                     Navigator.of(dialogContext).pop();
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => MerchantVerificationScreen(
-                          verificationController: vCtrl,
-                        ),
+                        builder: (_) => const MerchantSupportScreen(),
                       ),
                     );
                   },

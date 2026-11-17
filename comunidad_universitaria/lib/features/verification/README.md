@@ -36,16 +36,19 @@ Este módulo implementa el flujo normativo de verificación de identidad para la
 - La app no guarda el mensaje ni el carné; solo se incluyen en el correo que el usuario decide enviar.
 - Si no hay cliente de correo disponible, se copia la dirección de soporte al portapapeles.
 
-### Verificación de Comerciantes (Zero-PII)
-- Requiere sesión Google real (no anónima).
+### Alta de comerciantes por soporte
+- Requiere sesión real (no anónima).
+- La app no sube fotos ni crea solicitudes de comerciante.
 - Datos solicitados:
   1. Nombre del negocio (2-80 caracteres).
-  2. Teléfono comercial / WhatsApp (8 dígitos de Guatemala; normalizado).
-  3. Nota de ubicación en el campus (opcional, máx. 160 caracteres).
-  4. Una sola fotografía obligatoria del puesto o local físico en el campus USAC.
-- No se solicitan fotos ni números de DPI.
-- Envío: `POST /api/v1/verify-merchant` con `business_name`, `contact_phone`, `establishment_note`, `establishment_photo`.
-- Toda solicitud entra a revisión manual (`manual_review`).
+  2. Teléfono comercial / WhatsApp (8 dígitos de Guatemala).
+  3. Ubicación en el campus (obligatoria, máx. 160 caracteres).
+  4. Categoría del Marketplace.
+  5. Descripción breve opcional (máx. 300 caracteres).
+- El botón **“Enviar solicitud a soporte”** abre `mailto:trebol4devop@proton.me`
+  con correo/ID de cuenta, negocio, teléfono, ubicación, categoría y descripción.
+- Soporte revisa el correo y da de alta el comercio manualmente en `seller_profiles`.
+- Sin foto, sin R2 y sin `merchant_verification_requests` nuevas.
 
 ## Privacidad y Seguridad (Zero-PII & Anti-doxxing)
 - El carné universitario **nunca** se persiste en `shared_preferences` ni en texto plano en almacenamiento local.

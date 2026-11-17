@@ -6,7 +6,7 @@ import '../../verification/services/verification_service.dart';
 import '../../verification/state/verification_controller.dart';
 import '../../verification/utils/verification_validators.dart';
 import '../../verification/widgets/verification_gate.dart';
-import '../screens/merchant_verification_screen.dart';
+import '../screens/merchant_support_screen.dart';
 import '../screens/no_institutional_email_screen.dart';
 import '../screens/welcome_screen.dart';
 import '../state/session_controller.dart';
@@ -116,10 +116,7 @@ class _AuthGateState extends State<AuthGate> {
         case 'merchant':
           nav.push(
             MaterialPageRoute(
-              builder: (_) => MerchantVerificationScreen(
-                verificationController: effectiveCtrl,
-                sessionController: widget.sessionController,
-              ),
+              builder: (_) => const MerchantSupportScreen(),
             ),
           );
           break;
