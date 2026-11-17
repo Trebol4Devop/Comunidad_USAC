@@ -6,6 +6,8 @@ import {
   validateQrUrl,
   detectImageType,
   normalizeOcrText,
+  evaluateApproval,
+  isAutoApproved,
 } from '../src/validators';
 
 describe('Validators: validateCarne', () => {
@@ -147,5 +149,48 @@ describe('Validators: validateDocumentType', () => {
     expect(validateDocumentType('pasaporte')).toBe(false);
     expect(validateDocumentType('dpi')).toBe(false);
     expect(validateDocumentType('')).toBe(false);
+  });
+});
+
+describe('Validators: evaluateApproval flags', () => {
+  const currentYear = new Date().getUTCFullYear();
+  const carne = '202012345';
+
+  it('evaluates all 3 flags as true for valid constancia_inscripcion', () => {
+    const text = `UNIVERSIDAD DE SAN CARLOS CARNE: ${carne} CICLO ${currentYear}`;
+    const result = evaluateApproval({
+      ocrText: text,
+      carne,
+      documentType: 'constancia_inscripcion',
+      currentYear,
+    });
+    expect(result).toEqual({
+      approved: true,
+      matched_keywords: true,
+      matched_carne: true,
+      matched_current_year: true,
+    });
+    expect(isAutoApproved({
+      ocrText: text,
+      carne,
+      documentType: 'constancia_inscripcion',
+      currentYear,
+    })).toBe(true);
+  });
+
+  it('sets matched_current_year to false for carne_fisico while still approving', () => {
+    const text = `UNIVERSIDAD DE SAN CARLOS CARNE: ${carne}`;
+    const result = evaluateApproval({
+      ocrText: text,
+      carne,
+      documentType: 'carne_fisico',
+      currentYear,
+    });
+    expect(result).toEqual({
+      approved: true,
+      matched_keywords: true,
+      matched_carne: true,
+      matched_current_year: false,
+    });
   });
 });

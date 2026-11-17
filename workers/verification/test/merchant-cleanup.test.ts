@@ -3,7 +3,7 @@ import { runCleanup } from '../src/handlers/cleanup';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 describe('Merchant Cleanup (runCleanup handler)', () => {
-  it('processes both tables, deletes 3 keys, clears DB keys, continues if one fails, and ignores rows without keys', async () => {
+  it('processes both tables, deletes establishment_key, clears DB keys, continues if one fails, and ignores rows without keys', async () => {
     const deletedR2Keys: string[] = [];
     const clearedMerchantReqIds: string[] = [];
     const updatedStudentReqIds: string[] = [];
@@ -30,44 +30,36 @@ describe('Merchant Cleanup (runCleanup handler)', () => {
     const futureDate = new Date(Date.now() + 3600 * 1000).toISOString();
 
     const merchantCandidates = [
-      // 1. Solicitud aprobada con 3 claves -> debe borrar 3 y limpiar
+      // 1. Solicitud aprobada con clave -> debe borrar y limpiar
       {
         id: 'merchant-req-1',
         user_id: 'user-m1',
         status: 'approved',
         expires_at: futureDate,
-        dpi_front_key: 'pending/merchant/user-m1/req-1/dpi_front.jpg',
-        dpi_back_key: 'pending/merchant/user-m1/req-1/dpi_back.png',
         establishment_key: 'pending/merchant/user-m1/req-1/establishment.webp',
       },
-      // 2. Solicitud con fallo en borrado de 1 clave -> no debe limpiar claves
+      // 2. Solicitud con fallo en borrado de clave en R2 -> no debe limpiar clave en BD
       {
         id: 'merchant-req-fail',
         user_id: 'user-m2',
         status: 'rejected',
         expires_at: futureDate,
-        dpi_front_key: 'pending/merchant/user-m2/req-fail/dpi_front.jpg',
-        dpi_back_key: 'pending/merchant/user-m2/req-fail/fail-delete.png', // falla
-        establishment_key: 'pending/merchant/user-m2/req-fail/establishment.webp',
+        establishment_key: 'pending/merchant/user-m2/req-fail/fail-delete.webp',
       },
-      // 3. Solicitud expirada en pending -> debe expirar a rejected, actualizar profiles/moderation_jobs y borrar claves
+      // 3. Solicitud expirada en pending -> debe expirar a rejected, actualizar profiles/moderation_jobs y borrar clave
       {
         id: 'merchant-req-expired',
         user_id: 'user-m3',
         status: 'pending',
         expires_at: pastDate,
-        dpi_front_key: 'pending/merchant/user-m3/req-exp/dpi_front.jpg',
-        dpi_back_key: 'pending/merchant/user-m3/req-exp/dpi_back.png',
         establishment_key: 'pending/merchant/user-m3/req-exp/establishment.webp',
       },
-      // 4. Solicitud sin claves (todas null) -> debe ser ignorada sin errores
+      // 4. Solicitud sin clave (null) -> debe ser ignorada
       {
         id: 'merchant-req-no-keys',
         user_id: 'user-m4',
         status: 'approved',
         expires_at: futureDate,
-        dpi_front_key: null,
-        dpi_back_key: null,
         establishment_key: null,
       },
     ];
@@ -98,7 +90,7 @@ describe('Merchant Cleanup (runCleanup handler)', () => {
         if (table === 'merchant_verification_requests') {
           return {
             select: vi.fn(() => ({
-              or: vi.fn(() => ({
+              not: vi.fn(() => ({
                 or: vi.fn(() => ({
                   limit: vi.fn(async () => ({
                     data: merchantCandidates,
@@ -171,13 +163,9 @@ describe('Merchant Cleanup (runCleanup handler)', () => {
     // Verificamos que se borraron las claves en R2
     // Estudiante: 1 clave
     expect(deletedR2Keys).toContain('pending/user-s1/student-1.jpg');
-    // Merchant 1: 3 claves
-    expect(deletedR2Keys).toContain('pending/merchant/user-m1/req-1/dpi_front.jpg');
-    expect(deletedR2Keys).toContain('pending/merchant/user-m1/req-1/dpi_back.png');
+    // Merchant 1: establishment_key
     expect(deletedR2Keys).toContain('pending/merchant/user-m1/req-1/establishment.webp');
-    // Merchant Expired: 3 claves
-    expect(deletedR2Keys).toContain('pending/merchant/user-m3/req-exp/dpi_front.jpg');
-    expect(deletedR2Keys).toContain('pending/merchant/user-m3/req-exp/dpi_back.png');
+    // Merchant Expired: establishment_key
     expect(deletedR2Keys).toContain('pending/merchant/user-m3/req-exp/establishment.webp');
 
     // Verificamos llamadas a admin_clear_merchant_keys
