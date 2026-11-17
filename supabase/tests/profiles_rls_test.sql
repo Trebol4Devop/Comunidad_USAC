@@ -16,10 +16,10 @@ begin
     perform tests.create_supabase_user(v_user_b, 'profile_b@test.com');
 
     update public.profiles
-       set full_name = 'Perfil A'
+       set carrera = 'sistemas'
      where id = v_user_a;
     update public.profiles
-       set full_name = 'Perfil B'
+       set carrera = 'civil'
      where id = v_user_b;
 end;
 $$;
@@ -54,31 +54,31 @@ select is(
 
 select lives_ok(
     $$update public.profiles
-         set full_name = 'Perfil A actualizado'
+         set carrera = 'quimica'
        where id = '88888888-8888-8888-8888-888888888881'$$,
     'AAL2 permite actualizar el perfil propio'
 );
 
 update public.profiles
-   set full_name = 'Modificado por otra cuenta'
+   set carrera = 'mecanica'
  where id = '88888888-8888-8888-8888-888888888882';
 
 reset role;
 
 select is(
-    (select full_name from public.profiles
+    (select carrera from public.profiles
       where id = '88888888-8888-8888-8888-888888888882'),
-    'Perfil B',
+    'civil',
     'RLS impide modificar el perfil de otra cuenta'
 );
 
 select tests.authenticate_as('88888888-8888-8888-8888-888888888881');
 
 select throws_ok(
-    $$insert into public.profiles (id, full_name)
+    $$insert into public.profiles (id, carrera)
       values (
         '88888888-8888-8888-8888-888888888881',
-        'Inserción directa no permitida'
+        'sistemas'
       )$$,
     '42501',
     null,

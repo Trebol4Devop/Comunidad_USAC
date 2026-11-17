@@ -27,44 +27,40 @@ begin
     perform tests.create_supabase_user(v_u3, 'user3_legal@test.com');
     perform tests.create_supabase_user(v_mod, 'mod_legal@test.com');
 
-    insert into public.profiles (id, full_name, carrera)
-    values (v_u1, 'Usuario Legal Uno', 'sistemas'),
-           (v_u2, 'Usuario Legal Dos', 'sistemas'),
-           (v_u3, 'Usuario Legal Tres', 'sistemas'),
-           (v_mod, 'Moderador Legal', 'sistemas')
+    insert into public.profiles (id, carrera)
+    values (v_u1, 'sistemas'),
+           (v_u2, 'sistemas'),
+           (v_u3, 'sistemas'),
+           (v_mod, 'sistemas')
     on conflict (id) do nothing;
 end $$;
 
 -- =============================================================================
--- SECCIÓN 1: CUI y Carné hasheados (Art. 12 / PII Protection)
+-- SECCIÓN 1: CUI y Carné hasheados (Art. 12 / PII Protection Zero-PII)
 -- =============================================================================
 reset role;
 set role postgres;
 
 update public.profiles
-   set cui = '1234567890101',
-       carne = '202300001'
+   set carne_hash = private.hash_credential('202300001')
  where id = '11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 
--- Test 1: cui en texto plano debe quedar NULL
-select is(
-    (select cui from public.profiles where id = '11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),
-    NULL,
-    '1. CUI en texto plano queda forzado a NULL tras trigger de seguridad'
+-- Test 1: cui en texto plano no existe
+select hasnt_column(
+    'public', 'profiles', 'cui',
+    '1. CUI en texto plano no existe en profiles (Zero-PII)'
 );
 
--- Test 2: carne en texto plano debe quedar NULL
-select is(
-    (select carne from public.profiles where id = '11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),
-    NULL,
-    '2. Carné en texto plano queda forzado a NULL tras trigger de seguridad'
+-- Test 2: carne en texto plano no existe
+select hasnt_column(
+    'public', 'profiles', 'carne',
+    '2. Carné en texto plano no existe en profiles (Zero-PII)'
 );
 
--- Test 3: cui_hash generado con 64 caracteres hexadecimales (SHA-256 HMAC)
-select is(
-    (select length(cui_hash) from public.profiles where id = '11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),
-    64,
-    '3. cui_hash posee 64 caracteres hex'
+-- Test 3: cui_hash no existe
+select hasnt_column(
+    'public', 'profiles', 'cui_hash',
+    '3. cui_hash no existe en profiles (Zero-PII)'
 );
 
 -- Test 4: carne_hash generado con 64 caracteres hexadecimales (SHA-256 HMAC)
@@ -87,12 +83,10 @@ select throws_ok(
     '5. Usuario autenticado no puede actualizar is_verified en profiles'
 );
 
--- Test 6: Usuario no puede modificar cui_hash
-select throws_ok(
-    $$update public.profiles set cui_hash = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff' where id = '11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa'$$,
-    '42501',
-    null,
-    '6. Usuario autenticado no puede actualizar cui_hash directamente'
+-- Test 6: full_name no existe en profiles
+select hasnt_column(
+    'public', 'profiles', 'full_name',
+    '6. full_name no existe en profiles (Zero-PII)'
 );
 
 -- Test 7: Usuario no puede modificar carne_hash
@@ -103,20 +97,20 @@ select throws_ok(
     '7. Usuario autenticado no puede actualizar carne_hash directamente'
 );
 
--- Test 8: Usuario puede actualizar full_name y accepted_terms_*
+-- Test 8: Usuario puede actualizar carrera y accepted_terms_*
 select lives_ok(
     $$update public.profiles
-         set full_name = 'Estudiante Sancarlista Legal',
+         set carrera = 'civil',
              accepted_terms_version = 'v2.1',
              accepted_terms_at = now()
        where id = '11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa'$$,
-    '8. Usuario autenticado puede actualizar full_name y accepted_terms_*'
+    '8. Usuario autenticado puede actualizar carrera y accepted_terms_*'
 );
 
 -- Test 9: Se verifica persistencia de campos permitidos
 select is(
-    (select full_name from public.profiles where id = '11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),
-    'Estudiante Sancarlista Legal',
+    (select carrera from public.profiles where id = '11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),
+    'civil',
     '9. Los cambios permitidos en profiles son persistidos'
 );
 

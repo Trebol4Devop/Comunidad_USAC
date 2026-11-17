@@ -48,31 +48,31 @@ begin
     perform tests.create_supabase_user('51000000-0000-0000-0000-000000000023', 'u23_mkt@test.com');
 
     -- Perfiles base
-    insert into public.profiles (id, full_name, carrera, is_verified)
+    insert into public.profiles (id, carrera, is_verified)
     values
-        ('51000000-0000-0000-0000-000000000001', 'Usuario Verificado 01', 'sistemas', true),
-        ('51000000-0000-0000-0000-000000000002', 'Usuario No Verificado 02', 'sistemas', false),
-        ('51000000-0000-0000-0000-000000000003', 'Comercio Local 03', 'sistemas', false),
-        ('51000000-0000-0000-0000-000000000004', 'Usuario Cuota Free 04', 'sistemas', true),
-        ('51000000-0000-0000-0000-000000000005', 'Usuario Vigencia 05', 'sistemas', true),
-        ('51000000-0000-0000-0000-000000000006', 'Usuario Filtros 06', 'sistemas', true),
-        ('51000000-0000-0000-0000-000000000007', 'Usuario Comercio 07', 'sistemas', true),
-        ('51000000-0000-0000-0000-000000000008', 'Usuario Moderacion 08', 'sistemas', true),
-        ('51000000-0000-0000-0000-000000000009', 'Vendedor Catalogo 09', 'sistemas', true),
-        ('51000000-0000-0000-0000-000000000010', 'Vendedor Competidor 10', 'sistemas', true),
-        ('51000000-0000-0000-0000-000000000011', 'Usuario Marcadores 11', 'sistemas', true),
-        ('51000000-0000-0000-0000-000000000012', 'Usuario Marcadores 12', 'sistemas', true),
-        ('51000000-0000-0000-0000-000000000013', 'Usuario Telemetria 13', 'sistemas', true),
-        ('51000000-0000-0000-0000-000000000014', 'Visitante Telemetria 14', 'sistemas', true),
-        ('51000000-0000-0000-0000-000000000015', 'Usuario Anti Escalada 15', 'sistemas', true),
-        ('51000000-0000-0000-0000-000000000016', 'Usuario Filtro Semantico 16', 'sistemas', true),
-        ('51000000-0000-0000-0000-000000000017', 'Usuario Legal Hold 17', 'sistemas', true),
-        ('51000000-0000-0000-0000-000000000018', 'Moderador 18', 'sistemas', true),
-        ('51000000-0000-0000-0000-000000000019', 'Usuario Sponsor Req 19', 'sistemas', true),
-        ('51000000-0000-0000-0000-000000000020', 'Administrador 20', 'sistemas', true),
-        ('51000000-0000-0000-0000-000000000021', 'Usuario Delete Fisico 21', 'sistemas', true),
-        ('51000000-0000-0000-0000-000000000022', 'Usuario Event Privacy 22', 'sistemas', true),
-        ('51000000-0000-0000-0000-000000000023', 'Usuario Event Privacy 23', 'sistemas', true)
+        ('51000000-0000-0000-0000-000000000001', 'sistemas', true),
+        ('51000000-0000-0000-0000-000000000002', 'sistemas', false),
+        ('51000000-0000-0000-0000-000000000003', 'sistemas', false),
+        ('51000000-0000-0000-0000-000000000004', 'sistemas', true),
+        ('51000000-0000-0000-0000-000000000005', 'sistemas', true),
+        ('51000000-0000-0000-0000-000000000006', 'sistemas', true),
+        ('51000000-0000-0000-0000-000000000007', 'sistemas', true),
+        ('51000000-0000-0000-0000-000000000008', 'sistemas', true),
+        ('51000000-0000-0000-0000-000000000009', 'sistemas', true),
+        ('51000000-0000-0000-0000-000000000010', 'sistemas', true),
+        ('51000000-0000-0000-0000-000000000011', 'sistemas', true),
+        ('51000000-0000-0000-0000-000000000012', 'sistemas', true),
+        ('51000000-0000-0000-0000-000000000013', 'sistemas', true),
+        ('51000000-0000-0000-0000-000000000014', 'sistemas', true),
+        ('51000000-0000-0000-0000-000000000015', 'sistemas', true),
+        ('51000000-0000-0000-0000-000000000016', 'sistemas', true),
+        ('51000000-0000-0000-0000-000000000017', 'sistemas', true),
+        ('51000000-0000-0000-0000-000000000018', 'sistemas', true),
+        ('51000000-0000-0000-0000-000000000019', 'sistemas', true),
+        ('51000000-0000-0000-0000-000000000020', 'sistemas', true),
+        ('51000000-0000-0000-0000-000000000021', 'sistemas', true),
+        ('51000000-0000-0000-0000-000000000022', 'sistemas', true),
+        ('51000000-0000-0000-0000-000000000023', 'sistemas', true)
     on conflict (id) do update set is_verified = excluded.is_verified, carrera = excluded.carrera;
 
     -- Perfil comercial pre-aprobado para Usuario 3 (comercio local sin verificación estudiantil)

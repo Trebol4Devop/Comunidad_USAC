@@ -11,10 +11,10 @@ do $$
 begin
   perform tests.create_supabase_user('77777777-7777-7777-7777-777777777777');
   perform tests.create_supabase_user('88888888-8888-8888-8888-888888888888');
-  insert into public.profiles (id, full_name)
+  insert into public.profiles (id)
   values
-    ('77777777-7777-7777-7777-777777777777', 'Vendedor de prueba'),
-    ('88888888-8888-8888-8888-888888888888', 'Admin de prueba')
+    ('77777777-7777-7777-7777-777777777777'),
+    ('88888888-8888-8888-8888-888888888888')
   on conflict (id) do nothing;
 end;
 $$;
