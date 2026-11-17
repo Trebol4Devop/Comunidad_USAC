@@ -420,7 +420,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                     ),
                   );
                 },
-                child: const Text('Reintentar verificación de comerciante'),
+                child: const Text('Contactar con soporte'),
               ),
             ],
           ),
