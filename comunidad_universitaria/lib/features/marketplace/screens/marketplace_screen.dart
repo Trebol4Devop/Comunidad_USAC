@@ -484,10 +484,25 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                 ),
                 const SizedBox(height: 16),
                 _VerificationPathOption(
-                  icon: Icons.school_outlined,
-                  title: 'Estudiante USAC',
+                  icon: Icons.verified_user_outlined,
+                  title: 'Verificación automática',
                   subtitle:
-                      'Constancia de inscripción, carné físico o boleta. OCR automático o revisión manual.',
+                      'Con tu correo @usac.edu.gt y tu carné USAC. Validación inmediata.',
+                  onTap: () {
+                    Navigator.of(dialogContext).pop();
+                    VerificationFlowScreen.show(
+                      context,
+                      controller: vCtrl,
+                      initialTab: 0,
+                    );
+                  },
+                ),
+                const SizedBox(height: 10),
+                _VerificationPathOption(
+                  icon: Icons.support_agent,
+                  title: 'Contactar con soporte',
+                  subtitle:
+                      'Si no tienes correo institucional o la verificación automática falló.',
                   onTap: () {
                     Navigator.of(dialogContext).pop();
                     VerificationFlowScreen.show(
@@ -516,7 +531,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                 ),
                 const SizedBox(height: 14),
                 Text(
-                  'Si tienes correo @usac.edu.gt, cierra sesión e inicia con Google institucional: tu correo verifica la cuenta automáticamente.',
+                  'La verificación automática requiere correo @usac.edu.gt. Si usas una cuenta personal, contacta con soporte.',
                   style: TextStyle(
                     fontSize: 10.5,
                     height: 1.3,

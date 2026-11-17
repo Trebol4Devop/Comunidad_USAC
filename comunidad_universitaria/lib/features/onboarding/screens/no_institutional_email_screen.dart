@@ -12,9 +12,8 @@ import '../../verification/widgets/verification_gate.dart';
 import '../state/session_controller.dart';
 import 'merchant_verification_screen.dart';
 
-/// Pantalla que se presenta a usuarios sin correo institucional (@usac.edu.gt),
-/// permitiendo elegir entre el camino de estudiante (Camino B con documento)
-/// y el camino de comerciante del campus.
+/// Pantalla que se presenta a usuarios sin correo institucional (@usac.edu.gt).
+/// Ofrece contactar con soporte para estudiantes y el flujo de comerciante del campus.
 class NoInstitutionalEmailScreen extends StatefulWidget {
   final VerificationController? verificationController;
   final SessionController? sessionController;
@@ -60,7 +59,7 @@ class _NoInstitutionalEmailScreenState
     return SupabaseService.isAuthenticated;
   }
 
-  void _navigateToStudent() {
+  void _navigateToSupport() {
     if (widget.onStudentSelected != null) {
       widget.onStudentSelected!();
       return;
@@ -93,7 +92,7 @@ class _NoInstitutionalEmailScreenState
 
     if (_isAuthenticated) {
       if (isStudent) {
-        _navigateToStudent();
+        _navigateToSupport();
       } else {
         _navigateToMerchant();
       }
@@ -134,7 +133,7 @@ class _NoInstitutionalEmailScreenState
             _waitingForGoogle = false;
           });
           if (_pendingStudent == true) {
-            _navigateToStudent();
+            _navigateToSupport();
           } else if (_pendingStudent == false) {
             _navigateToMerchant();
           }
@@ -208,7 +207,7 @@ class _NoInstitutionalEmailScreenState
                 children: [
                   // Encabezado explicativo
                   Text(
-                    '¿No cuentas con correo institucional?',
+                    '¿No puedes verificar automáticamente?',
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w800,
                       letterSpacing: -0.5,
@@ -216,7 +215,7 @@ class _NoInstitutionalEmailScreenState
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Si usas una cuenta de correo personal o comercial, elige tu perfil para validar tu identidad dentro de la comunidad:',
+                    'Si usas una cuenta personal o comercial, elige tu perfil. Para estudiantes, soporte revisará tu caso manualmente.',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
                       height: 1.4,
@@ -263,15 +262,15 @@ class _NoInstitutionalEmailScreenState
                   // Tarjeta 1: Estudiante
                   _VerificationOptionCard(
                     title: 'Estudiante USAC',
-                    subtitle: 'Tengo constancia de inscripción o carné físico',
+                    subtitle: 'No tengo correo institucional o la verificación automática falló',
                     description:
-                        'Verifica tu condición estudiantil subiendo una fotografía de tu carné, boleta de pago o constancia de inscripción mediante escaneo OCR.',
-                    badgeText: 'Camino B Estudiantil',
+                        'Escríbenos desde tu correo registrado y el equipo de soporte revisará tu caso para verificar tu cuenta.',
+                    badgeText: 'Soporte estudiantil',
                     icon: PhosphorIconsRegular.student,
                     accentColor: studentColor,
                     isDark: isDark,
                     isBusy: _isBusy,
-                    buttonLabel: 'Verificar como Estudiante',
+                    buttonLabel: 'Contactar con soporte',
                     onTap: () => _handleSelection(isStudent: true),
                   ),
 
@@ -294,7 +293,7 @@ class _NoInstitutionalEmailScreenState
 
                   const SizedBox(height: 28),
                   Text(
-                    'Tu información está protegida. Las imágenes de documentos se procesan de forma cifrada y no se almacenan en texto plano.',
+                    'La app no almacena el contenido del correo ni el carné que decidas incluir; se envía desde tu propia cuenta.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 11,

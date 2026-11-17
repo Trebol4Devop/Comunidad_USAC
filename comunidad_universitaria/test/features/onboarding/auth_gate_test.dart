@@ -128,7 +128,7 @@ void main() {
         expect(find.byType(MerchantVerificationScreen), findsOneWidget);
       });
 
-      testWidgets('Intención auto con correo institucional no verificado abre Camino A (tab 0)', (tester) async {
+      testWidgets('Intención auto con correo institucional no verificado abre verificación automática (tab 0)', (tester) async {
         String? currentIntent = 'auto';
         bool clearCalled = false;
 

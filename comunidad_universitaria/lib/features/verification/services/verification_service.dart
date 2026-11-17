@@ -1,12 +1,7 @@
-import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
 import '../../../core/config/supabase_config.dart';
 import '../../../core/constants/categories.dart';
 import '../../../core/services/supabase_service.dart';
-import '../models/verification_result.dart';
-import '../models/verification_status.dart';
 import '../utils/verification_validators.dart';
 
 const String workerBaseUrl = String.fromEnvironment(
@@ -17,18 +12,6 @@ const String workerBaseUrl = String.fromEnvironment(
 /// Servicio de red y comunicación con la base de datos Supabase y el Worker
 /// de verificación de documentos estudiantiles USAC.
 class VerificationService {
-  final http.Client _httpClient;
-  final String _baseUrl;
-
-  VerificationService({
-    http.Client? httpClient,
-    String? baseUrl,
-  })  : _httpClient = httpClient ?? http.Client(),
-        _baseUrl = baseUrl ?? workerBaseUrl;
-
-  /// Indica si el endpoint del Worker está habilitado.
-  bool get isWorkerConfigured => _baseUrl.trim().isNotEmpty;
-
   /// Consulta el estado de verificación actual y metadatos del perfil del usuario.
   Future<Map<String, dynamic>?> fetchVerificationStatus() async {
     if (!SupabaseConfig.isConfigured) return null;
@@ -105,134 +88,6 @@ class VerificationService {
         'code': 'network_error',
         'message': VerificationValidators.mapErrorCode('network_error'),
       };
-    }
-  }
-
-  /// Envía un documento estudiantil al Cloudflare Worker para validación automática o manual.
-  /// Contrato §6.1: POST /api/v1/verify-document con multipart/form-data.
-  Future<VerificationResult> submitDocument({
-    required Uint8List fileBytes,
-    required String fileName,
-    required String carne,
-    required VerificationDocumentType documentType,
-    String? clientOcrText,
-    String? qrUrl,
-  }) async {
-    if (!isWorkerConfigured) {
-      return VerificationResult.error(
-        code: 'worker_unconfigured',
-        message:
-            'El servicio de verificación de documentos no está disponible en este momento.',
-      );
-    }
-
-    final session = SupabaseService.client.auth.currentSession;
-    final token = session?.accessToken;
-    if (token == null || session?.user.isAnonymous == true) {
-      return VerificationResult.error(
-        code: 'unauthorized',
-        message: VerificationValidators.mapErrorCode('unauthorized'),
-      );
-    }
-
-    final normalizedCarne = carne.trim();
-    if (!VerificationValidators.isValidCarne(normalizedCarne)) {
-      return VerificationResult.error(
-        code: 'invalid_carne',
-        message: VerificationValidators.mapErrorCode('invalid_carne'),
-      );
-    }
-
-    try {
-      final uri = Uri.parse('$_baseUrl/api/v1/verify-document');
-      final request = http.MultipartRequest('POST', uri);
-
-      request.headers['Authorization'] = 'Bearer $token';
-
-      request.fields['carne'] = normalizedCarne;
-      request.fields['document_type'] = documentType.toDb();
-
-      if (clientOcrText != null && clientOcrText.trim().isNotEmpty) {
-        request.fields['client_ocr_text'] = clientOcrText.trim();
-      }
-      if (qrUrl != null && qrUrl.trim().isNotEmpty) {
-        request.fields['qr_url'] = qrUrl.trim();
-      }
-
-      request.files.add(
-        http.MultipartFile.fromBytes(
-          'file',
-          fileBytes,
-          filename: fileName,
-        ),
-      );
-
-      final streamedResponse = await _httpClient
-          .send(request)
-          .timeout(const Duration(seconds: 45));
-
-      final response = await http.Response.fromStream(streamedResponse);
-      final statusCode = response.statusCode;
-
-      Map<String, dynamic> body = {};
-      try {
-        if (response.body.isNotEmpty) {
-          body = jsonDecode(response.body) as Map<String, dynamic>;
-        }
-      } catch (_) {
-        // En caso de que no sea JSON válido
-      }
-
-      final statusStr = body['status']?.toString();
-      final code = body['code']?.toString();
-
-      if (statusCode == 200) {
-        if (statusStr == 'verified') {
-          return VerificationResult.verified(
-            requestId: body['request_id']?.toString(),
-          );
-        } else if (statusStr == 'manual_review') {
-          return VerificationResult.manualReview(
-            requestId: body['request_id']?.toString(),
-          );
-        }
-      }
-
-      // Códigos de error específicos
-      if (statusCode == 409 || code == 'credential_unavailable') {
-        return VerificationResult.error(
-          code: 'credential_unavailable',
-          message: VerificationValidators.mapErrorCode('credential_unavailable'),
-        );
-      }
-
-      if (statusCode == 429 || code == 'rate_limited') {
-        return VerificationResult.error(
-          code: 'rate_limited',
-          message: 'Demasiados intentos. Espera 24 horas.',
-        );
-      }
-
-      final effectiveCode = code ?? 'http_$statusCode';
-      final message = body['message']?.toString() ??
-          VerificationValidators.mapErrorCode(effectiveCode);
-
-      return VerificationResult.error(
-        code: effectiveCode,
-        message: message,
-      );
-    } on TimeoutException {
-      return VerificationResult.error(
-        code: 'network_timeout',
-        message:
-            'Tiempo de espera agotado al conectar con el servidor de verificación. Por favor intenta de nuevo.',
-      );
-    } catch (e) {
-      debugPrint('[VerificationService] Error enviando documento a Worker: $e');
-      return VerificationResult.error(
-        code: 'network_error',
-        message: VerificationValidators.mapErrorCode('network_error'),
-      );
     }
   }
 

@@ -3,11 +3,11 @@ import '../../../core/constants/zanate_colors.dart';
 import '../../../core/utils/responsive.dart';
 import '../state/verification_controller.dart';
 import '../widgets/verification_gate.dart';
-import 'document_verification_screen.dart';
 import 'institutional_email_step.dart';
+import 'support_contact_screen.dart';
 
 /// Modal / Pantalla principal del flujo de onboarding y verificación estudiantil USAC.
-/// Presenta la elección entre Camino A (Correo Institucional) y Camino B (Documento con OCR).
+/// Presenta la verificación automática y el contacto con soporte como alternativa.
 class VerificationFlowScreen extends StatefulWidget {
   final VerificationController controller;
   final int initialTab;
@@ -115,12 +115,12 @@ class _VerificationFlowScreenState extends State<VerificationFlowScreen>
               unselectedLabelColor: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
               tabs: const [
                 Tab(
-                  icon: Icon(Icons.email_outlined, size: 20),
-                  text: 'Camino A: Correo',
+                  icon: Icon(Icons.verified_user_outlined, size: 20),
+                  text: 'Verificación automática',
                 ),
                 Tab(
-                  icon: Icon(Icons.document_scanner_outlined, size: 20),
-                  text: 'Camino B: Documento',
+                  icon: Icon(Icons.support_agent, size: 20),
+                  text: 'Contactar con soporte',
                 ),
               ],
             ),
@@ -132,13 +132,11 @@ class _VerificationFlowScreenState extends State<VerificationFlowScreen>
         children: [
           InstitutionalEmailStep(
             controller: widget.controller,
-            onSelectDocumentPath: () => _tabController.animateTo(1),
+            onSelectSupportPath: () => _tabController.animateTo(1),
             onSuccess: _onSuccess,
           ),
-          DocumentVerificationScreen(
-            controller: widget.controller,
-            onSelectEmailPath: () => _tabController.animateTo(0),
-            onSuccess: _onSuccess,
+          SupportContactScreen(
+            onSelectAutomaticPath: () => _tabController.animateTo(0),
           ),
         ],
       ),

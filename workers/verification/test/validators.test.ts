@@ -1,92 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  validateCarne,
-  validateCui,
-  validateDocumentType,
-  validateQrUrl,
-  detectImageType,
-  normalizeOcrText,
-  evaluateApproval,
-  isAutoApproved,
-} from '../src/validators';
-
-describe('Validators: validateCarne', () => {
-  it('accepts valid historical and recent carnes', () => {
-    expect(validateCarne('198012345')).toBe(true);
-    expect(validateCarne('201912345')).toBe(true);
-    expect(validateCarne('202412345')).toBe(true);
-  });
-
-  it('rejects carnes with year before 1980', () => {
-    expect(validateCarne('197912345')).toBe(false);
-    expect(validateCarne('190012345')).toBe(false);
-  });
-
-  it('rejects carnes with future years', () => {
-    const currentYear = new Date().getUTCFullYear();
-    const futureCarne = `${currentYear + 1}12345`;
-    expect(validateCarne(futureCarne)).toBe(false);
-    expect(validateCarne('209912345')).toBe(false);
-  });
-
-  it('rejects carnes by length', () => {
-    expect(validateCarne('20191234')).toBe(false); // 8 digits
-    expect(validateCarne('2019123456')).toBe(false); // 10 digits
-    expect(validateCarne('')).toBe(false);
-  });
-
-  it('rejects carnes containing letters or special characters', () => {
-    expect(validateCarne('2019A2345')).toBe(false);
-    expect(validateCarne('2019-12345')).toBe(false);
-    expect(validateCarne('2019 12345')).toBe(false);
-  });
-});
-
-describe('Validators: validateCui', () => {
-  it('accepts valid 13-digit CUI with departments 01 to 22', () => {
-    // Guatemala (01)
-    expect(validateCui('1234567890101')).toBe(true);
-    // Jalapa (21), Jutiapa (22)
-    expect(validateCui('9876543212101')).toBe(true);
-    expect(validateCui('9876543212201')).toBe(true);
-  });
-
-  it('rejects CUI with department 00 or 23+', () => {
-    expect(validateCui('1234567890001')).toBe(false); // 00 invalid
-    expect(validateCui('1234567892301')).toBe(false); // 23 invalid
-    expect(validateCui('1234567899901')).toBe(false); // 99 invalid
-  });
-
-  it('rejects CUI with invalid lengths or non-numeric characters', () => {
-    expect(validateCui('123456789010')).toBe(false); // 12 digits
-    expect(validateCui('12345678901011')).toBe(false); // 14 digits
-    expect(validateCui('12345678901A1')).toBe(false);
-    expect(validateCui('')).toBe(false);
-  });
-});
-
-describe('Validators: validateQrUrl', () => {
-  it('accepts valid https URLs from usac.edu.gt and subdomains', () => {
-    expect(validateQrUrl('https://registro.usac.edu.gt/verificar?id=123')).toBe(true);
-    expect(validateQrUrl('https://usac.edu.gt/constancias/validar')).toBe(true);
-    expect(validateQrUrl('https://ingenieria.usac.edu.gt/doc.pdf')).toBe(true);
-    expect(validateQrUrl('https://registro.usac.edu.gt.')).toBe(true); // Trailing dot
-  });
-
-  it('rejects non-https URLs', () => {
-    expect(validateQrUrl('http://registro.usac.edu.gt/verificar')).toBe(false);
-    expect(validateQrUrl('ftp://registro.usac.edu.gt/verificar')).toBe(false);
-  });
-
-  it('rejects non-USAC hostnames and spoofing attempts', () => {
-    expect(validateQrUrl('https://evil.com')).toBe(false);
-    expect(validateQrUrl('https://usac.edu.gt.evil.com/fake')).toBe(false);
-    expect(validateQrUrl('https://evil.com/?x=usac.edu.gt')).toBe(false);
-    expect(validateQrUrl('https://evil.com#registro.usac.edu.gt')).toBe(false);
-    expect(validateQrUrl('https://notusac.edu.gt')).toBe(false);
-    expect(validateQrUrl('invalid-url')).toBe(false);
-  });
-});
+import { detectImageType } from '../src/validators';
 
 describe('Validators: detectImageType', () => {
   it('detects JPEG from magic bytes FF D8 FF', () => {
@@ -113,84 +26,11 @@ describe('Validators: detectImageType', () => {
   });
 
   it('rejects PDF and garbage bytes', () => {
-    // PDF: %PDF
     const pdfBytes = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34]);
     expect(detectImageType(pdfBytes)).toBeNull();
 
-    // Garbage / text / empty
     expect(detectImageType(new Uint8Array([0x00, 0x01, 0x02]))).toBeNull();
     expect(detectImageType(new Uint8Array([0x48, 0x65, 0x6c, 0x6c, 0x6f]))).toBeNull();
     expect(detectImageType(new Uint8Array([]))).toBeNull();
-  });
-});
-
-describe('Validators: normalizeOcrText', () => {
-  it('normalizes diacritics, casing, and collapses whitespace', () => {
-    const raw = '  Universidad   de   San   Carlos  \n  de   Guatemala   ';
-    expect(normalizeOcrText(raw)).toBe('UNIVERSIDAD DE SAN CARLOS DE GUATEMALA');
-
-    const withAccents = 'Registro y Estadística Tricentenaria Constancia Inscripción';
-    expect(normalizeOcrText(withAccents)).toBe(
-      'REGISTRO Y ESTADISTICA TRICENTENARIA CONSTANCIA INSCRIPCION'
-    );
-  });
-
-  it('handles empty or null inputs', () => {
-    expect(normalizeOcrText('')).toBe('');
-  });
-});
-
-describe('Validators: validateDocumentType', () => {
-  it('accepts only allowed document types', () => {
-    expect(validateDocumentType('constancia_inscripcion')).toBe(true);
-    expect(validateDocumentType('carne_fisico')).toBe(true);
-    expect(validateDocumentType('boleta_asignacion')).toBe(true);
-
-    expect(validateDocumentType('pasaporte')).toBe(false);
-    expect(validateDocumentType('dpi')).toBe(false);
-    expect(validateDocumentType('')).toBe(false);
-  });
-});
-
-describe('Validators: evaluateApproval flags', () => {
-  const currentYear = new Date().getUTCFullYear();
-  const carne = '202012345';
-
-  it('evaluates all 3 flags as true for valid constancia_inscripcion', () => {
-    const text = `UNIVERSIDAD DE SAN CARLOS CARNE: ${carne} CICLO ${currentYear}`;
-    const result = evaluateApproval({
-      ocrText: text,
-      carne,
-      documentType: 'constancia_inscripcion',
-      currentYear,
-    });
-    expect(result).toEqual({
-      approved: true,
-      matched_keywords: true,
-      matched_carne: true,
-      matched_current_year: true,
-    });
-    expect(isAutoApproved({
-      ocrText: text,
-      carne,
-      documentType: 'constancia_inscripcion',
-      currentYear,
-    })).toBe(true);
-  });
-
-  it('sets matched_current_year to false for carne_fisico while still approving', () => {
-    const text = `UNIVERSIDAD DE SAN CARLOS CARNE: ${carne}`;
-    const result = evaluateApproval({
-      ocrText: text,
-      carne,
-      documentType: 'carne_fisico',
-      currentYear,
-    });
-    expect(result).toEqual({
-      approved: true,
-      matched_keywords: true,
-      matched_carne: true,
-      matched_current_year: false,
-    });
   });
 });

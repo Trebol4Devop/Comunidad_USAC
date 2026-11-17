@@ -201,11 +201,12 @@ void main() {
         await tester.pumpAndSettle();
 
         // Sin un verificador real, no se abre el formulario ni se afirma que
-        // el usuario está habilitado para vender. La ventana debe alinearse
-        // con el onboarding: estudiante y comerciante por separado.
+        // el usuario está habilitado para vender. La ventana ofrece verificación
+        // automática, soporte y comerciante.
         expect(find.byType(CreateListingDialog), findsNothing);
         expect(find.text('Verifica tu cuenta para publicar'), findsOneWidget);
-        expect(find.text('Estudiante USAC'), findsOneWidget);
+        expect(find.text('Verificación automática'), findsOneWidget);
+        expect(find.text('Contactar con soporte'), findsOneWidget);
         expect(find.text('Comerciante del campus'), findsOneWidget);
         expect(find.text('Ahora no'), findsOneWidget);
       },
