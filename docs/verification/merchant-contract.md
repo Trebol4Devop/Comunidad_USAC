@@ -1,5 +1,10 @@
 # Contrato — Acceso inicial y verificación de comerciante
 
+> **Actualización 2026-11-17:** el Camino B de documentos fue retirado de la app.
+> El flujo estudiantil ahora se llama **Verificación automática** y la alternativa es
+> **Contactar con soporte** (`mailto:trebol4devop@proton.me`). Las referencias a
+> Camino B en este documento son históricas.
+
 > **Actualización Zero-PII (2026-11-17):** este documento conserva el contrato histórico.
 > Desde la migración `20261117120000_zero_pii_hardening.sql` rigen los cambios descritos en
 > `docs/verification/zero-pii.md`: no se solicitan ni almacenan DPI, fotos de identidad civil
@@ -28,12 +33,11 @@
 - Único método de cuenta real: **Google OAuth**.
 - Tras autenticar:
   - Dominio institucional (`usac.edu.gt`, `*.usac.edu.gt` o
-    `facultades.allowed_domains`): Camino A de la Fase 1 (carné + carrera) si el
+    `facultades.allowed_domains`): **Verificación automática** (carné + carrera) si el
     perfil no está verificado; si ya lo está, a la app.
   - Dominio personal: pantalla **"Tu correo no es institucional"** con dos
     tarjetas separadas:
-    - **Estudiante** → Camino B existente (constancia/carné/boleta, OCR o
-      revisión manual).
+    - **Estudiante** → **Contactar con soporte** (correo al equipo).
     - **Comerciante** → flujo nuevo de esta fase (DPI frente, DPI reverso, foto
       del establecimiento, revisión manual).
 - `AuthModal.show` (12 usos contextuales) debe abrir el mismo gateway y llamar
@@ -281,7 +285,7 @@ enum SessionPhase { loading, authenticated, guest, unauthenticated }
   `NoInstitutionalEmailScreen`.
 - Mientras espera el deep link, mostrar estado "Completa el acceso en Google".
 - Tras sesión real:
-  - dominio institucional y perfil no verificado → abrir Camino A
+  - dominio institucional y perfil no verificado → abrir verificación automática
     (`VerificationFlowScreen` en tab 0);
   - dominio personal → `NoInstitutionalEmailScreen`.
 - No mostrar OTP ni correo/contraseña en este gateway.
@@ -337,7 +341,7 @@ enum SessionPhase { loading, authenticated, guest, unauthenticated }
 
 1. Primer arranque sin sesión muestra `WelcomeScreen`; "anónimo" entra en solo
    lectura y no vuelve a preguntar en el siguiente arranque.
-2. "Iniciar sesión" con Google institucional completa Camino A.
+2. "Iniciar sesión" con Google institucional completa la verificación automática.
 3. Google personal muestra las dos tarjetas separadas (estudiante/comerciante).
 4. Comerciante exige las 3 fotos y siempre queda en revisión manual.
 5. Al aprobar, `seller_profiles` queda `local_business/approved` y puede

@@ -52,7 +52,7 @@ void main() {
   }
 
   group('AuthGatewayScreen Unit & Decision Function Tests', () {
-    test('determinePostLoginDestination: correo institucional y no verificado enruta a Camino A', () {
+    test('determinePostLoginDestination: correo institucional y no verificado enruta a verificación automática', () {
       final dest1 = AuthGatewayScreen.determinePostLoginDestination(
         email: 'estudiante@usac.edu.gt',
         isUnverified: true,
@@ -152,7 +152,7 @@ void main() {
       // Tarjeta Estudiante
       expect(find.text('Estudiante USAC'), findsOneWidget);
       expect(
-        find.text('Tengo constancia de inscripción o carné físico'),
+        find.text('No tengo correo institucional o la verificación automática falló'),
         findsOneWidget,
       );
 
@@ -198,7 +198,7 @@ void main() {
       );
     });
 
-    testWidgets('al completar sesión con correo institucional no verificado abre Camino A (tab 0)', (
+    testWidgets('al completar sesión con correo institucional no verificado abre verificación automática (tab 0)', (
       tester,
     ) async {
       final fakeVerificationCtrl = FakeVerificationController();
@@ -230,9 +230,9 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // Se abrió VerificationFlowScreen en Camino A
+      // Se abrió VerificationFlowScreen en verificación automática
       expect(find.byType(VerificationFlowScreen), findsOneWidget);
-      expect(find.text('Camino A: Correo'), findsOneWidget);
+      expect(find.text('Verificación automática'), findsOneWidget);
     });
   });
 }

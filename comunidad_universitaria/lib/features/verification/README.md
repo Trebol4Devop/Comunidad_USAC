@@ -4,7 +4,7 @@ Este módulo implementa el flujo normativo de verificación de identidad para la
 
 ## Arquitectura y Flujos
 
-### Camino A: Correo Institucional + Carné (Zero-PII)
+### Verificación automática: Correo Institucional + Carné (Zero-PII)
 - **Identidad**: Validación mediante cuenta oficial de Google Workspace o mediante código OTP enviado al correo institucional del estudiante.
 - **Fotos del carné + verificación local (Android/iOS)**:
   - El estudiante adjunta el **frente** y el **reverso** de su carné con cámara o galería.
@@ -24,22 +24,17 @@ Este módulo implementa el flujo normativo de verificación de identidad para la
   - En **web/desktop** no hay OCR nativo: se muestra un aviso y se mantiene el correo institucional como prueba principal.
 - **Sin solicitud de CUI**: Solo se solicita carné universitario (9 dígitos) y carrera. Se incluye aviso de privacidad visible sobre el cifrado irreversible.
 - **Dominios permitidos**: `@usac.edu.gt`, `@*.usac.edu.gt` (ej. `@ingenieria.usac.edu.gt`, `@medicina.usac.edu.gt`, `@derecho.usac.edu.gt`, `@economicas.usac.edu.gt`), y autorizados en facultades (`@fausac.gt`, `@ecys.org`).
-- **Asociación**: Se ejecuta la función RPC `claim_student_credentials(p_carne)`. Si el dominio es institucional, el trigger de base de datos activa automáticamente `is_verified = true` y `verification_status = 'verified'`. Si no es institucional, permanece `unverified` y se le ofrece el Camino B.
+- **Asociación**: Se ejecuta la función RPC `claim_student_credentials(p_carne)`. Si el dominio es institucional, el trigger de base de datos activa automáticamente `is_verified = true` y `verification_status = 'verified'`. Si no es institucional, permanece `unverified` y se le ofrece contactar con soporte.
 
-### Camino B: Documento Estudiantil + OCR / QR
-- **Tipos de documento admitidos**:
-  1. `constancia_inscripcion`: Constancia de inscripción oficial.
-  2. `carne_fisico`: Carné físico universitario.
-  3. `boleta_asignacion`: Boleta de asignación de cursos.
-- **Procesamiento de OCR/QR**:
-  - En **móvil** (Android/iOS): Se realiza análisis local mediante `google_mlkit_text_recognition` (script latino) y `mobile_scanner` (análisis de imagen) para extraer texto y código QR antes de enviar.
-  - Indicador visual Zero-PII: si la validación automática es exitosa, la imagen se destruye al instante y no se almacena en ningún servidor.
-  - En **web y desktop**: No se ejecutan bibliotecas nativas de OCR móvil (`ocr_service_stub.dart`). Se muestra un aviso informativo y el documento se envía directamente para revisión manual sin bloquear al usuario.
-- **Worker**: Se envía vía `multipart/form-data` al endpoint seguro `POST /api/v1/verify-document` (`file`, `carne`, `document_type`, `client_ocr_text`, `qr_url`) con el Bearer token de Supabase.
-- **Estados resultantes**:
-  - `verified`: Aprobación automática.
-  - `manual_review` / `pending_review`: Pasa a moderación del equipo.
-  - Errores de credencial duplicada (`credential_unavailable` / 409): Muestra un mensaje estrictamente genérico sin confirmar la existencia previa del carné para prevenir ataques de enumeración.
+### Contactar con soporte
+- Alternativa cuando la verificación automática no funciona o el estudiante no tiene correo institucional.
+- La pantalla solicita:
+  1. Motivo de contacto.
+  2. Detalle opcional (máx. 500 caracteres).
+  3. Carné USAC opcional (9 dígitos).
+- El botón **“Enviar correo a soporte”** abre el cliente de correo del usuario con `mailto:trebol4devop@proton.me`, asunto y cuerpo prellenados.
+- La app no guarda el mensaje ni el carné; solo se incluyen en el correo que el usuario decide enviar.
+- Si no hay cliente de correo disponible, se copia la dirección de soporte al portapapeles.
 
 ### Verificación de Comerciantes (Zero-PII)
 - Requiere sesión Google real (no anónima).

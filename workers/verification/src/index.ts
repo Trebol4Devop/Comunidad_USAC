@@ -1,5 +1,4 @@
 import type { Env } from './types';
-import { handleVerifyDocument } from './handlers/verify-document';
 import { handleAdminReview } from './handlers/admin-review';
 import { handleVerifyMerchant } from './handlers/merchant';
 import { handleAdminReviewMerchant } from './handlers/merchant-review';
@@ -50,10 +49,6 @@ export default {
     const pathname = url.pathname;
 
     try {
-      if (pathname === '/api/v1/verify-document' && request.method === 'POST') {
-        return await handleVerifyDocument(request, env, corsHeaders);
-      }
-
       if (pathname === '/api/v1/verify-merchant' && request.method === 'POST') {
         return await handleVerifyMerchant(request, env, corsHeaders);
       }

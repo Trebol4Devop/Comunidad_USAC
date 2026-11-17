@@ -125,7 +125,7 @@ void main() {
 
       final studentBtn = find.widgetWithText(
         ElevatedButton,
-        'Verificar como Estudiante',
+        'Contactar con soporte',
       );
       expect(studentBtn, findsOneWidget);
 

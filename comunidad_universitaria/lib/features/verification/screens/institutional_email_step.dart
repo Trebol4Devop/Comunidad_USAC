@@ -13,11 +13,11 @@ import '../state/verification_controller.dart';
 import '../utils/carnet_photo_validator.dart';
 import '../utils/verification_validators.dart';
 
-/// Camino A: Verificación mediante Correo Institucional USAC + Carné.
+/// Verificación automática mediante correo institucional USAC + carné.
 /// Permite autenticarse con Google OAuth o código OTP de correo institucional.
 class InstitutionalEmailStep extends StatefulWidget {
   final VerificationController controller;
-  final VoidCallback onSelectDocumentPath;
+  final VoidCallback onSelectSupportPath;
   final VoidCallback onSuccess;
   final OcrService? ocrService;
   final Future<XFile?> Function(ImageSource source)? imagePickerFn;
@@ -25,7 +25,7 @@ class InstitutionalEmailStep extends StatefulWidget {
   const InstitutionalEmailStep({
     super.key,
     required this.controller,
-    required this.onSelectDocumentPath,
+    required this.onSelectSupportPath,
     required this.onSuccess,
     this.ocrService,
     this.imagePickerFn,
@@ -376,7 +376,7 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
     if (!VerificationValidators.isInstitutionalEmail(email)) {
       setState(() {
         _inlineError =
-            'El dominio "$email" no es reconocido como institucional USAC (@usac.edu.gt, etc.). Puedes optar por verificación con documento.';
+            'El dominio "$email" no es reconocido como institucional USAC (@usac.edu.gt, etc.). Puedes contactar con soporte.';
       });
       return;
     }
@@ -486,7 +486,7 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
         // El perfil no quedó verificado automáticamente (por ejemplo correo de dominio externo)
         setState(() {
           _inlineError =
-              'Tu carné fue registrado, pero tu correo no fue reconocido como institucional automático. Puedes adjuntar tu documento para verificación por OCR o revisión manual.';
+              'Tu carné fue registrado, pero tu correo no fue reconocido como institucional. Usa Contactar con soporte para revisar tu caso.';
         });
       }
     } finally {
@@ -800,7 +800,7 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Resumen del Camino A
+            // Resumen de la verificación automática
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -820,7 +820,7 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
                   SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Camino A: Validación automática instantánea mediante tu cuenta institucional USAC.',
+                      'Verificación automática: valida tu cuenta institucional y tu carné al instante.',
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w600,
@@ -1066,21 +1066,35 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
                     color: isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFECACA),
                   ),
                 ),
-                child: Text(
-                  _inlineError!,
-                  style: const TextStyle(fontSize: 12, color: Color(0xFFB91C1C)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _inlineError!,
+                      style: const TextStyle(fontSize: 12, color: Color(0xFFB91C1C)),
+                    ),
+                    const SizedBox(height: 6),
+                    TextButton.icon(
+                      onPressed: widget.onSelectSupportPath,
+                      icon: const Icon(Icons.support_agent, size: 16),
+                      label: const Text(
+                        'Contactar con soporte',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
 
             const SizedBox(height: 24),
-            // Alternativa: ir a Camino B
+            // Alternativa: contactar con soporte
             Center(
               child: TextButton.icon(
-                onPressed: widget.onSelectDocumentPath,
-                icon: const Icon(Icons.document_scanner_outlined, size: 18),
+                onPressed: widget.onSelectSupportPath,
+                icon: const Icon(Icons.support_agent, size: 18),
                 label: const Text(
-                  '¿No tienes correo activo? Usar verificación con documento (Camino B)',
+                  '¿No pudiste verificar automáticamente? Contactar con soporte',
                   style: TextStyle(fontSize: 12),
                 ),
               ),

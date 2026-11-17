@@ -1,6 +1,4 @@
-import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:comunidad_universitaria/features/verification/models/verification_result.dart';
 import 'package:comunidad_universitaria/features/verification/models/verification_status.dart';
 import 'package:comunidad_universitaria/features/verification/services/merchant_verification_service.dart';
 import 'package:comunidad_universitaria/features/verification/services/verification_service.dart';
@@ -19,7 +17,6 @@ class FakeMerchantService extends MerchantVerificationService {
 class FakeVerificationService extends VerificationService {
   Map<String, dynamic>? statusToReturn;
   Map<String, dynamic> claimResultToReturn = {'ok': true};
-  VerificationResult? submitResultToReturn;
 
   @override
   Future<Map<String, dynamic>?> fetchVerificationStatus() async {
@@ -33,18 +30,6 @@ class FakeVerificationService extends VerificationService {
     return claimResultToReturn;
   }
 
-  @override
-  Future<VerificationResult> submitDocument({
-    required Uint8List fileBytes,
-    required String fileName,
-    required String carne,
-    required VerificationDocumentType documentType,
-    String? clientOcrText,
-    String? qrUrl,
-  }) async {
-    return submitResultToReturn ??
-        VerificationResult.verified(requestId: 'test-req-123');
-  }
 }
 
 void main() {
@@ -76,24 +61,6 @@ void main() {
       expect(controller.isRejected, isFalse);
       expect(controller.isLoading, isFalse);
       expect(controller.errorMessage, isNull);
-    });
-
-    test('Transición: unverified → pending_review mediante submitDocument dudoso', () async {
-      fakeService.submitResultToReturn = VerificationResult.manualReview(
-        requestId: 'req-manual-1',
-      );
-
-      final result = await controller.submitDocument(
-        fileBytes: Uint8List(10),
-        fileName: 'constancia.jpg',
-        carne: '201901234',
-        documentType: VerificationDocumentType.constanciaInscripcion,
-      );
-
-      expect(result.isManualReview, isTrue);
-      expect(controller.status, StudentVerificationStatus.pendingReview);
-      expect(controller.isPendingReview, isTrue);
-      expect(controller.maskedCarne, '2019****4');
     });
 
     test('Transición: pending_review → verified al recargar status aprobado', () async {
@@ -160,23 +127,6 @@ void main() {
       final retryOk = await controller.claimCredentials(carne: '201900002');
 
       expect(retryOk, isTrue);
-      expect(controller.status, StudentVerificationStatus.verified);
-      expect(controller.isVerified, isTrue);
-    });
-
-    test('Transición directa a verified mediante submitDocument auto-aprobado', () async {
-      fakeService.submitResultToReturn = VerificationResult.verified(
-        requestId: 'auto-approved-1',
-      );
-
-      final result = await controller.submitDocument(
-        fileBytes: Uint8List(10),
-        fileName: 'carne.png',
-        carne: '202012345',
-        documentType: VerificationDocumentType.carneFisico,
-      );
-
-      expect(result.isSuccess, isTrue);
       expect(controller.status, StudentVerificationStatus.verified);
       expect(controller.isVerified, isTrue);
     });

@@ -144,8 +144,8 @@ class _AuthGatewayScreenState extends State<AuthGatewayScreen> {
   Future<void> _handlePostLogin(User user) async {
     final ctrl = widget.verificationController ??
         VerificationGate.maybeOf(context);
-    // Asegura el estado real antes de decidir el destino (Camino A vs. ya
-    // verificado). Sin esto, un perfil ya verificado podría entrar a Camino A.
+    // Asegura el estado real antes de decidir el destino (verificación automática vs. ya
+    // verificado). Sin esto, un perfil ya verificado podría entrar a la verificación automática.
     if (ctrl != null) {
       await ctrl.loadStatus();
     }

@@ -1,8 +1,9 @@
 import 'dart:async';
+
 import 'package:flutter/foundation.dart';
+
 import '../../../core/config/supabase_config.dart';
 import '../../../core/services/supabase_service.dart';
-import '../models/verification_result.dart';
 import '../models/verification_status.dart';
 import '../services/merchant_verification_service.dart';
 import '../services/verification_service.dart';
@@ -185,55 +186,6 @@ class VerificationController extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
       return false;
-    }
-  }
-
-  /// Envía el documento estudiantil al Worker para verificación.
-  Future<VerificationResult> submitDocument({
-    required Uint8List fileBytes,
-    required String fileName,
-    required String carne,
-    required VerificationDocumentType documentType,
-    String? clientOcrText,
-    String? qrUrl,
-  }) async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
-
-    try {
-      final result = await _service.submitDocument(
-        fileBytes: fileBytes,
-        fileName: fileName,
-        carne: carne,
-        documentType: documentType,
-        clientOcrText: clientOcrText,
-        qrUrl: qrUrl,
-      );
-
-      _currentCarne = carne.trim();
-
-      if (result.isSuccess) {
-        _status = StudentVerificationStatus.verified;
-      } else if (result.isManualReview) {
-        _status = StudentVerificationStatus.pendingReview;
-      } else if (result.isError) {
-        _errorMessage = result.message;
-      }
-
-      _isLoading = false;
-      notifyListeners();
-      return result;
-    } catch (e) {
-      debugPrint('[VerificationController] Error enviando documento: $e');
-      final err = VerificationResult.error(
-        code: 'network_error',
-        message: VerificationValidators.mapErrorCode('network_error'),
-      );
-      _errorMessage = err.message;
-      _isLoading = false;
-      notifyListeners();
-      return err;
     }
   }
 

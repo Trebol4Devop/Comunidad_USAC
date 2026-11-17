@@ -5,6 +5,10 @@
 > `docs/verification/zero-pii.md`: sin CUI/DPI, sin `full_name`, sin OCR persistido,
 > carné solo como `carne_hash` y comerciante identificado por `contact_phone_hash`.
 > El RPC vigente es `claim_student_credentials(p_carne text)`.
+>
+> **Actualización 2026-11-17:** el Camino B de documentos fue retirado de la app.
+> La alternativa al flujo automático es **Contactar con soporte**
+> (`mailto:trebol4devop@proton.me`). Las referencias a OCR o documentos son históricas.
 
 > Documento normativo para los tres entregables (base de datos, Worker, Flutter).
 > Cualquier divergencia con este documento es un bug. Versión 1.0 — 2026-11-16.
@@ -324,7 +328,7 @@ afectadas.
 
 Base: `https://<worker>/api/v1`.
 
-### 6.1 `POST /verify-document`
+### 6.1 `POST /verify-document` (retirado en la app, 2026-11-17)
 
 `Authorization: Bearer <JWT Supabase>`, `Content-Type: multipart/form-data`.
 

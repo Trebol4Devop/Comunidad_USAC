@@ -68,7 +68,7 @@ Widget _buildStep({
     home: Scaffold(
       body: InstitutionalEmailStep(
         controller: VerificationController(listenToAuthChanges: false),
-        onSelectDocumentPath: () {},
+        onSelectSupportPath: () {},
         onSuccess: onSuccess,
         ocrService: _FakeOcrService(ocrResults),
         imagePickerFn: (_) async => XFile.fromData(
