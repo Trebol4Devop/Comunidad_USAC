@@ -2,7 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   validateDpi,
   validateBusinessName,
-  validateMerchantKeys,
+  validateContactPhone,
+  normalizeContactPhone,
+  validateEstablishmentKey,
   validateMerchantDoc,
 } from '../src/merchant-validators';
 import { handleVerifyMerchant } from '../src/handlers/merchant';
@@ -65,8 +67,6 @@ vi.mock('../src/supabase', () => ({
               }
               return {
                 data: {
-                  dpi_front_key: 'pending/merchant/u1/r1/dpi_front.jpg',
-                  dpi_back_key: 'pending/merchant/u1/r1/dpi_back.png',
                   establishment_key: 'pending/merchant/u1/r1/establishment.webp',
                 },
                 error: null,
@@ -114,13 +114,10 @@ function createFakeImage(type: 'jpg' | 'png' | 'webp' | 'fake', size = 64): File
   return new File([bytes], `test.${ext}`, { type: mime });
 }
 
-describe('1. validateDpi', () => {
+describe('1. validateDpi & ContactPhone', () => {
   it('accepts valid 13-digit DPI with department codes 01 to 22', () => {
-    // Guatemala (01)
     expect(validateDpi('1234567890101')).toBe(true);
-    // Quetzaltenango (09)
     expect(validateDpi('2589631470901')).toBe(true);
-    // Jalapa (21), Jutiapa (22)
     expect(validateDpi('9876543212101')).toBe(true);
     expect(validateDpi('9876543212201')).toBe(true);
   });
@@ -131,16 +128,20 @@ describe('1. validateDpi', () => {
     expect(validateDpi('1234567899901')).toBe(false);
   });
 
-  it('rejects DPI by length', () => {
-    expect(validateDpi('123456789010')).toBe(false); // 12 dígitos
-    expect(validateDpi('12345678901011')).toBe(false); // 14 dígitos
-    expect(validateDpi('')).toBe(false);
+  it('normalizes Guatemala phone numbers removing prefix, spaces, dashes', () => {
+    expect(normalizeContactPhone('+502 2345-6789')).toBe('23456789');
+    expect(normalizeContactPhone('50223456789')).toBe('23456789');
+    expect(normalizeContactPhone('2345-6789')).toBe('23456789');
+    expect(normalizeContactPhone('  2345 6789  ')).toBe('23456789');
   });
 
-  it('rejects DPI containing letters or special characters', () => {
-    expect(validateDpi('12345678901A1')).toBe(false);
-    expect(validateDpi('123456789-0101')).toBe(false);
-    expect(validateDpi('123456789 0101')).toBe(false);
+  it('validates 8-digit Guatemala phone numbers', () => {
+    expect(validateContactPhone('23456789')).toBe(true);
+    expect(validateContactPhone('+502 2345-6789')).toBe(true);
+    expect(validateContactPhone('1234567')).toBe(false); // 7 digits
+    expect(validateContactPhone('123456789')).toBe(false); // 9 digits
+    expect(validateContactPhone('')).toBe(false);
+    expect(validateContactPhone(null)).toBe(false);
   });
 });
 
@@ -163,59 +164,26 @@ describe('2. validateBusinessName', () => {
   });
 });
 
-describe('3. validateMerchantKeys', () => {
+describe('3. validateEstablishmentKey & validateMerchantDoc', () => {
   const userId = 'user-123';
   const requestId = 'req-456';
-  const prefix = `pending/merchant/${userId}/${requestId}/`;
+  const prefix = `pending/merchant/${userId}/${requestId}/establishment.`;
 
-  it('accepts 3 distinct non-null keys starting with prefix', () => {
-    const keys = {
-      dpiFrontKey: `${prefix}dpi_front.jpg`,
-      dpiBackKey: `${prefix}dpi_back.png`,
-      establishmentKey: `${prefix}establishment.webp`,
-    };
-    expect(validateMerchantKeys(keys, userId, requestId)).toBe(true);
+  it('accepts establishment key starting with exact prefix', () => {
+    expect(validateEstablishmentKey(`${prefix}webp`, userId, requestId)).toBe(true);
+    expect(validateEstablishmentKey(`${prefix}jpg`, userId, requestId)).toBe(true);
   });
 
-  it('rejects if keys are identical or duplicated', () => {
-    const keys = {
-      dpiFrontKey: `${prefix}dpi_front.jpg`,
-      dpiBackKey: `${prefix}dpi_front.jpg`,
-      establishmentKey: `${prefix}establishment.webp`,
-    };
-    expect(validateMerchantKeys(keys, userId, requestId)).toBe(false);
+  it('rejects invalid establishment keys', () => {
+    expect(validateEstablishmentKey(null, userId, requestId)).toBe(false);
+    expect(validateEstablishmentKey(prefix, userId, requestId)).toBe(false);
+    expect(validateEstablishmentKey('wrong/path/establishment.webp', userId, requestId)).toBe(false);
   });
 
-  it('rejects if any key is null, empty or does not have prefix', () => {
-    expect(
-      validateMerchantKeys(
-        {
-          dpiFrontKey: null,
-          dpiBackKey: `${prefix}dpi_back.png`,
-          establishmentKey: `${prefix}establishment.webp`,
-        },
-        userId,
-        requestId
-      )
-    ).toBe(false);
-
-    expect(
-      validateMerchantKeys(
-        {
-          dpiFrontKey: `wrong/path/dpi_front.jpg`,
-          dpiBackKey: `${prefix}dpi_back.png`,
-          establishmentKey: `${prefix}establishment.webp`,
-        },
-        userId,
-        requestId
-      )
-    ).toBe(false);
-  });
-
-  it('validates document types with validateMerchantDoc', () => {
-    expect(validateMerchantDoc('front')).toBe(true);
-    expect(validateMerchantDoc('back')).toBe(true);
+  it('validates document types with validateMerchantDoc (only establishment allowed)', () => {
     expect(validateMerchantDoc('establishment')).toBe(true);
+    expect(validateMerchantDoc('front')).toBe(false);
+    expect(validateMerchantDoc('back')).toBe(false);
     expect(validateMerchantDoc('other')).toBe(false);
     expect(validateMerchantDoc('')).toBe(false);
   });
@@ -260,16 +228,14 @@ describe('4. Handler verify-merchant (POST /api/v1/verify-merchant)', () => {
 
   function createValidFormData(): FormData {
     const fd = new FormData();
-    fd.append('dpi_front', createFakeImage('jpg'));
-    fd.append('dpi_back', createFakeImage('png'));
-    fd.append('establishment', createFakeImage('webp'));
     fd.append('business_name', 'Librería Universitaria');
-    fd.append('dpi_number', '1234567890101');
+    fd.append('contact_phone', '+502 2345-6789');
+    fd.append('establishment_photo', createFakeImage('webp'));
     fd.append('establishment_note', 'Edificio T-1, nivel 2');
     return fd;
   }
 
-  it('exits with manual_review and 3 put calls on success', async () => {
+  it('exits with manual_review and 1 put call on success without DPI fields', async () => {
     const formData = createValidFormData();
     const req = new Request('https://worker/api/v1/verify-merchant', {
       method: 'POST',
@@ -284,20 +250,23 @@ describe('4. Handler verify-merchant (POST /api/v1/verify-merchant)', () => {
     expect(body.status).toBe('manual_review');
     expect(body.request_id).toBeDefined();
 
-    // 3 subidas a R2
-    expect(putCalls).toHaveLength(3);
-    expect(putCalls[0].key).toContain('dpi_front.jpg');
-    expect(putCalls[1].key).toContain('dpi_back.png');
-    expect(putCalls[2].key).toContain('establishment.webp');
+    // Exactly 1 upload to R2 (establishment photo)
+    expect(putCalls).toHaveLength(1);
+    expect(putCalls[0].key).toContain('establishment.webp');
 
-    // 1 llamada RPC con service_role
+    // 1 RPC call with service_role and normalized phone, without DPI fields
     expect(mockState.rpcCalls).toHaveLength(1);
-    expect(mockState.rpcCalls[0].name).toBe('admin_create_merchant_verification_request');
-    expect(mockState.rpcCalls[0].params.p_business_name).toBe('Librería Universitaria');
-    expect(mockState.rpcCalls[0].params.p_dpi_number).toBe('1234567890101');
+    const rpcCall = mockState.rpcCalls[0];
+    expect(rpcCall.name).toBe('admin_create_merchant_verification_request');
+    expect(rpcCall.params.p_business_name).toBe('Librería Universitaria');
+    expect(rpcCall.params.p_contact_phone).toBe('23456789');
+    expect(rpcCall.params.p_establishment_key).toContain('establishment.webp');
+    expect(rpcCall.params.p_dpi_number).toBeUndefined();
+    expect(rpcCall.params.p_dpi_front_key).toBeUndefined();
+    expect(rpcCall.params.p_dpi_back_key).toBeUndefined();
   });
 
-  it('returns 409 and deletes 3 keys when RPC returns credential_unavailable', async () => {
+  it('returns 409 and deletes the uploaded key when RPC returns credential_unavailable', async () => {
     mockState.rpcResponse = {
       data: { ok: false, code: 'credential_unavailable' },
       error: null,
@@ -316,12 +285,13 @@ describe('4. Handler verify-merchant (POST /api/v1/verify-merchant)', () => {
     const body = (await res.json()) as { status: string; code: string };
     expect(body.code).toBe('credential_unavailable');
 
-    // Se subieron las 3 y luego se borraron las 3 al fallar la RPC
-    expect(putCalls).toHaveLength(3);
-    expect(deleteCalls).toHaveLength(3);
+    // Se subió 1 foto y luego se borró al fallar el RPC
+    expect(putCalls).toHaveLength(1);
+    expect(deleteCalls).toHaveLength(1);
+    expect(deleteCalls[0]).toContain('establishment.webp');
   });
 
-  it('returns 429 when RPC returns rate_limited', async () => {
+  it('returns 429 and deletes uploaded key when RPC returns rate_limited', async () => {
     mockState.rpcResponse = {
       data: { ok: false, code: 'rate_limited' },
       error: null,
@@ -336,16 +306,33 @@ describe('4. Handler verify-merchant (POST /api/v1/verify-merchant)', () => {
 
     const res = await handleVerifyMerchant(req, fakeEnv, {});
     expect(res.status).toBe(429);
-    expect(deleteCalls).toHaveLength(3);
+    expect(deleteCalls).toHaveLength(1);
   });
 
-  it('returns 415 without uploading to R2 when an image has invalid MIME bytes', async () => {
+  it('returns 422 when invalid contact phone is provided', async () => {
     const formData = new FormData();
-    formData.append('dpi_front', createFakeImage('fake'));
-    formData.append('dpi_back', createFakeImage('png'));
-    formData.append('establishment', createFakeImage('webp'));
     formData.append('business_name', 'Tienda');
-    formData.append('dpi_number', '1234567890101');
+    formData.append('contact_phone', '12345'); // invalid length
+    formData.append('establishment_photo', createFakeImage('webp'));
+
+    const req = new Request('https://worker/api/v1/verify-merchant', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer valid-jwt' },
+      body: formData,
+    });
+
+    const res = await handleVerifyMerchant(req, fakeEnv, {});
+    expect(res.status).toBe(422);
+    const body = (await res.json()) as { code: string };
+    expect(body.code).toBe('invalid_phone');
+    expect(putCalls).toHaveLength(0);
+  });
+
+  it('returns 415 without uploading to R2 when photo has invalid MIME bytes', async () => {
+    const formData = new FormData();
+    formData.append('business_name', 'Tienda');
+    formData.append('contact_phone', '23456789');
+    formData.append('establishment_photo', createFakeImage('fake'));
 
     const req = new Request('https://worker/api/v1/verify-merchant', {
       method: 'POST',
@@ -375,15 +362,9 @@ describe('4. Handler verify-merchant (POST /api/v1/verify-merchant)', () => {
     expect(putCalls).toHaveLength(0);
   });
 
-  it('returns 500 upload_failed and compensates by deleting already uploaded files if one upload fails', async () => {
-    let callCount = 0;
-    fakeEnv.VERIFICATION_BUCKET.put = vi.fn(async (key: string) => {
-      callCount++;
-      if (callCount === 2) {
-        throw new Error('R2 Network Failure on 2nd upload');
-      }
-      putCalls.push({ key });
-      return { key } as R2Object;
+  it('returns 500 upload_failed if upload to R2 fails', async () => {
+    fakeEnv.VERIFICATION_BUCKET.put = vi.fn(async () => {
+      throw new Error('R2 Network Failure');
     });
 
     const formData = createValidFormData();
@@ -397,9 +378,6 @@ describe('4. Handler verify-merchant (POST /api/v1/verify-merchant)', () => {
     expect(res.status).toBe(500);
     const body = (await res.json()) as { code: string };
     expect(body.code).toBe('upload_failed');
-
-    expect(deleteCalls).toHaveLength(1);
-    expect(deleteCalls[0]).toContain('dpi_front.jpg');
     expect(mockState.rpcCalls).toHaveLength(0);
   });
 });
@@ -455,7 +433,7 @@ describe('5. Handler review-merchant (POST /api/v1/admin/review-merchant)', () =
     };
   });
 
-  it('deletes 3 R2 keys and clears DB keys when approved by staff', async () => {
+  it('deletes establishment_key from R2 and clears DB keys when approved by staff', async () => {
     const req = new Request('https://worker/api/v1/admin/review-merchant', {
       method: 'POST',
       headers: {
@@ -474,15 +452,14 @@ describe('5. Handler review-merchant (POST /api/v1/admin/review-merchant)', () =
     expect(body.status).toBe('approved');
 
     expect(reviewRpcParams?.p_decision).toBe('approved');
-    expect(deletedKeys).toHaveLength(3);
+    expect(deletedKeys).toHaveLength(1);
+    expect(deletedKeys[0]).toContain('establishment.webp');
     expect(clearedRpcId).toBe('req-uuid-1');
   });
 
-  it('returns 502 and does NOT clear keys if a delete fails in R2', async () => {
+  it('returns 200 (does not fail applied review) and lets cron retry if delete fails in R2', async () => {
     mockState.merchantRecord = {
-      dpi_front_key: 'pending/merchant/u1/r1/dpi_front.jpg',
-      dpi_back_key: 'pending/merchant/u1/r1/fail-delete.png',
-      establishment_key: 'pending/merchant/u1/r1/establishment.webp',
+      establishment_key: 'pending/merchant/u1/r1/fail-delete.webp',
     };
 
     const req = new Request('https://worker/api/v1/admin/review-merchant', {
@@ -494,16 +471,16 @@ describe('5. Handler review-merchant (POST /api/v1/admin/review-merchant)', () =
       body: JSON.stringify({
         request_id: 'req-fail-delete',
         decision: 'rejected',
-        reason: 'Fotos ilegibles',
+        reason: 'Foto ilegible',
       }),
     });
 
     const res = await handleAdminReviewMerchant(req, fakeEnv, {});
-    expect(res.status).toBe(502);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toBe('r2_delete_failed');
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { status: string; request_id: string };
+    expect(body.status).toBe('rejected');
 
-    // No debe haber limpiado claves en BD
+    // No debe haber limpiado claves en BD para que el cron reintente
     expect(clearedRpcId).toBeNull();
   });
 
@@ -564,9 +541,9 @@ describe('6. Handler merchant-document (GET /api/v1/admin/merchant-document)', (
     };
   });
 
-  it('returns document bytes and Content-Type with Cache-Control: no-store', async () => {
+  it('returns document bytes and Content-Type with request_id alone', async () => {
     const req = new Request(
-      'https://worker/api/v1/admin/merchant-document?request_id=req-1&doc=front',
+      'https://worker/api/v1/admin/merchant-document?request_id=req-1',
       {
         method: 'GET',
         headers: { Authorization: 'Bearer staff-jwt' },
@@ -579,15 +556,52 @@ describe('6. Handler merchant-document (GET /api/v1/admin/merchant-document)', (
     expect(res.headers.get('Cache-Control')).toBe('no-store');
   });
 
+  it('accepts doc=establishment and serves establishment_key', async () => {
+    const req = new Request(
+      'https://worker/api/v1/admin/merchant-document?request_id=req-1&doc=establishment',
+      {
+        method: 'GET',
+        headers: { Authorization: 'Bearer staff-jwt' },
+      }
+    );
+
+    const res = await handleGetMerchantDocument(req, fakeEnv, {});
+    expect(res.status).toBe(200);
+  });
+
+  it('rejects legacy doc=front or doc=back with 422 invalid_doc', async () => {
+    const reqFront = new Request(
+      'https://worker/api/v1/admin/merchant-document?request_id=req-1&doc=front',
+      {
+        method: 'GET',
+        headers: { Authorization: 'Bearer staff-jwt' },
+      }
+    );
+
+    const resFront = await handleGetMerchantDocument(reqFront, fakeEnv, {});
+    expect(resFront.status).toBe(422);
+    const body = (await resFront.json()) as { code: string };
+    expect(body.code).toBe('invalid_doc');
+
+    const reqBack = new Request(
+      'https://worker/api/v1/admin/merchant-document?request_id=req-1&doc=back',
+      {
+        method: 'GET',
+        headers: { Authorization: 'Bearer staff-jwt' },
+      }
+    );
+
+    const resBack = await handleGetMerchantDocument(reqBack, fakeEnv, {});
+    expect(resBack.status).toBe(422);
+  });
+
   it('returns 404 when key is null in database (already purged)', async () => {
     mockState.merchantRecord = {
-      dpi_front_key: null,
-      dpi_back_key: null,
       establishment_key: null,
     };
 
     const req = new Request(
-      'https://worker/api/v1/admin/merchant-document?request_id=req-null-keys&doc=front',
+      'https://worker/api/v1/admin/merchant-document?request_id=req-null-keys',
       {
         method: 'GET',
         headers: { Authorization: 'Bearer staff-jwt' },
@@ -600,13 +614,11 @@ describe('6. Handler merchant-document (GET /api/v1/admin/merchant-document)', (
 
   it('returns 404 when object is missing in R2 bucket', async () => {
     mockState.merchantRecord = {
-      dpi_front_key: 'missing-in-r2',
-      dpi_back_key: 'valid-key',
-      establishment_key: 'valid-key',
+      establishment_key: 'missing-in-r2',
     };
 
     const req = new Request(
-      'https://worker/api/v1/admin/merchant-document?request_id=req-missing-file&doc=front',
+      'https://worker/api/v1/admin/merchant-document?request_id=req-missing-file',
       {
         method: 'GET',
         headers: { Authorization: 'Bearer staff-jwt' },

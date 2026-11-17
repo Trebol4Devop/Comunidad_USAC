@@ -1,5 +1,11 @@
 # Contrato — Acceso inicial y verificación de comerciante
 
+> **Actualización Zero-PII (2026-11-17):** este documento conserva el contrato histórico.
+> Desde la migración `20261117120000_zero_pii_hardening.sql` rigen los cambios descritos en
+> `docs/verification/zero-pii.md`: no se solicitan ni almacenan DPI, fotos de identidad civil
+> ni número de DPI. El comerciante se identifica por `contact_phone_hash` y una única foto
+> del establecimiento (`establishment_key`).
+
 > Normativo para los 4 entregables de la Fase 2. Versión 1.0 — 2026-11-16.
 > Cualquier divergencia es un bug. La Fase 1 (verificación estudiantil) no se modifica.
 

@@ -2,8 +2,9 @@ import type { Env } from '../types';
 import { createAnonClient, createServiceClient } from '../supabase';
 import { detectImageType } from '../validators';
 import {
+  normalizeContactPhone,
   validateBusinessName,
-  validateDpi,
+  validateContactPhone,
   validateEstablishmentNote,
 } from '../merchant-validators';
 import { deleteVerificationDocument, uploadVerificationDocument } from '../r2';
@@ -13,7 +14,7 @@ export function mapMerchantRpcErrorCode(code?: string): { status: number; messag
     case 'credential_unavailable':
       return {
         status: 409,
-        message: 'DPI credentials are unavailable or already claimed',
+        message: 'Merchant credentials are unavailable or already claimed',
       };
     case 'rate_limited':
       return {
@@ -25,11 +26,12 @@ export function mapMerchantRpcErrorCode(code?: string): { status: number; messag
         status: 422,
         message: 'Business name must be between 2 and 80 characters',
       };
-    case 'invalid_dpi':
+    case 'invalid_phone':
       return {
         status: 422,
-        message: 'DPI format is invalid (13 digits, valid department code)',
+        message: 'Contact phone must be an 8-digit Guatemala phone number',
       };
+    case 'invalid_establishment_key':
     case 'invalid_keys':
       return {
         status: 422,
@@ -120,40 +122,33 @@ export async function handleVerifyMerchant(
     );
   }
 
-  const dpiFrontEntry = formData.get('dpi_front');
-  const dpiBackEntry = formData.get('dpi_back');
-  const establishmentEntry = formData.get('establishment');
   const businessNameEntry = formData.get('business_name');
-  const dpiNumberEntry = formData.get('dpi_number');
+  const contactPhoneEntry = formData.get('contact_phone');
+  const establishmentPhotoEntry =
+    formData.get('establishment_photo') || formData.get('establishment');
   const establishmentNoteEntry = formData.get('establishment_note');
 
   if (
-    !dpiFrontEntry ||
-    typeof dpiFrontEntry === 'string' ||
-    typeof dpiFrontEntry.arrayBuffer !== 'function' ||
-    !dpiBackEntry ||
-    typeof dpiBackEntry === 'string' ||
-    typeof dpiBackEntry.arrayBuffer !== 'function' ||
-    !establishmentEntry ||
-    typeof establishmentEntry === 'string' ||
-    typeof establishmentEntry.arrayBuffer !== 'function' ||
     !businessNameEntry ||
     typeof businessNameEntry !== 'string' ||
-    !dpiNumberEntry ||
-    typeof dpiNumberEntry !== 'string'
+    !contactPhoneEntry ||
+    typeof contactPhoneEntry !== 'string' ||
+    !establishmentPhotoEntry ||
+    typeof establishmentPhotoEntry === 'string' ||
+    typeof establishmentPhotoEntry.arrayBuffer !== 'function'
   ) {
     return new Response(
       JSON.stringify({
         status: 'error',
         code: 'missing_fields',
         message:
-          'Missing required fields: dpi_front, dpi_back, establishment, business_name, dpi_number',
+          'Missing required fields: business_name, contact_phone, establishment_photo',
       }),
       { status: 422, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
   }
 
-  // 3. Validar business_name
+  // 3. Validar business_name (2-80 caracteres)
   const businessName = businessNameEntry.trim();
   if (!validateBusinessName(businessName)) {
     return new Response(
@@ -166,21 +161,20 @@ export async function handleVerifyMerchant(
     );
   }
 
-  // 4. Validar dpi_number
-  const dpiNumber = dpiNumberEntry.trim();
-  if (!validateDpi(dpiNumber)) {
+  // 4. Validar y normalizar contact_phone (8 dígitos de Guatemala)
+  if (!validateContactPhone(contactPhoneEntry)) {
     return new Response(
       JSON.stringify({
         status: 'error',
-        code: 'invalid_dpi',
-        message:
-          'DPI number must be 13 digits with a valid Guatemala department code (01-22)',
+        code: 'invalid_phone',
+        message: 'Contact phone must be an 8-digit Guatemala phone number',
       }),
       { status: 422, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
   }
+  const normalizedPhone = normalizeContactPhone(contactPhoneEntry);
 
-  // Validar nota opcional
+  // 5. Validar nota opcional (máx 160)
   let cleanEstablishmentNote: string | null = null;
   if (
     establishmentNoteEntry != null &&
@@ -201,13 +195,9 @@ export async function handleVerifyMerchant(
     cleanEstablishmentNote = rawNote;
   }
 
-  // 5. Validar tamaños de archivo
+  // 6. Validar tamaño de archivo (< 10 MB)
   const maxBytes = parseInt(env.MAX_FILE_BYTES || '10485760', 10);
-  if (
-    dpiFrontEntry.size > maxBytes ||
-    dpiBackEntry.size > maxBytes ||
-    establishmentEntry.size > maxBytes
-  ) {
+  if (establishmentPhotoEntry.size > maxBytes) {
     return new Response(
       JSON.stringify({
         status: 'error',
@@ -218,20 +208,12 @@ export async function handleVerifyMerchant(
     );
   }
 
-  // 6. Leer bytes y detectar tipo MIME por magic bytes
-  const frontBuffer = await dpiFrontEntry.arrayBuffer();
-  const backBuffer = await dpiBackEntry.arrayBuffer();
-  const estBuffer = await establishmentEntry.arrayBuffer();
-
-  const frontBytes = new Uint8Array(frontBuffer);
-  const backBytes = new Uint8Array(backBuffer);
+  // 7. Leer bytes y detectar tipo MIME por magic bytes
+  const estBuffer = await establishmentPhotoEntry.arrayBuffer();
   const estBytes = new Uint8Array(estBuffer);
-
-  const detectedFront = detectImageType(frontBytes);
-  const detectedBack = detectImageType(backBytes);
   const detectedEst = detectImageType(estBytes);
 
-  if (!detectedFront || !detectedBack || !detectedEst) {
+  if (!detectedEst) {
     return new Response(
       JSON.stringify({
         status: 'error',
@@ -242,54 +224,30 @@ export async function handleVerifyMerchant(
     );
   }
 
-  // 7. Generar UUID y claves R2
+  // 8. Generar UUID y clave R2 para la foto del establecimiento
   const requestId = crypto.randomUUID();
-  const frontKey = `pending/merchant/${user.id}/${requestId}/dpi_front.${detectedFront.ext}`;
-  const backKey = `pending/merchant/${user.id}/${requestId}/dpi_back.${detectedBack.ext}`;
-  const estKey = `pending/merchant/${user.id}/${requestId}/establishment.${detectedEst.ext}`;
+  const establishmentKey = `pending/merchant/${user.id}/${requestId}/establishment.${detectedEst.ext}`;
 
-  // 8. Subir las 3 con contentType real; si una falla, compensar borrando las ya subidas
-  const filesToUpload = [
-    { key: frontKey, bytes: frontBytes, mime: detectedFront.mime },
-    { key: backKey, bytes: backBytes, mime: detectedBack.mime },
-    { key: estKey, bytes: estBytes, mime: detectedEst.mime },
-  ];
-
-  const uploadedKeys: string[] = [];
-  let uploadFailed = false;
-
-  for (const item of filesToUpload) {
-    try {
-      await uploadVerificationDocument(
-        env.VERIFICATION_BUCKET,
-        item.key,
-        item.bytes,
-        item.mime
-      );
-      uploadedKeys.push(item.key);
-    } catch {
-      uploadFailed = true;
-      break;
-    }
-  }
-
-  if (uploadFailed) {
-    // Compensación: borrar las que se hayan alcanzado a subir
-    await Promise.allSettled(
-      uploadedKeys.map((key) => deleteVerificationDocument(env.VERIFICATION_BUCKET, key))
+  // 9. Subir a R2
+  try {
+    await uploadVerificationDocument(
+      env.VERIFICATION_BUCKET,
+      establishmentKey,
+      estBytes,
+      detectedEst.mime
     );
-
+  } catch {
     return new Response(
       JSON.stringify({
         status: 'error',
         code: 'upload_failed',
-        message: 'Failed to upload document images to storage',
+        message: 'Failed to upload document image to storage',
       }),
       { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
   }
 
-  // 9. Invocar RPC administrativa con service_role
+  // 10. Invocar RPC administrativa con service_role (el RPC realiza el hash del teléfono)
   const supabaseService = createServiceClient(env);
   const { data: rpcData, error: rpcErr } = await supabaseService.rpc(
     'admin_create_merchant_verification_request',
@@ -297,21 +255,19 @@ export async function handleVerifyMerchant(
       p_request_id: requestId,
       p_user_id: user.id,
       p_business_name: businessName,
-      p_dpi_number: dpiNumber,
-      p_dpi_front_key: frontKey,
-      p_dpi_back_key: backKey,
-      p_establishment_key: estKey,
+      p_contact_phone: normalizedPhone,
+      p_establishment_key: establishmentKey,
       p_establishment_note: cleanEstablishmentNote,
     }
   );
 
-  // 10. Si RPC falla o rpcData.ok es false: borrar las 3 claves y mapear error
+  // 11. Si RPC falla o rpcData.ok es false: compensar borrando de R2 y mapear error
   if (rpcErr || !rpcData?.ok) {
-    await Promise.allSettled([
-      deleteVerificationDocument(env.VERIFICATION_BUCKET, frontKey),
-      deleteVerificationDocument(env.VERIFICATION_BUCKET, backKey),
-      deleteVerificationDocument(env.VERIFICATION_BUCKET, estKey),
-    ]);
+    try {
+      await deleteVerificationDocument(env.VERIFICATION_BUCKET, establishmentKey);
+    } catch {
+      console.error(`[verify-merchant] compensation delete failed for request: ${requestId}`);
+    }
 
     if (rpcErr) {
       console.error(`[verify-merchant] rpc error code=${rpcErr.code ?? 'unknown'}`);
@@ -336,7 +292,7 @@ export async function handleVerifyMerchant(
     );
   }
 
-  // 11. 200 OK con manual_review (nunca se auto-aprueba)
+  // 12. 200 OK con manual_review (nunca se auto-aprueba comerciante)
   return new Response(
     JSON.stringify({
       status: 'manual_review',

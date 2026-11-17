@@ -1,7 +1,14 @@
 import type { Env } from '../types';
 import { createAnonClient, createServiceClient } from '../supabase';
-import { validateMerchantDoc } from '../merchant-validators';
 
+/**
+ * Endpoint para visualización staff de documentos de comerciante.
+ *
+ * Elección de diseño para parámetro doc:
+ * Si se envía 'doc' y su valor es distinto de 'establishment' (por ejemplo los obsoletos 'front' o 'back'),
+ * se rechaza con 422 'invalid_doc' para advertir a los clientes de la eliminación de fotos de identidad civil.
+ * Si 'doc' se omite o es 'establishment', se sirve 'establishment_key'.
+ */
 export async function handleGetMerchantDocument(
   request: Request,
   env: Env,
@@ -83,45 +90,33 @@ export async function handleGetMerchantDocument(
   const requestId = url.searchParams.get('request_id');
   const doc = url.searchParams.get('doc');
 
-  if (!requestId || !doc) {
+  if (!requestId) {
     return new Response(
       JSON.stringify({
         status: 'error',
         code: 'missing_fields',
-        message: 'Query parameters request_id and doc are required',
+        message: 'Query parameter request_id is required',
       }),
       { status: 422, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
   }
 
-  if (!validateMerchantDoc(doc)) {
+  // Si se envía doc y es distinto de 'establishment', rechazar con 422 invalid_doc
+  if (doc != null && doc !== 'establishment') {
     return new Response(
       JSON.stringify({
         status: 'error',
         code: 'invalid_doc',
-        message: "Parameter doc must be 'front', 'back', or 'establishment'",
+        message: "Parameter doc must be 'establishment' (civil identity documents are not retained)",
       }),
       { status: 422, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
   }
 
-  // 4. Mapear columna correspondiente
-  let keyColumn: 'dpi_front_key' | 'dpi_back_key' | 'establishment_key';
-  switch (doc) {
-    case 'front':
-      keyColumn = 'dpi_front_key';
-      break;
-    case 'back':
-      keyColumn = 'dpi_back_key';
-      break;
-    case 'establishment':
-      keyColumn = 'establishment_key';
-      break;
-  }
-
+  // 4. Consultar únicamente establishment_key
   const { data: record, error: dbErr } = await supabaseService
     .from('merchant_verification_requests')
-    .select(keyColumn)
+    .select('establishment_key')
     .eq('id', requestId)
     .maybeSingle();
 
@@ -147,7 +142,7 @@ export async function handleGetMerchantDocument(
     );
   }
 
-  const objectKey = (record as Record<string, string | null>)[keyColumn];
+  const objectKey = record.establishment_key;
   if (!objectKey) {
     return new Response(
       JSON.stringify({

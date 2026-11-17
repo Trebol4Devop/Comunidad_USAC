@@ -91,11 +91,10 @@ class ProfileService {
     }
   }
 
-  /// Reclama credenciales de estudiante mediante la función RPC `claim_student_credentials`.
+  /// Reclama credenciales de estudiante mediante la función RPC `claim_student_credentials` (Zero-PII: solo carné).
   static Future<Map<String, dynamic>> claimStudentCredentials(
-    String carne, [
-    String? cui,
-  ]) async {
+    String carne,
+  ) async {
     if (!SupabaseConfig.isConfigured) {
       return {'ok': false, 'code': 'offline'};
     }
@@ -107,9 +106,6 @@ class ProfileService {
       final params = <String, dynamic>{
         'p_carne': carne.trim(),
       };
-      if (cui != null && cui.trim().isNotEmpty) {
-        params['p_cui'] = cui.trim();
-      }
       final dynamic res = await SupabaseService.client.rpc(
         'claim_student_credentials',
         params: params,
@@ -119,7 +115,7 @@ class ProfileService {
       }
       return {'ok': false, 'code': 'unexpected_response'};
     } catch (e) {
-      debugPrint('Error en claimStudentCredentials: $e');
+      debugPrint('Error en claimStudentCredentials');
       return {'ok': false, 'code': 'network_error', 'message': e.toString()};
     }
   }

@@ -1,5 +1,11 @@
 # Contrato — Verificación estudiantil USAC
 
+> **Actualización Zero-PII (2026-11-17):** este documento conserva el contrato histórico.
+> Desde la migración `20261117120000_zero_pii_hardening.sql` rigen los cambios descritos en
+> `docs/verification/zero-pii.md`: sin CUI/DPI, sin `full_name`, sin OCR persistido,
+> carné solo como `carne_hash` y comerciante identificado por `contact_phone_hash`.
+> El RPC vigente es `claim_student_credentials(p_carne text)`.
+
 > Documento normativo para los tres entregables (base de datos, Worker, Flutter).
 > Cualquier divergencia con este documento es un bug. Versión 1.0 — 2026-11-16.
 

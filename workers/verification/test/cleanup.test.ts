@@ -31,7 +31,7 @@ describe('runCleanup handler', () => {
         if (table === 'merchant_verification_requests') {
           return {
             select: vi.fn(() => ({
-              or: vi.fn(() => ({
+              not: vi.fn(() => ({
                 or: vi.fn(() => ({
                   limit: vi.fn(async () => ({
                     data: [],
@@ -106,7 +106,7 @@ describe('runCleanup handler', () => {
         if (table === 'merchant_verification_requests') {
           return {
             select: vi.fn(() => ({
-              or: vi.fn(() => ({
+              not: vi.fn(() => ({
                 or: vi.fn(() => ({
                   limit: vi.fn(async () => ({
                     data: null,

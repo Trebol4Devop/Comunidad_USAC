@@ -53,15 +53,13 @@ class MerchantVerificationService {
     return user.isAnonymous;
   }
 
-  /// Envía los 3 documentos obligatorios y datos del negocio al Worker.
-  /// Contrato: docs/verification/merchant-contract.md §3.1.
-  /// Nunca loguea el DPI ni datos confidenciales.
+  /// Envía la fotografía del establecimiento y datos comerciales al Worker.
+  /// Contrato: docs/verification/merchant-contract.md §3.1 (Zero-PII).
+  /// Nunca loguea datos personales ni números de teléfono.
   Future<MerchantVerificationResult> submitMerchantVerification({
-    required Uint8List dpiFront,
-    required Uint8List dpiBack,
-    required Uint8List establishment,
+    required Uint8List establishmentPhoto,
     required String businessName,
-    required String dpiNumber,
+    required String contactPhone,
     String? establishmentNote,
   }) async {
     // 1. Validar autenticación real sin tocar la red si es anónimo o no autenticado
@@ -90,31 +88,17 @@ class MerchantVerificationService {
 
       // Campos de texto
       request.fields['business_name'] = businessName.trim();
-      request.fields['dpi_number'] = dpiNumber.trim();
+      request.fields['contact_phone'] = contactPhone.trim();
       if (establishmentNote != null && establishmentNote.trim().isNotEmpty) {
         request.fields['establishment_note'] = establishmentNote.trim();
       }
 
-      // Archivos binarios (las 3 fotos obligatorias)
+      // Archivo binario (fotografía obligatoria del establecimiento)
       request.files.add(
         http.MultipartFile.fromBytes(
-          'dpi_front',
-          dpiFront,
-          filename: 'dpi_front.jpg',
-        ),
-      );
-      request.files.add(
-        http.MultipartFile.fromBytes(
-          'dpi_back',
-          dpiBack,
-          filename: 'dpi_back.jpg',
-        ),
-      );
-      request.files.add(
-        http.MultipartFile.fromBytes(
-          'establishment',
-          establishment,
-          filename: 'establishment.jpg',
+          'establishment_photo',
+          establishmentPhoto,
+          filename: 'establishment_photo.jpg',
         ),
       );
 
@@ -146,12 +130,12 @@ class MerchantVerificationService {
         );
       }
 
-      // 409: Credencial no disponible (DPI duplicado o en uso).
+      // 409: Credencial no disponible (teléfono duplicado o en uso).
       // Mensaje genérico normativo sin confirmar existencia.
       if (statusCode == 409 || code == 'credential_unavailable') {
         return const MerchantVerificationResult.error(
           code: 'credential_unavailable',
-          message: 'No pudimos registrar este DPI. Si crees que es un error, contacta soporte.',
+          message: 'No pudimos registrar este teléfono de contacto. Si crees que es un error, contacta soporte.',
         );
       }
 
@@ -182,10 +166,10 @@ class MerchantVerificationService {
       // 422: Errores de validación de campos
       if (statusCode == 422) {
         String msg = 'Datos de verificación inválidos.';
-        if (code == 'invalid_business_name') {
+        if (code == 'invalid_phone') {
+          msg = 'El teléfono debe tener 8 dígitos (Guatemala).';
+        } else if (code == 'invalid_business_name') {
           msg = 'El nombre del negocio debe tener entre 2 y 80 caracteres.';
-        } else if (code == 'invalid_dpi') {
-          msg = 'El número de DPI debe tener 13 dígitos y un código departamental válido (01-22).';
         } else if (code == 'invalid_establishment_note') {
           msg = 'La nota de ubicación no debe superar los 160 caracteres.';
         } else if (code == 'missing_fields') {
@@ -249,7 +233,7 @@ class MerchantVerificationService {
       if (res == null) return null;
       return Map<String, dynamic>.from(res);
     } catch (e) {
-      debugPrint('[MerchantVerificationService] Error consultando solicitud reciente: $e');
+      debugPrint('[MerchantVerificationService] Error consultando solicitud reciente');
       return null;
     }
   }

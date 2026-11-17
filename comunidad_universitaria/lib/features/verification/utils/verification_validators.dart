@@ -13,6 +13,40 @@ class VerificationValidators {
   static final RegExp cuiPattern =
       RegExp(r'^[0-9]{9}(0[1-9]|1[0-9]|2[0-2])[0-9]{2}$');
 
+  /// Formato canónico de teléfono comercial de Guatemala:
+  /// Exactamente 8 dígitos numéricos.
+  static final RegExp guatemalaPhonePattern = RegExp(r'^[2-7][0-9]{7}$');
+
+  /// Normaliza un número telefónico removiendo código internacional (+502),
+  /// espacios y caracteres no numéricos, dejando únicamente los 8 dígitos locales.
+  static String normalizePhone(String? phone) {
+    if (phone == null) return '';
+    var digits = phone.replaceAll(RegExp(r'\D'), '');
+    if (digits.startsWith('502') && digits.length == 11) {
+      digits = digits.substring(3);
+    }
+    return digits;
+  }
+
+  /// Valida si un teléfono normalizado es válido (8 dígitos guatemaltecos).
+  static bool isValidPhone(String? phone) {
+    if (phone == null) return false;
+    final clean = normalizePhone(phone);
+    return guatemalaPhonePattern.hasMatch(clean);
+  }
+
+  /// Validador de formulario para el campo de teléfono comercial.
+  static String? validatePhone(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Ingresa tu teléfono comercial.';
+    }
+    final clean = normalizePhone(value);
+    if (clean.length != 8 || !guatemalaPhonePattern.hasMatch(clean)) {
+      return 'El teléfono debe tener 8 dígitos (Guatemala).';
+    }
+    return null;
+  }
+
   /// Dominios institucionales explícitos autorizados adicionales a usac.edu.gt
   static const Set<String> explicitAllowedDomains = {
     'usac.edu.gt',
@@ -124,6 +158,10 @@ class VerificationValidators {
         return 'Demasiados intentos de verificación en las últimas 24 horas. Por favor espera.';
       case 'invalid_carne':
         return 'El carné debe tener 9 dígitos y corresponder a un año de matrícula válido.';
+      case 'invalid_phone':
+        return 'El teléfono debe tener 8 dígitos (Guatemala).';
+      case 'invalid_business_name':
+        return 'El nombre del negocio debe tener entre 2 y 80 caracteres.';
       case 'invalid_cui':
         return 'El formato del CUI es inválido.';
       case 'invalid_document_type':

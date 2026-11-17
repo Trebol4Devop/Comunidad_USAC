@@ -54,18 +54,17 @@ BEGIN
     DELETE FROM public.user_roles WHERE user_id IN (v_u1, v_u2, v_u3, v_u4, v_u5, v_u6);
 
     -- Asegurar perfiles base
-    INSERT INTO public.profiles (id, full_name, carrera, is_verified, verification_status, seller_verification_status)
+    INSERT INTO public.profiles (id, carrera, is_verified, verification_status, seller_verification_status)
     VALUES
-        (v_u1, 'Comerciante Uno', 'sistemas', false, 'unverified', 'unverified'),
-        (v_u2, 'Comerciante Dos', 'sistemas', false, 'unverified', 'unverified'),
-        (v_u3, 'Comerciante Tres', 'sistemas', false, 'unverified', 'unverified'),
-        (v_u4, 'Comerciante Con Plan', 'sistemas', false, 'unverified', 'unverified'),
-        (v_u5, 'Estudiante Verificado', 'sistemas', true, 'verified', 'unverified'),
-        (v_u6, 'Usuario Sin Rol', 'sistemas', false, 'unverified', 'unverified'),
-        (v_mod, 'Moderador Staff', 'sistemas', true, 'verified', 'verified'),
-        (v_adm, 'Admin Staff', 'sistemas', true, 'verified', 'verified')
+        (v_u1, 'sistemas', false, 'unverified', 'unverified'),
+        (v_u2, 'sistemas', false, 'unverified', 'unverified'),
+        (v_u3, 'sistemas', false, 'unverified', 'unverified'),
+        (v_u4, 'sistemas', false, 'unverified', 'unverified'),
+        (v_u5, 'sistemas', true, 'verified', 'unverified'),
+        (v_u6, 'sistemas', false, 'unverified', 'unverified'),
+        (v_mod, 'sistemas', true, 'verified', 'verified'),
+        (v_adm, 'sistemas', true, 'verified', 'verified')
     ON CONFLICT (id) DO UPDATE SET
-        full_name = EXCLUDED.full_name,
         carrera = EXCLUDED.carrera,
         is_verified = EXCLUDED.is_verified,
         verification_status = EXCLUDED.verification_status,
@@ -107,9 +106,9 @@ SELECT has_table('public', 'merchant_verification_requests', '1. Tabla public.me
 SELECT has_column('public', 'merchant_verification_requests', 'id', '2. Columna id existe');
 SELECT has_column('public', 'merchant_verification_requests', 'user_id', '3. Columna user_id existe');
 SELECT has_column('public', 'merchant_verification_requests', 'business_name', '4. Columna business_name existe');
-SELECT has_column('public', 'merchant_verification_requests', 'dpi_hash', '5. Columna dpi_hash existe');
-SELECT has_column('public', 'merchant_verification_requests', 'dpi_front_key', '6. Columna dpi_front_key existe');
-SELECT has_column('public', 'merchant_verification_requests', 'dpi_back_key', '7. Columna dpi_back_key existe');
+SELECT hasnt_column('public', 'merchant_verification_requests', 'dpi_hash', '5. merchant_verification_requests no posee dpi_hash (Zero-PII)');
+SELECT hasnt_column('public', 'merchant_verification_requests', 'dpi_front_key', '6. merchant_verification_requests no posee dpi_front_key (Zero-PII)');
+SELECT hasnt_column('public', 'merchant_verification_requests', 'dpi_back_key', '7. merchant_verification_requests no posee dpi_back_key (Zero-PII)');
 SELECT has_column('public', 'merchant_verification_requests', 'establishment_key', '8. Columna establishment_key existe');
 SELECT has_column('public', 'merchant_verification_requests', 'establishment_note', '9. Columna establishment_note existe');
 SELECT has_column('public', 'merchant_verification_requests', 'status', '10. Columna status existe');
@@ -123,7 +122,7 @@ SELECT has_column('public', 'merchant_verification_requests', 'updated_at', '16.
 -- Test 17: CHECK business_name < 2 falla
 SELECT throws_ok(
     $$INSERT INTO public.merchant_verification_requests (
-        user_id, business_name, dpi_hash
+        user_id, business_name, contact_phone_hash
     ) VALUES (
         '88000000-0000-0000-0000-000000000001', 'A', 'abc'
     )$$,
@@ -135,7 +134,7 @@ SELECT throws_ok(
 -- Test 18: CHECK business_name > 80 falla
 SELECT throws_ok(
     $$INSERT INTO public.merchant_verification_requests (
-        user_id, business_name, dpi_hash
+        user_id, business_name, contact_phone_hash
     ) VALUES (
         '88000000-0000-0000-0000-000000000001', repeat('X', 81), 'abc'
     )$$,
@@ -147,7 +146,7 @@ SELECT throws_ok(
 -- Test 19: CHECK establishment_note > 160 falla
 SELECT throws_ok(
     $$INSERT INTO public.merchant_verification_requests (
-        user_id, business_name, dpi_hash, establishment_note
+        user_id, business_name, contact_phone_hash, establishment_note
     ) VALUES (
         '88000000-0000-0000-0000-000000000001', 'Tienda Valida', 'abc', repeat('N', 161)
     )$$,
@@ -159,7 +158,7 @@ SELECT throws_ok(
 -- Test 20: CHECK status con valor inválido falla
 SELECT throws_ok(
     $$INSERT INTO public.merchant_verification_requests (
-        user_id, business_name, dpi_hash, status
+        user_id, business_name, contact_phone_hash, status
     ) VALUES (
         '88000000-0000-0000-0000-000000000001', 'Tienda Valida', 'abc', 'in_progress'
     )$$,
@@ -171,8 +170,8 @@ SELECT throws_ok(
 -- Índices normativos
 SELECT has_index('public', 'merchant_verification_requests', 'idx_merchant_verification_requests_user_created', '21. Indice idx_merchant_verification_requests_user_created existe');
 SELECT has_index('public', 'merchant_verification_requests', 'idx_merchant_verification_requests_status_expires', '22. Indice idx_merchant_verification_requests_status_expires existe');
-SELECT has_index('public', 'merchant_verification_requests', 'idx_merchant_verification_requests_dpi_hash', '23. Indice idx_merchant_verification_requests_dpi_hash existe');
-SELECT has_index('public', 'merchant_verification_requests', 'idx_merchant_verification_requests_keys', '24. Indice parcial idx_merchant_verification_requests_keys existe');
+SELECT has_index('public', 'merchant_verification_requests', 'idx_merchant_unique_active_phone_hash', '23. Indice idx_merchant_unique_active_phone_hash existe');
+SELECT has_index('public', 'merchant_verification_requests', 'idx_merchant_verification_requests_establishment_key', '24. Indice parcial idx_merchant_verification_requests_establishment_key existe');
 
 -- Test 25: moderation_jobs extendido acepta 'merchant_verification_requests'
 SELECT lives_ok(
@@ -193,9 +192,7 @@ SELECT is(
         '88000000-0000-0000-0000-000000000001',
         '88000000-0000-0000-0000-000000000001',
         'Librería Central USAC',
-        '1234567890101',
-        'pending/merchant/88000000-0000-0000-0000-000000000001/88000000-0000-0000-0000-000000000001/dpi_front.jpg',
-        'pending/merchant/88000000-0000-0000-0000-000000000001/88000000-0000-0000-0000-000000000001/dpi_back.jpg',
+        '55551234',
         'pending/merchant/88000000-0000-0000-0000-000000000001/88000000-0000-0000-0000-000000000001/establishment.jpg',
         'Frente a la plaza de los mártires'
     ) ->> 'ok')::boolean,
@@ -216,21 +213,21 @@ SELECT is(
 );
 
 SELECT is(
-    (SELECT length(dpi_hash) FROM public.merchant_verification_requests WHERE id = '88000000-0000-0000-0000-000000000001'),
+    (SELECT length(contact_phone_hash) FROM public.merchant_verification_requests WHERE id = '88000000-0000-0000-0000-000000000001'),
     64,
-    '29. dpi_hash tiene longitud exacta de 64 caracteres hex'
+    '29. contact_phone_hash tiene longitud exacta de 64 caracteres hex'
 );
 
 SELECT is(
-    (SELECT dpi_hash FROM public.merchant_verification_requests WHERE id = '88000000-0000-0000-0000-000000000001'),
-    private.hash_credential('1234567890101'),
-    '30. dpi_hash coincide exactamente con private.hash_credential(dpi)'
+    (SELECT contact_phone_hash FROM public.merchant_verification_requests WHERE id = '88000000-0000-0000-0000-000000000001'),
+    private.hash_credential('55551234'),
+    '30. contact_phone_hash coincide exactamente con private.hash_credential(phone)'
 );
 
 SELECT is(
-    (SELECT count(*) FROM public.merchant_verification_requests WHERE dpi_hash LIKE '%1234567890101%'),
+    (SELECT count(*) FROM public.merchant_verification_requests WHERE contact_phone_hash LIKE '%55551234%'),
     0::bigint,
-    '31. Nunca se almacena el DPI en claro en la base de datos'
+    '31. Nunca se almacena el telefono en claro en la base de datos'
 );
 
 SELECT is(
@@ -288,8 +285,8 @@ SELECT throws_ok(
         gen_random_uuid(),
         '88000000-0000-0000-0000-000000000001',
         'Tienda Directa',
-        '1234567890101',
-        'k1', 'k2', 'k3'
+        '55551234',
+        'pending/merchant/88000000-0000-0000-0000-000000000001/req/est.jpg'
     )$$,
     '42501',
     NULL,
@@ -307,7 +304,7 @@ SELECT set_config('request.jwt.claim.email', '', true);
 SELECT is(
     public.admin_create_merchant_verification_request(
         gen_random_uuid(), '88000000-0000-0000-0000-000000000001',
-        NULL, '1234567890101', 'k1', 'k2', 'k3'
+        NULL, '55551234', 'k1'
     ),
     '{"ok": false, "code": "invalid_business_name"}'::jsonb,
     '39. business_name NULL retorna invalid_business_name'
@@ -316,7 +313,7 @@ SELECT is(
 SELECT is(
     public.admin_create_merchant_verification_request(
         gen_random_uuid(), '88000000-0000-0000-0000-000000000001',
-        'A', '1234567890101', 'k1', 'k2', 'k3'
+        'A', '55551234', 'k1'
     ),
     '{"ok": false, "code": "invalid_business_name"}'::jsonb,
     '40. business_name < 2 chars retorna invalid_business_name'
@@ -325,7 +322,7 @@ SELECT is(
 SELECT is(
     public.admin_create_merchant_verification_request(
         gen_random_uuid(), '88000000-0000-0000-0000-000000000001',
-        repeat('X', 81), '1234567890101', 'k1', 'k2', 'k3'
+        repeat('X', 81), '55551234', 'k1'
     ),
     '{"ok": false, "code": "invalid_business_name"}'::jsonb,
     '41. business_name > 80 chars retorna invalid_business_name'
@@ -334,139 +331,130 @@ SELECT is(
 SELECT is(
     public.admin_create_merchant_verification_request(
         gen_random_uuid(), '88000000-0000-0000-0000-000000000001',
-        '    ', '1234567890101', 'k1', 'k2', 'k3'
+        '    ', '55551234', 'k1'
     ),
     '{"ok": false, "code": "invalid_business_name"}'::jsonb,
     '42. business_name con solo espacios tras btrim retorna invalid_business_name'
 );
 
--- Test 43 a 48: Validaciones de DPI
+-- Test 43 a 48: Validaciones de Teléfono (Zero-PII)
 SELECT is(
     public.admin_create_merchant_verification_request(
         gen_random_uuid(), '88000000-0000-0000-0000-000000000001',
-        'Tienda Valida', NULL, 'k1', 'k2', 'k3'
+        'Tienda Valida', NULL, 'k1'
     ),
-    '{"ok": false, "code": "invalid_dpi"}'::jsonb,
-    '43. dpi_number NULL retorna invalid_dpi'
+    '{"ok": false, "code": "invalid_phone"}'::jsonb,
+    '43. contact_phone NULL retorna invalid_phone'
 );
 
 SELECT is(
     public.admin_create_merchant_verification_request(
         gen_random_uuid(), '88000000-0000-0000-0000-000000000001',
-        'Tienda Valida', '123456789010', 'k1', 'k2', 'k3'
+        'Tienda Valida', '5551234', 'k1'
     ),
-    '{"ok": false, "code": "invalid_dpi"}'::jsonb,
-    '44. dpi_number con 12 digitos retorna invalid_dpi'
+    '{"ok": false, "code": "invalid_phone"}'::jsonb,
+    '44. contact_phone con 7 digitos retorna invalid_phone'
 );
 
 SELECT is(
     public.admin_create_merchant_verification_request(
         gen_random_uuid(), '88000000-0000-0000-0000-000000000001',
-        'Tienda Valida', '12345678901010', 'k1', 'k2', 'k3'
+        'Tienda Valida', '555512345', 'k1'
     ),
-    '{"ok": false, "code": "invalid_dpi"}'::jsonb,
-    '45. dpi_number con 14 digitos retorna invalid_dpi'
+    '{"ok": false, "code": "invalid_phone"}'::jsonb,
+    '45. contact_phone con 9 digitos retorna invalid_phone'
 );
 
 SELECT is(
     public.admin_create_merchant_verification_request(
         gen_random_uuid(), '88000000-0000-0000-0000-000000000001',
-        'Tienda Valida', '123456789ABCD', 'k1', 'k2', 'k3'
+        'Tienda Valida', '5555ABCD', 'k1'
     ),
-    '{"ok": false, "code": "invalid_dpi"}'::jsonb,
-    '46. dpi_number con caracteres alfabeticos retorna invalid_dpi'
+    '{"ok": false, "code": "invalid_phone"}'::jsonb,
+    '46. contact_phone con caracteres alfabeticos retorna invalid_phone'
 );
 
 SELECT is(
     public.admin_create_merchant_verification_request(
         gen_random_uuid(), '88000000-0000-0000-0000-000000000001',
-        'Tienda Valida', '1234567890001', 'k1', 'k2', 'k3'
+        'Tienda Valida', '85551234', 'k1'
     ),
-    '{"ok": false, "code": "invalid_dpi"}'::jsonb,
-    '47. dpi_number con codigo de departamento 00 retorna invalid_dpi'
+    '{"ok": false, "code": "invalid_phone"}'::jsonb,
+    '47. contact_phone que no inicia con 2-7 retorna invalid_phone'
 );
 
 SELECT is(
     public.admin_create_merchant_verification_request(
         gen_random_uuid(), '88000000-0000-0000-0000-000000000001',
-        'Tienda Valida', '1234567892301', 'k1', 'k2', 'k3'
+        'Tienda Valida', '15551234', 'k1'
     ),
-    '{"ok": false, "code": "invalid_dpi"}'::jsonb,
-    '48. dpi_number con codigo de departamento 23 retorna invalid_dpi'
+    '{"ok": false, "code": "invalid_phone"}'::jsonb,
+    '48. contact_phone que inicia con 1 retorna invalid_phone'
 );
 
--- Test 49 a 54: Validaciones de Claves R2
+-- Test 49 a 54: Validaciones de Claves R2 (Establecimiento único)
 SELECT is(
     public.admin_create_merchant_verification_request(
         '88000000-0000-0000-0000-000000000099', '88000000-0000-0000-0000-000000000001',
-        'Tienda Valida', '1234567890101',
-        NULL, 'k2', 'k3'
+        'Tienda Valida', '55551234',
+        NULL
     ),
     '{"ok": false, "code": "invalid_keys"}'::jsonb,
-    '49. front_key NULL retorna invalid_keys'
+    '49. establishment_key NULL retorna invalid_keys'
 );
 
 SELECT is(
     public.admin_create_merchant_verification_request(
         '88000000-0000-0000-0000-000000000099', '88000000-0000-0000-0000-000000000001',
-        'Tienda Valida', '1234567890101',
-        'pending/merchant/88000000-0000-0000-0000-000000000001/88000000-0000-0000-0000-000000000099/same.jpg',
-        'pending/merchant/88000000-0000-0000-0000-000000000001/88000000-0000-0000-0000-000000000099/same.jpg',
-        'pending/merchant/88000000-0000-0000-0000-000000000001/88000000-0000-0000-0000-000000000099/est.jpg'
+        'Tienda Valida', '55551234',
+        'pending/otro_path/establishment.jpg'
     ),
     '{"ok": false, "code": "invalid_keys"}'::jsonb,
-    '50. front_key y back_key identicas retorna invalid_keys'
+    '50. Clave que no comienza con el prefijo normativo retorna invalid_keys'
 );
 
 SELECT is(
     public.admin_create_merchant_verification_request(
         '88000000-0000-0000-0000-000000000099', '88000000-0000-0000-0000-000000000001',
-        'Tienda Valida', '1234567890101',
-        'pending/otro_path/front.jpg',
-        'pending/merchant/88000000-0000-0000-0000-000000000001/88000000-0000-0000-0000-000000000099/back.jpg',
-        'pending/merchant/88000000-0000-0000-0000-000000000001/88000000-0000-0000-0000-000000000099/est.jpg'
-    ),
-    '{"ok": false, "code": "invalid_keys"}'::jsonb,
-    '51. Clave que no comienza con el prefijo normativo retorna invalid_keys'
-);
-
-SELECT is(
-    public.admin_create_merchant_verification_request(
-        '88000000-0000-0000-0000-000000000099', '88000000-0000-0000-0000-000000000001',
-        'Tienda Valida', '1234567890101',
+        'Tienda Valida', '55551234',
         -- Clave con prefijo de otro usuario (u2)
-        'pending/merchant/88000000-0000-0000-0000-000000000002/88000000-0000-0000-0000-000000000099/front.jpg',
-        'pending/merchant/88000000-0000-0000-0000-000000000001/88000000-0000-0000-0000-000000000099/back.jpg',
-        'pending/merchant/88000000-0000-0000-0000-000000000001/88000000-0000-0000-0000-000000000099/est.jpg'
+        'pending/merchant/88000000-0000-0000-0000-000000000002/88000000-0000-0000-0000-000000000099/establishment.jpg'
     ),
     '{"ok": false, "code": "invalid_keys"}'::jsonb,
-    '52. Clave perteneciente a otro usuario retorna invalid_keys'
+    '51. Clave perteneciente a otro usuario retorna invalid_keys'
 );
 
 SELECT is(
     public.admin_create_merchant_verification_request(
         '88000000-0000-0000-0000-000000000099', '88000000-0000-0000-0000-000000000001',
-        'Tienda Valida', '1234567890101',
+        'Tienda Valida', '55551234',
         -- Clave con prefijo de otra solicitud
-        'pending/merchant/88000000-0000-0000-0000-000000000001/88000000-0000-0000-0000-000000000001/front.jpg',
-        'pending/merchant/88000000-0000-0000-0000-000000000001/88000000-0000-0000-0000-000000000099/back.jpg',
-        'pending/merchant/88000000-0000-0000-0000-000000000001/88000000-0000-0000-0000-000000000099/est.jpg'
+        'pending/merchant/88000000-0000-0000-0000-000000000001/88000000-0000-0000-0000-000000000001/establishment.jpg'
     ),
     '{"ok": false, "code": "invalid_keys"}'::jsonb,
-    '53. Clave perteneciente a otra solicitud retorna invalid_keys'
+    '52. Clave perteneciente a otra solicitud retorna invalid_keys'
 );
 
 SELECT is(
     public.admin_create_merchant_verification_request(
         '88000000-0000-0000-0000-000000000099', '88000000-0000-0000-0000-000000000001',
-        'Tienda Valida', '1234567890101',
+        'Tienda Valida', '55551234',
         -- Clave vacía o igual al prefijo sin nombre de archivo
-        'pending/merchant/88000000-0000-0000-0000-000000000001/88000000-0000-0000-0000-000000000099/',
-        'pending/merchant/88000000-0000-0000-0000-000000000001/88000000-0000-0000-0000-000000000099/back.jpg',
-        'pending/merchant/88000000-0000-0000-0000-000000000001/88000000-0000-0000-0000-000000000099/est.jpg'
+        'pending/merchant/88000000-0000-0000-0000-000000000001/88000000-0000-0000-0000-000000000099/'
     ),
     '{"ok": false, "code": "invalid_keys"}'::jsonb,
-    '54. Clave sin nombre de archivo retorna invalid_keys'
+    '53. Clave sin nombre de archivo retorna invalid_keys'
+);
+
+SELECT is(
+    (public.admin_create_merchant_verification_request(
+        '88000000-0000-0000-0000-000000000099', '88000000-0000-0000-0000-000000000001',
+        'Tienda Valida', '55551235',
+        'pending/merchant/88000000-0000-0000-0000-000000000001/88000000-0000-0000-0000-000000000099/establishment.jpg',
+        repeat('N', 200) -- nota > 160 caracteres se trunca y no produce error
+    ) ->> 'ok')::boolean,
+    true,
+    '54. establishment_note > 160 caracteres es truncado a 160 y aceptado'
 );
 
 -- =============================================================================
@@ -476,9 +464,7 @@ SELECT is(
 SELECT is(
     (public.admin_create_merchant_verification_request(
         '88000000-0000-0000-0000-000000000021', '88000000-0000-0000-0000-000000000002',
-        'Negocio Dos', '2222222220101',
-        'pending/merchant/88000000-0000-0000-0000-000000000002/88000000-0000-0000-0000-000000000021/front.jpg',
-        'pending/merchant/88000000-0000-0000-0000-000000000002/88000000-0000-0000-0000-000000000021/back.jpg',
+        'Negocio Dos', '55552001',
         'pending/merchant/88000000-0000-0000-0000-000000000002/88000000-0000-0000-0000-000000000021/est.jpg'
     ) ->> 'ok')::boolean,
     true,
@@ -488,9 +474,7 @@ SELECT is(
 SELECT is(
     (public.admin_create_merchant_verification_request(
         '88000000-0000-0000-0000-000000000022', '88000000-0000-0000-0000-000000000002',
-        'Negocio Dos Reintento', '2222222220101',
-        'pending/merchant/88000000-0000-0000-0000-000000000002/88000000-0000-0000-0000-000000000022/front.jpg',
-        'pending/merchant/88000000-0000-0000-0000-000000000002/88000000-0000-0000-0000-000000000022/back.jpg',
+        'Negocio Dos Reintento', '55552002',
         'pending/merchant/88000000-0000-0000-0000-000000000002/88000000-0000-0000-0000-000000000022/est.jpg'
     ) ->> 'ok')::boolean,
     true,
@@ -500,9 +484,7 @@ SELECT is(
 SELECT is(
     public.admin_create_merchant_verification_request(
         '88000000-0000-0000-0000-000000000023', '88000000-0000-0000-0000-000000000002',
-        'Negocio Dos Tercero', '2222222220101',
-        'pending/merchant/88000000-0000-0000-0000-000000000002/88000000-0000-0000-0000-000000000023/front.jpg',
-        'pending/merchant/88000000-0000-0000-0000-000000000002/88000000-0000-0000-0000-000000000023/back.jpg',
+        'Negocio Dos Tercero', '55552003',
         'pending/merchant/88000000-0000-0000-0000-000000000002/88000000-0000-0000-0000-000000000023/est.jpg'
     ),
     '{"ok": false, "code": "rate_limited"}'::jsonb,
@@ -510,20 +492,18 @@ SELECT is(
 );
 
 -- =============================================================================
--- SECCIÓN 5: Detección de DPI Duplicado (§2.3 del Contrato)
+-- SECCIÓN 5: Detección de Teléfono Duplicado (§2.3 del Contrato Zero-PII)
 -- =============================================================================
 
 SELECT is(
     public.admin_create_merchant_verification_request(
         '88000000-0000-0000-0000-000000000031', '88000000-0000-0000-0000-000000000003',
         'Comercio Duplicado',
-        '1234567890101', -- Ya tomado por u1 (estado pending)
-        'pending/merchant/88000000-0000-0000-0000-000000000003/88000000-0000-0000-0000-000000000031/front.jpg',
-        'pending/merchant/88000000-0000-0000-0000-000000000003/88000000-0000-0000-0000-000000000031/back.jpg',
+        '55551234', -- Ya tomado por u1 (estado pending)
         'pending/merchant/88000000-0000-0000-0000-000000000003/88000000-0000-0000-0000-000000000031/est.jpg'
     ),
     '{"ok": false, "code": "credential_unavailable"}'::jsonb,
-    '58. DPI en estado pending en otra cuenta es rechazado con credential_unavailable'
+    '58. Telefono en estado pending en otra cuenta es rechazado con credential_unavailable'
 );
 
 -- =============================================================================
@@ -534,8 +514,8 @@ SELECT is(
 SELECT tests.authenticate_as('88000000-0000-0000-0000-000000000001');
 SELECT is(
     (SELECT count(*) FROM public.merchant_verification_requests),
-    1::bigint,
-    '59. Duenio ve unicamente su propia solicitud'
+    2::bigint,
+    '59. Duenio ve unicamente sus propias solicitudes (2 activas)'
 );
 
 -- Test 60: Otro usuario (u3) que no tiene solicitudes activas ve 0 filas
@@ -566,7 +546,7 @@ SELECT is(
 SELECT tests.authenticate_as('88000000-0000-0000-0000-000000000001');
 SELECT throws_ok(
     $$INSERT INTO public.merchant_verification_requests (
-        user_id, business_name, dpi_hash
+        user_id, business_name, contact_phone_hash
     ) VALUES (
         '88000000-0000-0000-0000-000000000001', 'Directo', 'abc'
     )$$,
@@ -697,10 +677,10 @@ SELECT is(
 );
 
 SELECT is(
-    (SELECT dpi_front_key IS NOT NULL AND dpi_back_key IS NOT NULL AND establishment_key IS NOT NULL
+    (SELECT establishment_key IS NOT NULL
      FROM public.merchant_verification_requests WHERE id = '88000000-0000-0000-0000-000000000001'),
     true,
-    '76. Claves R2 se conservan intactas tras aprobacion (no se borran ni nulan aqui)'
+    '76. La clave R2 del establecimiento se conserva tras aprobacion (purga delegada a Worker/cron)'
 );
 
 SELECT is(
@@ -784,18 +764,16 @@ SELECT set_config('request.jwt.claim.sub', '', true);
 SELECT set_config('request.jwt.claim.role', '', true);
 SELECT set_config('request.jwt.claim.email', '', true);
 
--- Test 87: DPI en estado approved en otra cuenta también es rechazado con credential_unavailable
+-- Test 87: Telefono en estado approved en otra cuenta también es rechazado con credential_unavailable
 SELECT is(
     public.admin_create_merchant_verification_request(
         '88000000-0000-0000-0000-000000000032', '88000000-0000-0000-0000-000000000003',
         'Comercio Duplicado 2',
-        '1234567890101', -- Aprobado en u1
-        'pending/merchant/88000000-0000-0000-0000-000000000003/88000000-0000-0000-0000-000000000032/front.jpg',
-        'pending/merchant/88000000-0000-0000-0000-000000000003/88000000-0000-0000-0000-000000000032/back.jpg',
+        '55551234', -- Aprobado en u1
         'pending/merchant/88000000-0000-0000-0000-000000000003/88000000-0000-0000-0000-000000000032/est.jpg'
     ),
     '{"ok": false, "code": "credential_unavailable"}'::jsonb,
-    '87. DPI en estado approved en otra cuenta es rechazado con credential_unavailable'
+    '87. Telefono en estado approved en otra cuenta es rechazado con credential_unavailable'
 );
 
 -- =============================================================================
@@ -806,9 +784,7 @@ SELECT is(
 SELECT is(
     (public.admin_create_merchant_verification_request(
         '88000000-0000-0000-0000-000000000033', '88000000-0000-0000-0000-000000000003',
-        'Comercio Tres', '3333333330101',
-        'pending/merchant/88000000-0000-0000-0000-000000000003/88000000-0000-0000-0000-000000000033/front.jpg',
-        'pending/merchant/88000000-0000-0000-0000-000000000003/88000000-0000-0000-0000-000000000033/back.jpg',
+        'Comercio Tres', '55553001',
         'pending/merchant/88000000-0000-0000-0000-000000000003/88000000-0000-0000-0000-000000000033/est.jpg'
     ) ->> 'ok')::boolean,
     true,
@@ -850,10 +826,10 @@ SELECT is(
 );
 
 SELECT is(
-    (SELECT dpi_front_key IS NOT NULL AND dpi_back_key IS NOT NULL AND establishment_key IS NOT NULL
+    (SELECT establishment_key IS NOT NULL
      FROM public.merchant_verification_requests WHERE id = '88000000-0000-0000-0000-000000000033'),
     true,
-    '93. Claves R2 siguen intactas tras rechazo (purga delegada a Worker/cron)'
+    '93. La clave R2 del establecimiento sigue intacta tras rechazo (purga delegada a Worker/cron)'
 );
 
 SELECT is(
@@ -884,10 +860,8 @@ SELECT is(
 SELECT is(
     (public.admin_create_merchant_verification_request(
         '88000000-0000-0000-0000-000000000051', '88000000-0000-0000-0000-000000000005',
-        'Estudiante Negocio', '5555555550101',
-        'pending/merchant/88000000-0000-0000-0000-000000000005/88000000-0000-0000-0000-000000000051/front.jpg',
-        'pending/merchant/88000000-0000-0000-0000-000000000005/88000000-0000-0000-0000-000000000051/back.jpg',
-        'pending/merchant/88000000-0000-0000-0000-000000000005/88000000-0000-0000-0000-000000000051/est.jpg'
+        'Estudiante Negocio', '55555501',
+        'pending/merchant/88000000-0000-0000-0000-000000000005/88000000-0000-0000-0000-000000000051/establishment.jpg'
     ) ->> 'ok')::boolean,
     true,
     '97. Solicitud de comerciante para estudiante verificado creada'
@@ -930,10 +904,8 @@ SELECT is(
 SELECT is(
     (public.admin_create_merchant_verification_request(
         '88000000-0000-0000-0000-000000000041', '88000000-0000-0000-0000-000000000004',
-        'Tienda Plan Preservado', '4444444440101',
-        'pending/merchant/88000000-0000-0000-0000-000000000004/88000000-0000-0000-0000-000000000041/front.jpg',
-        'pending/merchant/88000000-0000-0000-0000-000000000004/88000000-0000-0000-0000-000000000041/back.jpg',
-        'pending/merchant/88000000-0000-0000-0000-000000000004/88000000-0000-0000-0000-000000000041/est.jpg'
+        'Tienda Plan Preservado', '44444401',
+        'pending/merchant/88000000-0000-0000-0000-000000000004/88000000-0000-0000-0000-000000000041/establishment.jpg'
     ) ->> 'ok')::boolean,
     true,
     '102. Solicitud para usuario 4 (con plan previo) creada'
@@ -1000,15 +972,15 @@ SELECT lives_ok(
 );
 
 SELECT is(
-    (SELECT dpi_front_key FROM public.merchant_verification_requests WHERE id = '88000000-0000-0000-0000-000000000001'),
-    NULL,
-    '110. dpi_front_key queda en NULL'
+    (SELECT contact_phone_hash IS NOT NULL FROM public.merchant_verification_requests WHERE id = '88000000-0000-0000-0000-000000000001'),
+    true,
+    '110. contact_phone_hash se conserva al limpiar la clave R2'
 );
 
 SELECT is(
-    (SELECT dpi_back_key FROM public.merchant_verification_requests WHERE id = '88000000-0000-0000-0000-000000000001'),
-    NULL,
-    '111. dpi_back_key queda en NULL'
+    (SELECT length(contact_phone_hash) FROM public.merchant_verification_requests WHERE id = '88000000-0000-0000-0000-000000000001'),
+    64,
+    '111. contact_phone_hash mantiene 64 caracteres hex'
 );
 
 SELECT is(
@@ -1026,7 +998,7 @@ SELECT is(
 SELECT is(
     (SELECT count(*) FROM public.merchant_verification_requests
      WHERE id = '88000000-0000-0000-0000-000000000001'
-       AND (dpi_front_key IS NOT NULL OR dpi_back_key IS NOT NULL OR establishment_key IS NOT NULL)),
+       AND establishment_key IS NOT NULL),
     0::bigint,
     '114. La fila ya no califica en el indice parcial de claves activas'
 );

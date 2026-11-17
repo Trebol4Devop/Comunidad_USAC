@@ -47,6 +47,13 @@ export interface ImageTypeResult {
   ext: 'jpg' | 'png' | 'webp';
 }
 
+export interface ApprovalEvaluationResult {
+  approved: boolean;
+  matched_keywords: boolean;
+  matched_carne: boolean;
+  matched_current_year: boolean;
+}
+
 export interface AdminCreateVerificationRpcResult {
   ok: boolean;
   status?: 'verified' | 'manual_review';
@@ -65,12 +72,12 @@ export interface VerificationRequestRow {
   id: string;
   user_id: string;
   carne_hash: string;
-  cui_hash: string | null;
   document_type: DocumentType;
   r2_object_key: string | null;
-  extracted_ocr_text: string | null;
   qr_url: string | null;
-  ocr_confidence: number | null;
+  matched_keywords: boolean;
+  matched_carne: boolean;
+  matched_current_year: boolean;
   ocr_source: 'client' | 'server';
   status: 'pending' | 'approved' | 'manual_review' | 'rejected';
   rejection_reason: string | null;
@@ -83,7 +90,7 @@ export interface VerificationRequestRow {
 
 export type MerchantVerificationStatus = 'pending' | 'approved' | 'rejected';
 
-export type MerchantDocType = 'front' | 'back' | 'establishment';
+export type MerchantDocType = 'establishment';
 
 export interface VerifyMerchantSuccessResponse {
   status: 'manual_review';
@@ -105,9 +112,8 @@ export interface MerchantVerificationRequestRow {
   id: string;
   user_id: string | null;
   business_name: string;
-  dpi_hash: string;
-  dpi_front_key: string | null;
-  dpi_back_key: string | null;
+  contact_phone_hash: string;
+  campus_zone?: string | null;
   establishment_key: string | null;
   establishment_note: string | null;
   status: MerchantVerificationStatus;
@@ -118,4 +124,3 @@ export interface MerchantVerificationRequestRow {
   created_at: string;
   updated_at: string;
 }
-

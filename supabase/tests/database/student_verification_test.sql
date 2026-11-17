@@ -51,18 +51,17 @@ BEGIN
     ON CONFLICT (user_id) DO UPDATE SET role = 'admin';
 
     -- Asegurar perfiles base
-    INSERT INTO public.profiles (id, full_name, carrera, is_verified, verification_status)
+    INSERT INTO public.profiles (id, carrera, is_verified, verification_status)
     VALUES
-        (v_u1, 'Estudiante Uno', 'sistemas', false, 'unverified'),
-        (v_u2, 'Estudiante Dos', 'sistemas', false, 'unverified'),
-        (v_u3, 'Estudiante Tres', 'sistemas', false, 'unverified'),
-        (v_u4, 'Estudiante Cuatro', 'sistemas', false, 'unverified'),
-        (v_u5, 'Estudiante Cinco', 'sistemas', false, 'unverified'),
-        (v_mod, 'Moderador Staff', 'sistemas', true, 'verified'),
-        (v_adm, 'Admin Staff', 'sistemas', true, 'verified'),
-        (v_other, 'Otro Estudiante', 'sistemas', false, 'unverified')
+        (v_u1, 'sistemas', false, 'unverified'),
+        (v_u2, 'sistemas', false, 'unverified'),
+        (v_u3, 'sistemas', false, 'unverified'),
+        (v_u4, 'sistemas', false, 'unverified'),
+        (v_u5, 'sistemas', false, 'unverified'),
+        (v_mod, 'sistemas', true, 'verified'),
+        (v_adm, 'sistemas', true, 'verified'),
+        (v_other, 'sistemas', false, 'unverified')
     ON CONFLICT (id) DO UPDATE SET
-        full_name = EXCLUDED.full_name,
         carrera = EXCLUDED.carrera,
         is_verified = EXCLUDED.is_verified,
         verification_status = EXCLUDED.verification_status;
@@ -116,7 +115,7 @@ SELECT has_column('public', 'profiles', 'institutional_email_domain', '10. profi
 
 SELECT has_table('public', 'verification_requests', '11. Tabla public.verification_requests existe');
 SELECT has_column('public', 'verification_requests', 'carne_hash', '12. verification_requests posee carne_hash');
-SELECT has_column('public', 'verification_requests', 'cui_hash', '13. verification_requests posee cui_hash');
+SELECT hasnt_column('public', 'verification_requests', 'cui_hash', '13. verification_requests no posee cui_hash (Zero-PII)');
 SELECT has_column('public', 'verification_requests', 'document_type', '14. verification_requests posee document_type');
 SELECT has_column('public', 'verification_requests', 'r2_object_key', '15. verification_requests posee r2_object_key');
 SELECT has_column('public', 'verification_requests', 'status', '16. verification_requests posee status');
@@ -219,41 +218,41 @@ SELECT tests.authenticate_as('77000000-0000-0000-0000-000000000001');
 -- Test 29: Rechaza carné no numérico o de longitud errónea
 SELECT is(
     public.claim_student_credentials('carne_invalido'),
-    '{"ok": false, "code": "invalid_carne"}'::jsonb,
+    '{"ok": false, "code": "invalid_carne_format"}'::jsonb,
     '29. claim_student_credentials rechaza carne con formato invalido'
 );
 
 -- Test 30: Rechaza carné con año futuro
 SELECT is(
     public.claim_student_credentials((EXTRACT(YEAR FROM now()) + 1)::text || '12345'),
-    '{"ok": false, "code": "invalid_carne"}'::jsonb,
+    '{"ok": false, "code": "invalid_carne_year"}'::jsonb,
     '30. claim_student_credentials rechaza carne con anio posterior al vigente'
 );
 
 -- Test 31: Rechaza carné con año anterior a 1980
 SELECT is(
     public.claim_student_credentials('197812345'),
-    '{"ok": false, "code": "invalid_carne"}'::jsonb,
+    '{"ok": false, "code": "invalid_carne_year"}'::jsonb,
     '31. claim_student_credentials rechaza carne con anio anterior a 1980'
 );
 
--- Test 32: Rechaza CUI con longitud o formato incorrecto
+-- Test 32: Rechaza carné con longitud menor a 9 dígitos
 SELECT is(
-    public.claim_student_credentials('202012345', '12345'),
-    '{"ok": false, "code": "invalid_cui"}'::jsonb,
-    '32. claim_student_credentials rechaza CUI con longitud erronea'
+    public.claim_student_credentials('12345'),
+    '{"ok": false, "code": "invalid_carne_format"}'::jsonb,
+    '32. claim_student_credentials rechaza carne con longitud menor a 9 digitos'
 );
 
--- Test 33: Rechaza CUI con código de departamento inválido (> 22)
+-- Test 33: Rechaza carné con longitud mayor a 9 dígitos
 SELECT is(
-    public.claim_student_credentials('202012345', '1234567899901'),
-    '{"ok": false, "code": "invalid_cui"}'::jsonb,
-    '33. claim_student_credentials rechaza CUI con departamento invalido'
+    public.claim_student_credentials('20201234567'),
+    '{"ok": false, "code": "invalid_carne_format"}'::jsonb,
+    '33. claim_student_credentials rechaza carne con longitud mayor a 9 digitos'
 );
 
--- Test 34: Reclamo exitoso con carné y CUI válidos
+-- Test 34: Reclamo exitoso con carné válido
 SELECT is(
-    public.claim_student_credentials('202012345', '1234567890101'),
+    public.claim_student_credentials('202012345'),
     '{"ok": true, "verification_status": "unverified", "is_verified": false}'::jsonb,
     '34. claim_student_credentials procesa credenciales validas exitosamente'
 );
@@ -267,10 +266,9 @@ SELECT is(
     '35. carne_hash almacenado en profiles coincide con private.hash_credential'
 );
 
-SELECT is(
-    (SELECT cui_hash FROM public.profiles WHERE id = '77000000-0000-0000-0000-000000000001'),
-    private.hash_credential('1234567890101'),
-    '36. cui_hash almacenado en profiles coincide con private.hash_credential'
+SELECT hasnt_column(
+    'public', 'profiles', 'cui_hash',
+    '36. cui_hash no existe en profiles (Zero-PII)'
 );
 
 -- Test 37: No altera is_verified (sigue false)
@@ -283,22 +281,22 @@ SELECT is(
 -- Test 38: Usuario 2 intenta reclamar el carné del Usuario 1 -> credential_unavailable
 SELECT tests.authenticate_as('77000000-0000-0000-0000-000000000002');
 SELECT is(
-    public.claim_student_credentials('202012345', '9876543210101'),
+    public.claim_student_credentials('202012345'),
     '{"ok": false, "code": "credential_unavailable"}'::jsonb,
     '38. Reclamo de carne duplicado por otro usuario devuelve credential_unavailable'
 );
 
--- Test 39: Usuario 2 intenta reclamar el CUI del Usuario 1 con otro carné -> credential_unavailable
+-- Test 39: Usuario 2 intenta reclamar carné disponible -> exitoso
 SELECT is(
-    public.claim_student_credentials('202154321', '1234567890101'),
-    '{"ok": false, "code": "credential_unavailable"}'::jsonb,
-    '39. Reclamo de CUI duplicado por otro usuario devuelve credential_unavailable'
+    public.claim_student_credentials('202154321'),
+    '{"ok": true, "verification_status": "unverified", "is_verified": false}'::jsonb,
+    '39. Reclamo de carne disponible por segundo usuario devuelve ok true'
 );
 
 -- Test 40: Mismo Usuario 1 puede re-reclamar sus propias credenciales sin error
 SELECT tests.authenticate_as('77000000-0000-0000-0000-000000000001');
 SELECT is(
-    public.claim_student_credentials('202012345', '1234567890101'),
+    public.claim_student_credentials('202012345'),
     '{"ok": true, "verification_status": "unverified", "is_verified": false}'::jsonb,
     '40. Usuario original puede actualizar o re-reclamar sus propias credenciales'
 );
@@ -463,7 +461,8 @@ SELECT tests.authenticate_as('77000000-0000-0000-0000-000000000001');
 SELECT throws_ok(
     $$SELECT public.admin_create_verification_request(
         '77000000-0000-0000-0000-000000000001',
-        '202210001'
+        '202210001',
+        'constancia_inscripcion'
     )$$,
     '42501',
     NULL,
@@ -478,12 +477,12 @@ SELECT is(
     (public.admin_create_verification_request(
         '77000000-0000-0000-0000-000000000002',
         '202210002',
-        '2000000000101',
         'constancia_inscripcion',
         'pending/temp_key.jpg',
-        'UNIVERSIDAD DE SAN CARLOS 202210002',
         'https://usac.edu.gt/qr',
-        0.95,
+        true,
+        true,
+        true,
         true
     ) ->> 'status'),
     'verified',
@@ -527,12 +526,12 @@ SELECT is(
     (public.admin_create_verification_request(
         '77000000-0000-0000-0000-000000000003',
         '202210003',
-        '3000000000101',
         'carne_fisico',
         'pending/77003/doc.jpg',
-        'TEXTO BORROSO',
         NULL,
-        0.50,
+        false,
+        false,
+        false,
         false
     ) ->> 'status'),
     'manual_review',
@@ -570,7 +569,7 @@ SELECT is(
 SELECT is(
     (public.admin_create_verification_request(
         '77000000-0000-0000-0000-000000000004',
-        '202210004', NULL, 'carne_fisico', NULL, NULL, NULL, NULL, false
+        '202210004', 'carne_fisico', NULL, NULL, false, false, false, false
     ) ->> 'ok')::boolean,
     true,
     '64. Intento 1 de verificacion para usuario 4 es aceptado'
@@ -579,7 +578,7 @@ SELECT is(
 SELECT is(
     (public.admin_create_verification_request(
         '77000000-0000-0000-0000-000000000004',
-        '202210004', NULL, 'carne_fisico', NULL, NULL, NULL, NULL, false
+        '202210004', 'carne_fisico', NULL, NULL, false, false, false, false
     ) ->> 'ok')::boolean,
     true,
     '65. Intento 2 de verificacion para usuario 4 es aceptado'
@@ -588,7 +587,7 @@ SELECT is(
 SELECT is(
     (public.admin_create_verification_request(
         '77000000-0000-0000-0000-000000000004',
-        '202210004', NULL, 'carne_fisico', NULL, NULL, NULL, NULL, false
+        '202210004', 'carne_fisico', NULL, NULL, false, false, false, false
     ) ->> 'ok')::boolean,
     true,
     '66. Intento 3 de verificacion para usuario 4 es aceptado'
@@ -597,7 +596,7 @@ SELECT is(
 SELECT is(
     public.admin_create_verification_request(
         '77000000-0000-0000-0000-000000000004',
-        '202210004', NULL, 'carne_fisico', NULL, NULL, NULL, NULL, false
+        '202210004', 'carne_fisico', NULL, NULL, false, false, false, false
     ),
     '{"ok": false, "code": "rate_limited"}'::jsonb,
     '67. Intento 4 dentro de 24h es rechazado por rate_limited'
@@ -608,7 +607,7 @@ SELECT is(
     public.admin_create_verification_request(
         '77000000-0000-0000-0000-000000000005',
         '202210002', -- Ya tomado por Usuario 2
-        NULL, 'carne_fisico', NULL, NULL, NULL, NULL, false
+        'carne_fisico', NULL, NULL, false, false, false, false
     ),
     '{"ok": false, "code": "credential_unavailable"}'::jsonb,
     '68. admin_create_verification_request rechaza carné duplicado con credential_unavailable'
@@ -710,10 +709,8 @@ BEGIN
     SELECT (public.admin_create_verification_request(
         v_u_rej,
         '202210005',
-        NULL,
         'carne_fisico',
-        'pending/rej.jpg',
-        NULL, NULL, NULL, false
+        'pending/rej.jpg'
     ) ->> 'request_id')::uuid INTO v_req_rej;
 
     PERFORM public.admin_review_verification(
@@ -746,10 +743,8 @@ BEGIN
     SELECT (public.admin_create_verification_request(
         v_u_inst,
         '202210031',
-        NULL,
         'carne_fisico',
-        'pending/inst.jpg',
-        NULL, NULL, NULL, false
+        'pending/inst.jpg'
     ) ->> 'request_id')::uuid INTO v_req_inst;
 
     PERFORM public.admin_review_verification(
@@ -910,10 +905,10 @@ SELECT throws_ok(
     '92. Usuario autenticado no puede modificar institutional_email_domain directamente'
 );
 
--- Test 93: Usuario autenticado sí puede actualizar campos permitidos (ej. full_name)
+-- Test 93: Usuario autenticado sí puede actualizar campos permitidos (ej. carrera)
 SELECT lives_ok(
-    $$UPDATE public.profiles SET full_name = 'Estudiante Actualizado' WHERE id = '77000000-0000-0000-0000-000000000001'$$,
-    '93. Usuario autenticado puede modificar campos no protegidos como full_name'
+    $$UPDATE public.profiles SET carrera = 'mecanica' WHERE id = '77000000-0000-0000-0000-000000000001'$$,
+    '93. Usuario autenticado puede modificar campos no protegidos como carrera'
 );
 
 -- Test 94: Invariante: public.is_user_verified devuelve true para usuario verificado
