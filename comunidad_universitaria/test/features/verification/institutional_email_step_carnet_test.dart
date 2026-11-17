@@ -109,10 +109,6 @@ void main() {
         find.widgetWithText(TextFormField, 'Número de Carné USAC (9 dígitos)'),
         '201901234',
       );
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'CUI (opcional, 13 dígitos)'),
-        '1234567890101',
-      );
       await tester.pumpAndSettle();
 
       await tester.ensureVisible(

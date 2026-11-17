@@ -30,7 +30,6 @@ class _DocumentVerificationScreenState
     extends State<DocumentVerificationScreen> {
   final _formKey = GlobalKey<FormState>();
   final _carneController = TextEditingController();
-  final _cuiController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   final OcrService _ocrService = OcrService();
   final VerificationService _verificationService = VerificationService();
@@ -50,7 +49,6 @@ class _DocumentVerificationScreenState
   @override
   void dispose() {
     _carneController.dispose();
-    _cuiController.dispose();
     _ocrService.dispose();
     super.dispose();
   }
@@ -118,7 +116,7 @@ class _DocumentVerificationScreenState
         });
       }
     } catch (e) {
-      debugPrint('[DocumentVerification] Error en escaneo OCR: $e');
+      debugPrint('[DocumentVerification] Error en escaneo OCR');
     } finally {
       if (mounted) setState(() => _isScanningOcr = false);
     }
@@ -139,7 +137,6 @@ class _DocumentVerificationScreenState
     });
 
     final carne = _carneController.text.trim();
-    final cui = _cuiController.text.trim();
 
     try {
       final result = await widget.controller.submitDocument(
@@ -147,7 +144,6 @@ class _DocumentVerificationScreenState
         fileName: _selectedFile!.name,
         carne: carne,
         documentType: _selectedDocType,
-        cui: cui.isNotEmpty ? cui : null,
         clientOcrText: _clientOcrText,
         qrUrl: _qrUrl,
       );
@@ -266,6 +262,39 @@ class _DocumentVerificationScreenState
                   ],
                 ),
               ),
+              const SizedBox(height: 12),
+
+              // Indicador visual Zero-PII de destrucción inmediata
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF0FDF4),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: isDark ? const Color(0xFF166534) : const Color(0xFFBBF7D0),
+                  ),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(
+                      Icons.auto_delete_outlined,
+                      color: Color(0xFF16A34A),
+                      size: 20,
+                    ),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Si la validación automática es exitosa, la imagen se destruye al instante y no se almacena en ningún servidor.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF15803D),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 16),
 
               // Tipo de Documento
@@ -293,7 +322,7 @@ class _DocumentVerificationScreenState
               TextFormField(
                 controller: _carneController,
                 keyboardType: TextInputType.number,
-                textInputAction: TextInputAction.next,
+                textInputAction: TextInputAction.done,
                 maxLength: 9,
                 decoration: const InputDecoration(
                   labelText: 'Número de Carné USAC (9 dígitos)',
@@ -303,23 +332,6 @@ class _DocumentVerificationScreenState
                   counterText: '',
                 ),
                 validator: VerificationValidators.validateCarne,
-              ),
-              const SizedBox(height: 14),
-
-              // Campo CUI (Opcional)
-              TextFormField(
-                controller: _cuiController,
-                keyboardType: TextInputType.number,
-                textInputAction: TextInputAction.done,
-                maxLength: 13,
-                decoration: const InputDecoration(
-                  labelText: 'CUI / DPI (13 dígitos, opcional)',
-                  hintText: 'Ej. 2501123450101',
-                  prefixIcon: Icon(Icons.fingerprint),
-                  border: OutlineInputBorder(),
-                  counterText: '',
-                ),
-                validator: VerificationValidators.validateCui,
               ),
               const SizedBox(height: 16),
 

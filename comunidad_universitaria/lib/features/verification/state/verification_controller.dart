@@ -155,17 +155,16 @@ class VerificationController extends ChangeNotifier {
     }
   }
 
-  /// Reclama carné y CUI usando la RPC `claim_student_credentials`.
+  /// Reclama carné usando la RPC `claim_student_credentials` (Zero-PII: solo carné).
   Future<bool> claimCredentials({
     required String carne,
-    String? cui,
   }) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final res = await _service.claimCredentials(carne: carne, cui: cui);
+      final res = await _service.claimCredentials(carne: carne);
       if (res['ok'] == true) {
         _currentCarne = carne.trim();
         // Recargar perfil para reflejar cambios
@@ -181,7 +180,7 @@ class VerificationController extends ChangeNotifier {
         return false;
       }
     } catch (e) {
-      debugPrint('[VerificationController] Error en claimCredentials: $e');
+      debugPrint('[VerificationController] Error en claimCredentials');
       _errorMessage = VerificationValidators.mapErrorCode('network_error');
       _isLoading = false;
       notifyListeners();
@@ -195,7 +194,6 @@ class VerificationController extends ChangeNotifier {
     required String fileName,
     required String carne,
     required VerificationDocumentType documentType,
-    String? cui,
     String? clientOcrText,
     String? qrUrl,
   }) async {
@@ -209,7 +207,6 @@ class VerificationController extends ChangeNotifier {
         fileName: fileName,
         carne: carne,
         documentType: documentType,
-        cui: cui,
         clientOcrText: clientOcrText,
         qrUrl: qrUrl,
       );

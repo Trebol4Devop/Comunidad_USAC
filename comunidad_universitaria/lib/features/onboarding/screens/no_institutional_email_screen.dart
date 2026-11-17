@@ -280,9 +280,9 @@ class _NoInstitutionalEmailScreenState
                   // Tarjeta 2: Comerciante
                   _VerificationOptionCard(
                     title: 'Comerciante del Campus',
-                    subtitle: 'Tengo un negocio dentro del campus (DPI + local)',
+                    subtitle: 'Tengo un negocio dentro del campus',
                     description:
-                        'Para propietarios y encargados de locales o puestos comerciales dentro del campus central o sedes. Requiere DPI vigente y fotografía del establecimiento.',
+                        'Para propietarios y encargados de locales o puestos comerciales dentro del campus central o sedes. Requiere teléfono de contacto y fotografía del establecimiento.',
                     badgeText: 'Comercio Local',
                     icon: PhosphorIconsRegular.storefront,
                     accentColor: merchantColor,

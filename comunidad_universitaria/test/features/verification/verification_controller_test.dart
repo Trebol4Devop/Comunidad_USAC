@@ -29,7 +29,6 @@ class FakeVerificationService extends VerificationService {
   @override
   Future<Map<String, dynamic>> claimCredentials({
     required String carne,
-    String? cui,
   }) async {
     return claimResultToReturn;
   }
@@ -40,7 +39,6 @@ class FakeVerificationService extends VerificationService {
     required String fileName,
     required String carne,
     required VerificationDocumentType documentType,
-    String? cui,
     String? clientOcrText,
     String? qrUrl,
   }) async {
@@ -234,14 +232,14 @@ void main() {
       };
       fakeMerchantService.latestRequestToReturn = {
         'status': 'rejected',
-        'rejection_reason': 'DPI vencido',
+        'rejection_reason': 'Fotografía del puesto no visible',
       };
 
       await controller.loadStatus();
 
       expect(controller.sellerVerificationStatus, 'rejected');
       expect(controller.isMerchantRejected, isTrue);
-      expect(controller.merchantRejectionReason, 'DPI vencido');
+      expect(controller.merchantRejectionReason, 'Fotografía del puesto no visible');
     });
   });
 }

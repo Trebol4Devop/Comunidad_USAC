@@ -179,7 +179,7 @@ class _TermsConsentModalState extends State<TermsConsentModal> {
                             ),
                             const SizedBox(height: 4),
                             _buildSectionBody(
-                              'Tu CUI y número de carné estudiantil se almacenan exclusivamente como una huella HMAC irreversible (cui_hash / carne_hash), garantizando que nunca se guarden en texto plano ni puedan ser leídos por terceros o administradores.',
+                              'Tu número de carné estudiantil se almacena exclusivamente como una huella HMAC irreversible (carne_hash), garantizando que nunca se guarde en texto plano ni pueda ser leído por terceros o administradores.',
                               isDark,
                             ),
                           ],
