@@ -79,7 +79,7 @@ class ProfileService {
     try {
       final res = await SupabaseService.client
           .from('profiles')
-          .select('is_verified, verified_at, cui_hash, carne_hash, verification_status, verification_method')
+          .select('is_verified, verified_at, carne_hash, verification_status, verification_method')
           .eq('id', uid)
           .maybeSingle();
 
