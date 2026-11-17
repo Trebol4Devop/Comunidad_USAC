@@ -41,16 +41,15 @@ begin
     perform tests.create_supabase_user('53000000-0000-0000-0000-000000000007', 'u07_mktadm@test.com');
     perform tests.create_supabase_user('53000000-0000-0000-0000-000000000008', 'u08_mktadm@test.com');
 
-    insert into public.profiles (id, full_name, carrera, is_verified)
+    insert into public.profiles (id, carrera, is_verified)
     values
-        ('53000000-0000-0000-0000-000000000003', 'Vendedor Cincuenta y Tres', 'sistemas', true),
-        ('53000000-0000-0000-0000-000000000004', 'Usuario Sin Rol Cincuenta y Tres', 'sistemas', true),
-        ('53000000-0000-0000-0000-000000000005', 'Solicitante Patrocinio Cincuenta y Tres', 'sistemas', true),
-        ('53000000-0000-0000-0000-000000000006', 'Vendedor Free Vencido', 'sistemas', true),
-        ('53000000-0000-0000-0000-000000000007', 'Vendedor a Suspender', 'sistemas', true),
-        ('53000000-0000-0000-0000-000000000008', 'Estudiante Sin Carne', 'sistemas', false)
+        ('53000000-0000-0000-0000-000000000003', 'sistemas', true),
+        ('53000000-0000-0000-0000-000000000004', 'sistemas', true),
+        ('53000000-0000-0000-0000-000000000005', 'sistemas', true),
+        ('53000000-0000-0000-0000-000000000006', 'sistemas', true),
+        ('53000000-0000-0000-0000-000000000007', 'sistemas', true),
+        ('53000000-0000-0000-0000-000000000008', 'sistemas', false)
     on conflict (id) do update set
-        full_name = excluded.full_name,
         carrera = excluded.carrera,
         is_verified = excluded.is_verified;
 
