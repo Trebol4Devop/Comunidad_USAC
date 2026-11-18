@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../core/constants/zanate_colors.dart';
 import '../../../core/constants/categories.dart';
@@ -259,11 +260,15 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                           iconSize: 18,
                           padding: const EdgeInsets.all(5),
                           constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                          icon: Icon(
-                            item.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                          icon: PhosphorIcon(
+                            item.isBookmarked
+                                ? PhosphorIconsFill.bookmarkSimple
+                                : PhosphorIconsRegular.bookmarkSimple,
                             color: item.isBookmarked
-                                ? ZanateColors.zanateAccent
-                                : (isDark ? Colors.white70 : Colors.black87),
+                                ? ZanateColors.zanateEyeYellow
+                                : (isDark
+                                    ? Colors.white70
+                                    : ZanateColors.zanateBlack),
                           ),
                           tooltip: item.isBookmarked ? 'Guardado' : 'Guardar',
                           onPressed: widget.onToggleBookmark,
@@ -275,20 +280,18 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                         vertical: 5,
                       ),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF0F172A) : ZanateColors.zanateDark,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.15),
-                            blurRadius: 4,
-                          ),
-                        ],
+                        color: isDark
+                            ? ZanateColors.zanateEyeYellow
+                            : ZanateColors.zanateBlack,
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         item.isSold ? 'VENDIDO' : item.formattedPrice,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
+                        style: TextStyle(
+                          color: isDark
+                              ? ZanateColors.zanateBlack
+                              : Colors.white,
+                          fontWeight: FontWeight.w800,
                           fontSize: 12,
                         ),
                       ),
@@ -388,27 +391,35 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                               const SizedBox(width: 4),
                               Tooltip(
                                 message: 'Vendedor verificado',
-                                child: Icon(
-                                  Icons.verified_outlined,
+                                child: PhosphorIcon(
+                                  PhosphorIconsFill.sealCheck,
                                   size: 14,
-                                  color: theme.colorScheme.onSurfaceVariant,
+                                  color: isDark
+                                      ? ZanateColors.zanateEyeYellow
+                                      : ZanateColors.zanateBlack,
                                 ),
                               ),
                             ],
                             if (item.sellerBadgeText != null && item.sellerBadgeText!.isNotEmpty) ...[
                               const SizedBox(width: 6),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: ZanateColors.zanateAccent.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(4),
+                                  color: ZanateColors.zanateEyeYellow
+                                      .withValues(alpha: 0.25),
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
                                   item.sellerBadgeText!,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 9.5,
-                                    fontWeight: FontWeight.bold,
-                                    color: ZanateColors.zanateAccent,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark
+                                        ? ZanateColors.zanateEyeYellow
+                                        : ZanateColors.zanateBlack,
                                   ),
                                 ),
                               ),
@@ -434,15 +445,22 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                     children: [
                       if (item.sellerIsOnCampus)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.location_on, size: 12, color: Color(0xFF059669)),
+                              const PhosphorIcon(
+                                PhosphorIconsFill.mapPin,
+                                size: 12,
+                                color: Color(0xFF059669),
+                              ),
                               const SizedBox(width: 3),
                               Text(
                                 item.sellerBuildingCode != null && item.sellerBuildingCode!.isNotEmpty
@@ -476,10 +494,11 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                   item.title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+                  style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15.5,
                     height: 1.25,
+                    color: isDark ? Colors.white : ZanateColors.zanateBlack,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -592,10 +611,12 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
-                            Icons.play_circle_outline,
-                            size: 13,
-                            color: theme.colorScheme.onSurface,
+                          PhosphorIcon(
+                            PhosphorIconsRegular.playCircle,
+                            size: 14,
+                            color: isDark
+                                ? Colors.white
+                                : ZanateColors.zanateBlack,
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -658,10 +679,12 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
+                          PhosphorIcon(
                             PhosphorIconsRegular.tag,
                             size: 12,
-                            color: ZanateColors.zanateAccent,
+                            color: isDark
+                                ? ZanateColors.zanateEyeYellow
+                                : ZanateColors.zanateBlack,
                           ),
                           const SizedBox(width: 5),
                           Text(
@@ -669,7 +692,9 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                             style: TextStyle(
                               fontSize: 10.5,
                               fontWeight: FontWeight.w700,
-                              color: isDark ? Colors.white : ZanateColors.zanateDark,
+                              color: isDark
+                                  ? Colors.white
+                                  : ZanateColors.zanateBlack,
                             ),
                           ),
                           const SizedBox(width: 4),

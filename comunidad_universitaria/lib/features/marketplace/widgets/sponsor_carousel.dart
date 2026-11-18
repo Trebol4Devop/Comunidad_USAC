@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../core/constants/zanate_colors.dart';
 import '../../../core/models/marketplace_item.dart';
@@ -29,11 +30,12 @@ class SponsorCarousel extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFFFFBEB),
-          borderRadius: BorderRadius.circular(8),
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isDark ? const Color(0xFF334155) : const Color(0xFFFDE68A),
-            width: 0.8,
+            color:
+                isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            width: 1.0,
           ),
         ),
         child: Row(
@@ -41,12 +43,14 @@ class SponsorCarousel extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(4),
+                color: ZanateColors.zanateEyeYellow.withValues(alpha: 0.25),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(
+              child: PhosphorIcon(
                 PhosphorIconsBold.megaphoneSimple,
-                color: Color(0xFFD97706),
+                color: isDark
+                    ? ZanateColors.zanateEyeYellow
+                    : ZanateColors.zanateBlack,
                 size: 22,
               ),
             ),
@@ -57,20 +61,20 @@ class SponsorCarousel extends StatelessWidget {
                 children: [
                   Text(
                     'Espacio para Patrocinadores y Emprendimientos',
-                    style: TextStyle(
+                    style: GoogleFonts.outfit(
                       fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                      color: isDark ? Colors.white : ZanateColors.zanateDark,
+                      fontSize: 13.5,
+                      color: isDark ? Colors.white : ZanateColors.zanateBlack,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     'Llega a miles de estudiantes en primera plana con fotos y video.',
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 11.5,
                       color: isDark
                           ? const Color(0xFF94A3B8)
-                          : const Color(0xFF92400E),
+                          : ZanateColors.subtleText,
                     ),
                   ),
                 ],
@@ -79,21 +83,24 @@ class SponsorCarousel extends StatelessWidget {
             const SizedBox(width: 10),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFD97706),
-                foregroundColor: Colors.white,
+                backgroundColor: isDark
+                    ? ZanateColors.zanateEyeYellow
+                    : ZanateColors.zanateBlack,
+                foregroundColor:
+                    isDark ? ZanateColors.zanateBlack : Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 14,
-                  vertical: 9,
+                  vertical: 10,
                 ),
               ),
               onPressed: onRequestSponsor,
               child: const Text(
                 'Anunciarme',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
               ),
             ),
           ],
@@ -106,22 +113,12 @@ class SponsorCarousel extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isDark
-              ? [const Color(0xFF252525), const Color(0xFF1C1C1C)]
-              : [const Color(0xFFFFFDF5), const Color(0xFFFEF3C7)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: ZanateColors.zanateEyeYellow,
+          width: 1.5,
         ),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFF59E0B), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,13 +137,21 @@ class SponsorCarousel extends StatelessWidget {
                   alignment: Alignment.centerRight,
                   child: TextButton.icon(
                     onPressed: onRequestSponsor,
-                    icon: const Icon(PhosphorIconsRegular.plusCircle, size: 16, color: Color(0xFFD97706)),
-                    label: const Text(
+                    icon: PhosphorIcon(
+                      PhosphorIconsRegular.plusCircle,
+                      size: 16,
+                      color: isDark
+                          ? ZanateColors.zanateEyeYellow
+                          : ZanateColors.zanateBlack,
+                    ),
+                    label: Text(
                       'Anunciarme aquí',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Color(0xFFD97706),
-                        fontWeight: FontWeight.bold,
+                        color: isDark
+                            ? ZanateColors.zanateEyeYellow
+                            : ZanateColors.zanateBlack,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     style: TextButton.styleFrom(
@@ -171,19 +176,21 @@ class SponsorCarousel extends StatelessWidget {
                 // Thumbnail or gallery preview
                 if (item.imageUrls.isNotEmpty)
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(12),
                     child: Container(
                       width: 100,
                       height: 100,
-                      color: Colors.grey.shade200,
+                      color: isDark
+                          ? const Color(0xFF0F172A)
+                          : ZanateColors.surfaceBg,
                       child: Image.network(
                         item.imageUrls.first,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) =>
-                            const Icon(
-                              Icons.storefront,
+                            const PhosphorIcon(
+                              PhosphorIconsRegular.storefront,
                               size: 36,
-                              color: Colors.grey,
+                              color: ZanateColors.hintText,
                             ),
                       ),
                     ),
@@ -202,10 +209,12 @@ class SponsorCarousel extends StatelessWidget {
                               (item.sellerBusinessName != null && item.sellerBusinessName!.trim().isNotEmpty)
                                   ? item.sellerBusinessName!
                                   : (item.normalizedSponsorBrandName ?? item.authorAlias),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFFD97706),
+                                fontWeight: FontWeight.w700,
+                                color: isDark
+                                    ? ZanateColors.zanateEyeYellow
+                                    : ZanateColors.zanateBlack,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -213,29 +222,38 @@ class SponsorCarousel extends StatelessWidget {
                           if (item.sellerBadgeText != null && item.sellerBadgeText!.isNotEmpty) ...[
                             const SizedBox(width: 6),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(4),
+                                color: ZanateColors.zanateEyeYellow
+                                    .withValues(alpha: 0.28),
+                                borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
                                 item.sellerBadgeText!,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 9.5,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFFD97706),
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark
+                                      ? ZanateColors.zanateEyeYellow
+                                      : ZanateColors.zanateBlack,
                                 ),
                               ),
                             ),
                           ],
                         ],
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 3),
                       Text(
                         item.title,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
+                        style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15.5,
+                          color: isDark
+                              ? Colors.white
+                              : ZanateColors.zanateBlack,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -259,21 +277,28 @@ class SponsorCarousel extends StatelessWidget {
                           if (item.buildingCode.isNotEmpty)
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
+                                horizontal: 8,
+                                vertical: 3,
                               ),
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.primary.withValues(
-                                  alpha: 0.1,
+                                color: isDark
+                                    ? const Color(0xFF0F172A)
+                                    : ZanateColors.surfaceBg,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: isDark
+                                      ? const Color(0xFF334155)
+                                      : ZanateColors.subtleBorder,
                                 ),
-                                borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
                                 'Ubicación: ${item.buildingCode}',
                                 style: TextStyle(
                                   fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark
+                                      ? Colors.white
+                                      : ZanateColors.zanateBlack,
                                 ),
                               ),
                             ),
@@ -281,9 +306,9 @@ class SponsorCarousel extends StatelessWidget {
                           if (item.videoUrl != null &&
                               item.videoUrl!.isNotEmpty)
                             ActionChip(
-                              avatar: const Icon(
-                                Icons.play_circle_fill,
-                                size: 14,
+                              avatar: const PhosphorIcon(
+                                PhosphorIconsFill.playCircle,
+                                size: 15,
                                 color: Colors.red,
                               ),
                               label: const Text(
@@ -305,12 +330,12 @@ class SponsorCarousel extends StatelessWidget {
                               backgroundColor: const Color(0xFF25D366),
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
+                                horizontal: 12,
+                                vertical: 8,
                               ),
-                              minimumSize: const Size(0, 30),
+                              minimumSize: const Size(0, 34),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(4),
+                                borderRadius: BorderRadius.circular(10),
                               ),
                               elevation: 0,
                             ),
