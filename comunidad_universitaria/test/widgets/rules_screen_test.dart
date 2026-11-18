@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:comunidad_universitaria/core/config/app_theme.dart';
 import 'package:comunidad_universitaria/features/rules/screens/rules_screen.dart';
 
@@ -30,7 +31,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Header
-      expect(find.text('Normas Comunitarias & Descargo Legal'), findsOneWidget);
+      expect(find.text('Normas y Descargo'), findsOneWidget);
       expect(
         find.textContaining('iniciativa estudiantil independiente'),
         findsOneWidget,
@@ -63,10 +64,10 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(
-          find.text('Normas Comunitarias & Descargo Legal'),
+          find.text('Normas y Descargo'),
           findsOneWidget,
         );
-        expect(find.byIcon(Icons.shield_outlined), findsWidgets);
+        expect(find.byIcon(PhosphorIconsRegular.scales), findsWidgets);
       },
     );
 
