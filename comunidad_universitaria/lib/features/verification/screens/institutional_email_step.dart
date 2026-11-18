@@ -2,10 +2,11 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/categories.dart';
-import '../../../core/constants/zanate_colors.dart';
 import '../../../core/services/supabase_service.dart';
 import '../services/ocr_service.dart';
 import '../services/verification_service.dart';
@@ -396,7 +397,7 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
         setState(() {
           _otpSent = true;
           _otpInfoMessage =
-              'Hemos enviado un código OTP a $email. Si no lo recibes, revisa spam o inicia con Google.';
+              'Hemos enviado un código a $email. Si no lo recibes, revisa spam o inicia con Google.';
         });
       }
     } catch (e) {
@@ -417,7 +418,7 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
     final email = _emailController.text.trim().toLowerCase();
 
     if (token.length < 6) {
-      setState(() => _inlineError = 'Ingresa el código OTP completo de 6 dígitos.');
+      setState(() => _inlineError = 'Ingresa el código completo de 6 dígitos.');
       return;
     }
 
@@ -502,15 +503,15 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
         const Row(
           children: [
             Icon(
-              Icons.photo_camera_outlined,
+              PhosphorIconsRegular.camera,
               size: 20,
-              color: ZanateColors.zanateAccent,
+              color: Color(0xFF0B0D10),
             ),
             SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Fotos del carné (verificación local)',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                'Fotos del carné',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
               ),
             ),
           ],
@@ -518,22 +519,23 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
         const SizedBox(height: 8),
         if (!_ocrService.isSupported)
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF2D2415) : const Color(0xFFFEFCE8),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: isDark ? const Color(0xFF78350F) : const Color(0xFFFEF08A),
-              ),
+              color: const Color(0xFFF5C518).withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(14),
             ),
             child: const Row(
               children: [
-                Icon(Icons.info_outline, color: Color(0xFFB45309), size: 18),
+                Icon(
+                  PhosphorIconsFill.info,
+                  color: Color(0xFFB45309),
+                  size: 18,
+                ),
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'La verificación local del carné solo está disponible en Android/iOS. En este dispositivo puedes continuar con tu correo institucional.',
-                    style: TextStyle(fontSize: 11.5, color: Color(0xFFB45309)),
+                    'La validación local del carné solo aplica en móvil. Aquí puedes usar tu correo institucional.',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF334155)),
                   ),
                 ),
               ],
@@ -543,8 +545,6 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
           _buildCarnetSideCard(
             isDark: isDark,
             title: 'Frente del carné',
-            subtitle:
-                'Facultad, carrera, carné, "En caso de emergencia marca 1592" y código de barras.',
             bytes: _frontBytes,
             fileName: _frontName,
             isScanning: _isScanningFront,
@@ -560,8 +560,6 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
           _buildCarnetSideCard(
             isDark: isDark,
             title: 'Reverso del carné',
-            subtitle:
-                'Nombre completo, "USAC TRICENTENARIA", "ESTUDIANTE UNIVERSITARIO" y QR de Registro y Estadística.',
             bytes: _backBytes,
             fileName: _backName,
             isScanning: _isScanningBack,
@@ -573,13 +571,6 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
             onGallery: () => _pickCarneSide(ImageSource.gallery, isFront: false),
             onClear: () => _clearCarnetSide(isFront: false),
           ),
-          if (!_canRequestEmail) ...[
-            const SizedBox(height: 8),
-            const Text(
-              'Adjunta y valida el frente y el reverso para habilitar el correo institucional.',
-              style: TextStyle(fontSize: 11, color: Color(0xFFB45309)),
-            ),
-          ],
         ],
       ],
     );
@@ -588,7 +579,7 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
   Widget _buildCarnetSideCard({
     required bool isDark,
     required String title,
-    required String subtitle,
+    String? subtitle,
     required Uint8List? bytes,
     required String? fileName,
     required bool isScanning,
@@ -601,12 +592,14 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
     required VoidCallback onClear,
   }) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
+        color: Colors.white,
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: const Color(0xFFE2E8F0),
+          width: 1.2,
         ),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -629,15 +622,17 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
                 ),
             ],
           ),
-          const SizedBox(height: 2),
-          Text(
-            subtitle,
-            style: TextStyle(
-              fontSize: 11,
-              height: 1.3,
-              color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+          if (subtitle != null && subtitle.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 11,
+                height: 1.3,
+                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+              ),
             ),
-          ),
+          ],
           const SizedBox(height: 8),
           if (bytes != null) ...[
             ClipRRect(
@@ -790,169 +785,200 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    const zanateBlack = Color(0xFF0B0D10);
+    const zanateEyeYellow = Color(0xFFF5C518);
+    const subtleText = Color(0xFF475569);
+    const mutedText = Color(0xFF64748B);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final inputBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1.2),
+    );
+    final focusedBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: const BorderSide(color: zanateBlack, width: 1.6),
+    );
+    final errorBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.2),
+    );
+    InputDecoration zanateInput({
+      required String labelText,
+      String? hintText,
+      Widget? prefixIcon,
+      String? counterText,
+    }) {
+      return InputDecoration(
+        labelText: labelText,
+        hintText: hintText,
+        counterText: counterText,
+        prefixIcon: prefixIcon,
+        filled: true,
+        fillColor: const Color(0xFFF8FAFC),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
+        labelStyle: const TextStyle(
+          fontSize: 13.5,
+          fontWeight: FontWeight.w500,
+          color: Color(0xFF64748B),
+        ),
+        floatingLabelStyle: const TextStyle(
+          fontSize: 12.5,
+          fontWeight: FontWeight.w700,
+          color: zanateBlack,
+        ),
+        hintStyle: const TextStyle(
+          fontSize: 13.5,
+          color: Color(0xFF94A3B8),
+        ),
+        border: inputBorder,
+        enabledBorder: inputBorder,
+        focusedBorder: focusedBorder,
+        errorBorder: errorBorder,
+        focusedErrorBorder: errorBorder,
+      );
+    }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Resumen de la verificación automática
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: isDark ? const Color(0xFF334155) : const Color(0xFFBFDBFE),
+    return ColoredBox(
+      color: Colors.white,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Valida tu cuenta',
+                style: GoogleFonts.outfit(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.3,
+                  color: zanateBlack,
                 ),
               ),
-              child: const Row(
-                children: [
-                  Icon(
-                    Icons.school_outlined,
-                    color: ZanateColors.zanateAccent,
-                    size: 24,
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Container(
+                  width: 44,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: zanateEyeYellow,
+                    borderRadius: BorderRadius.circular(999),
                   ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Verificación automática: valida tu cuenta institucional y tu carné al instante.',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w600,
-                        color: ZanateColors.zanateAccent,
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Valida tu correo institucional y tu carné USAC.',
+                style: TextStyle(
+                  fontSize: 13.5,
+                  height: 1.4,
+                  color: subtleText,
+                ),
+              ),
+              const SizedBox(height: 18),
+
+              // Campo Carné
+              TextFormField(
+                controller: _carneController,
+                keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.next,
+                maxLength: 9,
+                decoration: zanateInput(
+                  labelText: 'Número de Carné USAC (9 dígitos)',
+                  hintText: 'Ej. 201901234',
+                  prefixIcon: const Icon(
+                    PhosphorIconsRegular.identificationCard,
+                    color: subtleText,
+                  ),
+                  counterText: '',
+                ),
+                validator: VerificationValidators.validateCarne,
+                onChanged: (_) => _invalidateCarnePhotoCheck(),
+              ),
+              const SizedBox(height: 14),
+
+              // Dropdown de Carrera
+              if (_loadingCarreras)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: CircularProgressIndicator(color: zanateBlack),
+                  ),
+                )
+              else
+                DropdownButtonFormField<String>(
+                  initialValue: _selectedCarreraId,
+                  isExpanded: true,
+                  dropdownColor: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  decoration: zanateInput(
+                    labelText: 'Carrera Universitaria',
+                    prefixIcon: const Icon(
+                      PhosphorIconsRegular.graduationCap,
+                      color: subtleText,
+                    ),
+                  ),
+                  items: _carreras.map((c) {
+                    return DropdownMenuItem<String>(
+                      value: c['id'],
+                      child: Text(
+                        c['nombre'] ?? '',
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 13),
                       ),
-                    ),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    setState(() => _selectedCarreraId = val);
+                    _invalidateCarnePhotoCheck();
+                  },
+                ),
+              const SizedBox(height: 18),
+              _buildCarnePhotoSection(isDark),
+              const SizedBox(height: 20),
+
+              // Opción 1: Google OAuth
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: zanateEyeYellow,
+                  foregroundColor: zanateBlack,
+                  elevation: 0,
+                  minimumSize: const Size.fromHeight(52),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Campo Carné
-            TextFormField(
-              controller: _carneController,
-              keyboardType: TextInputType.number,
-              textInputAction: TextInputAction.next,
-              maxLength: 9,
-              decoration: const InputDecoration(
-                labelText: 'Número de Carné USAC (9 dígitos)',
-                hintText: 'Ej. 201901234',
-                prefixIcon: Icon(Icons.badge_outlined),
-                border: OutlineInputBorder(),
-                counterText: '',
-              ),
-              validator: VerificationValidators.validateCarne,
-              onChanged: (_) => _invalidateCarnePhotoCheck(),
-            ),
-            const SizedBox(height: 8),
-
-            // Aviso de privacidad Zero-PII
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                ),
+                onPressed:
+                    (_isBusy || !_canRequestEmail) ? null : _handleGoogleSignIn,
+                icon: const Icon(PhosphorIconsBold.signIn, size: 20),
+                label: const Text(
+                  'Continuar con Google Institucional',
+                  style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800),
                 ),
               ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(
-                    Icons.lock_outline,
-                    size: 16,
-                    color: Color(0xFF10B981),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Tu carné se convierte en un código cifrado irreversible para evitar cuentas duplicadas. Nunca guardamos tu número real.',
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: isDark ? Colors.grey.shade300 : const Color(0xFF475569),
-                        height: 1.3,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-
-            // Dropdown de Carrera
-            if (_loadingCarreras)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: CircularProgressIndicator(),
-                ),
-              )
-            else
-              DropdownButtonFormField<String>(
-                initialValue: _selectedCarreraId,
-                isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: 'Carrera Universitaria',
-                  prefixIcon: Icon(Icons.account_balance_outlined),
-                  border: OutlineInputBorder(),
-                ),
-                items: _carreras.map((c) {
-                  return DropdownMenuItem<String>(
-                    value: c['id'],
-                    child: Text(
-                      c['nombre'] ?? '',
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 13),
-                    ),
-                  );
-                }).toList(),
-                onChanged: (val) {
-                  setState(() => _selectedCarreraId = val);
-                  _invalidateCarnePhotoCheck();
-                },
-              ),
-            const SizedBox(height: 18),
-            _buildCarnePhotoSection(isDark),
-            const SizedBox(height: 20),
-
-            // Opción 1: Google OAuth
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: ZanateColors.zanateAccent,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              onPressed: (_isBusy || !_canRequestEmail) ? null : _handleGoogleSignIn,
-              icon: const Icon(Icons.login, size: 20),
-              label: const Text(
-                'Continuar con Google Institucional',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-              ),
-            ),
             const SizedBox(height: 16),
 
             // Separador
-            Row(
+            const Row(
               children: [
-                const Expanded(child: Divider()),
+                Expanded(child: Divider(color: Color(0xFFE2E8F0))),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: EdgeInsets.symmetric(horizontal: 12),
                   child: Text(
-                    'o mediante código OTP',
+                    'o mediante código',
                     style: TextStyle(
                       fontSize: 12,
-                      color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                      color: mutedText,
                     ),
                   ),
                 ),
-                const Expanded(child: Divider()),
+                Expanded(child: Divider(color: Color(0xFFE2E8F0))),
               ],
             ),
             const SizedBox(height: 16),
@@ -960,22 +986,29 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
             // Aviso de sesión anónima
             if (SupabaseService.currentUser?.isAnonymous == true) ...[
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF2D2415) : const Color(0xFFFEFCE8),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(
-                    color: isDark ? const Color(0xFF78350F) : const Color(0xFFFEF08A),
-                  ),
+                  color: zanateEyeYellow.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.info_outline, color: Color(0xFFB45309), size: 18),
+                    Icon(
+                      PhosphorIconsFill.info,
+                      color: Color(0xFFB45309),
+                      size: 18,
+                    ),
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Tu sesión actual es anónima. Al verificar tu correo, se migrará a tu cuenta real.',
-                        style: TextStyle(fontSize: 11.5, color: Color(0xFFB45309)),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF334155),
+                        ),
                       ),
                     ),
                   ],
@@ -988,26 +1021,39 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
             TextFormField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
-              textInputAction: _otpSent ? TextInputAction.next : TextInputAction.done,
-              decoration: const InputDecoration(
+              textInputAction:
+                  _otpSent ? TextInputAction.next : TextInputAction.done,
+              decoration: zanateInput(
                 labelText: 'Correo Institucional USAC',
                 hintText: 'estudiante@ingenieria.usac.edu.gt',
-                prefixIcon: Icon(Icons.email_outlined),
-                border: OutlineInputBorder(),
+                prefixIcon: const Icon(
+                  PhosphorIconsRegular.envelopeSimple,
+                  color: subtleText,
+                ),
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
 
             // Botón enviar OTP
             if (!_otpSent)
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
+                  foregroundColor: zanateBlack,
+                  backgroundColor: const Color(0xFFF8FAFC),
+                  side: const BorderSide(color: Color(0xFFCBD5E1), width: 1.3),
+                  minimumSize: const Size.fromHeight(50),
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
-                onPressed: (_isBusy || !_canRequestEmail) ? null : _handleSendOtp,
-                icon: const Icon(Icons.send_outlined, size: 18),
-                label: const Text('Enviar código OTP por correo'),
+                onPressed:
+                    (_isBusy || !_canRequestEmail) ? null : _handleSendOtp,
+                icon: const Icon(PhosphorIconsRegular.paperPlaneTilt, size: 18),
+                label: const Text(
+                  'Enviar código',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
               ),
 
             // Campo OTP si ya fue enviado
@@ -1017,18 +1063,24 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
                   padding: const EdgeInsets.only(bottom: 10),
                   child: Text(
                     _otpInfoMessage!,
-                    style: const TextStyle(fontSize: 12, color: ZanateColors.zanateAccent),
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: zanateBlack,
+                    ),
                   ),
                 ),
               TextFormField(
                 controller: _otpController,
                 keyboardType: TextInputType.number,
                 maxLength: 6,
-                decoration: const InputDecoration(
-                  labelText: 'Código de 6 dígitos (OTP)',
+                decoration: zanateInput(
+                  labelText: 'Código de 6 dígitos',
                   hintText: '123456',
-                  prefixIcon: Icon(Icons.lock_clock_outlined),
-                  border: OutlineInputBorder(),
+                  prefixIcon: const Icon(
+                    PhosphorIconsRegular.lockKey,
+                    color: subtleText,
+                  ),
                   counterText: '',
                 ),
               ),
@@ -1037,15 +1089,23 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF10B981),
                   foregroundColor: Colors.white,
+                  elevation: 0,
+                  minimumSize: const Size.fromHeight(50),
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
-                onPressed: (_isBusy || !_canRequestEmail) ? null : _handleVerifyOtp,
+                onPressed:
+                    (_isBusy || !_canRequestEmail) ? null : _handleVerifyOtp,
                 child: _isBusy
                     ? const SizedBox(
                         height: 20,
                         width: 20,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
                       )
                     : const Text(
                         'Confirmar código y verificar',
@@ -1058,25 +1118,29 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
             if (_inlineError != null) ...[
               const SizedBox(height: 12),
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF451A1A) : const Color(0xFFFEF2F2),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(
-                    color: isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFECACA),
-                  ),
+                  color: const Color(0xFFFEF2F2),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFFCA5A5)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       _inlineError!,
-                      style: const TextStyle(fontSize: 12, color: Color(0xFFB91C1C)),
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        color: Color(0xFFB91C1C),
+                      ),
                     ),
                     const SizedBox(height: 6),
                     TextButton.icon(
                       onPressed: widget.onSelectSupportPath,
-                      icon: const Icon(Icons.support_agent, size: 16),
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFFB91C1C),
+                      ),
+                      icon: const Icon(PhosphorIconsRegular.headset, size: 16),
                       label: const Text(
                         'Contactar con soporte',
                         style: TextStyle(fontSize: 12),
@@ -1086,21 +1150,9 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
                 ),
               ),
             ],
-
-            const SizedBox(height: 24),
-            // Alternativa: contactar con soporte
-            Center(
-              child: TextButton.icon(
-                onPressed: widget.onSelectSupportPath,
-                icon: const Icon(Icons.support_agent, size: 18),
-                label: const Text(
-                  '¿No pudiste verificar automáticamente? Contactar con soporte',
-                  style: TextStyle(fontSize: 12),
-                ),
-              ),
-            ),
           ],
         ),
+      ),
       ),
     );
   }
