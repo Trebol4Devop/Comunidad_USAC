@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
+import '../../../core/constants/zanate_colors.dart';
 import '../../../core/models/marketplace_item.dart';
 import '../../../core/utils/responsive.dart';
 import '../../shared/widgets/report_dialog.dart';
@@ -31,15 +34,62 @@ class SponsoredContentControls extends StatelessWidget {
         ? 'Este contenido fue incluido como promoción en Marketplace. Actualmente no se informa una razón de segmentación más específica.'
         : 'Este contenido fue promocionado por $brand en Marketplace. Actualmente no se informa una razón de segmentación más específica.';
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('¿Por qué veo esto?'),
-        content: Text(explanation),
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '¿Por qué veo esto?',
+              style: GoogleFonts.outfit(
+                fontWeight: FontWeight.w700,
+                fontSize: 19,
+                color: isDark ? Colors.white : ZanateColors.zanateBlack,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              width: 44,
+              height: 4,
+              decoration: BoxDecoration(
+                color: ZanateColors.zanateEyeYellow,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          explanation,
+          style: TextStyle(
+            fontSize: 13.5,
+            height: 1.45,
+            color:
+                isDark ? const Color(0xFFCBD5E1) : ZanateColors.subtleText,
+          ),
+        ),
         actions: [
-          TextButton(
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isDark
+                  ? ZanateColors.zanateEyeYellow
+                  : ZanateColors.zanateBlack,
+              foregroundColor:
+                  isDark ? ZanateColors.zanateBlack : Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cerrar'),
+            child: const Text(
+              'Cerrar',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
           ),
         ],
       ),
@@ -71,22 +121,25 @@ class SponsoredContentControls extends StatelessWidget {
 
   void _openMobileActions(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: theme.colorScheme.surface,
+      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
       showDragHandle: true,
       shape: RoundedRectangleBorder(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-        side: BorderSide(color: theme.colorScheme.outlineVariant),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        side: BorderSide(
+          color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+        ),
       ),
       builder: (sheetContext) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: Icon(
-                Icons.info_outline,
-                color: theme.colorScheme.onSurface,
+              leading: PhosphorIcon(
+                PhosphorIconsRegular.info,
+                color: isDark ? Colors.white : ZanateColors.zanateBlack,
               ),
               title: const Text('¿Por qué veo esto?'),
               onTap: () {
@@ -95,9 +148,9 @@ class SponsoredContentControls extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: Icon(
-                Icons.visibility_off_outlined,
-                color: theme.colorScheme.onSurface,
+              leading: PhosphorIcon(
+                PhosphorIconsRegular.eyeSlash,
+                color: isDark ? Colors.white : ZanateColors.zanateBlack,
               ),
               title: const Text('Ocultar este anuncio'),
               onTap: () {
@@ -106,9 +159,9 @@ class SponsoredContentControls extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: Icon(
-                Icons.flag_outlined,
-                color: theme.colorScheme.onSurface,
+              leading: PhosphorIcon(
+                PhosphorIconsRegular.flag,
+                color: const Color(0xFFEF4444),
               ),
               title: const Text('Reportar'),
               onTap: () {
@@ -126,9 +179,10 @@ class SponsoredContentControls extends StatelessWidget {
   Widget build(BuildContext context) {
     final brand = item.normalizedSponsorBrandName;
     final isMobile = Responsive.isMobile(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final menuForeground = overImage
         ? Colors.white
-        : Theme.of(context).colorScheme.onSurface;
+        : (isDark ? Colors.white : ZanateColors.zanateBlack);
     final menuBackground = overImage
         ? Colors.black.withValues(alpha: 0.72)
         : null;
@@ -145,17 +199,16 @@ class SponsoredContentControls extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
-                    vertical: 7,
+                    vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFEF08A),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: const Color(0xFF854D0E)),
+                    color: ZanateColors.zanateEyeYellow,
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Patrocinado',
-                    style: TextStyle(
-                      color: Color(0xFF422006),
+                    style: GoogleFonts.outfit(
+                      color: ZanateColors.zanateBlack,
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),
@@ -201,21 +254,26 @@ class SponsoredContentControls extends StatelessWidget {
                     backgroundColor: menuBackground,
                     minimumSize: const Size(48, 48),
                   ),
-                  icon: const Icon(Icons.more_vert),
+                  icon: const PhosphorIcon(PhosphorIconsBold.dotsThreeVertical),
                 )
               : PopupMenuButton<String>(
                   tooltip: 'Opciones del contenido patrocinado',
-                  color: Theme.of(context).colorScheme.surface,
+                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
                   surfaceTintColor: Colors.transparent,
                   elevation: 2,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12),
                     side: BorderSide(
-                      color: Theme.of(context).colorScheme.outlineVariant,
+                      color: isDark
+                          ? const Color(0xFF334155)
+                          : ZanateColors.subtleBorder,
                     ),
                   ),
                   padding: EdgeInsets.zero,
-                  icon: Icon(Icons.more_vert, color: menuForeground),
+                  icon: PhosphorIcon(
+                    PhosphorIconsBold.dotsThreeVertical,
+                    color: menuForeground,
+                  ),
                   onSelected: (action) => _selectAction(context, action),
                   itemBuilder: (menuContext) => const [
                     PopupMenuItem(

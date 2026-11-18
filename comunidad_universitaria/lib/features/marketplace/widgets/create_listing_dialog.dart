@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../core/constants/zanate_colors.dart';
 import 'package:image_picker/image_picker.dart';
@@ -39,7 +40,9 @@ class CreateListingDialog extends StatefulWidget {
         context: context,
         isScrollControlled: true,
         useSafeArea: true,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF0F172A)
+            : Colors.white,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
@@ -313,10 +316,50 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
     }
   }
 
+  InputDecoration _zanateInput(
+    bool isDark, {
+    required String labelText,
+    String? hintText,
+    String? prefixText,
+    Widget? prefixIcon,
+  }) {
+    final borderColor =
+        isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
+    final focusColor =
+        isDark ? ZanateColors.zanateEyeYellow : ZanateColors.zanateBlack;
+    return InputDecoration(
+      labelText: labelText,
+      hintText: hintText,
+      prefixText: prefixText,
+      prefixIcon: prefixIcon,
+      filled: true,
+      fillColor: isDark ? const Color(0xFF1E293B) : ZanateColors.surfaceBg,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: borderColor, width: 1.2),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: borderColor, width: 1.2),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: focusColor, width: 1.6),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final isMobile = Responsive.isMobile(context);
+    final borderColor =
+        isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
+    final primaryText = isDark ? Colors.white : ZanateColors.zanateBlack;
+    final secondaryText =
+        isDark ? const Color(0xFF94A3B8) : ZanateColors.mutedText;
     final maxHeight =
         MediaQuery.of(context).size.height * (isMobile ? 0.90 : 0.85);
 
@@ -325,24 +368,42 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
       child: ConstrainedBox(
         constraints: BoxConstraints(maxHeight: maxHeight),
         child: SingleChildScrollView(
-          padding: EdgeInsets.all(isMobile ? 16 : 24),
+          padding: EdgeInsets.all(isMobile ? 20 : 26),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (isMobile) ...[
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: borderColor,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+              ],
               // Header
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
-                      color: ZanateColors.zanateAccent.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(4),
+                      color: ZanateColors.zanateEyeYellow.withValues(alpha: 0.24),
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Icon(
-                      PhosphorIconsBold.storefront,
-                      color: ZanateColors.zanateAccent,
-                      size: 22,
+                    child: Center(
+                      child: PhosphorIcon(
+                        PhosphorIconsBold.storefront,
+                        color: isDark
+                            ? ZanateColors.zanateEyeYellow
+                            : ZanateColors.zanateBlack,
+                        size: 22,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -352,20 +413,29 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                       children: [
                         Text(
                           'Publicar Producto o Servicio',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 17,
+                          style: GoogleFonts.outfit(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 19,
                             letterSpacing: -0.2,
-                            color: theme.brightness == Brightness.dark ? Colors.white : ZanateColors.zanateDark,
+                            color: primaryText,
                           ),
                         ),
                         const SizedBox(height: 2),
-                        const Text(
+                        Text(
                           'Marketplace Universitario · Comunidad USAC',
                           style: TextStyle(
                             fontSize: 12,
-                            color: ZanateColors.zanateAccent,
+                            color: secondaryText,
                             fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          width: 44,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: ZanateColors.zanateEyeYellow,
+                            borderRadius: BorderRadius.circular(2),
                           ),
                         ),
                       ],
@@ -373,7 +443,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
 
               // Selector visual drásticamente diferenciado (Identidad en Marketplace)
               IdentityBadgeChip(
@@ -505,12 +575,11 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                     child: DropdownButtonFormField<String>(
                       initialValue: _selectedCategory,
                       isExpanded: true,
-                      decoration: const InputDecoration(
+                      dropdownColor:
+                          isDark ? const Color(0xFF1E293B) : Colors.white,
+                      decoration: _zanateInput(
+                        isDark,
                         labelText: 'Categoría',
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
                       ),
                       items: USACConstants.marketplaceCategories
                           .where((c) => c.id != 'todos')
@@ -537,6 +606,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                     children: [
                       Checkbox(
                         value: _isFree,
+                        activeColor: ZanateColors.zanateBlack,
                         onChanged: (val) {
                           setState(() {
                             _isFree = val ?? false;
@@ -561,13 +631,10 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
               // Title
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(
+                decoration: _zanateInput(
+                  isDark,
                   labelText: 'Título del producto o servicio',
                   hintText: 'Ej. Pastel de Zanahoria / Tutoría de Física 1',
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
                 ),
                 validator: (val) {
                   if (val == null || val.trim().length < 4) {
@@ -586,14 +653,11 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
-                  decoration: const InputDecoration(
+                  decoration: _zanateInput(
+                    isDark,
                     labelText: 'Precio en Quetzales',
                     hintText: '15.00',
                     prefixText: 'Q ',
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
                   ),
                   validator: (val) {
                     if (!_isFree) {
@@ -609,9 +673,10 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
               // Contact Channels Section Header
               Text(
                 'Canales de Contacto',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  color: primaryText,
                 ),
               ),
               const SizedBox(height: 8),
@@ -620,86 +685,87 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
               TextFormField(
                 controller: _whatsappController,
                 keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
+                decoration: _zanateInput(
+                  isDark,
                   labelText: 'WhatsApp',
                   hintText: 'Ej. 55551234',
-                  prefixIcon: Icon(
-                    Icons.chat,
-                    size: 18,
-                    color: Color(0xFF25D366),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
+                  prefixIcon: const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: PhosphorIcon(
+                      PhosphorIconsFill.whatsappLogo,
+                      size: 18,
+                      color: Color(0xFF25D366),
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
 
               // Instagram
               TextFormField(
                 controller: _instagramController,
-                decoration: const InputDecoration(
+                decoration: _zanateInput(
+                  isDark,
                   labelText: 'Instagram',
                   hintText: 'Ej. @mi_emprendimiento o enlace a tu perfil',
-                  prefixIcon: Icon(
-                    Icons.camera_alt_outlined,
-                    size: 18,
-                    color: Color(0xFFE1306C),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
+                  prefixIcon: const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: PhosphorIcon(
+                      PhosphorIconsFill.instagramLogo,
+                      size: 18,
+                      color: Color(0xFFE1306C),
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
 
               // Messenger
               TextFormField(
                 controller: _messengerController,
-                decoration: const InputDecoration(
+                decoration: _zanateInput(
+                  isDark,
                   labelText: 'Facebook Messenger',
                   hintText: 'Ej. @usuario o enlace m.me/tu_perfil',
-                  prefixIcon: Icon(
-                    Icons.message_outlined,
-                    size: 18,
-                    color: Color(0xFF0084FF),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
+                  prefixIcon: const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: PhosphorIcon(
+                      PhosphorIconsFill.messengerLogo,
+                      size: 18,
+                      color: Color(0xFF0084FF),
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
 
               // Telegram
               TextFormField(
                 controller: _telegramController,
-                decoration: const InputDecoration(
+                decoration: _zanateInput(
+                  isDark,
                   labelText: 'Telegram',
                   hintText: 'Ej. @usuario_telegram',
-                  prefixIcon: Icon(
-                    Icons.send_outlined,
-                    size: 18,
-                    color: Color(0xFF229ED9),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
+                  prefixIcon: const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: PhosphorIcon(
+                      PhosphorIconsFill.telegramLogo,
+                      size: 18,
+                      color: Color(0xFF229ED9),
+                    ),
                   ),
                 ),
               ),
 
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
 
               // Sede & Building / Location
               Text(
                 'Ubicación de Entrega en el Campus',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  color: primaryText,
                 ),
               ),
               const SizedBox(height: 8),
@@ -713,12 +779,11 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                     child: DropdownButtonFormField<String>(
                       initialValue: _selectedSede,
                       isExpanded: true,
-                      decoration: const InputDecoration(
+                      dropdownColor:
+                          isDark ? const Color(0xFF1E293B) : Colors.white,
+                      decoration: _zanateInput(
+                        isDark,
                         labelText: 'Sede / Campus',
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 8,
-                        ),
                       ),
                       items: USACConstants.sedes
                           .map(
@@ -741,12 +806,11 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                     child: DropdownButtonFormField<String>(
                       initialValue: _selectedFacultad,
                       isExpanded: true,
-                      decoration: const InputDecoration(
+                      dropdownColor:
+                          isDark ? const Color(0xFF1E293B) : Colors.white,
+                      decoration: _zanateInput(
+                        isDark,
                         labelText: 'Facultad / Unidad',
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 8,
-                        ),
                       ),
                       items: USACConstants.facultades
                           .map(
@@ -769,12 +833,11 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                     child: DropdownButtonFormField<String>(
                       initialValue: _selectedBuilding,
                       isExpanded: true,
-                      decoration: const InputDecoration(
+                      dropdownColor:
+                          isDark ? const Color(0xFF1E293B) : Colors.white,
+                      decoration: _zanateInput(
+                        isDark,
                         labelText: 'Edificio o Punto',
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 8,
-                        ),
                       ),
                       items: USACConstants.campusBuildings
                           .map(
@@ -795,17 +858,17 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                 ],
               ),
 
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
 
               TextFormField(
                 controller: _locationDetailController,
-                decoration: const InputDecoration(
+                decoration: _zanateInput(
+                  isDark,
                   labelText: 'Punto específico / Horario de entrega',
                   hintText: 'Ej. Frente a cafetería entre 11:00 y 13:00 hrs.',
-                  prefixIcon: Icon(Icons.place_outlined, size: 18),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 8,
+                  prefixIcon: const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: PhosphorIcon(PhosphorIconsRegular.mapPin, size: 18),
                   ),
                 ),
               ),
@@ -816,7 +879,8 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
               TextFormField(
                 controller: _descriptionController,
                 maxLines: 3,
-                decoration: const InputDecoration(
+                decoration: _zanateInput(
+                  isDark,
                   labelText: 'Descripción detallada',
                   hintText:
                       'Indica sabores, temas de la tutoría, estado del libro o especificaciones...',
@@ -836,9 +900,10 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                 widget.isSponsored
                     ? 'Fotos de Patrocinador · Hasta 3 imágenes'
                     : 'Foto del Producto o Servicio',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  color: primaryText,
                 ),
               ),
               const SizedBox(height: 6),
@@ -852,7 +917,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                     (url) => Stack(
                       children: [
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(12),
                           child: Image.network(
                             url,
                             width: 70,
@@ -861,8 +926,14 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                             errorBuilder: (ctx, err, stack) => Container(
                               width: 70,
                               height: 70,
-                              color: Colors.grey.shade300,
-                              child: const Icon(Icons.broken_image, size: 24),
+                              color: isDark
+                                  ? const Color(0xFF1E293B)
+                                  : ZanateColors.surfaceBg,
+                              child: PhosphorIcon(
+                                PhosphorIconsRegular.imageBroken,
+                                size: 24,
+                                color: secondaryText,
+                              ),
                             ),
                           ),
                         ),
@@ -872,14 +943,14 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                           child: InkWell(
                             onTap: () => setState(() => _imageUrls.remove(url)),
                             child: Container(
-                              padding: const EdgeInsets.all(2),
+                              padding: const EdgeInsets.all(3),
                               decoration: const BoxDecoration(
                                 color: Colors.black54,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(
-                                Icons.close,
-                                size: 14,
+                              child: const PhosphorIcon(
+                                PhosphorIconsRegular.x,
+                                size: 12,
                                 color: Colors.white,
                               ),
                             ),
@@ -891,9 +962,17 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                   if (_imageUrls.length < _maxImages)
                     OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
+                        foregroundColor: primaryText,
+                        backgroundColor: isDark
+                            ? const Color(0xFF1E293B)
+                            : ZanateColors.surfaceBg,
+                        side: BorderSide(color: borderColor, width: 1.2),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
+                          horizontal: 14,
+                          vertical: 11,
                         ),
                       ),
                       onPressed: _isUploadingImage ? null : _pickAndUploadImage,
@@ -903,9 +982,10 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                               height: 14,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Icon(
-                              Icons.add_photo_alternate_outlined,
+                          : PhosphorIcon(
+                              PhosphorIconsRegular.image,
                               size: 18,
+                              color: primaryText,
                             ),
                       label: Text(
                         _isUploadingImage ? 'Subiendo...' : 'Subir Foto',
@@ -919,9 +999,10 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
               // Reference Social Links
               Text(
                 'Publicaciones de Referencia en Redes Sociales',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  color: primaryText,
                 ),
               ),
               const SizedBox(height: 6),
@@ -931,13 +1012,13 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                   Expanded(
                     child: TextField(
                       controller: _socialLinkInputController,
-                      decoration: const InputDecoration(
+                      decoration: _zanateInput(
+                        isDark,
                         labelText: 'Enlace de publicación',
                         hintText: 'https://instagram.com/p/...',
-                        prefixIcon: Icon(Icons.link, size: 18),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 8,
+                        prefixIcon: const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: PhosphorIcon(PhosphorIconsRegular.link, size: 18),
                         ),
                       ),
                       onSubmitted: (_) => _addSocialLink(),
@@ -945,7 +1026,16 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                   ),
                   const SizedBox(width: 8),
                   IconButton.filledTonal(
-                    icon: const Icon(Icons.add, size: 20),
+                    style: IconButton.styleFrom(
+                      backgroundColor: isDark
+                          ? const Color(0xFF1E293B)
+                          : ZanateColors.pillBg,
+                      foregroundColor: primaryText,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    icon: const PhosphorIcon(PhosphorIconsBold.plus, size: 18),
                     tooltip: 'Fijar enlace',
                     onPressed: _addSocialLink,
                   ),
@@ -966,7 +1056,10 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                                 : link,
                             style: const TextStyle(fontSize: 11),
                           ),
-                          deleteIcon: const Icon(Icons.close, size: 14),
+                          deleteIcon: const PhosphorIcon(
+                            PhosphorIconsRegular.x,
+                            size: 13,
+                          ),
                           onDeleted: () =>
                               setState(() => _socialLinks.remove(link)),
                         ),
@@ -980,13 +1073,16 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                 const SizedBox(height: 14),
                 TextFormField(
                   controller: _videoUrlController,
-                  decoration: const InputDecoration(
+                  decoration: _zanateInput(
+                    isDark,
                     labelText: 'Enlace de Video Promocional',
                     hintText: 'https://youtube.com/watch?v=...',
-                    prefixIcon: Icon(Icons.play_circle_outline, size: 18),
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 8,
+                    prefixIcon: const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: PhosphorIcon(
+                        PhosphorIconsRegular.playCircle,
+                        size: 18,
+                      ),
                     ),
                   ),
                 ),
@@ -996,15 +1092,23 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
 
               // Disclaimer
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFFBEB),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFFDE68A)),
+                  color: ZanateColors.zanateEyeYellow.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: ZanateColors.zanateEyeYellow.withValues(alpha: 0.45),
+                  ),
                 ),
-                child: const Text(
+                child: Text(
                   'Nota: Toda compra, venta o asesoría se coordina directamente entre estudiantes de forma voluntaria. La plataforma no maneja dinero.',
-                  style: TextStyle(color: Color(0xFF92400E), fontSize: 11),
+                  style: TextStyle(
+                    color: isDark
+                        ? const Color(0xFFFDE68A)
+                        : ZanateColors.zanateBlack,
+                    fontSize: 11.5,
+                    height: 1.35,
+                  ),
                 ),
               ),
 
@@ -1020,24 +1124,36 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                   runSpacing: 8,
                   children: [
                     TextButton(
+                      style: TextButton.styleFrom(
+                        foregroundColor: secondaryText,
+                      ),
                       onPressed: _isSubmitting
                           ? null
                           : () => Navigator.of(context).pop(),
-                      child: const Text('Cancelar'),
+                      child: const Text(
+                        'Cancelar',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
                     ),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _isQuotaExceeded
-                            ? const Color(0xFFF59E0B)
-                            : ZanateColors.zanateAccent,
-                        foregroundColor: Colors.white,
+                            ? ZanateColors.zanateEyeYellow
+                            : (isDark
+                                ? ZanateColors.zanateEyeYellow
+                                : ZanateColors.zanateBlack),
+                        foregroundColor: _isQuotaExceeded
+                            ? ZanateColors.zanateBlack
+                            : (isDark
+                                ? ZanateColors.zanateBlack
+                                : Colors.white),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(14),
                         ),
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 11,
+                          horizontal: 20,
+                          vertical: 13,
                         ),
                       ),
                       onPressed: _isSubmitting

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../core/constants/categories.dart';
@@ -105,7 +106,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('El enlace de la tienda se copió al portapapeles.'),
-          backgroundColor: ZanateColors.zanateAccent,
+          backgroundColor: ZanateColors.zanateBlack,
         ),
       );
     }
@@ -136,7 +137,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
                   ? 'Tienda reportada. Gracias por cuidar la comunidad.'
                   : 'No se pudo enviar el reporte.',
             ),
-            backgroundColor: ZanateColors.zanateAccent,
+            backgroundColor: ZanateColors.zanateBlack,
           ),
         );
       },
@@ -151,6 +152,9 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF0F172A)
+          : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -217,13 +221,25 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
     return MarketplaceTheme.wrap(
       context,
       Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg,
+      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
       appBar: AppBar(
+        leading: IconButton(
+          icon: PhosphorIcon(
+            PhosphorIconsBold.caretLeft,
+            size: 22,
+            color: isDark ? Colors.white : ZanateColors.zanateBlack,
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: Text(
           storeName,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontWeight: FontWeight.w700),
+          style: GoogleFonts.outfit(
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+            color: isDark ? Colors.white : ZanateColors.zanateBlack,
+          ),
         ),
         actions: [
           IconButton(
@@ -369,7 +385,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
               decoration: BoxDecoration(
                 gradient: bannerUrl == null
                     ? const LinearGradient(
-                        colors: [Color(0xFF004B87), Color(0xFF1E3A8A)],
+                        colors: [ZanateColors.zanateBlack, Color(0xFF1E293B)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       )
@@ -430,19 +446,26 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
                   Flexible(
                     child: Text(
                       storeName,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 20,
+                      style: GoogleFonts.outfit(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 21,
+                        color: isDark ? Colors.white : ZanateColors.zanateBlack,
                       ),
                     ),
                   ),
                   if (prof.isVerified) ...[
                     const SizedBox(width: 6),
-                    const Icon(Icons.verified, size: 18, color: Color(0xFF0284C7)),
+                    PhosphorIcon(
+                      PhosphorIconsFill.sealCheck,
+                      size: 18,
+                      color: isDark
+                          ? ZanateColors.zanateEyeYellow
+                          : ZanateColors.zanateBlack,
+                    ),
                   ],
                 ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
 
               // Plan Badge & Status Chips
               Wrap(
@@ -451,17 +474,20 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
-                      color: ZanateColors.zanateAccent.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(6),
+                      color: ZanateColors.zanateEyeYellow,
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       prof.badgeText ?? prof.planName,
                       style: const TextStyle(
                         fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: ZanateColors.zanateAccent,
+                        fontWeight: FontWeight.w800,
+                        color: ZanateColors.zanateBlack,
                       ),
                     ),
                   ),
@@ -560,13 +586,13 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
 
   Widget _buildAvatarFallback(SellerProfile prof) {
     return Container(
-      color: ZanateColors.zanateAccent,
+      color: ZanateColors.zanateBlack,
       child: Center(
         child: Text(
           prof.storeInitials,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w900,
+          style: GoogleFonts.outfit(
+            color: ZanateColors.zanateEyeYellow,
+            fontWeight: FontWeight.w800,
             fontSize: 22,
           ),
         ),
@@ -588,14 +614,14 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
           ),
         );
       },
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: BorderRadius.circular(14),
       child: Container(
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E293B) : Colors.white,
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
-            width: 0.8,
+            width: 1.0,
           ),
         ),
         clipBehavior: Clip.antiAlias,
@@ -605,14 +631,24 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
             Expanded(
               child: Container(
                 width: double.infinity,
-                color: isDark ? const Color(0xFF0F172A) : Colors.grey.shade200,
+                color: isDark
+                    ? const Color(0xFF0F172A)
+                    : ZanateColors.surfaceBg,
                 child: item.imageUrls.isNotEmpty
                     ? Image.network(
                         item.imageUrls.first,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => const Icon(Icons.image, size: 28),
+                        errorBuilder: (_, _, _) => const PhosphorIcon(
+                          PhosphorIconsRegular.image,
+                          size: 28,
+                          color: ZanateColors.hintText,
+                        ),
                       )
-                    : const Icon(Icons.storefront, size: 28),
+                    : const PhosphorIcon(
+                        PhosphorIconsRegular.storefront,
+                        size: 28,
+                        color: ZanateColors.hintText,
+                      ),
               ),
             ),
             Padding(
@@ -624,15 +660,21 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
                     item.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    style: GoogleFonts.outfit(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : ZanateColors.zanateBlack,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     item.formattedPrice,
-                    style: const TextStyle(
-                      fontSize: 11.5,
+                    style: TextStyle(
+                      fontSize: 12,
                       fontWeight: FontWeight.w800,
-                      color: ZanateColors.zanateAccent,
+                      color: isDark
+                          ? ZanateColors.zanateEyeYellow
+                          : ZanateColors.zanateBlack,
                     ),
                   ),
                   if (item.buildingCode.isNotEmpty) ...[
@@ -733,44 +775,96 @@ class _EditStoreSheetState extends State<_EditStoreSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final borderColor =
+        isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
+    final focusColor =
+        isDark ? ZanateColors.zanateEyeYellow : ZanateColors.zanateBlack;
+    final primaryText = isDark ? Colors.white : ZanateColors.zanateBlack;
+
+    InputDecoration zanateField(String label) => InputDecoration(
+      labelText: label,
+      filled: true,
+      fillColor: isDark ? const Color(0xFF1E293B) : ZanateColors.surfaceBg,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: borderColor, width: 1.2),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: borderColor, width: 1.2),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: focusColor, width: 1.6),
+      ),
+    );
+
     return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
         left: 20,
         right: 20,
-        top: 20,
+        top: 14,
       ),
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Editar Perfil Comercial',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: borderColor,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
             ),
-            const SizedBox(height: 14),
+            Text(
+              'Editar Perfil Comercial',
+              style: GoogleFonts.outfit(
+                fontSize: 19,
+                fontWeight: FontWeight.w700,
+                color: primaryText,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              width: 44,
+              height: 4,
+              decoration: BoxDecoration(
+                color: ZanateColors.zanateEyeYellow,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
             TextField(
               controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Nombre comercial de la tienda',
-                border: OutlineInputBorder(),
-              ),
+              decoration: zanateField('Nombre comercial de la tienda'),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _descController,
               maxLines: 3,
               maxLength: 300,
-              decoration: const InputDecoration(
-                labelText: 'Descripción de la tienda o productos',
-                border: OutlineInputBorder(),
-              ),
+              decoration: zanateField('Descripción de la tienda o productos'),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Entregando ahora en el campus'),
+              activeTrackColor: ZanateColors.zanateBlack,
+              title: Text(
+                'Entregando ahora en el campus',
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  color: primaryText,
+                ),
+              ),
               subtitle: const Text('Muestra un distintivo verde en tu perfil y publicaciones.'),
               value: _isOnCampus,
               onChanged: (val) => setState(() => _isOnCampus = val),
@@ -780,10 +874,8 @@ class _EditStoreSheetState extends State<_EditStoreSheet> {
               DropdownButtonFormField<String>(
                 key: ValueKey(_selectedBuilding),
                 initialValue: _selectedBuilding,
-                decoration: const InputDecoration(
-                  labelText: 'Edificio de entrega',
-                  border: OutlineInputBorder(),
-                ),
+                dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                decoration: zanateField('Edificio de entrega'),
                 items: USACConstants.campusBuildings
                     .where((b) => b['sede_id'] == 'central')
                     .map(
@@ -799,27 +891,40 @@ class _EditStoreSheetState extends State<_EditStoreSheet> {
               TextField(
                 controller: _noteController,
                 maxLength: 120,
-                decoration: const InputDecoration(
-                  labelText: 'Nota de ubicación (ej. Frente a fotocopiadora)',
-                  border: OutlineInputBorder(),
+                decoration: zanateField(
+                  'Nota de ubicación (ej. Frente a fotocopiadora)',
                 ),
               ),
             ],
             const SizedBox(height: 16),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: ZanateColors.zanateAccent,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
+                backgroundColor: isDark
+                    ? ZanateColors.zanateEyeYellow
+                    : ZanateColors.zanateBlack,
+                foregroundColor:
+                    isDark ? ZanateColors.zanateBlack : Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 15),
               ),
               onPressed: _isSaving ? null : _save,
               child: _isSaving
-                  ? const SizedBox(
+                  ? SizedBox(
                       height: 18,
                       width: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color:
+                            isDark ? ZanateColors.zanateBlack : Colors.white,
+                      ),
                     )
-                  : const Text('Guardar Cambios'),
+                  : const Text(
+                      'Guardar Cambios',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
             ),
             const SizedBox(height: 24),
           ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../core/constants/zanate_colors.dart';
 import '../../../core/models/marketplace_item.dart';
@@ -94,11 +95,23 @@ class _SavedListingsScreenState extends State<SavedListingsScreen> {
     return MarketplaceTheme.wrap(
       context,
       Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg,
+      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
       appBar: AppBar(
-        title: const Text(
+        leading: IconButton(
+          icon: PhosphorIcon(
+            PhosphorIconsBold.caretLeft,
+            size: 22,
+            color: isDark ? Colors.white : ZanateColors.zanateBlack,
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(
           'Productos Guardados',
-          style: TextStyle(fontWeight: FontWeight.w700),
+          style: GoogleFonts.outfit(
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+            color: isDark ? Colors.white : ZanateColors.zanateBlack,
+          ),
         ),
       ),
       body: _isLoading

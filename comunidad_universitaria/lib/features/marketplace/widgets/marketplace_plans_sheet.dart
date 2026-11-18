@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../core/constants/zanate_colors.dart';
 import '../../../core/services/marketplace_service.dart';
@@ -20,12 +21,13 @@ class MarketplacePlansSheet extends StatefulWidget {
   });
 
   static Future<void> show(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (Responsive.isMobile(context)) {
       return showModalBottomSheet(
         context: context,
         isScrollControlled: true,
         useSafeArea: true,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
@@ -35,6 +37,10 @@ class MarketplacePlansSheet extends StatefulWidget {
       return showDialog(
         context: context,
         builder: (ctx) => Dialog(
+          backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 960),
@@ -140,25 +146,45 @@ class _MarketplacePlansSheetState extends State<MarketplacePlansSheet> {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: isDesktop ? 32 : 18,
-        vertical: 24,
+        vertical: 20,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (!isDesktop) ...[
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF334155)
+                      : ZanateColors.subtleBorder,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+          ],
           // Header
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  color: ZanateColors.zanateAccent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(4),
+                  color: ZanateColors.zanateEyeYellow.withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(
-                  PhosphorIconsBold.sparkle,
-                  color: ZanateColors.zanateAccent,
-                  size: 24,
+                child: Center(
+                  child: PhosphorIcon(
+                    PhosphorIconsBold.sparkle,
+                    color: isDark
+                        ? ZanateColors.zanateEyeYellow
+                        : ZanateColors.zanateBlack,
+                    size: 22,
+                  ),
                 ),
               ),
               const SizedBox(width: 14),
@@ -168,10 +194,10 @@ class _MarketplacePlansSheetState extends State<MarketplacePlansSheet> {
                   children: [
                     Text(
                       'Planes del Marketplace',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: isDark ? Colors.white : ZanateColors.zanateDark,
+                      style: GoogleFonts.outfit(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : ZanateColors.zanateBlack,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -181,7 +207,16 @@ class _MarketplacePlansSheetState extends State<MarketplacePlansSheet> {
                         fontSize: 12,
                         color: isDark
                             ? const Color(0xFF94A3B8)
-                            : const Color(0xFF64748B),
+                            : ZanateColors.mutedText,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      width: 44,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: ZanateColors.zanateEyeYellow,
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
                   ],
@@ -189,7 +224,12 @@ class _MarketplacePlansSheetState extends State<MarketplacePlansSheet> {
               ),
               IconButton(
                 tooltip: 'Cerrar',
-                icon: const Icon(Icons.close),
+                icon: PhosphorIcon(
+                  PhosphorIconsRegular.x,
+                  size: 20,
+                  color:
+                      isDark ? const Color(0xFF94A3B8) : ZanateColors.mutedText,
+                ),
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ],
@@ -214,6 +254,17 @@ class _MarketplacePlansSheetState extends State<MarketplacePlansSheet> {
                     Text(_errorMessage!),
                     const SizedBox(height: 12),
                     ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isDark
+                            ? ZanateColors.zanateEyeYellow
+                            : ZanateColors.zanateBlack,
+                        foregroundColor:
+                            isDark ? ZanateColors.zanateBlack : Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                       onPressed: _loadPlansAndStatus,
                       child: const Text('Reintentar'),
                     ),
@@ -314,30 +365,19 @@ class _MarketplacePlansSheetState extends State<MarketplacePlansSheet> {
     final borderColor = isCurrentPlan
         ? const Color(0xFF10B981)
         : (isRecommended
-            ? const Color(0xFFF59E0B)
+            ? ZanateColors.zanateEyeYellow
             : (isDark
                 ? const Color(0xFF334155)
                 : ZanateColors.subtleBorder));
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A) : Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: borderColor,
-          width: isCurrentPlan || isRecommended ? 1.5 : 0.8,
+          width: isCurrentPlan || isRecommended ? 1.5 : 1.0,
         ),
-        boxShadow: [
-          if (isRecommended || isCurrentPlan)
-            BoxShadow(
-              color: (isCurrentPlan
-                      ? const Color(0xFF10B981)
-                      : const Color(0xFFF59E0B))
-                  .withValues(alpha: 0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-        ],
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -349,9 +389,10 @@ class _MarketplacePlansSheetState extends State<MarketplacePlansSheet> {
             children: [
               Text(
                 plan.name,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
+                style: GoogleFonts.outfit(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white : ZanateColors.zanateBlack,
                 ),
               ),
               if (isCurrentPlan)
@@ -360,7 +401,7 @@ class _MarketplacePlansSheetState extends State<MarketplacePlansSheet> {
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Text(
                     'Plan actual',
@@ -376,15 +417,15 @@ class _MarketplacePlansSheetState extends State<MarketplacePlansSheet> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(6),
+                    color: ZanateColors.zanateEyeYellow,
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Text(
                     'Recomendado',
                     style: TextStyle(
                       fontSize: 10.5,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFFD97706),
+                      fontWeight: FontWeight.w800,
+                      color: ZanateColors.zanateBlack,
                     ),
                   ),
                 ),
@@ -399,10 +440,12 @@ class _MarketplacePlansSheetState extends State<MarketplacePlansSheet> {
             children: [
               Text(
                 plan.formattedPrice,
-                style: const TextStyle(
+                style: GoogleFonts.outfit(
                   fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                  color: ZanateColors.zanateAccent,
+                  fontWeight: FontWeight.w800,
+                  color: isDark
+                      ? ZanateColors.zanateEyeYellow
+                      : ZanateColors.zanateBlack,
                 ),
               ),
               if (plan.priceMonthly > 0)
@@ -478,13 +521,16 @@ class _MarketplacePlansSheetState extends State<MarketplacePlansSheet> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: isCurrentPlan
-                  ? (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9))
-                  : ZanateColors.zanateAccent,
-              foregroundColor:
-                  isCurrentPlan ? (isDark ? Colors.white70 : Colors.black87) : Colors.white,
-              elevation: isCurrentPlan ? 0 : 1,
+                  ? (isDark ? const Color(0xFF1E293B) : ZanateColors.pillBg)
+                  : (isDark
+                      ? ZanateColors.zanateEyeYellow
+                      : ZanateColors.zanateBlack),
+              foregroundColor: isCurrentPlan
+                  ? (isDark ? Colors.white70 : ZanateColors.mutedText)
+                  : (isDark ? ZanateColors.zanateBlack : Colors.white),
+              elevation: 0,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(12),
               ),
               padding: const EdgeInsets.symmetric(vertical: 12),
             ),
@@ -500,9 +546,11 @@ class _MarketplacePlansSheetState extends State<MarketplacePlansSheet> {
                           ? 'Solicitar plan'
                           : 'Mejorar plan')),
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w700,
-                color: isCurrentPlan ? Colors.grey : Colors.white,
+                color: isCurrentPlan
+                    ? Colors.grey
+                    : (isDark ? ZanateColors.zanateBlack : Colors.white),
               ),
             ),
           ),

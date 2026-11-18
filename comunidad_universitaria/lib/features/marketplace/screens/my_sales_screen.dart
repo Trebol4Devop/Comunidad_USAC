@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../core/constants/categories.dart';
 import '../../../core/constants/zanate_colors.dart';
@@ -215,11 +216,23 @@ class _MySalesScreenState extends State<MySalesScreen> {
     return MarketplaceTheme.wrap(
       context,
       Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg,
+      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
       appBar: AppBar(
-        title: const Text(
+        leading: IconButton(
+          icon: PhosphorIcon(
+            PhosphorIconsBold.caretLeft,
+            size: 22,
+            color: isDark ? Colors.white : ZanateColors.zanateBlack,
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(
           'Mis Ventas e Inventario',
-          style: TextStyle(fontWeight: FontWeight.w700),
+          style: GoogleFonts.outfit(
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+            color: isDark ? Colors.white : ZanateColors.zanateBlack,
+          ),
         ),
       ),
       body: _isLoadingAll
@@ -305,10 +318,10 @@ class _MySalesScreenState extends State<MySalesScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
-          width: 0.8,
+          width: 1.0,
         ),
       ),
       child: Row(
@@ -317,10 +330,16 @@ class _MySalesScreenState extends State<MySalesScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: ZanateColors.zanateAccent.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(4),
+              color: ZanateColors.zanateEyeYellow.withValues(alpha: 0.25),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(PhosphorIconsBold.sparkle, color: ZanateColors.zanateAccent, size: 22),
+            child: PhosphorIcon(
+              PhosphorIconsBold.sparkle,
+              color: isDark
+                  ? ZanateColors.zanateEyeYellow
+                  : ZanateColors.zanateBlack,
+              size: 22,
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -329,7 +348,11 @@ class _MySalesScreenState extends State<MySalesScreen> {
               children: [
                 Text(
                   'Plan $planName',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                  style: GoogleFonts.outfit(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : ZanateColors.zanateBlack,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -339,7 +362,9 @@ class _MySalesScreenState extends State<MySalesScreen> {
                   style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+                    color: isDark
+                        ? const Color(0xFFCBD5E1)
+                        : ZanateColors.subtleText,
                   ),
                 ),
                 if (status?.expiresAt != null) ...[
@@ -348,7 +373,9 @@ class _MySalesScreenState extends State<MySalesScreen> {
                     'Vence el: ${status!.expiresAt!.day}/${status.expiresAt!.month}/${status.expiresAt!.year}',
                     style: TextStyle(
                       fontSize: 11,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      color: isDark
+                          ? const Color(0xFF94A3B8)
+                          : ZanateColors.mutedText,
                     ),
                   ),
                 ],
@@ -357,14 +384,23 @@ class _MySalesScreenState extends State<MySalesScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: ZanateColors.zanateAccent,
-              foregroundColor: Colors.white,
+              backgroundColor: isDark
+                  ? ZanateColors.zanateEyeYellow
+                  : ZanateColors.zanateBlack,
+              foregroundColor: isDark
+                  ? ZanateColors.zanateBlack
+                  : Colors.white,
               elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             onPressed: () => MarketplacePlansSheet.show(context),
-            child: const Text('Mejorar plan', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Mejorar plan',
+              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
+            ),
           ),
         ],
       ),
@@ -376,10 +412,10 @@ class _MySalesScreenState extends State<MySalesScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
-          width: 0.8,
+          width: 1.0,
         ),
       ),
       child: Column(
@@ -461,10 +497,10 @@ class _MySalesScreenState extends State<MySalesScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
-          width: 0.8,
+          width: 1.0,
         ),
       ),
       child: Column(
@@ -567,24 +603,36 @@ class _MySalesScreenState extends State<MySalesScreen> {
 
   Widget _buildMetricTile(String label, String value, IconData icon, bool isDark) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(8),
+        color: isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+          width: 1.0,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, size: 14, color: ZanateColors.zanateAccent),
+              Icon(
+                icon,
+                size: 14,
+                color: isDark
+                    ? ZanateColors.zanateEyeYellow
+                    : ZanateColors.zanateBlack,
+              ),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
                   label,
                   style: TextStyle(
-                    fontSize: 10,
-                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    fontSize: 10.5,
+                    color: isDark
+                        ? const Color(0xFF94A3B8)
+                        : ZanateColors.mutedText,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -594,7 +642,11 @@ class _MySalesScreenState extends State<MySalesScreen> {
           const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+            style: GoogleFonts.outfit(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              color: isDark ? Colors.white : ZanateColors.zanateBlack,
+            ),
           ),
         ],
       ),
@@ -629,10 +681,10 @@ class _MySalesScreenState extends State<MySalesScreen> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
-          width: 0.8,
+          width: 1.0,
         ),
       ),
       child: Row(
@@ -650,17 +702,27 @@ class _MySalesScreenState extends State<MySalesScreen> {
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                color: isDark ? const Color(0xFF0F172A) : Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(10),
+                color: isDark
+                    ? const Color(0xFF0F172A)
+                    : ZanateColors.surfaceBg,
               ),
               clipBehavior: Clip.antiAlias,
               child: item.imageUrls.isNotEmpty
                   ? Image.network(
                       item.imageUrls.first,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => const Icon(Icons.image, size: 24),
+                      errorBuilder: (_, _, _) => const PhosphorIcon(
+                        PhosphorIconsRegular.image,
+                        size: 24,
+                        color: ZanateColors.hintText,
+                      ),
                     )
-                  : const Icon(Icons.storefront, size: 24),
+                  : const PhosphorIcon(
+                      PhosphorIconsRegular.storefront,
+                      size: 24,
+                      color: ZanateColors.hintText,
+                    ),
             ),
           ),
           const SizedBox(width: 12),
@@ -674,15 +736,21 @@ class _MySalesScreenState extends State<MySalesScreen> {
                   item.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                  style: GoogleFonts.outfit(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : ZanateColors.zanateBlack,
+                  ),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   item.formattedPrice,
-                  style: const TextStyle(
-                    fontSize: 12,
+                  style: TextStyle(
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w800,
-                    color: ZanateColors.zanateAccent,
+                    color: isDark
+                        ? ZanateColors.zanateEyeYellow
+                        : ZanateColors.zanateBlack,
                   ),
                 ),
               ],

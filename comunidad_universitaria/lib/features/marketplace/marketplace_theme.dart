@@ -4,14 +4,14 @@ import '../../core/constants/zanate_colors.dart';
 
 /// Lenguaje visual del Marketplace ("Zanate Store").
 ///
-/// Replica la estética cuadrada del catálogo principal: superficies planas,
-/// bordes sutiles de 0.8px y radios pequeños (4px en controles, 8px en tiles).
-/// Se aplica localmente al módulo para no alterar el resto de la aplicación.
+/// Sigue el sistema visual Zanate: superficies limpias blancas/oscuras,
+/// bordes definidos de 1.0–1.2px y radios consistentes (14px en controles,
+/// 20px en modales y diálogos).
 class MarketplaceTheme {
   MarketplaceTheme._();
 
   static const BorderRadius controlRadius = BorderRadius.all(
-    Radius.circular(4),
+    Radius.circular(14),
   );
 
   static ThemeData resolve(BuildContext context) {
@@ -21,16 +21,19 @@ class MarketplaceTheme {
         ? const Color(0xFF334155)
         : ZanateColors.subtleBorder;
     final surface = isDark ? const Color(0xFF1E293B) : Colors.white;
-    final foreground = isDark ? Colors.white : ZanateColors.zanateDark;
+    final foreground = isDark ? Colors.white : ZanateColors.zanateBlack;
+    final focusColor = isDark
+        ? ZanateColors.zanateEyeYellow
+        : ZanateColors.zanateBlack;
 
-    OutlineInputBorder outline(Color color, [double width = 0.8]) {
+    OutlineInputBorder outline(Color color, [double width = 1.2]) {
       return OutlineInputBorder(
         borderRadius: controlRadius,
         borderSide: BorderSide(color: color, width: width),
       );
     }
 
-    RoundedRectangleBorder shape({Color? side, double width = 0.8}) {
+    RoundedRectangleBorder shape({Color? side, double width = 1.0}) {
       return RoundedRectangleBorder(
         borderRadius: controlRadius,
         side: BorderSide(color: side ?? borderColor, width: width),
@@ -45,7 +48,7 @@ class MarketplaceTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        shape: Border(bottom: BorderSide(color: borderColor, width: 0.8)),
+        shape: Border(bottom: BorderSide(color: borderColor, width: 1.0)),
       ),
       cardTheme: base.cardTheme.copyWith(
         elevation: 0,
@@ -54,19 +57,24 @@ class MarketplaceTheme {
       ),
       dialogTheme: base.dialogTheme.copyWith(
         backgroundColor: surface,
-        shape: shape(),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: borderColor, width: 1.0),
+        ),
       ),
       bottomSheetTheme: base.bottomSheetTheme.copyWith(
         backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(4)),
-          side: BorderSide(color: ZanateColors.subtleBorder, width: 0.8),
+        shape: RoundedRectangleBorder(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          side: BorderSide(color: borderColor, width: 1.0),
         ),
       ),
       inputDecorationTheme: base.inputDecorationTheme.copyWith(
+        filled: true,
+        fillColor: isDark ? const Color(0xFF1E293B) : ZanateColors.surfaceBg,
         border: outline(borderColor),
         enabledBorder: outline(borderColor),
-        focusedBorder: outline(ZanateColors.zanateAccent, 1.2),
+        focusedBorder: outline(focusColor, 1.6),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style:

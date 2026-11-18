@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../core/constants/categories.dart';
@@ -252,7 +253,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('El enlace de la publicación se copió al portapapeles.'),
-          backgroundColor: ZanateColors.zanateAccent,
+          backgroundColor: ZanateColors.zanateBlack,
         ),
       );
     }
@@ -281,7 +282,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ? 'Publicación reportada. Gracias por cuidar la comunidad.'
                   : 'No se pudo enviar el reporte.',
             ),
-            backgroundColor: ZanateColors.zanateAccent,
+            backgroundColor: ZanateColors.zanateBlack,
           ),
         );
         if (ok) Navigator.of(context).pop();
@@ -351,18 +352,34 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       Scaffold(
       backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
       appBar: AppBar(
+        leading: IconButton(
+          icon: PhosphorIcon(
+            PhosphorIconsBold.caretLeft,
+            size: 22,
+            color: isDark ? Colors.white : ZanateColors.zanateBlack,
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: Text(
           item.title,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          style: GoogleFonts.outfit(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            color: isDark ? Colors.white : ZanateColors.zanateBlack,
+          ),
         ),
         actions: [
           IconButton(
             tooltip: item.isBookmarked ? 'Quitar de guardados' : 'Guardar publicación',
-            icon: Icon(
-              item.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-              color: item.isBookmarked ? ZanateColors.zanateAccent : null,
+            icon: PhosphorIcon(
+              item.isBookmarked
+                  ? PhosphorIconsFill.bookmarkSimple
+                  : PhosphorIconsRegular.bookmarkSimple,
+              color: item.isBookmarked
+                  ? ZanateColors.zanateEyeYellow
+                  : (isDark ? Colors.white : ZanateColors.zanateBlack),
             ),
             onPressed: _handleToggleBookmark,
           ),
@@ -602,10 +619,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           header: true,
           child: Text(
             item.title,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
-              fontSize: 20,
+            style: GoogleFonts.outfit(
+              fontWeight: FontWeight.w700,
+              fontSize: 22,
               height: 1.25,
+              color: isDark ? Colors.white : ZanateColors.zanateBlack,
             ),
           ),
         ),
@@ -617,14 +635,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: item.isFree ? const Color(0xFF059669) : ZanateColors.zanateAccent,
-                borderRadius: BorderRadius.circular(8),
+                color: item.isFree
+                    ? ZanateColors.zanateEyeYellow
+                    : (isDark ? Colors.white : ZanateColors.zanateBlack),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
                 item.formattedPrice,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
+                style: GoogleFonts.outfit(
+                  color: item.isFree
+                      ? ZanateColors.zanateBlack
+                      : (isDark ? ZanateColors.zanateBlack : Colors.white),
+                  fontWeight: FontWeight.w700,
                   fontSize: 16,
                 ),
               ),
@@ -714,7 +736,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(PhosphorIconsRegular.navigationArrow, size: 14, color: ZanateColors.zanateAccent),
+              PhosphorIcon(
+                PhosphorIconsRegular.navigationArrow,
+                size: 14,
+                color: isDark
+                    ? ZanateColors.zanateEyeYellow
+                    : ZanateColors.zanateBlack,
+              ),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -748,11 +776,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(4),
+        color: isDark ? const Color(0xFF1E293B) : ZanateColors.surfaceBg,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
-          width: 0.8,
+          width: 1.0,
         ),
       ),
       child: Column(
@@ -762,12 +790,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundColor: ZanateColors.zanateAccent.withValues(alpha: 0.15),
+                backgroundColor: ZanateColors.zanateEyeYellow,
                 child: Text(
                   sellerName.isNotEmpty ? sellerName[0].toUpperCase() : 'U',
-                  style: const TextStyle(
-                    color: ZanateColors.zanateAccent,
-                    fontWeight: FontWeight.bold,
+                  style: GoogleFonts.outfit(
+                    color: ZanateColors.zanateBlack,
+                    fontWeight: FontWeight.w700,
                     fontSize: 16,
                   ),
                 ),
@@ -782,22 +810,27 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         Flexible(
                           child: Text(
                             sellerName,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
+                            style: GoogleFonts.outfit(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: isDark
+                                  ? Colors.white
+                                  : ZanateColors.zanateBlack,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         if (item.isSellerVerified) ...[
-                          const SizedBox(width: 4),
-                          const Tooltip(
+                          const SizedBox(width: 5),
+                          Tooltip(
                             message: 'Identidad verificada',
-                            child: Icon(
-                              Icons.verified,
+                            child: PhosphorIcon(
+                              PhosphorIconsFill.sealCheck,
                               size: 16,
-                              color: Color(0xFF0284C7),
+                              color: isDark
+                                  ? ZanateColors.zanateEyeYellow
+                                  : ZanateColors.zanateBlack,
                             ),
                           ),
                         ],
@@ -810,10 +843,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               ? item.sellerPlanName
                               : 'Vendedor'),
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 11.5,
                         color: isDark
                             ? const Color(0xFF94A3B8)
-                            : const Color(0xFF64748B),
+                            : ZanateColors.mutedText,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -835,11 +868,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       ),
                     );
                   },
-                  child: const Text(
+                  child: Text(
                     'Ver tienda',
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
-                      color: ZanateColors.zanateAccent,
+                      color: isDark
+                          ? ZanateColors.zanateEyeYellow
+                          : ZanateColors.zanateBlack,
                     ),
                   ),
                 ),
@@ -889,13 +924,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       return Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-          borderRadius: BorderRadius.circular(4),
+          color: isDark ? const Color(0xFF1E293B) : ZanateColors.pillBg,
+          borderRadius: BorderRadius.circular(14),
         ),
         child: const Center(
           child: Text(
             'El contacto directo está deshabilitado porque este artículo ya fue vendido.',
-            style: TextStyle(fontSize: 12, color: Colors.grey),
+            style: TextStyle(fontSize: 12, color: ZanateColors.mutedText),
             textAlign: TextAlign.center,
           ),
         ),
@@ -916,14 +951,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF25D366),
               foregroundColor: Colors.white,
-              elevation: 1,
-              minimumSize: const Size(double.infinity, 50),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+              elevation: 0,
+              minimumSize: const Size(double.infinity, 52),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
             ),
             icon: const Icon(PhosphorIconsFill.whatsappLogo, size: 22),
-            label: const Text(
+            label: Text(
               'Contactar por WhatsApp',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              style: GoogleFonts.outfit(
+                fontSize: 15.5,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             onPressed: () => _handleContactChannel('whatsapp', item.whatsappUrl!),
           ),
@@ -937,7 +977,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size(0, 44),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     icon: const Icon(PhosphorIconsFill.telegramLogo, size: 16, color: Color(0xFF0088CC)),
                     label: const Text('Telegram', style: TextStyle(fontSize: 12)),
@@ -951,7 +993,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size(0, 44),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     icon: const Icon(PhosphorIconsFill.instagramLogo, size: 16, color: Color(0xFFE1306C)),
                     label: const Text('Instagram', style: TextStyle(fontSize: 12)),
@@ -965,7 +1009,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size(0, 44),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     icon: const Icon(PhosphorIconsFill.messengerLogo, size: 16, color: Color(0xFF0084FF)),
                     label: const Text('Messenger', style: TextStyle(fontSize: 12)),
@@ -1026,9 +1072,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             // Bookmark button
             IconButton(
               tooltip: item.isBookmarked ? 'Guardado' : 'Guardar',
-              icon: Icon(
-                item.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                color: item.isBookmarked ? ZanateColors.zanateAccent : null,
+              icon: PhosphorIcon(
+                item.isBookmarked
+                    ? PhosphorIconsFill.bookmarkSimple
+                    : PhosphorIconsRegular.bookmarkSimple,
+                color: item.isBookmarked
+                    ? ZanateColors.zanateEyeYellow
+                    : (isDark ? Colors.white : ZanateColors.zanateBlack),
               ),
               onPressed: _handleToggleBookmark,
             ),
@@ -1114,13 +1164,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   );
                 },
                 child: Container(
-                  width: 130,
+                  width: 136,
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(8),
+                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
-                      width: 0.8,
+                      color: isDark
+                          ? const Color(0xFF334155)
+                          : ZanateColors.subtleBorder,
+                      width: 1.0,
                     ),
                   ),
                   clipBehavior: Clip.antiAlias,
@@ -1130,17 +1182,27 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       Container(
                         height: 90,
                         width: double.infinity,
-                        color: isDark ? const Color(0xFF0F172A) : Colors.grey.shade200,
+                        color: isDark
+                            ? const Color(0xFF0F172A)
+                            : ZanateColors.surfaceBg,
                         child: other.imageUrls.isNotEmpty
                             ? Image.network(
                                 other.imageUrls.first,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) => const Icon(Icons.image, size: 24),
+                                errorBuilder: (_, _, _) => const PhosphorIcon(
+                                  PhosphorIconsRegular.image,
+                                  size: 24,
+                                  color: ZanateColors.hintText,
+                                ),
                               )
-                            : const Icon(Icons.storefront, size: 24),
+                            : const PhosphorIcon(
+                                PhosphorIconsRegular.storefront,
+                                size: 24,
+                                color: ZanateColors.hintText,
+                              ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.all(6),
+                        padding: const EdgeInsets.all(8),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -1148,15 +1210,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               other.title,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                              style: GoogleFonts.outfit(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: isDark
+                                    ? Colors.white
+                                    : ZanateColors.zanateBlack,
+                              ),
                             ),
                             const SizedBox(height: 2),
                             Text(
                               other.formattedPrice,
-                              style: const TextStyle(
-                                fontSize: 11,
+                              style: TextStyle(
+                                fontSize: 11.5,
                                 fontWeight: FontWeight.w800,
-                                color: ZanateColors.zanateAccent,
+                                color: isDark
+                                    ? ZanateColors.zanateEyeYellow
+                                    : ZanateColors.zanateBlack,
                               ),
                             ),
                           ],
@@ -1182,9 +1252,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           header: true,
           child: Text(
             'También te puede interesar',
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-              fontSize: 15,
+            style: GoogleFonts.outfit(
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
+              color: isDark ? Colors.white : ZanateColors.zanateBlack,
             ),
           ),
         ),
@@ -1214,11 +1285,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               },
               child: Container(
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(4),
+                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
-                    width: 0.8,
+                    color: isDark
+                        ? const Color(0xFF334155)
+                        : ZanateColors.subtleBorder,
+                    width: 1.0,
                   ),
                 ),
                 clipBehavior: Clip.antiAlias,
@@ -1228,14 +1301,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     Expanded(
                       child: Container(
                         width: double.infinity,
-                        color: isDark ? const Color(0xFF0F172A) : Colors.grey.shade200,
+                        color: isDark
+                            ? const Color(0xFF0F172A)
+                            : ZanateColors.surfaceBg,
                         child: rel.imageUrls.isNotEmpty
                             ? Image.network(
                                 rel.imageUrls.first,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) => const Icon(Icons.image, size: 28),
+                                errorBuilder: (_, _, _) => const PhosphorIcon(
+                                  PhosphorIconsRegular.image,
+                                  size: 28,
+                                  color: ZanateColors.hintText,
+                                ),
                               )
-                            : const Icon(Icons.storefront, size: 28),
+                            : const PhosphorIcon(
+                                PhosphorIconsRegular.storefront,
+                                size: 28,
+                                color: ZanateColors.hintText,
+                              ),
                       ),
                     ),
                     Padding(
@@ -1247,15 +1330,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             rel.title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                            style: GoogleFonts.outfit(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                              color: isDark
+                                  ? Colors.white
+                                  : ZanateColors.zanateBlack,
+                            ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             rel.formattedPrice,
-                            style: const TextStyle(
-                              fontSize: 11.5,
+                            style: TextStyle(
+                              fontSize: 12,
                               fontWeight: FontWeight.w800,
-                              color: ZanateColors.zanateAccent,
+                              color: isDark
+                                  ? ZanateColors.zanateEyeYellow
+                                  : ZanateColors.zanateBlack,
                             ),
                           ),
                           const SizedBox(height: 2),
