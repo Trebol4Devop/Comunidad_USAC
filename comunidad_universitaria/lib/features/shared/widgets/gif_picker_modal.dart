@@ -57,11 +57,6 @@ class _GifPickerModalState extends State<GifPickerModal> {
   static const List<GifItem> _curatedGifs = [
     // Estudiando
     GifItem(
-      title: 'Lofi Cat Estudiando',
-      url: 'https://media.giphy.com/media/LmN8OYiY4m0X85al0A/giphy.gif',
-      category: 'estudiando',
-    ),
-    GifItem(
       title: 'Escribiendo rápido',
       url: 'https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif',
       category: 'estudiando',
@@ -72,22 +67,22 @@ class _GifPickerModalState extends State<GifPickerModal> {
       category: 'estudiando',
     ),
     GifItem(
-      title: 'Programando en C++',
-      url: 'https://media.giphy.com/media/unQ3IJU2RG7DO/giphy.gif',
+      title: 'Programando sin parar',
+      url: 'https://media.giphy.com/media/13HgwGsXF0aiGY/giphy.gif',
+      category: 'estudiando',
+    ),
+    GifItem(
+      title: 'Leyendo apuntes',
+      url: 'https://media.giphy.com/media/NFA61GS9qKZ68/giphy.gif',
+      category: 'estudiando',
+    ),
+    GifItem(
+      title: 'Súper concentrado',
+      url: 'https://media.giphy.com/media/WoWm8YzFQJg5i/giphy.gif',
       category: 'estudiando',
     ),
 
     // Exámenes / Parciales
-    GifItem(
-      title: 'Pánico en el examen',
-      url: 'https://media.giphy.com/media/1FMaabePDEUuk/giphy.gif',
-      category: 'examenes',
-    ),
-    GifItem(
-      title: 'Matemáticas calculando',
-      url: 'https://media.giphy.com/media/4JVTF9fRVGUN52dAZQ/giphy.gif',
-      category: 'examenes',
-    ),
     GifItem(
       title: 'Revisando notas',
       url: 'https://media.giphy.com/media/32mC2kXYWCsg0/giphy.gif',
@@ -96,6 +91,11 @@ class _GifPickerModalState extends State<GifPickerModal> {
     GifItem(
       title: 'Todo bajo control',
       url: 'https://media.giphy.com/media/9M5jK4GXmD5o1irGrF/giphy.gif',
+      category: 'examenes',
+    ),
+    GifItem(
+      title: 'Estrés de parcial',
+      url: 'https://media.giphy.com/media/3o7btPCcdNniyf0ArS/giphy.gif',
       category: 'examenes',
     ),
 
@@ -120,8 +120,23 @@ class _GifPickerModalState extends State<GifPickerModal> {
       url: 'https://media.giphy.com/media/nbvFVPiEiJH6JOGIok/giphy.gif',
       category: 'celebracion',
     ),
+    GifItem(
+      title: 'Brindis de aprobación',
+      url: 'https://media.giphy.com/media/g9582DNuQppxC/giphy.gif',
+      category: 'celebracion',
+    ),
+    GifItem(
+      title: 'Éxito total',
+      url: 'https://media.giphy.com/media/nXxOjZrbnbRxS/giphy.gif',
+      category: 'celebracion',
+    ),
+    GifItem(
+      title: 'Fiesta de fin de semestre',
+      url: 'https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif',
+      category: 'celebracion',
+    ),
 
-    // F / Fracaso
+    // F / Reacciones
     GifItem(
       title: 'F en el Chat',
       url: 'https://media.giphy.com/media/hStvd5LiWCFzYNyxR4/giphy.gif',
@@ -138,12 +153,22 @@ class _GifPickerModalState extends State<GifPickerModal> {
       category: 'f',
     ),
     GifItem(
-      title: 'Dormir para olvidar',
-      url: 'https://media.giphy.com/media/l46CtynlN82CuZFni/giphy.gif',
+      title: 'Facepalm',
+      url: 'https://media.giphy.com/media/XsUtdIeJ0MWMo/giphy.gif',
+      category: 'f',
+    ),
+    GifItem(
+      title: 'Cansado tras desvelo',
+      url: 'https://media.giphy.com/media/l0MYAs5E2oIDCq9So/giphy.gif',
+      category: 'f',
+    ),
+    GifItem(
+      title: 'Tristeza total',
+      url: 'https://media.giphy.com/media/OPU6wzx8JrHna/giphy.gif',
       category: 'f',
     ),
 
-    // Memes
+    // Memes / Comunidad
     GifItem(
       title: 'Homero desapareciendo',
       url: 'https://media.giphy.com/media/jUwpNzg9IcyrK/giphy.gif',
@@ -161,7 +186,22 @@ class _GifPickerModalState extends State<GifPickerModal> {
     ),
     GifItem(
       title: 'Confundido Travolta',
-      url: 'https://media.giphy.com/media/g01ZnwjtvtuKNTILA2/giphy.gif',
+      url: 'https://media.giphy.com/media/3o7aTskHEUdgCQAXde/giphy.gif',
+      category: 'memes',
+    ),
+    GifItem(
+      title: 'Todo está bien',
+      url: 'https://media.giphy.com/media/QMHoU66sBXqqLqYvGO/giphy.gif',
+      category: 'memes',
+    ),
+    GifItem(
+      title: 'Comiendo palomitas',
+      url: 'https://media.giphy.com/media/pUeXcg80cO8I8/giphy.gif',
+      category: 'memes',
+    ),
+    GifItem(
+      title: 'Pulgar arriba',
+      url: 'https://media.giphy.com/media/111ebonMs90YLu/giphy.gif',
       category: 'memes',
     ),
   ];

@@ -152,16 +152,26 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
     final secondaryTextColor =
         isDark ? const Color(0xFF94A3B8) : ZanateColors.mutedText;
 
+    final screenSize = MediaQuery.of(context).size;
+    final isMobile = screenSize.width < 600;
+
     return Dialog(
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 12 : 24,
+        vertical: isMobile ? 16 : 24,
+      ),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: BorderSide(color: borderColor, width: 1.0),
       ),
       backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 580, maxHeight: 620),
+        constraints: BoxConstraints(
+          maxWidth: 640,
+          maxHeight: screenSize.height * 0.86,
+        ),
         child: Padding(
-          padding: const EdgeInsets.all(22),
+          padding: EdgeInsets.all(isMobile ? 16 : 22),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

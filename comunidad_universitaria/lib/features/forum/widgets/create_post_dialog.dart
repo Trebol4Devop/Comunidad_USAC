@@ -11,7 +11,6 @@ import '../../../core/services/storage_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
 import '../../legal/widgets/terms_consent_modal.dart';
-import '../../shared/widgets/alias_dice_button.dart';
 import '../../../core/services/profile_service.dart';
 import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/gif_picker_modal.dart';
@@ -53,17 +52,8 @@ class CreatePostDialog extends StatefulWidget {
     String? serverName,
     String? channelName,
   }) {
-    if (Responsive.isMobile(context)) {
-      return showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        useSafeArea: true,
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF0F172A)
-            : Colors.white,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
+    return Navigator.of(context).push<void>(
+      MaterialPageRoute(
         builder: (ctx) => CreatePostDialog(
           activeAlias: activeAlias,
           quotedPost: quotedPost,
@@ -75,23 +65,8 @@ class CreatePostDialog extends StatefulWidget {
           serverName: serverName,
           channelName: channelName,
         ),
-      );
-    } else {
-      return showDialog(
-        context: context,
-        builder: (ctx) => CreatePostDialog(
-          activeAlias: activeAlias,
-          quotedPost: quotedPost,
-          onAliasChanged: onAliasChanged,
-          onPostCreated: onPostCreated,
-          initialCategory: initialCategory,
-          initialCarrera: initialCarrera,
-          initialFacultad: initialFacultad,
-          serverName: serverName,
-          channelName: channelName,
-        ),
-      );
-    }
+      ),
+    );
   }
 
   @override
@@ -336,14 +311,58 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
     }
   }
 
+  InputDecoration _zanateInput(
+    bool isDark, {
+    required String labelText,
+    String? hintText,
+    Widget? prefixIcon,
+    bool isDense = false,
+    Color? fillColor,
+  }) {
+    final borderColor =
+        isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
+    final focusColor =
+        isDark ? ZanateColors.zanateEyeYellow : ZanateColors.zanateBlack;
+    final labelColor =
+        isDark ? const Color(0xFF94A3B8) : ZanateColors.mutedText;
+    return InputDecoration(
+      labelText: labelText,
+      hintText: hintText,
+      prefixIcon: prefixIcon,
+      isDense: isDense,
+      labelStyle: TextStyle(color: labelColor),
+      floatingLabelStyle: TextStyle(
+        color: focusColor,
+        fontWeight: FontWeight.w600,
+      ),
+      filled: true,
+      fillColor: fillColor ?? (isDark ? const Color(0xFF1E293B) : ZanateColors.surfaceBg),
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: isDense ? 10 : 12,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: borderColor, width: 1.2),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: borderColor, width: 1.2),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: focusColor, width: 1.6),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isMobile = Responsive.isMobile(context);
-    final maxHeight =
-        MediaQuery.of(context).size.height * (isMobile ? 0.90 : 0.85);
 
+    final scaffoldBg = isDark ? const Color(0xFF0F172A) : Colors.white;
     final bgFill = isDark ? const Color(0xFF1E293B) : ZanateColors.surfaceBg;
     final borderColor = isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
     final primaryTextColor = isDark ? Colors.white : ZanateColors.zanateBlack;
@@ -352,125 +371,24 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
     final focusColor =
         isDark ? ZanateColors.zanateEyeYellow : ZanateColors.zanateBlack;
 
+    final pageTitle = widget.quotedPost != null
+        ? 'Citar Publicación'
+        : 'Nueva Consulta en el Foro';
+
     Widget content = Form(
       key: _formKey,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: maxHeight),
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(isMobile ? 20 : 28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (isMobile) ...[
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: borderColor,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-              ],
-              // Header
-              Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: ZanateColors.zanateEyeYellow.withValues(alpha: 0.22),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Center(
-                      child: PhosphorIcon(
-                        widget.quotedPost != null
-                            ? PhosphorIconsRegular.quotes
-                            : PhosphorIconsRegular.chatCircleText,
-                        color: isDark
-                            ? ZanateColors.zanateEyeYellow
-                            : ZanateColors.zanateBlack,
-                        size: 22,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.quotedPost != null
-                              ? 'Citar Publicación'
-                              : 'Nueva Consulta en el Foro',
-                          style: GoogleFonts.outfit(
-                            fontSize: 19,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.4,
-                            color: primaryTextColor,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Foro Estudiantil USAC · Espacio Libre',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: secondaryTextColor,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Container(
-                          width: 44,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: ZanateColors.zanateEyeYellow,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Selector de identidad anónima con dados
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: bgFill,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: borderColor, width: 0.9),
-                ),
-                child: Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 8,
-                  runSpacing: 4,
-                  children: [
-                    Text(
-                      'Publicando como:',
-                      style: TextStyle(
-                        color: secondaryTextColor,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    AliasDiceButton(
-                      alias: _authorAlias,
-                      onAliasChanged: (newAlias) {
-                        setState(() => _authorAlias = newAlias);
-                        widget.onAliasChanged(newAlias);
-                      },
-                      compact: true,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
+      child: SingleChildScrollView(
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 18 : 28,
+          vertical: isMobile ? 16 : 24,
+        ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 680),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
 
               // Quote preview banner if quoting a post
               if (widget.quotedPost != null) ...[
@@ -747,30 +665,10 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                   fontWeight: FontWeight.w600,
                   color: primaryTextColor,
                 ),
-                decoration: InputDecoration(
+                decoration: _zanateInput(
+                  isDark,
                   labelText: 'Título de la consulta o aporte',
                   hintText: 'Ej. ¿Qué catedrático recomiendan para Física 1?',
-                  filled: true,
-                  fillColor: bgFill,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: borderColor, width: 1.2),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: borderColor, width: 1.2),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(
-                      color: focusColor,
-                      width: 1.6,
-                    ),
-                  ),
                 ),
                 validator: (val) {
                   if (val == null || val.trim().length < 3) {
@@ -791,31 +689,11 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                   height: 1.45,
                   color: primaryTextColor,
                 ),
-                decoration: InputDecoration(
+                decoration: _zanateInput(
+                  isDark,
                   labelText: 'Detalle o descripción',
                   hintText:
                       'Explica tu duda o comparte el material de estudio con la comunidad...',
-                  filled: true,
-                  fillColor: bgFill,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: borderColor, width: 1.2),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: borderColor, width: 1.2),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(
-                      color: focusColor,
-                      width: 1.6,
-                    ),
-                  ),
                 ),
                 validator: (val) {
                   if (val == null || val.trim().length < 10) {
@@ -930,106 +808,133 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                 ],
               ),
 
-              // Interactive Poll Creator Section
+              // Interactive Poll Creator Section (Zanate custom card)
               if (_showPollForm) ...[
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
                 Container(
-                  padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: bgFill,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: borderColor),
+                    border: Border.all(color: borderColor, width: 1.1),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            children: [
-                              PhosphorIcon(
-                                PhosphorIconsRegular.chartBar,
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: ZanateColors.zanateEyeYellow,
+                              borderRadius: BorderRadius.circular(9),
+                            ),
+                            child: const Center(
+                              child: PhosphorIcon(
+                                PhosphorIconsBold.chartBar,
                                 size: 16,
-                                color: focusColor,
+                                color: ZanateColors.zanateBlack,
                               ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Crear Encuesta Estudiantil',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 13,
-                                  color: primaryTextColor,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Crear Encuesta Estudiantil',
+                                  style: GoogleFonts.outfit(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14,
+                                    color: primaryTextColor,
+                                  ),
                                 ),
-                              ),
-                            ],
+                                Text(
+                                  '${_pollOptionControllers.length} de 5 opciones',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: secondaryTextColor,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                           IconButton(
-                            icon: Icon(PhosphorIconsRegular.x, size: 16, color: secondaryTextColor),
+                            icon: Icon(
+                              PhosphorIconsRegular.x,
+                              size: 18,
+                              color: secondaryTextColor,
+                            ),
+                            tooltip: 'Quitar encuesta',
                             onPressed: () =>
                                 setState(() => _showPollForm = false),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 14),
                       TextFormField(
                         controller: _pollQuestionController,
-                        decoration: InputDecoration(
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: primaryTextColor,
+                        ),
+                        decoration: _zanateInput(
+                          isDark,
                           labelText: 'Pregunta de la encuesta',
                           hintText: 'Opcional, por defecto usará el título',
                           isDense: true,
-                          filled: true,
                           fillColor: isDark ? const Color(0xFF0F172A) : Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: borderColor, width: 1.2),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: borderColor, width: 1.2),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: focusColor, width: 1.6),
-                          ),
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 12),
                       ..._pollOptionControllers.asMap().entries.map((entry) {
                         final idx = entry.key;
                         final ctrl = entry.value;
+                        final letter = String.fromCharCode(65 + idx);
                         return Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.only(bottom: 10),
                           child: Row(
                             children: [
+                              Container(
+                                width: 30,
+                                height: 30,
+                                decoration: BoxDecoration(
+                                  color: ZanateColors.zanateEyeYellow
+                                      .withValues(alpha: isDark ? 0.22 : 0.35),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    letter,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w800,
+                                      color: isDark
+                                          ? ZanateColors.zanateEyeYellow
+                                          : ZanateColors.zanateBlack,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
                               Expanded(
                                 child: TextFormField(
                                   controller: ctrl,
-                                  decoration: InputDecoration(
+                                  style: TextStyle(
+                                    fontSize: 13.5,
+                                    color: primaryTextColor,
+                                  ),
+                                  decoration: _zanateInput(
+                                    isDark,
                                     labelText: 'Opción ${idx + 1}',
                                     isDense: true,
-                                    filled: true,
-                                    fillColor: isDark ? const Color(0xFF0F172A) : Colors.white,
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 10,
-                                    ),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide(color: borderColor, width: 1.2),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide(color: borderColor, width: 1.2),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide(color: focusColor, width: 1.6),
-                                    ),
+                                    fillColor: isDark
+                                        ? const Color(0xFF0F172A)
+                                        : Colors.white,
                                   ),
                                 ),
                               ),
@@ -1047,18 +952,29 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                         );
                       }),
                       if (_pollOptionControllers.length < 5)
-                        TextButton.icon(
-                          style: TextButton.styleFrom(
-                            foregroundColor: focusColor,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: focusColor,
+                              side: BorderSide(color: borderColor, width: 1.0),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
                             ),
-                          ),
-                          onPressed: _addPollOption,
-                          icon: Icon(PhosphorIconsRegular.plus, size: 16),
-                          label: const Text(
-                            'Añadir opción',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                            onPressed: _addPollOption,
+                            icon: const Icon(PhosphorIconsBold.plus, size: 15),
+                            label: const Text(
+                              'Añadir opción',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                           ),
                         ),
                     ],
@@ -1325,28 +1241,38 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
             ],
           ),
         ),
+        ),
       ),
     );
 
-    if (isMobile) {
-      return Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
+    return Scaffold(
+      backgroundColor: scaffoldBg,
+      appBar: AppBar(
+        backgroundColor: scaffoldBg,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: PhosphorIcon(
+            PhosphorIconsBold.caretLeft,
+            color: primaryTextColor,
+            size: 22,
+          ),
+          onPressed: () => Navigator.of(context).pop(),
         ),
-        child: content,
-      );
-    } else {
-      return Dialog(
-        backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: borderColor, width: 0.9),
+        title: Text(
+          pageTitle,
+          style: GoogleFonts.outfit(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            color: primaryTextColor,
+          ),
         ),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 620),
-          child: content,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Divider(height: 1, color: borderColor),
         ),
-      );
-    }
+      ),
+      body: SafeArea(child: content),
+    );
   }
 }
