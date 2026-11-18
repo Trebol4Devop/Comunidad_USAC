@@ -126,5 +126,51 @@ void main() {
 
       expect(find.byType(VerificationFlowScreen), findsOneWidget);
     });
+
+    testWidgets(
+      'Usuario no autenticado: al regresar de Google sin iniciar sesión libera los botones tras el periodo de gracia',
+      (tester) async {
+        tester.view.physicalSize = const Size(800, 1200);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        await tester.pumpWidget(
+          buildTestScreen(
+            sessionController: sessionCtrl,
+            verificationController: verificationCtrl,
+            authApi: fakeApi,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final merchantBtn = find.byKey(const Key('merchant_support_button'));
+        await tester.ensureVisible(merchantBtn);
+        await tester.tap(merchantBtn);
+        await tester.pump();
+
+        expect(
+          find.text(
+            'Completa el acceso en Google y regresa a la app para continuar.',
+          ),
+          findsOneWidget,
+        );
+
+        // Simula que el usuario cierra la ventana de Google y regresa a la app
+        tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+        await tester.pump(const Duration(milliseconds: 1600));
+        await tester.pumpAndSettle();
+
+        expect(
+          find.text(
+            'Completa el acceso en Google y regresa a la app para continuar.',
+          ),
+          findsNothing,
+        );
+        final buttonWidget = tester.widget<ElevatedButton>(merchantBtn);
+        expect(buttonWidget.onPressed, isNotNull);
+        expect(await LocalStorageService.getPendingAuthIntent(), isNull);
+      },
+    );
   });
 }
