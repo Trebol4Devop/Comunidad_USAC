@@ -486,10 +486,6 @@ class _AuthGatewayScreenState extends State<AuthGatewayScreen> {
             decoration: BoxDecoration(
               color: AuthGatewayScreen._zanateEyeYellow.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: AuthGatewayScreen._zanateEyeYellow.withValues(alpha: 0.6),
-                width: 1.1,
-              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
