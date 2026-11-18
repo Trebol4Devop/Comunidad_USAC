@@ -3,6 +3,24 @@ import 'package:flutter/material.dart';
 class ZanateColors {
   ZanateColors._();
 
+  /// Negro plumaje Zanate (textos principales, botones primarios, bordes de foco)
+  static const Color zanateBlack = Color(0xFF0B0D10);
+
+  /// Amarillo del ojo Zanate (acentos, barras bajo títulos, filtros activos)
+  static const Color zanateEyeYellow = Color(0xFFF5C518);
+
+  /// Textos secundarios y descriptivos
+  static const Color subtleText = Color(0xFF475569);
+
+  /// Textos tenues y metadatos
+  static const Color mutedText = Color(0xFF64748B);
+
+  /// Textos de sugerencia (placeholders)
+  static const Color hintText = Color(0xFF94A3B8);
+
+  /// Fondo de píldoras/chips inactivos
+  static const Color pillBg = Color(0xFFF1F5F9);
+
   /// Primario / Textos principales / Riel activo
   static const Color zanateDark = Color(0xFF0F172A);
 

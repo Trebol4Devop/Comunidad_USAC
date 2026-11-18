@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:comunidad_universitaria/core/constants/anonymous_aliases.dart';
 import 'package:comunidad_universitaria/features/shared/widgets/alias_dice_button.dart';
 
@@ -24,7 +25,7 @@ void main() {
 
         final diceBtn = find.byTooltip('Generar alias anónimo');
         expect(diceBtn, findsOneWidget);
-        expect(find.byIcon(Icons.casino_outlined), findsOneWidget);
+        expect(find.byIcon(PhosphorIconsRegular.diceFive), findsOneWidget);
       },
     );
 

@@ -94,39 +94,118 @@ class _AppShellState extends State<AppShell> {
     showDialog(
       context: context,
       requestFocus: true,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: const [
-            Icon(Icons.info_outline, color: Color(0xFF004B87)),
-            SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Aviso Comunitario',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        final bg = isDark ? const Color(0xFF1E293B) : Colors.white;
+        final titleColor = isDark ? Colors.white : ZanateColors.zanateBlack;
+        final bodyColor = isDark
+            ? const Color(0xFFCBD5E1)
+            : ZanateColors.subtleText;
+        return AlertDialog(
+          backgroundColor: bg,
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(
+              color: isDark
+                  ? const Color(0xFF334155)
+                  : ZanateColors.subtleBorder,
+            ),
+          ),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: ZanateColors.zanateEyeYellow.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      PhosphorIconsFill.info,
+                      color: isDark
+                          ? ZanateColors.zanateEyeYellow
+                          : ZanateColors.zanateBlack,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Aviso Comunitario',
+                      style: GoogleFonts.outfit(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: titleColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Container(
+                width: 44,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: ZanateColors.zanateEyeYellow,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            'Comunidad Universitaria es una plataforma estudiantil colaborativa, autónoma y sin fines de lucro. No representa formalmente a la administración ni a las autoridades de la Universidad de San Carlos de Guatemala. Los datos académicos, pensums y directorios son informativos y compartidos entre compañeros.',
+            style: TextStyle(fontSize: 13.5, height: 1.45, color: bodyColor),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
+          actions: [
+            TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: titleColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                _navigateToRules();
+              },
+              child: const Text(
+                'Ver Normas Completas',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+            ElevatedButton(
+              autofocus: true,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isDark
+                    ? ZanateColors.zanateEyeYellow
+                    : ZanateColors.zanateBlack,
+                foregroundColor: isDark
+                    ? ZanateColors.zanateBlack
+                    : Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 11,
+                ),
+              ),
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text(
+                'Entendido',
+                style: TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
           ],
-        ),
-        content: const Text(
-          'Comunidad Universitaria es una plataforma estudiantil colaborativa, autónoma y sin fines de lucro. No representa formalmente a la administración ni a las autoridades de la Universidad de San Carlos de Guatemala. Los datos académicos, pensums y directorios son informativos y compartidos entre compañeros.',
-          style: TextStyle(fontSize: 13, height: 1.4),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              _navigateToRules();
-            },
-            child: const Text('Ver Normas Completas'),
-          ),
-          TextButton(
-            autofocus: true,
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Entendido'),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -244,22 +323,26 @@ class _AppShellState extends State<AppShell> {
                               _buildNavTab(
                                 index: 0,
                                 label: 'Foro Estudiantil',
-                                icon: Icons.forum_outlined,
+                                activeIcon: PhosphorIconsFill.chatsCircle,
+                                inactiveIcon: PhosphorIconsRegular.chatsCircle,
                               ),
                               _buildNavTab(
                                 index: 1,
                                 label: 'Marketplace & Tutorías',
-                                icon: Icons.storefront_outlined,
+                                activeIcon: PhosphorIconsFill.shoppingBag,
+                                inactiveIcon: PhosphorIconsRegular.shoppingBag,
                               ),
                               _buildNavTab(
                                 index: 2,
                                 label: 'Grupos de Estudio',
-                                icon: Icons.groups_outlined,
+                                activeIcon: PhosphorIconsFill.usersThree,
+                                inactiveIcon: PhosphorIconsRegular.usersThree,
                               ),
                               _buildNavTab(
                                 index: 3,
                                 label: 'Mapa',
-                                icon: Icons.map_outlined,
+                                activeIcon: PhosphorIconsFill.mapTrifold,
+                                inactiveIcon: PhosphorIconsRegular.mapTrifold,
                               ),
                             ],
                           ),
@@ -405,9 +488,9 @@ class _AppShellState extends State<AppShell> {
     final isSelected = currentNavIndex == navIndex;
     final isDark = widget.isDarkMode;
 
-    final activeColor = isDark ? Colors.white : ZanateColors.zanateDark;
+    final activeColor = isDark ? Colors.white : ZanateColors.zanateBlack;
     final inactiveColor =
-        isDark ? const Color(0xFF64748B) : Colors.blueGrey.shade400;
+        isDark ? const Color(0xFF94A3B8) : ZanateColors.mutedText;
 
     return Semantics(
       label: label,
@@ -430,8 +513,8 @@ class _AppShellState extends State<AppShell> {
           decoration: BoxDecoration(
             color: isSelected
                 ? (isDark
-                    ? ZanateColors.zanateAccent.withValues(alpha: 0.22)
-                    : ZanateColors.zanateDark.withValues(alpha: 0.08))
+                    ? ZanateColors.zanateEyeYellow.withValues(alpha: 0.22)
+                    : ZanateColors.zanateEyeYellow.withValues(alpha: 0.28))
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(20),
           ),
@@ -562,16 +645,16 @@ class _AppShellState extends State<AppShell> {
   Widget _buildNavTab({
     required int index,
     required String label,
-    required IconData icon,
+    required IconData activeIcon,
+    required IconData inactiveIcon,
   }) {
     final isSelected = _currentIndex == index;
-    final theme = Theme.of(context);
     final activeColor = widget.isDarkMode
         ? Colors.white
-        : theme.colorScheme.primary;
+        : ZanateColors.zanateBlack;
     final inactiveColor = widget.isDarkMode
-        ? const Color(0xFFAAAAAA)
-        : Colors.grey.shade600;
+        ? const Color(0xFF94A3B8)
+        : ZanateColors.subtleText;
 
     return Semantics(
       container: true,
@@ -598,7 +681,7 @@ class _AppShellState extends State<AppShell> {
                   border: Border(
                     bottom: BorderSide(
                       color: isSelected
-                          ? theme.colorScheme.primary
+                          ? ZanateColors.zanateEyeYellow
                           : Colors.transparent,
                       width: 3,
                     ),
@@ -607,18 +690,18 @@ class _AppShellState extends State<AppShell> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      icon,
+                    PhosphorIcon(
+                      isSelected ? activeIcon : inactiveIcon,
                       size: 18,
                       color: isSelected ? activeColor : inactiveColor,
                     ),
                     const SizedBox(width: 8),
                     Text(
                       label,
-                      style: TextStyle(
-                        fontSize: 13,
+                      style: GoogleFonts.outfit(
+                        fontSize: 13.5,
                         fontWeight: isSelected
-                            ? FontWeight.bold
+                            ? FontWeight.w700
                             : FontWeight.w500,
                         color: isSelected ? activeColor : inactiveColor,
                       ),

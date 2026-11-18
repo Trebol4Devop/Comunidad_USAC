@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import '../../../core/constants/zanate_colors.dart';
 
 enum IdentityMode { forumAnonymous, marketplaceVerified }
 
@@ -22,36 +24,31 @@ class IdentityBadgeChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final fg = isDark ? Colors.white : ZanateColors.zanateBlack;
+    final subtle = isDark ? const Color(0xFF94A3B8) : ZanateColors.subtleText;
+    final chipBg = isDark ? const Color(0xFF1E293B) : ZanateColors.surfaceBg;
+    final borderColor = isDark
+        ? const Color(0xFF334155)
+        : ZanateColors.subtleBorder;
 
     if (mode == IdentityMode.forumAnonymous) {
-      // FORO ANÓNIMO: Tratamiento visual neutro / privacy-first / dark tones
-      final chipBg = isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9);
-      final borderColor = isDark
-          ? const Color(0xFF475569)
-          : const Color(0xFFCBD5E1);
-
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: chipBg,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(color: borderColor, width: 1.2),
         ),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(5),
+              padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: isDark
-                    ? const Color(0xFF303030)
-                    : const Color(0xFFE2E8F0),
-                borderRadius: BorderRadius.circular(6),
+                color: isDark ? const Color(0xFF0F172A) : Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: borderColor),
               ),
-              child: const Icon(
-                Icons.person_outline,
-                size: 16,
-                color: Color(0xFF64748B),
-              ),
+              child: Icon(PhosphorIconsRegular.user, size: 16, color: fg),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -63,22 +60,15 @@ class IdentityBadgeChip extends StatelessWidget {
                     children: [
                       Text(
                         'Autor: ',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: isDark
-                              ? Colors.grey.shade400
-                              : Colors.grey.shade600,
-                        ),
+                        style: TextStyle(fontSize: 11.5, color: subtle),
                       ),
                       Flexible(
                         child: Text(
                           displayName,
                           style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: isDark
-                                ? Colors.white
-                                : const Color(0xFF0F172A),
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: fg,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -101,11 +91,9 @@ class IdentityBadgeChip extends StatelessWidget {
                         child: Text(
                           'Perfil Estudiantil',
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 10.5,
                             fontWeight: FontWeight.w500,
-                            color: isDark
-                                ? Colors.grey.shade400
-                                : const Color(0xFF64748B),
+                            color: subtle,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -118,26 +106,26 @@ class IdentityBadgeChip extends StatelessWidget {
             if (onSwitchIdentity != null)
               InkWell(
                 onTap: onSwitchIdentity,
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(8),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
+                    horizontal: 8,
                     vertical: 4,
                   ),
                   child: Row(
                     children: [
                       Icon(
-                        Icons.cached,
+                        PhosphorIconsRegular.arrowsClockwise,
                         size: 13,
-                        color: theme.colorScheme.primary,
+                        color: fg,
                       ),
-                      const SizedBox(width: 3),
+                      const SizedBox(width: 4),
                       Text(
                         'Cambiar',
                         style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.primary,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: fg,
                         ),
                       ),
                     ],
@@ -148,31 +136,27 @@ class IdentityBadgeChip extends StatelessWidget {
         ),
       );
     } else {
-      // MARKETPLACE: Lenguaje visual de confianza y transparencia institucional
-      final chipBg = isDark
-          ? const Color(0xFF064E3B).withValues(alpha: 0.35)
-          : const Color(0xFFECFDF5);
-      final borderColor = const Color(0xFF10B981).withValues(alpha: 0.5);
-
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: chipBg,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: borderColor, width: 1.5),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: borderColor, width: 1.2),
         ),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(5),
+              padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(6),
+                color: ZanateColors.zanateEyeYellow.withValues(alpha: 0.22),
+                borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
-                isVerified ? Icons.verified : Icons.verified_user_outlined,
+                isVerified
+                    ? PhosphorIconsFill.sealCheck
+                    : PhosphorIconsRegular.shieldCheck,
                 size: 16,
-                color: const Color(0xFF059669),
+                color: ZanateColors.zanateBlack,
               ),
             ),
             const SizedBox(width: 10),
@@ -187,40 +171,33 @@ class IdentityBadgeChip extends StatelessWidget {
                     children: [
                       Text(
                         'Vendedor: ',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: isDark
-                              ? Colors.grey.shade300
-                              : const Color(0xFF065F46),
-                        ),
+                        style: TextStyle(fontSize: 11.5, color: subtle),
                       ),
                       Text(
                         displayName,
                         style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: isDark
-                              ? const Color(0xFF34D399)
-                              : const Color(0xFF065F46),
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: fg,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
                       if (isVerified)
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 5,
-                            vertical: 1,
+                            horizontal: 6,
+                            vertical: 1.5,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF059669),
-                            borderRadius: BorderRadius.circular(4),
+                            color: ZanateColors.zanateEyeYellow,
+                            borderRadius: BorderRadius.circular(5),
                           ),
                           child: const Text(
                             'Verificado',
                             style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
+                              color: ZanateColors.zanateBlack,
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
@@ -235,11 +212,9 @@ class IdentityBadgeChip extends StatelessWidget {
                               ? 'Identidad validada con carné institucional USAC'
                               : 'Perfil estudiantil de contacto directo',
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 10.5,
                             fontWeight: FontWeight.w500,
-                            color: isDark
-                                ? Colors.grey.shade400
-                                : const Color(0xFF047857),
+                            color: subtle,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -252,23 +227,26 @@ class IdentityBadgeChip extends StatelessWidget {
             if (onSwitchIdentity != null)
               InkWell(
                 onTap: onSwitchIdentity,
-                borderRadius: BorderRadius.circular(6),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   child: Row(
                     children: [
                       Icon(
-                        Icons.shield_outlined,
+                        PhosphorIconsRegular.shield,
                         size: 13,
-                        color: Color(0xFF059669),
+                        color: fg,
                       ),
-                      SizedBox(width: 3),
+                      const SizedBox(width: 4),
                       Text(
                         'Ajustes',
                         style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF059669),
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: fg,
                         ),
                       ),
                     ],

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import '../../../core/constants/zanate_colors.dart';
 import '../../../core/services/profile_service.dart';
 
 class TermsConsentModal extends StatefulWidget {
@@ -61,17 +64,27 @@ class _TermsConsentModalState extends State<TermsConsentModal> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final titleColor = isDark ? Colors.white : ZanateColors.zanateBlack;
+    final subtleColor =
+        isDark ? const Color(0xFF94A3B8) : ZanateColors.subtleText;
+    final borderColor =
+        isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
 
     return PopScope(
       canPop: !_isSubmitting,
       child: Dialog(
         insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: borderColor, width: 1.0),
+        ),
         backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 540, maxHeight: 680),
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(22),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -80,15 +93,19 @@ class _TermsConsentModalState extends State<TermsConsentModal> {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF2563EB).withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10),
+                        color: ZanateColors.zanateEyeYellow.withValues(
+                          alpha: 0.22,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(
-                        Icons.gavel_rounded,
-                        color: Color(0xFF2563EB),
-                        size: 24,
+                      child: Icon(
+                        PhosphorIconsRegular.scales,
+                        color: isDark
+                            ? ZanateColors.zanateEyeYellow
+                            : ZanateColors.zanateBlack,
+                        size: 22,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -98,24 +115,30 @@ class _TermsConsentModalState extends State<TermsConsentModal> {
                         children: [
                           Text(
                             'Términos de Uso y Reglas de la Comunidad',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                            style: GoogleFonts.outfit(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 17,
+                              color: titleColor,
                             ),
                           ),
+                          const SizedBox(height: 2),
                           Text(
                             'Versión ${ProfileService.termsVersion}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isDark
-                                  ? Colors.grey.shade400
-                                  : Colors.grey.shade600,
-                            ),
+                            style: TextStyle(fontSize: 12, color: subtleColor),
                           ),
                         ],
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  width: 44,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: ZanateColors.zanateEyeYellow,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
                 ),
                 const SizedBox(height: 14),
 
@@ -126,13 +149,9 @@ class _TermsConsentModalState extends State<TermsConsentModal> {
                     decoration: BoxDecoration(
                       color: isDark
                           ? const Color(0xFF0F172A)
-                          : const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: isDark
-                            ? const Color(0xFF334155)
-                            : const Color(0xFFE2E8F0),
-                      ),
+                          : ZanateColors.surfaceBg,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: borderColor, width: 1.2),
                     ),
                     child: Scrollbar(
                       thumbVisibility: true,
@@ -193,17 +212,19 @@ class _TermsConsentModalState extends State<TermsConsentModal> {
                 // Checkbox
                 CheckboxListTile(
                   contentPadding: EdgeInsets.zero,
+                  activeColor: ZanateColors.zanateBlack,
                   value: _accepted,
                   onChanged: _isSubmitting
                       ? null
                       : (val) {
                           setState(() => _accepted = val ?? false);
                         },
-                  title: const Text(
+                  title: Text(
                     'He leído y acepto los Términos y las Reglas de la Comunidad',
                     style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w600,
+                      color: titleColor,
                     ),
                   ),
                   controlAffinity: ListTileControlAffinity.leading,
@@ -218,19 +239,40 @@ class _TermsConsentModalState extends State<TermsConsentModal> {
                   child: Wrap(
                     alignment: WrapAlignment.end,
                     crossAxisAlignment: WrapCrossAlignment.center,
-                    spacing: 8,
+                    spacing: 10,
                     runSpacing: 8,
                     children: [
                       TextButton(
+                        style: TextButton.styleFrom(
+                          foregroundColor: subtleColor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
                         onPressed: _isSubmitting
                             ? null
                             : () => Navigator.of(context).pop(false),
-                        child: const Text('Cancelar'),
+                        child: const Text(
+                          'Cancelar',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
                       ),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.colorScheme.primary,
-                          foregroundColor: Colors.white,
+                          backgroundColor: isDark
+                              ? ZanateColors.zanateEyeYellow
+                              : ZanateColors.zanateBlack,
+                          foregroundColor: isDark
+                              ? ZanateColors.zanateBlack
+                              : Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 12,
+                          ),
                         ),
                         onPressed: (_accepted && !_isSubmitting)
                             ? _handleAccept
@@ -244,7 +286,10 @@ class _TermsConsentModalState extends State<TermsConsentModal> {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Text('Aceptar y continuar'),
+                            : const Text(
+                                'Aceptar y continuar',
+                                style: TextStyle(fontWeight: FontWeight.w700),
+                              ),
                       ),
                     ],
                   ),
@@ -260,10 +305,10 @@ class _TermsConsentModalState extends State<TermsConsentModal> {
   Widget _buildSectionTitle(String title, bool isDark) {
     return Text(
       title,
-      style: TextStyle(
-        fontWeight: FontWeight.bold,
-        fontSize: 12.5,
-        color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF1D4ED8),
+      style: GoogleFonts.outfit(
+        fontWeight: FontWeight.w700,
+        fontSize: 13,
+        color: isDark ? Colors.white : ZanateColors.zanateBlack,
       ),
     );
   }
@@ -272,9 +317,9 @@ class _TermsConsentModalState extends State<TermsConsentModal> {
     return Text(
       text,
       style: TextStyle(
-        fontSize: 11.5,
-        height: 1.4,
-        color: isDark ? Colors.grey.shade300 : const Color(0xFF334155),
+        fontSize: 12,
+        height: 1.45,
+        color: isDark ? Colors.grey.shade300 : ZanateColors.subtleText,
       ),
     );
   }

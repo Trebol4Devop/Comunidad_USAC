@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../core/constants/anonymous_aliases.dart';
+import '../../../core/constants/zanate_colors.dart';
 
 /// Botón reutilizable con icono de dados para generar alias anónimos de manera aleatoria.
 /// No permite entrada manual ni contiene TextField.
@@ -24,6 +26,7 @@ class AliasDiceButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final fg = isDark ? Colors.white : ZanateColors.zanateBlack;
 
     return Container(
       padding: EdgeInsets.symmetric(
@@ -31,19 +34,20 @@ class AliasDiceButton extends StatelessWidget {
         vertical: compact ? 3 : 5,
       ),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+        color: isDark ? const Color(0xFF1E293B) : ZanateColors.surfaceBg,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+          width: 1.0,
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            Icons.person_outline,
+            PhosphorIconsRegular.user,
             size: compact ? 14 : 16,
-            color: theme.colorScheme.primary,
+            color: fg,
           ),
           const SizedBox(width: 6),
           ConstrainedBox(
@@ -54,16 +58,16 @@ class AliasDiceButton extends StatelessWidget {
               style: TextStyle(
                 fontSize: compact ? 11 : 12,
                 fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: fg,
               ),
             ),
           ),
           const SizedBox(width: 2),
           IconButton(
             icon: Icon(
-              Icons.casino_outlined,
+              PhosphorIconsRegular.diceFive,
               size: compact ? 16 : 18,
-              color: theme.colorScheme.primary,
+              color: fg,
             ),
             tooltip: 'Generar alias anónimo',
             padding: EdgeInsets.zero,

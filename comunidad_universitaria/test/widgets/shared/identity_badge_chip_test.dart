@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:comunidad_universitaria/core/config/app_theme.dart';
 import 'package:comunidad_universitaria/features/shared/widgets/identity_badge_chip.dart';
 
@@ -29,7 +30,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byIcon(Icons.person_outline), findsOneWidget);
+      expect(find.byIcon(PhosphorIconsRegular.user), findsOneWidget);
       expect(find.text('Autor: '), findsOneWidget);
       expect(find.text('Estudiante Rebelde #404'), findsOneWidget);
       expect(find.text('Perfil Estudiantil'), findsOneWidget);
@@ -56,7 +57,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byIcon(Icons.verified_user_outlined), findsOneWidget);
+      expect(find.byIcon(PhosphorIconsRegular.shieldCheck), findsOneWidget);
       expect(find.text('Vendedor: '), findsOneWidget);
       expect(find.text('Emprendedor Sancarlista'), findsOneWidget);
       expect(find.text('Perfil estudiantil de contacto directo'), findsOneWidget);
@@ -79,7 +80,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byIcon(Icons.verified), findsOneWidget);
+      expect(find.byIcon(PhosphorIconsFill.sealCheck), findsOneWidget);
       expect(find.text('Carlos Mario Gómez'), findsOneWidget);
       expect(find.text('Verificado'), findsOneWidget);
       expect(find.text('Identidad validada con carné institucional USAC'), findsOneWidget);

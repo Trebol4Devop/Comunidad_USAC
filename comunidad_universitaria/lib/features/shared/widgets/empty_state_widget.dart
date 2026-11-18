@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../core/constants/zanate_colors.dart';
 
@@ -23,86 +24,81 @@ class EmptyStateWidget extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final titleColor = isDark ? Colors.white : ZanateColors.zanateDark;
+    final titleColor = isDark ? Colors.white : ZanateColors.zanateBlack;
     final subtitleColor =
-        isDark ? const Color(0xFF94A3B8) : Colors.blueGrey.shade500;
+        isDark ? const Color(0xFF94A3B8) : ZanateColors.subtleText;
+    final circleBg = isDark
+        ? const Color(0xFF1E293B)
+        : ZanateColors.surfaceBg;
+    final circleBorder = isDark
+        ? const Color(0xFF334155)
+        : ZanateColors.subtleBorder;
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 48),
+        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
-              width: 88,
-              height: 88,
+              width: 76,
+              height: 76,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [
-                    ZanateColors.zanateAccent.withValues(alpha: isDark ? 0.25 : 0.14),
-                    const Color(0xFF38BDF8).withValues(alpha: isDark ? 0.16 : 0.08),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                border: Border.all(
-                  color: ZanateColors.zanateAccent.withValues(alpha: 0.2),
-                  width: 1,
-                ),
+                color: circleBg,
+                border: Border.all(color: circleBorder, width: 1.2),
               ),
               child: Center(
                 child: icon != null
-                    ? Icon(
-                        icon,
-                        size: 38,
-                        color: ZanateColors.zanateAccent,
-                      )
-                    : const Text(
+                    ? Icon(icon, size: 34, color: titleColor)
+                    : Text(
                         '#',
-                        style: TextStyle(
-                          fontSize: 42,
-                          fontWeight: FontWeight.w900,
-                          color: ZanateColors.zanateAccent,
+                        style: GoogleFonts.outfit(
+                          fontSize: 36,
+                          fontWeight: FontWeight.w800,
+                          color: titleColor,
                         ),
                       ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.4,
+              style: GoogleFonts.outfit(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.3,
                 color: titleColor,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 380),
+              constraints: const BoxConstraints(maxWidth: 360),
               child: Text(
                 description,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 14,
-                  height: 1.45,
+                  fontSize: 13.5,
+                  height: 1.4,
                   color: subtitleColor,
                 ),
               ),
             ),
             if (onButtonPressed != null) ...[
-              const SizedBox(height: 24),
-              FilledButton.icon(
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
                 onPressed: onButtonPressed,
-                style: FilledButton.styleFrom(
-                  backgroundColor:
-                      isDark ? ZanateColors.zanateAccent : ZanateColors.zanateDark,
-                  foregroundColor: Colors.white,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isDark
+                      ? ZanateColors.zanateEyeYellow
+                      : ZanateColors.zanateBlack,
+                  foregroundColor: isDark
+                      ? ZanateColors.zanateBlack
+                      : Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
@@ -110,11 +106,11 @@ class EmptyStateWidget extends StatelessWidget {
                   ),
                   elevation: 0,
                 ),
-                icon: const PhosphorIcon(PhosphorIconsRegular.plus, size: 18),
+                icon: const PhosphorIcon(PhosphorIconsBold.plus, size: 17),
                 label: Text(
                   buttonText ?? 'Iniciar conversación',
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 13.5,
                     fontWeight: FontWeight.w700,
                   ),
                 ),

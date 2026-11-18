@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import '../../../core/constants/zanate_colors.dart';
 
 class GifItem {
   final String title;
@@ -21,11 +24,12 @@ class GifPickerModal extends StatefulWidget {
     BuildContext context, {
     required Function(String gifUrl) onGifSelected,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -187,71 +191,123 @@ class _GifPickerModalState extends State<GifPickerModal> {
     final isDark = theme.brightness == Brightness.dark;
     final height = MediaQuery.of(context).size.height * 0.75;
 
-    return SizedBox(
+    final titleColor = isDark ? Colors.white : ZanateColors.zanateBlack;
+    final subtleText =
+        isDark ? const Color(0xFF94A3B8) : ZanateColors.subtleText;
+    final borderColor =
+        isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
+
+    return Container(
       height: height,
+      color: isDark ? const Color(0xFF0F172A) : Colors.white,
       child: Column(
         children: [
           // Drag handle & Header
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 10),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Center(
                   child: Container(
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade400,
-                      borderRadius: BorderRadius.circular(2),
+                      color: borderColor,
+                      borderRadius: BorderRadius.circular(999),
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 Row(
                   children: [
-                    Icon(
-                      Icons.gif_box_outlined,
-                      color: theme.colorScheme.primary,
-                      size: 26,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Insertar GIF o Sticker',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: ZanateColors.zanateEyeYellow.withValues(
+                          alpha: 0.22,
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        PhosphorIconsRegular.gif,
+                        color: isDark
+                            ? ZanateColors.zanateEyeYellow
+                            : ZanateColors.zanateBlack,
+                        size: 22,
                       ),
                     ),
-                    const Spacer(),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Insertar GIF o Sticker',
+                        style: GoogleFonts.outfit(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: titleColor,
+                        ),
+                      ),
+                    ),
                     IconButton(
-                      icon: const Icon(Icons.close, size: 20),
+                      icon: Icon(
+                        PhosphorIconsRegular.x,
+                        size: 20,
+                        color: titleColor,
+                      ),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 // Search field
                 TextField(
                   controller: _searchController,
                   onChanged: (_) => setState(() {}),
+                  style: TextStyle(fontSize: 13.5, color: titleColor),
                   decoration: InputDecoration(
                     hintText: 'Buscar GIFs...',
-                    prefixIcon: const Icon(Icons.search, size: 20),
+                    hintStyle: const TextStyle(
+                      fontSize: 13,
+                      color: ZanateColors.hintText,
+                    ),
+                    prefixIcon: Icon(
+                      PhosphorIconsRegular.magnifyingGlass,
+                      size: 18,
+                      color: subtleText,
+                    ),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear, size: 18),
+                            icon: Icon(
+                              PhosphorIconsRegular.x,
+                              size: 16,
+                              color: subtleText,
+                            ),
                             onPressed: () {
                               _searchController.clear();
                               setState(() {});
                             },
                           )
                         : null,
+                    filled: true,
+                    fillColor: isDark
+                        ? const Color(0xFF1E293B)
+                        : ZanateColors.surfaceBg,
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 12,
-                      vertical: 10,
+                      vertical: 11,
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: borderColor, width: 1.2),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: borderColor, width: 1.2),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: titleColor, width: 1.6),
                     ),
                   ),
                 ),
@@ -264,33 +320,39 @@ class _GifPickerModalState extends State<GifPickerModal> {
             height: 40,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               itemCount: categories.length,
               separatorBuilder: (ctx, idx) => const SizedBox(width: 8),
               itemBuilder: (ctx, i) {
                 final cat = categories[i];
                 final isSelected = _selectedCategory == cat['id'];
                 return ChoiceChip(
+                  showCheckmark: false,
                   label: Text(
                     cat['name']!,
                     style: TextStyle(
                       fontSize: 12,
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.normal,
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w600,
                       color: isSelected
-                          ? (isDark
-                                ? const Color(0xFF93C5FD)
-                                : const Color(0xFF004B87))
+                          ? ZanateColors.zanateBlack
                           : (isDark
-                                ? Colors.grey.shade300
-                                : Colors.grey.shade800),
+                                ? const Color(0xFFCBD5E1)
+                                : ZanateColors.subtleText),
                     ),
                   ),
                   selected: isSelected,
-                  selectedColor: isDark
-                      ? const Color(0xFF3B82F6).withValues(alpha: 0.25)
-                      : const Color(0xFF004B87).withValues(alpha: 0.15),
+                  backgroundColor: isDark
+                      ? const Color(0xFF1E293B)
+                      : ZanateColors.pillBg,
+                  selectedColor: ZanateColors.zanateEyeYellow,
+                  side: BorderSide(
+                    color: isSelected ? ZanateColors.zanateBlack : borderColor,
+                    width: isSelected ? 1.2 : 1.0,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   onSelected: (val) {
                     if (val) setState(() => _selectedCategory = cat['id']!);
                   },
@@ -298,7 +360,7 @@ class _GifPickerModalState extends State<GifPickerModal> {
               },
             ),
           ),
-          const Divider(height: 16),
+          Divider(height: 16, color: borderColor),
 
           // GIFs Grid
           Expanded(
