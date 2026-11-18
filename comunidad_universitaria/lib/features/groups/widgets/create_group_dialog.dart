@@ -37,17 +37,8 @@ class CreateGroupDialog extends StatefulWidget {
     String? initialFacultad,
     String? initialCarrera,
   }) {
-    if (Responsive.isMobile(context)) {
-      return showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        useSafeArea: true,
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF0F172A)
-            : Colors.white,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
+    return Navigator.of(context).push<void>(
+      MaterialPageRoute(
         builder: (ctx) => CreateGroupDialog(
           activeAlias: activeAlias,
           onAliasChanged: onAliasChanged,
@@ -55,19 +46,8 @@ class CreateGroupDialog extends StatefulWidget {
           initialFacultad: initialFacultad,
           initialCarrera: initialCarrera,
         ),
-      );
-    } else {
-      return showDialog(
-        context: context,
-        builder: (ctx) => CreateGroupDialog(
-          activeAlias: activeAlias,
-          onAliasChanged: onAliasChanged,
-          onGroupCreated: onGroupCreated,
-          initialFacultad: initialFacultad,
-          initialCarrera: initialCarrera,
-        ),
-      );
-    }
+      ),
+    );
   }
 
   @override
@@ -285,32 +265,23 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
         isDark ? const Color(0xFF94A3B8) : ZanateColors.mutedText;
     final borderColor =
         isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
-    final maxHeight =
-        MediaQuery.of(context).size.height * (isMobile ? 0.90 : 0.85);
+
+    final scaffoldBg = isDark ? const Color(0xFF0F172A) : Colors.white;
 
     Widget content = Form(
       key: _formKey,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: maxHeight),
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(isMobile ? 20 : 26),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (isMobile) ...[
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: borderColor,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-              ],
+      child: SingleChildScrollView(
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 18 : 28,
+          vertical: isMobile ? 16 : 24,
+        ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 680),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               // Header
               Row(
                 children: [
@@ -337,21 +308,11 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Compartir Enlace de Grupo',
-                          style: GoogleFonts.outfit(
-                            fontSize: 19,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.3,
-                            color: primaryTextColor,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
                           'Publicado por: ${widget.activeAlias}',
                           style: TextStyle(
-                            fontSize: 12.5,
+                            fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: secondaryTextColor,
+                            color: primaryTextColor,
                           ),
                         ),
                         const SizedBox(height: 6),
@@ -777,31 +738,38 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
             ],
           ),
         ),
+        ),
       ),
     );
 
-    if (isMobile) {
-      return Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
+    return Scaffold(
+      backgroundColor: scaffoldBg,
+      appBar: AppBar(
+        backgroundColor: scaffoldBg,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: PhosphorIcon(
+            PhosphorIconsBold.caretLeft,
+            color: primaryTextColor,
+            size: 22,
+          ),
+          onPressed: () => Navigator.of(context).pop(),
         ),
-        child: content,
-      );
-    } else {
-      return Dialog(
-        backgroundColor: theme.brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(
-            color: theme.brightness == Brightness.dark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
-            width: 0.8,
+        title: Text(
+          'Compartir Enlace de Grupo',
+          style: GoogleFonts.outfit(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            color: primaryTextColor,
           ),
         ),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 620),
-          child: content,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Divider(height: 1, color: borderColor),
         ),
-      );
-    }
+      ),
+      body: SafeArea(child: content),
+    );
   }
 }
