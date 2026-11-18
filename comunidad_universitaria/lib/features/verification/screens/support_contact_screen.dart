@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/config/support_config.dart';
-import '../../../core/constants/zanate_colors.dart';
 import '../../../core/services/supabase_service.dart';
 import '../utils/verification_validators.dart';
 
@@ -150,206 +151,234 @@ class _SupportContactScreenState extends State<SupportContactScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
-    final borderColor =
-        isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+    const zanateBlack = Color(0xFF0B0D10);
+    const zanateEyeYellow = Color(0xFFF5C518);
+    const subtleText = Color(0xFF475569);
+    final inputBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1.2),
+    );
+    final focusedBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: const BorderSide(color: zanateBlack, width: 1.6),
+    );
+    final errorBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.2),
+    );
+    InputDecoration zanateInput({
+      required String labelText,
+      String? hintText,
+      Widget? prefixIcon,
+      bool alignLabelWithHint = false,
+      String? counterText,
+    }) {
+      return InputDecoration(
+        labelText: labelText,
+        hintText: hintText,
+        alignLabelWithHint: alignLabelWithHint,
+        counterText: counterText,
+        prefixIcon: prefixIcon,
+        filled: true,
+        fillColor: const Color(0xFFF8FAFC),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
+        labelStyle: const TextStyle(
+          fontSize: 13.5,
+          fontWeight: FontWeight.w500,
+          color: Color(0xFF64748B),
+        ),
+        floatingLabelStyle: const TextStyle(
+          fontSize: 12.5,
+          fontWeight: FontWeight.w700,
+          color: zanateBlack,
+        ),
+        hintStyle: const TextStyle(
+          fontSize: 13.5,
+          color: Color(0xFF94A3B8),
+        ),
+        border: inputBorder,
+        enabledBorder: inputBorder,
+        focusedBorder: focusedBorder,
+        errorBorder: errorBorder,
+        focusedErrorBorder: errorBorder,
+      );
+    }
 
-    return AbsorbPointer(
-      absorbing: _isSending,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: cardColor,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: borderColor),
+    return ColoredBox(
+      color: Colors.white,
+      child: AbsorbPointer(
+        absorbing: _isSending,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Solicitud de soporte',
+                  style: GoogleFonts.outfit(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.3,
+                    color: zanateBlack,
+                  ),
                 ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(
-                      Icons.support_agent,
-                      color: ZanateColors.zanateAccent,
-                      size: 26,
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    width: 44,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: zanateEyeYellow,
+                      borderRadius: BorderRadius.circular(999),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Contactar con soporte',
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Escríbenos si no tienes correo institucional o falló la verificación.',
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    height: 1.4,
+                    color: subtleText,
+                  ),
+                ),
+                const SizedBox(height: 18),
+
+                if (_accountEmail != null) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 11,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          PhosphorIconsRegular.at,
+                          size: 17,
+                          color: subtleText,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Correo de la cuenta: ${_accountEmail!}',
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w500,
+                              color: zanateBlack,
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Si la verificación automática no funcionó o no tienes correo institucional, escríbenos y revisaremos tu caso.',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: isDark
-                                  ? Colors.grey.shade300
-                                  : Colors.grey.shade700,
-                              height: 1.35,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
+                  ),
+                  const SizedBox(height: 16),
+                ],
 
-              if (_accountEmail != null) ...[
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
+                DropdownButtonFormField<String>(
+                  initialValue: _selectedReason,
+                  isExpanded: true,
+                  dropdownColor: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  decoration: zanateInput(
+                    labelText: 'Motivo de contacto',
+                    prefixIcon: const Icon(
+                      PhosphorIconsRegular.question,
+                      color: subtleText,
+                    ),
                   ),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? const Color(0xFF0F172A)
-                        : const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: borderColor),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.alternate_email, size: 16),
-                      const SizedBox(width: 8),
-                      Expanded(
+                  items: [
+                    for (final reason in _reasons)
+                      DropdownMenuItem(
+                        value: reason,
                         child: Text(
-                          'Correo de la cuenta: ${_accountEmail!}',
-                          style: theme.textTheme.bodySmall,
+                          reason,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                    ],
-                  ),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setState(() => _selectedReason = value);
+                  },
                 ),
                 const SizedBox(height: 14),
-              ],
 
-              DropdownButtonFormField<String>(
-                initialValue: _selectedReason,
-                isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: 'Motivo de contacto',
-                  prefixIcon: Icon(Icons.help_outline),
-                  border: OutlineInputBorder(),
-                ),
-                items: [
-                  for (final reason in _reasons)
-                    DropdownMenuItem(
-                      value: reason,
-                      child: Text(
-                        reason,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                ],
-                onChanged: (value) {
-                  if (value == null) return;
-                  setState(() => _selectedReason = value);
-                },
-              ),
-              const SizedBox(height: 14),
-
-              TextFormField(
-                key: const Key('support_detail'),
-                controller: _detailController,
-                maxLength: 500,
-                maxLines: 4,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                  labelText: 'Detalle (opcional)',
-                  hintText: 'Cuéntanos qué pasó o qué mensaje de error viste.',
-                  alignLabelWithHint: true,
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 6),
-
-              TextFormField(
-                key: const Key('support_carne'),
-                controller: _carneController,
-                keyboardType: TextInputType.number,
-                maxLength: 9,
-                decoration: const InputDecoration(
-                  labelText: 'Carné USAC (opcional)',
-                  hintText: 'Ej. 202012345',
-                  prefixIcon: Icon(Icons.badge_outlined),
-                  border: OutlineInputBorder(),
-                  counterText: '',
-                  helperText:
-                      'Solo se incluye en el correo que tú envíes. La app no lo guarda.',
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) return null;
-                  return VerificationValidators.validateCarne(value);
-                },
-              ),
-              const SizedBox(height: 16),
-
-              ElevatedButton.icon(
-                key: const Key('support_send'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: ZanateColors.zanateAccent,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                TextFormField(
+                  key: const Key('support_detail'),
+                  controller: _detailController,
+                  maxLength: 500,
+                  maxLines: 4,
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: zanateInput(
+                    labelText: 'Detalle (opcional)',
+                    hintText: 'Cuéntanos qué pasó o qué error viste.',
+                    alignLabelWithHint: true,
                   ),
                 ),
-                onPressed: _isSending ? null : _handleSend,
-                icon: _isSending
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : const Icon(Icons.mail_outline, size: 20),
-                label: const Text(
-                  'Enviar correo a soporte',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                ),
-              ),
-              const SizedBox(height: 10),
+                const SizedBox(height: 6),
 
-              Text(
-                'Se abrirá tu aplicación de correo con el mensaje preparado. '
-                'La app no almacena el contenido ni el carné.',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-                ),
-              ),
-
-              if (widget.onSelectAutomaticPath != null) ...[
-                const SizedBox(height: 10),
-                Center(
-                  child: TextButton.icon(
-                    onPressed: widget.onSelectAutomaticPath,
-                    icon: const Icon(Icons.verified_user_outlined, size: 18),
-                    label: const Text(
-                      'Volver a la verificación automática',
-                      style: TextStyle(fontSize: 12),
+                TextFormField(
+                  key: const Key('support_carne'),
+                  controller: _carneController,
+                  keyboardType: TextInputType.number,
+                  maxLength: 9,
+                  decoration: zanateInput(
+                    labelText: 'Carné USAC (opcional)',
+                    hintText: 'Ej. 202012345',
+                    prefixIcon: const Icon(
+                      PhosphorIconsRegular.identificationCard,
+                      color: subtleText,
                     ),
+                    counterText: '',
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) return null;
+                    return VerificationValidators.validateCarne(value);
+                  },
+                ),
+                const SizedBox(height: 18),
+
+                ElevatedButton.icon(
+                  key: const Key('support_send'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: zanateBlack,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    minimumSize: const Size.fromHeight(52),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  onPressed: _isSending ? null : _handleSend,
+                  icon: _isSending
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Icon(PhosphorIconsBold.envelopeSimple, size: 19),
+                  label: const Text(
+                    'Enviar correo a soporte',
+                    style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
                   ),
                 ),
               ],
-            ],
+            ),
           ),
         ),
       ),
