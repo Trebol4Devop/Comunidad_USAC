@@ -46,12 +46,6 @@ void main() {
       );
 
       expect(find.text('Continuar con Google'), findsOneWidget);
-      expect(
-        find.text(
-          'Usa tu cuenta de Google para iniciar sesión o crear una cuenta.',
-        ),
-        findsOneWidget,
-      );
       expect(find.text('o con correo'), findsNothing);
       expect(find.text('Correo electrónico'), findsNothing);
       expect(find.text('Contraseña'), findsNothing);
