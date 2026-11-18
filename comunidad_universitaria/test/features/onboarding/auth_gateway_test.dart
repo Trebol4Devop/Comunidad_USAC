@@ -234,5 +234,35 @@ void main() {
       expect(find.byType(VerificationFlowScreen), findsOneWidget);
       expect(find.text('Verificación automática'), findsOneWidget);
     });
+
+    testWidgets(
+      'al regresar de Google sin completar acceso libera el botón tras el periodo de gracia',
+      (tester) async {
+        await tester.pumpWidget(buildTestGateway(authApi: fakeApi));
+        await tester.pumpAndSettle();
+
+        final googleButton = find.widgetWithText(
+          OutlinedButton,
+          'Continuar con Google',
+        );
+        await tester.tap(googleButton);
+        await tester.pump();
+
+        expect(
+          find.text('Completa el acceso en Google y regresa a la app'),
+          findsOneWidget,
+        );
+
+        tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+        await tester.pump(const Duration(milliseconds: 1600));
+        await tester.pumpAndSettle();
+
+        expect(
+          find.text('Completa el acceso en Google y regresa a la app'),
+          findsNothing,
+        );
+        expect(tester.widget<OutlinedButton>(googleButton).onPressed, isNotNull);
+      },
+    );
   });
 }

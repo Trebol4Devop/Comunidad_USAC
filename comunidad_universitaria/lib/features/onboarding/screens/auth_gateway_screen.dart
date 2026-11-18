@@ -137,16 +137,73 @@ class AuthGatewayScreen extends StatefulWidget {
   State<AuthGatewayScreen> createState() => _AuthGatewayScreenState();
 }
 
-class _AuthGatewayScreenState extends State<AuthGatewayScreen> {
+class _AuthGatewayScreenState extends State<AuthGatewayScreen>
+    with WidgetsBindingObserver {
   bool _isLoading = false;
   bool _waitingForGoogle = false;
   String? _errorMessage;
   StreamSubscription<AuthState>? _authSubscription;
+  Timer? _resumeGraceTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _resumeGraceTimer?.cancel();
     unawaited(_authSubscription?.cancel());
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _waitingForGoogle) {
+      _resumeGraceTimer?.cancel();
+      _resumeGraceTimer = Timer(
+        const Duration(milliseconds: 1500),
+        _verifyAuthAfterResume,
+      );
+    }
+  }
+
+  void _verifyAuthAfterResume() {
+    if (!mounted || !_waitingForGoogle) return;
+    final api = widget.authApi;
+    final currentUser = api != null
+        ? api.currentUser
+        : (SupabaseConfig.isConfigured
+            ? SupabaseService.client.auth.currentUser
+            : null);
+
+    if (currentUser != null && !currentUser.isAnonymous) {
+      _resumeGraceTimer?.cancel();
+      unawaited(_authSubscription?.cancel());
+      _authSubscription = null;
+      setState(() {
+        _isLoading = false;
+        _waitingForGoogle = false;
+      });
+      _handlePostLogin(currentUser);
+      return;
+    }
+
+    _cancelPendingGoogleWait();
+  }
+
+  void _cancelPendingGoogleWait() {
+    _resumeGraceTimer?.cancel();
+    unawaited(_authSubscription?.cancel());
+    _authSubscription = null;
+    unawaited(LocalStorageService.clearPendingAuthIntent());
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
+      _waitingForGoogle = false;
+    });
   }
 
   Future<void> _handlePostLogin(User user) async {
@@ -224,6 +281,7 @@ class _AuthGatewayScreenState extends State<AuthGatewayScreen> {
       if (state.event == AuthChangeEvent.signedIn &&
           user != null &&
           !user.isAnonymous) {
+        _resumeGraceTimer?.cancel();
         unawaited(_authSubscription?.cancel());
         _authSubscription = null;
         if (mounted) {
@@ -504,6 +562,26 @@ class _AuthGatewayScreenState extends State<AuthGatewayScreen> {
                       fontSize: 12.5,
                       fontWeight: FontWeight.w500,
                       color: isDark ? Colors.white : const Color(0xFF334155),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                TextButton(
+                  onPressed: _cancelPendingGoogleWait,
+                  style: TextButton.styleFrom(
+                    foregroundColor: accentColor,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text(
+                    'Cancelar',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
