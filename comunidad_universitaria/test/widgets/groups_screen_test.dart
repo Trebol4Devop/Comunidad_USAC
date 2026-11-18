@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:comunidad_universitaria/core/config/app_theme.dart';
 import 'package:comunidad_universitaria/core/models/whatsapp_group.dart';
 import 'package:comunidad_universitaria/core/services/cache_service.dart';
@@ -57,46 +58,42 @@ void main() {
       await tester.pumpWidget(buildTestScreen());
       await tester.pumpAndSettle();
 
-      // Bienvenida de canal estilo Discord
-      expect(
-        find.textContaining('¡Te damos la bienvenida a #'),
-        findsOneWidget,
+      // Encabezado Zanate del directorio estudiantil
+      expect(find.text('DIRECTORIO ESTUDIANTIL'), findsOneWidget);
+      expect(find.text('Grupos de Estudio'), findsOneWidget);
+      final prefsButton = find.byWidgetPredicate(
+        (w) =>
+            w is Icon &&
+            (w.icon == PhosphorIconsRegular.slidersHorizontal ||
+                w.icon == PhosphorIconsFill.slidersHorizontal),
       );
-      expect(
-        find.textContaining('grupos de WhatsApp y estudio USAC'),
-        findsOneWidget,
-      );
-
-      // Aviso de depuración semestral
-      expect(
-        find.textContaining(
-          'Para evitar enlaces caídos, los grupos se depuran automáticamente',
-        ),
-        findsOneWidget,
-      );
-      expect(find.byIcon(Icons.close), findsOneWidget);
+      expect(prefsButton, findsOneWidget);
+      expect(find.byTooltip('Compartir Grupo'), findsOneWidget);
 
       // La búsqueda permanece visible y accesible aunque falle la carga.
       expect(find.byType(TextField), findsOneWidget);
-      expect(find.text('Buscar grupos'), findsOneWidget);
+      expect(
+        find.text('Buscar cursos, secciones o palabras clave...'),
+        findsOneWidget,
+      );
 
       // Sin Supabase configurado, la carga falla: no debe mostrarse como lista vacía.
       expect(find.byType(EmptyStateWidget), findsNothing);
-      expect(find.text('No se pudieron cargar los grupos'), findsOneWidget);
+      expect(
+        find.text('No se pudieron cargar los grupos. Revisa tu conexión.'),
+        findsOneWidget,
+      );
       expect(find.text('Reintentar'), findsOneWidget);
       await tester.tap(find.text('Reintentar'));
       await tester.pumpAndSettle();
-      expect(find.text('No se pudieron cargar los grupos'), findsOneWidget);
-
-      // FAB para compartir grupo
       expect(
-        find.widgetWithText(FloatingActionButton, 'Compartir Grupo'),
+        find.text('No se pudieron cargar los grupos. Revisa tu conexión.'),
         findsOneWidget,
       );
     });
 
     testWidgets(
-      'Renderiza en escritorio (1200x800) con bienvenida a canal y único botón de compartir',
+      'Renderiza en escritorio (1200x800) con cabecera Zanate y único botón de compartir',
       (tester) async {
         tester.view.physicalSize = const Size(1200, 800);
         tester.view.devicePixelRatio = 1.0;
@@ -105,21 +102,19 @@ void main() {
         await tester.pumpWidget(buildTestScreen());
         await tester.pumpAndSettle();
 
-        expect(
-          find.textContaining('¡Te damos la bienvenida a #'),
-          findsOneWidget,
-        );
+        expect(find.text('DIRECTORIO ESTUDIANTIL'), findsOneWidget);
+        expect(find.text('Grupos de Estudio'), findsOneWidget);
 
-        // Botón de compartir grupo en la parte inferior
-        expect(find.text('Compartir Grupo'), findsOneWidget);
+        // Botón único '+' para compartir grupo en cabecera
+        expect(find.byTooltip('Compartir Grupo'), findsOneWidget);
 
-        // Las facultades se manejan como canales de servidor en la barra lateral, no como dropdown en la página.
+        // Las facultades se manejan en el bottom sheet Zanate de preferencias, no como dropdown inline.
         expect(find.byType(DropdownButtonFormField<String>), findsNothing);
         expect(find.byType(TextField), findsOneWidget);
       },
     );
 
-    testWidgets('Permite descartar el aviso semestral con el botón cerrar', (
+    testWidgets('Permite abrir la hoja de preferencias de facultad', (
       tester,
     ) async {
       tester.view.physicalSize = const Size(1200, 800);
@@ -129,23 +124,21 @@ void main() {
       await tester.pumpWidget(buildTestScreen());
       await tester.pumpAndSettle();
 
-      final bannerFinder = find.textContaining(
-        'Para evitar enlaces caídos, los grupos se depuran automáticamente',
+      final prefsButton = find.byWidgetPredicate(
+        (w) =>
+            w is Icon &&
+            (w.icon == PhosphorIconsRegular.slidersHorizontal ||
+                w.icon == PhosphorIconsFill.slidersHorizontal),
       );
-      expect(bannerFinder, findsOneWidget);
-
-      // Tap en el botón de cerrar aviso
-      final closeButton = find.byIcon(Icons.close);
-      expect(closeButton, findsOneWidget);
-      await tester.tap(closeButton);
+      expect(prefsButton, findsOneWidget);
+      await tester.tap(prefsButton);
       await tester.pumpAndSettle();
 
-      // El aviso ya no debe estar visible
-      expect(bannerFinder, findsNothing);
+      expect(find.text('Filtrar por Facultad'), findsOneWidget);
     });
 
     testWidgets(
-      'Renderiza la cuadrícula de Grupos en tableta con datos en caché',
+      'Renderiza la lista de Grupos en tableta con datos en caché',
       (tester) async {
         tester.view.physicalSize = const Size(800, 800);
         tester.view.devicePixelRatio = 1.0;
@@ -169,7 +162,7 @@ void main() {
         await tester.pumpWidget(buildTestScreen());
         await tester.pumpAndSettle();
 
-        expect(find.byType(GridView), findsOneWidget);
+        expect(find.byType(ListView), findsWidgets);
         expect(find.byType(GroupCard), findsOneWidget);
         expect(find.text('Física 1 - Sección B'), findsOneWidget);
         expect(find.text('15'), findsOneWidget);
@@ -214,10 +207,10 @@ void main() {
       await tester.pumpWidget(buildTestScreen(activeAlias: 'Auxiliar #42'));
       await tester.pumpAndSettle();
 
-      final fab = find.byType(FloatingActionButton);
-      expect(fab, findsOneWidget);
+      final shareBtn = find.byTooltip('Compartir Grupo');
+      expect(shareBtn, findsOneWidget);
 
-      await tester.tap(fab);
+      await tester.tap(shareBtn);
       await tester.pumpAndSettle();
 
       // Debe haberse abierto CreateGroupDialog
