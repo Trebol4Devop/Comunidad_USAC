@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:comunidad_universitaria/features/shared/widgets/anonymous_author_header.dart';
 
 void main() {
@@ -103,7 +104,7 @@ void main() {
         );
 
         expect(find.text('Tú'), findsOneWidget);
-        final deleteIcon = find.byIcon(Icons.delete_outline);
+        final deleteIcon = find.byIcon(PhosphorIconsRegular.trash);
         expect(deleteIcon, findsOneWidget);
 
         await tester.tap(deleteIcon);
@@ -129,7 +130,7 @@ void main() {
         );
 
         expect(find.text('Tú'), findsOneWidget);
-        expect(find.byIcon(Icons.delete_outline), findsNothing);
+        expect(find.byIcon(PhosphorIconsRegular.trash), findsNothing);
       },
     );
 
@@ -152,7 +153,7 @@ void main() {
         ),
       );
 
-      final flagIcon = find.byIcon(Icons.flag_outlined);
+      final flagIcon = find.byIcon(PhosphorIconsRegular.flag);
       expect(flagIcon, findsOneWidget);
 
       await tester.tap(flagIcon);

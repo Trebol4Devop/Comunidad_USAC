@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:comunidad_universitaria/core/constants/anonymous_aliases.dart';
 import 'package:comunidad_universitaria/core/models/post.dart';
 import 'package:comunidad_universitaria/features/shared/widgets/anonymous_author_header.dart';
@@ -132,9 +133,9 @@ void main() {
       );
 
       expect(find.text('Tú'), findsOneWidget);
-      expect(find.byIcon(Icons.delete_outline), findsOneWidget);
+      expect(find.byIcon(PhosphorIconsRegular.trash), findsOneWidget);
 
-      await tester.tap(find.byIcon(Icons.delete_outline));
+      await tester.tap(find.byIcon(PhosphorIconsRegular.trash));
       expect(deleteCalled, isTrue);
     });
 

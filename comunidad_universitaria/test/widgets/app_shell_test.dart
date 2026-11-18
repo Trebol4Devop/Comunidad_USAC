@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show LogicalKeyboardKey;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:comunidad_universitaria/core/config/app_theme.dart';
 import 'package:comunidad_universitaria/features/forum/screens/forum_screen.dart';
 import 'package:comunidad_universitaria/features/groups/screens/groups_screen.dart';
@@ -71,34 +72,17 @@ void main() {
         // Botón de perfil ya no se muestra en el navbar (se ubica en la barra inferior)
         expect(find.byType(AliasBadgeButton), findsNothing);
 
-        // Navegación móvil con iconos sin etiquetas visibles, en orden de referencia.
-        expect(find.byType(NavigationBar), findsOneWidget);
-        final navigationBar = tester.widget<NavigationBar>(
-          find.byType(NavigationBar),
-        );
-        expect(
-          navigationBar.labelBehavior,
-          NavigationDestinationLabelBehavior.alwaysHide,
-        );
-        expect(
-          navigationBar.destinations.map(
-            (destination) => (destination as NavigationDestination).label,
-          ),
-          ['Foro', 'Grupos', 'Mapa', 'Marketplace'],
-        );
+        // Navegación móvil Zanate con 4 ítems en el orden de referencia.
+        for (final label in const ['Foro', 'Grupos', 'Mapa', 'Marketplace']) {
+          expect(find.bySemanticsLabel(label), findsOneWidget);
+        }
         for (final icon in const [
-          Icons.chat_bubble_outline,
-          Icons.groups_outlined,
-          Icons.map_outlined,
-          Icons.local_mall_outlined,
+          PhosphorIconsFill.chatsCircle,
+          PhosphorIconsRegular.usersThree,
+          PhosphorIconsRegular.mapTrifold,
+          PhosphorIconsRegular.shoppingBag,
         ]) {
-          expect(
-            find.descendant(
-              of: find.byType(NavigationBar),
-              matching: find.byIcon(icon),
-            ),
-            findsOneWidget,
-          );
+          expect(find.byIcon(icon), findsOneWidget);
         }
 
         // En el tab inicial (Foro), no hay FloatingActionButton
@@ -118,8 +102,8 @@ void main() {
 
         // Inicialmente la barra Zanate y la barra de canal están visibles en Foro
         expect(find.text('Zanate'), findsOneWidget);
-        expect(find.byIcon(Icons.menu), findsOneWidget);
-        expect(find.byIcon(Icons.add), findsOneWidget);
+        expect(find.byIcon(PhosphorIconsRegular.list), findsOneWidget);
+        expect(find.byIcon(PhosphorIconsBold.plus), findsOneWidget);
 
         // Despachamos un ScrollUpdateNotification hacia abajo
         final forumElement = tester.element(find.byType(ForumScreen));
@@ -159,8 +143,8 @@ void main() {
         expect(find.text('Zanate'), findsOneWidget);
         await tester.pumpAndSettle();
 
-        expect(find.byIcon(Icons.menu), findsOneWidget);
-        expect(find.byIcon(Icons.add), findsOneWidget);
+        expect(find.byIcon(PhosphorIconsRegular.list), findsOneWidget);
+        expect(find.byIcon(PhosphorIconsBold.plus), findsOneWidget);
       },
     );
 
@@ -173,12 +157,7 @@ void main() {
 
       await tester.pumpWidget(buildTestShell(activeAlias: 'Map Tester'));
       await tester.pumpAndSettle();
-      await tester.tap(
-        find.descendant(
-          of: find.byType(NavigationBar),
-          matching: find.byIcon(Icons.map_outlined),
-        ),
-      );
+      await tester.tap(find.bySemanticsLabel('Mapa'));
       await tester.pumpAndSettle();
 
       expect(find.byType(CampusMapScreen), findsOneWidget);
@@ -271,9 +250,15 @@ void main() {
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
       await tester.pumpAndSettle();
       expect(FocusManager.instance.primaryFocus?.debugLabel, 'Desktop tab 1');
+      Finder desktopTabSemantics(String label) => find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics &&
+            widget.properties.role == SemanticsRole.tab &&
+            widget.properties.label == label,
+      );
       expect(
         tester
-                .getSemantics(find.bySemanticsLabel('Marketplace & Tutorías'))
+                .getSemantics(desktopTabSemantics('Marketplace & Tutorías'))
                 .getSemanticsData()
                 .flagsCollection
                 .isSelected ==
@@ -285,7 +270,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         tester
-                .getSemantics(find.bySemanticsLabel('Mapa'))
+                .getSemantics(desktopTabSemantics('Mapa'))
                 .getSemanticsData()
                 .flagsCollection
                 .isSelected ==
@@ -297,7 +282,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         tester
-                .getSemantics(find.bySemanticsLabel('Foro Estudiantil'))
+                .getSemantics(desktopTabSemantics('Foro Estudiantil'))
                 .getSemanticsData()
                 .flagsCollection
                 .isSelected ==
@@ -309,7 +294,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         tester
-                .getSemantics(find.bySemanticsLabel('Mapa'))
+                .getSemantics(desktopTabSemantics('Mapa'))
                 .getSemanticsData()
                 .flagsCollection
                 .isSelected ==
@@ -320,7 +305,7 @@ void main() {
     });
 
     testWidgets(
-      'Navegación móvil entre tabs y verificación de FloatingActionButton contextual',
+      'Navegación móvil entre tabs y botón de publicar anuncio en Marketplace',
       (tester) async {
         tester.view.physicalSize = const Size(400, 800);
         tester.view.devicePixelRatio = 1.0;
@@ -333,18 +318,11 @@ void main() {
         expect(find.byType(ForumScreen), findsOneWidget);
 
         // El cuarto icono visual abre Marketplace (pantalla interna 1).
-        final marketTab = find.descendant(
-          of: find.byType(NavigationBar),
-          matching: find.byIcon(Icons.local_mall_outlined),
-        );
-        await tester.tap(marketTab);
+        await tester.tap(find.bySemanticsLabel('Marketplace'));
         await tester.pumpAndSettle();
 
-        // Debe mostrar el FAB contextual de marketplace 'Publicar Artículo'
-        expect(
-          find.widgetWithText(FloatingActionButton, 'Publicar Artículo'),
-          findsOneWidget,
-        );
+        // Muestra el botón Zanate 'Publicar Anuncio' en la cabecera del Marketplace
+        expect(find.byTooltip('Publicar Anuncio'), findsOneWidget);
       },
     );
 
@@ -357,14 +335,14 @@ void main() {
 
       await tester.pumpWidget(buildTestShell(activeAlias: 'Breakpoint Tester'));
       await tester.pumpAndSettle();
-      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(find.bySemanticsLabel('Foro'), findsOneWidget);
       expect(find.text('Zanate'), findsOneWidget);
       expect(find.byTooltip('Ajustes'), findsNothing);
 
       tester.view.physicalSize = const Size(700, 800);
       await tester.pumpAndSettle();
 
-      expect(find.byType(NavigationBar), findsNothing);
+      expect(find.bySemanticsLabel('Foro'), findsNothing);
       expect(find.text('Foro Estudiantil'), findsOneWidget);
       expect(find.text('Marketplace & Tutorías'), findsOneWidget);
       expect(find.text('Grupos de Estudio'), findsOneWidget);
@@ -373,7 +351,7 @@ void main() {
     });
 
     testWidgets(
-      'Acceso móvil a Grupos comparte con un solo FAB y conserva estado',
+      'Acceso móvil a Grupos comparte desde cabecera y conserva estado',
       (tester) async {
         tester.view.physicalSize = const Size(400, 800);
         tester.view.devicePixelRatio = 1.0;
@@ -384,44 +362,25 @@ void main() {
 
         expect(find.byType(GroupsScreen, skipOffstage: false), findsNothing);
 
-        await tester.tap(
-          find.descendant(
-            of: find.byType(NavigationBar),
-            matching: find.byIcon(Icons.groups_outlined),
-          ),
-        );
+        await tester.tap(find.bySemanticsLabel('Grupos'));
         await tester.pumpAndSettle();
 
         final groupsScreen = find.byType(GroupsScreen, skipOffstage: false);
         expect(groupsScreen, findsOneWidget);
         final groupsState = tester.state<GroupsScreenState>(groupsScreen);
-        expect(
-          find.widgetWithText(FloatingActionButton, 'Compartir Grupo'),
-          findsOneWidget,
-        );
-        expect(find.byType(FloatingActionButton), findsOneWidget);
+        final shareBtn = find.byTooltip('Compartir Grupo');
+        expect(shareBtn, findsOneWidget);
+        expect(find.byType(FloatingActionButton), findsNothing);
 
-        await tester.tap(
-          find.widgetWithText(FloatingActionButton, 'Compartir Grupo'),
-        );
+        await tester.tap(shareBtn);
         await tester.pumpAndSettle();
         expect(find.byType(CreateGroupDialog), findsOneWidget);
 
         Navigator.of(tester.element(find.byType(CreateGroupDialog))).pop();
         await tester.pumpAndSettle();
-        await tester.tap(
-          find.descendant(
-            of: find.byType(NavigationBar),
-            matching: find.byIcon(Icons.local_mall_outlined),
-          ),
-        );
+        await tester.tap(find.bySemanticsLabel('Marketplace'));
         await tester.pumpAndSettle();
-        await tester.tap(
-          find.descendant(
-            of: find.byType(NavigationBar),
-            matching: find.byIcon(Icons.groups_outlined),
-          ),
-        );
+        await tester.tap(find.bySemanticsLabel('Grupos'));
         await tester.pumpAndSettle();
 
         expect(
@@ -506,7 +465,7 @@ void main() {
       expect(find.byType(AliasBadgeButton), findsNothing);
     });
 
-    testWidgets('Click en botón de normas navega hacia RulesScreen', (
+    testWidgets('Desde el modal comunitario navega hacia RulesScreen', (
       tester,
     ) async {
       tester.view.physicalSize = const Size(1200, 800);
@@ -516,14 +475,17 @@ void main() {
       await tester.pumpWidget(buildTestShell(activeAlias: 'Rules Tester'));
       await tester.pumpAndSettle();
 
-      final rulesButton = find.byTooltip('Normas y Descargo');
+      await tester.tap(find.text('Comunidad Universitaria'));
+      await tester.pumpAndSettle();
+
+      final rulesButton = find.text('Ver Normas Completas');
       expect(rulesButton, findsOneWidget);
 
       await tester.tap(rulesButton);
       await tester.pumpAndSettle();
 
       expect(find.byType(RulesScreen), findsOneWidget);
-      expect(find.text('Normas Comunitarias & Descargo Legal'), findsOneWidget);
+      expect(find.text('Normas y Descargo'), findsOneWidget);
     });
 
     testWidgets(
