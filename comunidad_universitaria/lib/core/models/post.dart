@@ -93,6 +93,8 @@ class Post {
   final int likes;
   final String? userId;
   final String? authorHash;
+  final int? avatarColorIndex;
+  final int? avatarIconIndex;
   final DateTime createdAt;
   final String carrera;
   final String? imageUrl;
@@ -126,6 +128,8 @@ class Post {
     required this.likes,
     this.userId,
     this.authorHash,
+    this.avatarColorIndex,
+    this.avatarIconIndex,
     required this.createdAt,
     this.carrera = 'todas',
     this.imageUrl,
@@ -159,6 +163,8 @@ class Post {
     int? likes,
     String? userId,
     String? authorHash,
+    int? avatarColorIndex,
+    int? avatarIconIndex,
     DateTime? createdAt,
     String? carrera,
     String? imageUrl,
@@ -190,6 +196,8 @@ class Post {
       likes: likes ?? this.likes,
       userId: userId ?? this.userId,
       authorHash: authorHash ?? this.authorHash,
+      avatarColorIndex: avatarColorIndex ?? this.avatarColorIndex,
+      avatarIconIndex: avatarIconIndex ?? this.avatarIconIndex,
       createdAt: createdAt ?? this.createdAt,
       carrera: carrera ?? this.carrera,
       imageUrl: imageUrl ?? this.imageUrl,
@@ -259,6 +267,12 @@ class Post {
           : int.tryParse(map['likes']?.toString() ?? '0') ?? 0,
       userId: null,
       authorHash: map['author_hash']?.toString(),
+      avatarColorIndex: map['avatar_color_index'] is int
+          ? map['avatar_color_index'] as int
+          : int.tryParse(map['avatar_color_index']?.toString() ?? ''),
+      avatarIconIndex: map['avatar_icon_index'] is int
+          ? map['avatar_icon_index'] as int
+          : int.tryParse(map['avatar_icon_index']?.toString() ?? ''),
       createdAt: map['created_at'] != null
           ? DateTime.tryParse(map['created_at'].toString()) ?? DateTime.now()
           : DateTime.now(),
@@ -324,6 +338,8 @@ class PostComment {
   final String content;
   final String? userId;
   final String? authorHash;
+  final int? avatarColorIndex;
+  final int? avatarIconIndex;
   final DateTime createdAt;
   final String? parentId;
   final String? gifUrl;
@@ -345,6 +361,8 @@ class PostComment {
     required this.content,
     this.userId,
     this.authorHash,
+    this.avatarColorIndex,
+    this.avatarIconIndex,
     required this.createdAt,
     this.parentId,
     this.gifUrl,
@@ -367,6 +385,8 @@ class PostComment {
     String? content,
     String? userId,
     String? authorHash,
+    int? avatarColorIndex,
+    int? avatarIconIndex,
     DateTime? createdAt,
     String? parentId,
     String? gifUrl,
@@ -386,6 +406,8 @@ class PostComment {
       content: content ?? this.content,
       userId: userId ?? this.userId,
       authorHash: authorHash ?? this.authorHash,
+      avatarColorIndex: avatarColorIndex ?? this.avatarColorIndex,
+      avatarIconIndex: avatarIconIndex ?? this.avatarIconIndex,
       createdAt: createdAt ?? this.createdAt,
       parentId: parentId ?? this.parentId,
       gifUrl: gifUrl ?? this.gifUrl,
@@ -430,6 +452,12 @@ class PostComment {
       content: map['content'] ?? '',
       userId: null,
       authorHash: map['author_hash']?.toString(),
+      avatarColorIndex: map['avatar_color_index'] is int
+          ? map['avatar_color_index'] as int
+          : int.tryParse(map['avatar_color_index']?.toString() ?? ''),
+      avatarIconIndex: map['avatar_icon_index'] is int
+          ? map['avatar_icon_index'] as int
+          : int.tryParse(map['avatar_icon_index']?.toString() ?? ''),
       createdAt: map['created_at'] != null
           ? DateTime.tryParse(map['created_at'].toString()) ?? DateTime.now()
           : DateTime.now(),

@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import '../../../core/constants/avatar_presets.dart';
 import '../../../core/constants/categories.dart';
 import '../../../core/models/facultad.dart';
 import '../../../core/models/marketplace_item.dart';
@@ -59,29 +60,9 @@ class _ProfileScreenState extends State<ProfileScreen>
   List<MarketplaceItem> _myMarketplaceItems = [];
   bool _isLoadingActivity = false;
 
-  // Avatar color palette
-  static const List<Color> _avatarColors = [
-    Color(0xFF004B87), // USAC Blue
-    Color(0xFF0D9488), // Teal
-    Color(0xFF7C3AED), // Purple
-    Color(0xFFD97706), // Amber
-    Color(0xFFDC2626), // Red
-    Color(0xFF2563EB), // Royal Blue
-    Color(0xFF059669), // Emerald
-    Color(0xFF475569), // Slate
-  ];
-
-  // Avatar icons
-  static const List<IconData> _avatarIcons = [
-    PhosphorIconsRegular.graduationCap,
-    PhosphorIconsRegular.user,
-    PhosphorIconsRegular.bookOpen,
-    PhosphorIconsRegular.flask,
-    PhosphorIconsRegular.wrench,
-    PhosphorIconsRegular.palette,
-    PhosphorIconsRegular.laptop,
-    PhosphorIconsRegular.bank,
-  ];
+  // Avatar color palette & icons (compartidos en AvatarPresets)
+  static const List<Color> _avatarColors = AvatarPresets.colors;
+  static const List<IconData> _avatarIcons = AvatarPresets.icons;
 
   @override
   void initState() {
