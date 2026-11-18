@@ -130,4 +130,27 @@ class AnonymousAliasGenerator {
 
     return false;
   }
+
+  /// Normaliza y valida el alias contra las reglas estrictas del trigger Art. 12 en Supabase.
+  /// Si el alias actual no cumple, genera uno válido del catálogo oficial.
+  static String ensureValidForBackend(String alias) {
+    final norm = alias.trim().replaceAll(RegExp(r'\s+'), ' ');
+    if (norm == 'Estudiante Anónimo' ||
+        norm == 'Estudiante Emprendedor' ||
+        norm == 'Estudiante') {
+      return norm;
+    }
+    if (RegExp(r'^Estudiante [A-Za-zÁÉÍÓÚÑáéíóúñ]+ #[0-9]{1,4}$').hasMatch(norm)) {
+      return norm;
+    }
+    for (final noun in nouns) {
+      if (norm.startsWith('$noun ')) {
+        final remaining = norm.substring(noun.length + 1);
+        if (adjectives.contains(remaining)) {
+          return norm;
+        }
+      }
+    }
+    return generate();
+  }
 }

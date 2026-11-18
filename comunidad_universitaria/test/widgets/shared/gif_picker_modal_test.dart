@@ -38,7 +38,7 @@ void main() {
 
       // GIFs de la categoría todas
       expect(find.byType(GridView), findsOneWidget);
-      expect(find.text('Lofi Cat Estudiando'), findsOneWidget);
+      expect(find.text('Escribiendo rápido'), findsOneWidget);
     });
 
     testWidgets('Filtrar por texto muestra resultados o mensaje de no encontrados', (tester) async {
@@ -50,7 +50,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Mucho Café'), findsWidgets);
-      expect(find.text('Lofi Cat Estudiando'), findsNothing);
+      expect(find.text('Escribiendo rápido'), findsNothing);
 
       // Búsqueda sin resultados
       await tester.enterText(searchField, 'TextoQueNoExisteEnLosGifs');

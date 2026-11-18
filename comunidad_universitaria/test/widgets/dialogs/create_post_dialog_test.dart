@@ -55,10 +55,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('Nueva Consulta en el Foro'), findsOneWidget);
-        expect(
-          find.text('Foro Estudiantil USAC · Espacio Libre'),
-          findsOneWidget,
-        );
+        expect(find.text('Publicando como:'), findsNothing);
 
         // Campos de texto
         expect(

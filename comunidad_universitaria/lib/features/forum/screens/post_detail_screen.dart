@@ -15,11 +15,11 @@ import '../../../core/utils/time_utils.dart';
 import '../widgets/comment_item.dart';
 import '../widgets/create_post_dialog.dart';
 import '../../legal/widgets/terms_consent_modal.dart';
-import '../../shared/widgets/alias_dice_button.dart';
 import '../../../core/services/profile_service.dart';
 import '../../shared/widgets/auth_modal.dart';
 import '../../shared/widgets/gif_picker_modal.dart';
 import '../../shared/widgets/report_dialog.dart';
+import '../../shared/widgets/user_avatar_circle.dart';
 import '../widgets/discord/discord_media_attachment.dart';
 
 class PostDetailScreen extends StatefulWidget {
@@ -473,14 +473,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           preferredSize: const Size.fromHeight(1),
           child: Container(color: panelBorder, height: 1.0),
         ),
-        title: Text(
-          'Consulta en el Foro',
-          style: GoogleFonts.outfit(
-            color: primaryTextColor,
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
         leading: IconButton(
           icon: PhosphorIcon(
             PhosphorIconsBold.caretLeft,
@@ -625,31 +617,14 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           // Header: Author & Category
                           Row(
                             children: [
-                              Container(
-                                width: 38,
-                                height: 38,
-                                decoration: BoxDecoration(
-                                  color: isDark
-                                      ? const Color(0xFF0F172A)
-                                      : ZanateColors.zanateEyeYellow
-                                          .withValues(alpha: 0.24),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: isDark
-                                        ? const Color(0xFF334155)
-                                        : ZanateColors.zanateEyeYellow
-                                            .withValues(alpha: 0.45),
-                                  ),
-                                ),
-                                child: Center(
-                                  child: PhosphorIcon(
-                                    PhosphorIconsBold.user,
-                                    size: 18,
-                                    color: isDark
-                                        ? ZanateColors.zanateEyeYellow
-                                        : ZanateColors.zanateBlack,
-                                  ),
-                                ),
+                              UserAvatarCircle(
+                                authorAlias: _post.authorAlias,
+                                authorHash: _post.authorHash,
+                                avatarColorIndex: _post.avatarColorIndex,
+                                avatarIconIndex: _post.avatarIconIndex,
+                                isMine: _post.isMine,
+                                size: 38,
+                                iconSize: 18,
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -871,29 +846,34 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                           child: ClipRRect(
                                             borderRadius: BorderRadius.circular(9),
                                             child: Stack(
+                                              alignment: Alignment.centerLeft,
                                               children: [
                                                 if (hasVoted)
-                                                  FractionallySizedBox(
-                                                    widthFactor: percent,
-                                                    child: Container(
-                                                      color: isMyVote
-                                                          ? ZanateColors.zanateEyeYellow
-                                                              .withValues(
-                                                                alpha: isDark
-                                                                    ? 0.25
-                                                                    : 0.34,
-                                                              )
-                                                          : (isDark
-                                                                ? Colors.white.withValues(alpha: 0.08)
-                                                                : ZanateColors.pillBg),
+                                                  Positioned.fill(
+                                                    child: FractionallySizedBox(
+                                                      alignment: Alignment.centerLeft,
+                                                      widthFactor: percent,
+                                                      child: Container(
+                                                        color: isMyVote
+                                                            ? ZanateColors.zanateEyeYellow
+                                                                .withValues(
+                                                                  alpha: isDark
+                                                                      ? 0.25
+                                                                      : 0.34,
+                                                                )
+                                                            : (isDark
+                                                                  ? Colors.white.withValues(alpha: 0.08)
+                                                                  : ZanateColors.pillBg),
+                                                      ),
                                                     ),
                                                   ),
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 12,
-                                                      ),
-                                                  child: Row(
+                                                Center(
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 12,
+                                                        ),
+                                                    child: Row(
                                                     mainAxisAlignment:
                                                         MainAxisAlignment
                                                             .spaceBetween,
@@ -939,13 +919,16 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                                             fontWeight:
                                                                 FontWeight.w600,
                                                             color: isMyVote
-                                                                ? ZanateColors.zanateAccent
+                                                                ? (isDark
+                                                                    ? ZanateColors.zanateEyeYellow
+                                                                    : ZanateColors.zanateBlack)
                                                                 : secondaryTextColor,
                                                           ),
                                                         ),
                                                     ],
                                                   ),
                                                 ),
+                                              ),
                                               ],
                                             ),
                                           ),
@@ -1087,73 +1070,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                     ],
                                   ),
                                 ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: panelSurface,
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: panelBorder, width: 0.8),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    PhosphorIcon(
-                                      PhosphorIconsRegular.chatCircle,
-                                      size: 16,
-                                      color: secondaryTextColor,
-                                    ),
-                                    const SizedBox(width: 5),
-                                    Text(
-                                      '${_comments.length} comentarios',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: primaryTextColor,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              // Share action badge
-                              InkWell(
-                                onTap: _handleShare,
-                                borderRadius: BorderRadius.circular(20),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: panelSurface,
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(color: panelBorder, width: 0.8),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      PhosphorIcon(
-                                        PhosphorIconsRegular.shareNetwork,
-                                        size: 16,
-                                        color: secondaryTextColor,
-                                      ),
-                                      const SizedBox(width: 5),
-                                      Text(
-                                        _post.sharesCount > 0
-                                            ? '${_post.sharesCount} compartidos'
-                                            : 'Compartir',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: primaryTextColor,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
                             ],
                           ),
                         ],
@@ -1247,14 +1163,17 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                               width: 56,
                               height: 56,
                               decoration: BoxDecoration(
-                                color: ZanateColors.zanateAccent.withValues(alpha: 0.1),
+                                color: ZanateColors.zanateEyeYellow
+                                    .withValues(alpha: isDark ? 0.18 : 0.28),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Center(
+                              child: Center(
                                 child: PhosphorIcon(
                                   PhosphorIconsRegular.chatCircleDots,
                                   size: 26,
-                                  color: ZanateColors.zanateAccent,
+                                  color: isDark
+                                      ? ZanateColors.zanateEyeYellow
+                                      : ZanateColors.zanateBlack,
                                 ),
                               ),
                             ),
@@ -1423,18 +1342,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     ],
 
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        AliasDiceButton(
-                          alias: _commentAlias,
-                          onAliasChanged: (newAlias) =>
-                              setState(() => _commentAlias = newAlias),
-                          compact: true,
-                        ),
-                        const SizedBox(width: 4),
                         IconButton(
                           icon: PhosphorIcon(
                             PhosphorIconsRegular.gif,
-                            size: 20,
+                            size: 22,
                             color: isDark
                                 ? ZanateColors.zanateEyeYellow
                                 : ZanateColors.zanateBlack,
@@ -1449,6 +1362,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             );
                           },
                         ),
+                        const SizedBox(width: 4),
                         Expanded(
                           child: TextField(
                             controller: _commentController,

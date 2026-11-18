@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../features/forum/models/discord_forum_models.dart';
 import '../config/supabase_config.dart';
+import '../constants/anonymous_aliases.dart';
 import '../constants/categories.dart';
 import '../models/post.dart';
 import 'cache_service.dart';
+import 'local_storage_service.dart';
 import 'supabase_service.dart';
 
 enum FeedMode { hot, recent }
@@ -112,9 +114,8 @@ class ForumService {
         if (bookmarkedIds.isEmpty) return [];
 
         var bookmarksQuery = SupabaseService.client
-            .from('posts')
-            .select(_postFallbackColumns)
-            .neq('moderation_status', 2)
+            .from('safe_posts_feed')
+            .select('$_postFallbackColumns, is_mine')
             .inFilter('id', bookmarkedIds);
 
         if (carrera != 'todas') {
@@ -157,9 +158,8 @@ class ForumService {
       }
 
       var query = SupabaseService.client
-          .from('posts')
-          .select(_postFallbackColumns)
-          .neq('moderation_status', 2);
+          .from('safe_posts_feed')
+          .select('$_postFallbackColumns, is_mine');
 
       if (category != 'todos') {
         query = query.eq('category', category);
@@ -316,6 +316,8 @@ class ForumService {
       'author_alias': post.authorAlias,
       'likes': post.likes,
       'author_hash': post.authorHash,
+      'avatar_color_index': post.avatarColorIndex,
+      'avatar_icon_index': post.avatarIconIndex,
       'created_at': post.createdAt.toIso8601String(),
       'carrera': post.carrera,
       'image_url': post.imageUrl,
@@ -633,7 +635,7 @@ class ForumService {
         'content': content.trim(),
         'category': category,
         'carrera': carrera,
-        'author_alias': authorAlias.trim(),
+        'author_alias': AnonymousAliasGenerator.ensureValidForBackend(authorAlias),
         'user_id': userId,
         'image_url': imageUrl?.trim().isEmpty == true ? null : imageUrl?.trim(),
         'gif_url': gifUrl?.trim().isEmpty == true ? null : gifUrl?.trim(),
@@ -654,9 +656,14 @@ class ForumService {
           .select(selectColumns)
           .single();
 
+      final profile = await LocalStorageService.getUserProfile();
       final createdPost = Post.fromMap(
         Map<String, dynamic>.from(res),
-      ).copyWith(isMine: true);
+      ).copyWith(
+        isMine: true,
+        avatarColorIndex: profile.avatarColorIndex,
+        avatarIconIndex: profile.avatarIconIndex,
+      );
 
       // Create poll if provided
       if (pollQuestion != null &&
@@ -819,7 +826,7 @@ class ForumService {
       final commentMap = {
         'post_id': postId,
         'content': content.trim(),
-        'author_alias': authorAlias.trim(),
+        'author_alias': AnonymousAliasGenerator.ensureValidForBackend(authorAlias),
         'user_id': userId,
         'parent_id': (parentId != null && parentId.trim().isNotEmpty)
             ? parentId.trim()

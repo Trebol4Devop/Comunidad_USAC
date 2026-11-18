@@ -168,9 +168,7 @@ class ForumChannelSidebar extends StatelessWidget {
     bool isDark,
     Color borderColor,
   ) {
-    final foreground = isDark ? Colors.white : ZanateColors.zanateDark;
     final muted = isDark ? const Color(0xFF94A3B8) : Colors.blueGrey.shade600;
-    final bgTile = isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg;
 
     return Container(
       decoration: BoxDecoration(
@@ -183,74 +181,58 @@ class ForumChannelSidebar extends StatelessWidget {
           Expanded(
             child: Tooltip(
               message: 'Agregar servidor',
-              child: InkWell(
-                onTap: onAddServer,
+              child: Material(
+                color: ZanateColors.zanateEyeYellow,
                 borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  height: 40,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: bgTile,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: borderColor, width: 0.8),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      PhosphorIcon(
-                        PhosphorIconsRegular.plus,
-                        size: 16,
-                        color: foreground,
-                      ),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          'Agregar servidor',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: foreground,
+                child: InkWell(
+                  onTap: onAddServer,
+                  borderRadius: BorderRadius.circular(12),
+                  child: const SizedBox(
+                    height: 40,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          PhosphorIcon(
+                            PhosphorIconsBold.plus,
+                            size: 16,
+                            color: ZanateColors.zanateBlack,
                           ),
-                        ),
+                          SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              'Agregar servidor',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: ZanateColors.zanateBlack,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          Tooltip(
-            message: 'Configuración y Perfil',
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: () => SettingsScreen.show(
-                  context,
-                  activeAlias: activeAlias ?? 'Estudiante',
-                  onAliasChanged: onAliasChanged ?? (_) {},
-                  onToggleTheme: onToggleTheme,
-                ),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: bgTile,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: borderColor, width: 1.0),
-                  ),
-                  child: Center(
-                    child: PhosphorIcon(
-                      PhosphorIconsRegular.gear,
-                      size: 20,
-                      color: muted,
-                    ),
-                  ),
-                ),
-              ),
+          const SizedBox(width: 4),
+          IconButton(
+            tooltip: 'Configuración y Perfil',
+            onPressed: () => SettingsScreen.show(
+              context,
+              activeAlias: activeAlias ?? 'Estudiante',
+              onAliasChanged: onAliasChanged ?? (_) {},
+              onToggleTheme: onToggleTheme,
+            ),
+            icon: PhosphorIcon(
+              PhosphorIconsRegular.gear,
+              size: 20,
+              color: muted,
             ),
           ),
         ],
