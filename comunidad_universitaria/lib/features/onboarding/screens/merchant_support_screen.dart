@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/config/support_config.dart';
 import '../../../core/constants/categories.dart';
-import '../../../core/constants/zanate_colors.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../verification/utils/verification_validators.dart';
 
@@ -91,7 +92,7 @@ class _MerchantSupportScreenState extends State<MerchantSupportScreen> {
     final body = StringBuffer()
       ..writeln('Hola equipo de soporte:')
       ..writeln()
-      ..writeln('Quiero registrar mi comercio en Comunidad USAC.')
+      ..writeln('Quiero registrar mi comercio en Zanate.')
       ..writeln();
 
     if (accountEmail != null && accountEmail.isNotEmpty) {
@@ -177,254 +178,355 @@ class _MerchantSupportScreenState extends State<MerchantSupportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final borderColor =
-        isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+    const zanateBlack = Color(0xFF0B0D10);
+    const zanateEyeYellow = Color(0xFFF5C518);
+    const subtleText = Color(0xFF475569);
+    final inputBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1.2),
+    );
+    final focusedBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: const BorderSide(color: zanateBlack, width: 1.6),
+    );
+    final errorBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.2),
+    );
+    InputDecoration zanateInput({
+      required String labelText,
+      String? hintText,
+      String? helperText,
+      Widget? prefixIcon,
+      bool alignLabelWithHint = false,
+      String? counterText,
+    }) {
+      return InputDecoration(
+        labelText: labelText,
+        hintText: hintText,
+        helperText: helperText,
+        alignLabelWithHint: alignLabelWithHint,
+        counterText: counterText,
+        prefixIcon: prefixIcon,
+        filled: true,
+        fillColor: const Color(0xFFF8FAFC),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
+        labelStyle: const TextStyle(
+          fontSize: 13.5,
+          fontWeight: FontWeight.w500,
+          color: Color(0xFF64748B),
+        ),
+        floatingLabelStyle: const TextStyle(
+          fontSize: 12.5,
+          fontWeight: FontWeight.w700,
+          color: zanateBlack,
+        ),
+        hintStyle: const TextStyle(
+          fontSize: 13.5,
+          color: Color(0xFF94A3B8),
+        ),
+        helperStyle: const TextStyle(
+          fontSize: 12,
+          color: Color(0xFF64748B),
+        ),
+        border: inputBorder,
+        enabledBorder: inputBorder,
+        focusedBorder: focusedBorder,
+        errorBorder: errorBorder,
+        focusedErrorBorder: errorBorder,
+      );
+    }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Contactar con soporte',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          tooltip: 'Regresar',
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
+      backgroundColor: Colors.white,
       body: SafeArea(
-        child: AbsorbPointer(
-          absorbing: _isSending,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 580),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? const Color(0xFF1E293B)
-                              : const Color(0xFFEFF6FF),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: borderColor),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+        bottom: false,
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  bottom: BorderSide(color: Color(0xFFE2E8F0)),
+                ),
+              ),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(
+                      PhosphorIconsBold.caretLeft,
+                      size: 22,
+                      color: zanateBlack,
+                    ),
+                    tooltip: 'Regresar',
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  Expanded(
+                    child: Text(
+                      'Contactar con soporte',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.outfit(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: zanateBlack,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 48),
+                ],
+              ),
+            ),
+            Expanded(
+              child: AbsorbPointer(
+                absorbing: _isSending,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 20,
+                  ),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 580),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            const Icon(
-                              Icons.storefront_outlined,
-                              color: ZanateColors.zanateAccent,
-                              size: 26,
+                            Text(
+                              'Registro de comercio',
+                              style: GoogleFonts.outfit(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: -0.3,
+                                color: zanateBlack,
+                              ),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                'Registra tu comercio en Comunidad USAC. Enviaremos tus datos a soporte para que revisen tu caso y te den de alta.',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  height: 1.35,
-                                  color: isDark
-                                      ? Colors.grey.shade300
-                                      : Colors.grey.shade700,
+                            const SizedBox(height: 8),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Container(
+                                width: 44,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  color: zanateEyeYellow,
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            const Text(
+                              'Registra tu comercio en Zanate. Enviaremos tus datos a soporte para que revisen tu caso y te den de alta.',
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                height: 1.4,
+                                color: subtleText,
+                              ),
+                            ),
+                            const SizedBox(height: 18),
+
+                            if (_accountEmail != null) ...[
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 11,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: const Color(0xFFE2E8F0),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      PhosphorIconsRegular.at,
+                                      size: 17,
+                                      color: subtleText,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'Correo de la cuenta: ${_accountEmail!}',
+                                        style: const TextStyle(
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.w500,
+                                          color: zanateBlack,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                            ],
+
+                            TextFormField(
+                              key: const Key('merchant_business_name'),
+                              controller: _businessNameController,
+                              textCapitalization: TextCapitalization.words,
+                              decoration: zanateInput(
+                                labelText: 'Nombre del negocio *',
+                                hintText: 'Ej. Cafetería El Sancarlista',
+                                prefixIcon: const Icon(
+                                  PhosphorIconsRegular.storefront,
+                                  color: subtleText,
+                                ),
+                              ),
+                              validator: (value) {
+                                final clean = value?.trim() ?? '';
+                                if (clean.length < 2 || clean.length > 80) {
+                                  return 'El nombre debe tener entre 2 y 80 caracteres.';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 14),
+
+                            TextFormField(
+                              key: const Key('merchant_phone'),
+                              controller: _phoneController,
+                              keyboardType: TextInputType.phone,
+                              decoration: zanateInput(
+                                labelText: 'Teléfono / WhatsApp *',
+                                hintText: 'Ej. +502 2345 6789 o 23456789',
+                                prefixIcon: const Icon(
+                                  PhosphorIconsRegular.phone,
+                                  color: subtleText,
+                                ),
+                              ),
+                              validator: VerificationValidators.validatePhone,
+                            ),
+                            const SizedBox(height: 14),
+
+                            TextFormField(
+                              key: const Key('merchant_location'),
+                              controller: _locationController,
+                              maxLength: 160,
+                              textCapitalization: TextCapitalization.sentences,
+                              decoration: zanateInput(
+                                labelText: 'Ubicación en el campus *',
+                                hintText:
+                                    'Ej. Frente al edificio T-3, pasillo principal',
+                                prefixIcon: const Icon(
+                                  PhosphorIconsRegular.mapPin,
+                                  color: subtleText,
+                                ),
+                                counterText: '',
+                              ),
+                              validator: (value) {
+                                final clean = value?.trim() ?? '';
+                                if (clean.isEmpty) {
+                                  return 'Indica dónde está tu puesto o local.';
+                                }
+                                if (clean.length > 160) {
+                                  return 'La ubicación no debe superar 160 caracteres.';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 14),
+
+                            DropdownButtonFormField<String>(
+                              key: const Key('merchant_category'),
+                              initialValue: _selectedCategoryId.isEmpty
+                                  ? null
+                                  : _selectedCategoryId,
+                              isExpanded: true,
+                              dropdownColor: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              decoration: zanateInput(
+                                labelText: 'Categoría *',
+                                prefixIcon: const Icon(
+                                  PhosphorIconsRegular.tag,
+                                  color: subtleText,
+                                ),
+                              ),
+                              items: [
+                                for (final category in _categories)
+                                  DropdownMenuItem(
+                                    value: category.id,
+                                    child: Text(
+                                      category.label,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                              ],
+                              onChanged: (value) {
+                                if (value == null) return;
+                                setState(() => _selectedCategoryId = value);
+                              },
+                              validator: (value) =>
+                                  (value == null || value.isEmpty)
+                                      ? 'Selecciona una categoría.'
+                                      : null,
+                            ),
+                            const SizedBox(height: 14),
+
+                            TextFormField(
+                              key: const Key('merchant_description'),
+                              controller: _descriptionController,
+                              maxLength: 300,
+                              maxLines: 4,
+                              textCapitalization: TextCapitalization.sentences,
+                              decoration: zanateInput(
+                                labelText: 'Descripción (opcional)',
+                                hintText:
+                                    'Qué vendes, horario aproximado o cualquier detalle útil.',
+                                alignLabelWithHint: true,
+                              ),
+                            ),
+                            const SizedBox(height: 18),
+
+                            ElevatedButton.icon(
+                              key: const Key('merchant_send'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: zanateBlack,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                minimumSize: const Size.fromHeight(52),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              onPressed: _isSending ? null : _handleSend,
+                              icon: _isSending
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(
+                                      PhosphorIconsBold.envelopeSimple,
+                                      size: 19,
+                                    ),
+                              label: const Text(
+                                'Enviar solicitud a soporte',
+                                style: TextStyle(
+                                  fontSize: 14.5,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 14),
-
-                      if (_accountEmail != null) ...[
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? const Color(0xFF0F172A)
-                                : const Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: borderColor),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.alternate_email, size: 16),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Cuenta: ${_accountEmail!}',
-                                  style: theme.textTheme.bodySmall,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                      ],
-
-                      TextFormField(
-                        key: const Key('merchant_business_name'),
-                        controller: _businessNameController,
-                        textCapitalization: TextCapitalization.words,
-                        decoration: const InputDecoration(
-                          labelText: 'Nombre del negocio *',
-                          hintText: 'Ej. Cafetería El Sancarlista',
-                          prefixIcon: Icon(Icons.store_outlined),
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          final clean = value?.trim() ?? '';
-                          if (clean.length < 2 || clean.length > 80) {
-                            return 'El nombre debe tener entre 2 y 80 caracteres.';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 14),
-
-                      TextFormField(
-                        key: const Key('merchant_phone'),
-                        controller: _phoneController,
-                        keyboardType: TextInputType.phone,
-                        decoration: const InputDecoration(
-                          labelText: 'Teléfono / WhatsApp *',
-                          hintText: 'Ej. +502 2345 6789 o 23456789',
-                          prefixIcon: Icon(Icons.phone_outlined),
-                          border: OutlineInputBorder(),
-                          helperText:
-                              'Se usa para que soporte pueda contactarte; no se publica.',
-                        ),
-                        validator: VerificationValidators.validatePhone,
-                      ),
-                      const SizedBox(height: 14),
-
-                      TextFormField(
-                        key: const Key('merchant_location'),
-                        controller: _locationController,
-                        maxLength: 160,
-                        textCapitalization: TextCapitalization.sentences,
-                        decoration: const InputDecoration(
-                          labelText: 'Ubicación en el campus *',
-                          hintText: 'Ej. Frente al edificio T-3, pasillo principal',
-                          prefixIcon: Icon(Icons.place_outlined),
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          final clean = value?.trim() ?? '';
-                          if (clean.isEmpty) {
-                            return 'Indica dónde está tu puesto o local.';
-                          }
-                          if (clean.length > 160) {
-                            return 'La ubicación no debe superar 160 caracteres.';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 6),
-
-                      DropdownButtonFormField<String>(
-                        key: const Key('merchant_category'),
-                        initialValue: _selectedCategoryId.isEmpty
-                            ? null
-                            : _selectedCategoryId,
-                        isExpanded: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Categoría *',
-                          prefixIcon: Icon(Icons.category_outlined),
-                          border: OutlineInputBorder(),
-                        ),
-                        items: [
-                          for (final category in _categories)
-                            DropdownMenuItem(
-                              value: category.id,
-                              child: Text(
-                                category.label,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                        ],
-                        onChanged: (value) {
-                          if (value == null) return;
-                          setState(() => _selectedCategoryId = value);
-                        },
-                        validator: (value) =>
-                            (value == null || value.isEmpty)
-                                ? 'Selecciona una categoría.'
-                                : null,
-                      ),
-                      const SizedBox(height: 14),
-
-                      TextFormField(
-                        key: const Key('merchant_description'),
-                        controller: _descriptionController,
-                        maxLength: 300,
-                        maxLines: 4,
-                        textCapitalization: TextCapitalization.sentences,
-                        decoration: const InputDecoration(
-                          labelText: 'Descripción (opcional)',
-                          hintText:
-                              'Qué vendes, horario aproximado o cualquier detalle útil.',
-                          alignLabelWithHint: true,
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-
-                      ElevatedButton.icon(
-                        key: const Key('merchant_send'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: ZanateColors.zanateAccent,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        onPressed: _isSending ? null : _handleSend,
-                        icon: _isSending
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.mail_outline, size: 20),
-                        label: const Text(
-                          'Enviar solicitud a soporte',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-
-                      Text(
-                        'Se abrirá tu aplicación de correo con los datos preparados. '
-                        'La app no almacena esta información; solo se envía desde tu cuenta.',
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: isDark
-                              ? Colors.grey.shade400
-                              : Colors.grey.shade600,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
