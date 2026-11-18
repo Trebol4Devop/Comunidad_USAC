@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:comunidad_universitaria/core/services/forum_server_preferences_service.dart';
 import 'package:comunidad_universitaria/features/forum/models/discord_forum_models.dart';
@@ -130,7 +131,7 @@ void main() {
         expect(find.byTooltip('Todas las Facultades'), findsOneWidget);
         expect(find.byTooltip('Grupos de Estudio'), findsNothing);
         expect(find.byTooltip('Agregar servidor'), findsOneWidget);
-        expect(find.byIcon(Icons.settings_outlined), findsOneWidget);
+        expect(find.byIcon(PhosphorIconsRegular.gear), findsOneWidget);
         expect(find.text('Alias oculto'), findsNothing);
         expect(find.text('CANALES'), findsOneWidget);
       },
@@ -241,7 +242,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        await tester.tap(find.byIcon(Icons.menu));
+        await tester.tap(find.byIcon(PhosphorIconsRegular.list));
         await tester.pumpAndSettle();
         expect(find.byType(ForumServerRail), findsOneWidget);
         expect(find.byType(ForumChannelSidebar), findsOneWidget);

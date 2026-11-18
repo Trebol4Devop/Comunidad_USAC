@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:comunidad_universitaria/core/config/app_theme.dart';
 import 'package:comunidad_universitaria/core/models/post.dart';
 import 'package:comunidad_universitaria/features/forum/widgets/create_post_dialog.dart';
@@ -196,7 +197,7 @@ void main() {
         expect(find.text('Opción 2'), findsWidgets);
 
         // Con 2 opciones no debe haber botón de borrar (el mínimo es 2)
-        expect(find.byIcon(Icons.delete_outline), findsNothing);
+        expect(find.byIcon(PhosphorIconsRegular.trash), findsNothing);
 
         // Añadimos una opción más
         final addOptionBtn = find.text('Añadir opción');
@@ -205,14 +206,14 @@ void main() {
         await tester.pumpAndSettle();
 
         // Ahora hay 3 opciones y deben aparecer botones de eliminar
-        expect(find.byIcon(Icons.delete_outline), findsNWidgets(3));
+        expect(find.byIcon(PhosphorIconsRegular.trash), findsNWidgets(3));
 
         // Eliminamos la última opción
-        await tester.tap(find.byIcon(Icons.delete_outline).last);
+        await tester.tap(find.byIcon(PhosphorIconsRegular.trash).last);
         await tester.pumpAndSettle();
 
         // Volvemos a tener 2 opciones
-        expect(find.byIcon(Icons.delete_outline), findsNothing);
+        expect(find.byIcon(PhosphorIconsRegular.trash), findsNothing);
       },
     );
 
