@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import '../../../core/constants/zanate_colors.dart';
 import '../../../core/models/user_profile.dart';
 import '../../../core/services/profile_service.dart';
 
@@ -106,14 +109,74 @@ class _CarneValidationModalState extends State<CarneValidationModal> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final titleColor = isDark ? Colors.white : ZanateColors.zanateBlack;
+    final subtleColor =
+        isDark ? const Color(0xFF94A3B8) : ZanateColors.subtleText;
+    final borderColor =
+        isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
+    final fillColor =
+        isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg;
+
+    InputDecoration zanateInput({
+      required String labelText,
+      String? hintText,
+      Widget? prefixIcon,
+      String? counterText,
+    }) {
+      final inputBorder = OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: borderColor, width: 1.2),
+      );
+      final focusedBorder = OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: titleColor, width: 1.6),
+      );
+      final errorBorder = OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.2),
+      );
+      return InputDecoration(
+        labelText: labelText,
+        hintText: hintText,
+        counterText: counterText,
+        prefixIcon: prefixIcon,
+        filled: true,
+        fillColor: fillColor,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
+        labelStyle: TextStyle(
+          fontSize: 13.5,
+          fontWeight: FontWeight.w500,
+          color: subtleColor,
+        ),
+        floatingLabelStyle: TextStyle(
+          fontSize: 12.5,
+          fontWeight: FontWeight.w700,
+          color: titleColor,
+        ),
+        hintStyle: const TextStyle(fontSize: 13.5, color: ZanateColors.hintText),
+        border: inputBorder,
+        enabledBorder: inputBorder,
+        focusedBorder: focusedBorder,
+        errorBorder: errorBorder,
+        focusedErrorBorder: errorBorder,
+      );
+    }
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: borderColor, width: 1.0),
+      ),
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
       backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 460),
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Form(
             key: _formKey,
             child: SingleChildScrollView(
@@ -121,66 +184,80 @@ class _CarneValidationModalState extends State<CarneValidationModal> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header showing that institutional verification is unavailable
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(10),
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: const Color(
-                            0xFF0284C7,
-                          ).withValues(alpha: 0.12),
+                          color: ZanateColors.zanateEyeYellow.withValues(
+                            alpha: 0.22,
+                          ),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(
-                          Icons.info_outline,
-                          color: Color(0xFF0284C7),
-                          size: 26,
+                        child: Icon(
+                          PhosphorIconsFill.info,
+                          color: isDark
+                              ? ZanateColors.zanateEyeYellow
+                              : ZanateColors.zanateBlack,
+                          size: 22,
                         ),
                       ),
-                      const SizedBox(width: 14),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               'Datos para verificación de carné',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                              style: GoogleFonts.outfit(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16.5,
+                                color: titleColor,
                               ),
                             ),
                             const SizedBox(height: 2),
                             Text(
                               'Sin fuente institucional conectada',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isDark
-                                    ? Colors.grey.shade400
-                                    : Colors.grey.shade600,
-                              ),
+                              style: TextStyle(fontSize: 11.5, color: subtleColor),
                             ),
                           ],
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close, size: 20),
+                        icon: Icon(
+                          PhosphorIconsRegular.x,
+                          size: 20,
+                          color: titleColor,
+                        ),
                         onPressed: _isSavingDraft
                             ? null
                             : () => Navigator.of(context).pop(),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: 44,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: ZanateColors.zanateEyeYellow,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
 
                   // Consentimiento explícito para guardar el borrador local
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF0284C7).withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(12),
+                      color: ZanateColors.zanateEyeYellow.withValues(
+                        alpha: 0.14,
+                      ),
+                      borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: const Color(0xFF0284C7).withValues(alpha: 0.25),
+                        color: ZanateColors.zanateEyeYellow.withValues(
+                          alpha: 0.5,
+                        ),
                       ),
                     ),
                     child: Row(
@@ -189,9 +266,9 @@ class _CarneValidationModalState extends State<CarneValidationModal> {
                         const Padding(
                           padding: EdgeInsets.only(top: 2),
                           child: Icon(
-                            Icons.privacy_tip_outlined,
+                            PhosphorIconsFill.shieldCheck,
                             size: 18,
-                            color: Color(0xFF0284C7),
+                            color: Color(0xFFB45309),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -199,12 +276,12 @@ class _CarneValidationModalState extends State<CarneValidationModal> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'Consentimiento para guardar un borrador',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                  color: Color(0xFF0284C7),
+                                style: GoogleFonts.outfit(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12.5,
+                                  color: titleColor,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -212,10 +289,10 @@ class _CarneValidationModalState extends State<CarneValidationModal> {
                                 'Al guardar, tu carné y nombre se conservarán en el almacenamiento local de esta app para reintentar. Actualmente no hay una fuente institucional conectada: no se hará ninguna consulta ni se confirmará tu condición estudiantil.',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  height: 1.35,
+                                  height: 1.38,
                                   color: isDark
                                       ? Colors.grey.shade300
-                                      : const Color(0xFF0F172A),
+                                      : const Color(0xFF334155),
                                 ),
                               ),
                             ],
@@ -232,10 +309,14 @@ class _CarneValidationModalState extends State<CarneValidationModal> {
                     controller: _carneController,
                     keyboardType: TextInputType.number,
                     maxLength: 10,
-                    decoration: const InputDecoration(
+                    decoration: zanateInput(
                       labelText: 'Número de Carné Universitario',
                       hintText: 'Ej. 202100123',
-                      prefixIcon: Icon(Icons.badge_outlined, size: 20),
+                      prefixIcon: Icon(
+                        PhosphorIconsRegular.identificationCard,
+                        size: 20,
+                        color: subtleColor,
+                      ),
                       counterText: '',
                     ),
                     validator: (val) {
@@ -254,10 +335,14 @@ class _CarneValidationModalState extends State<CarneValidationModal> {
                   TextFormField(
                     controller: _nameController,
                     textCapitalization: TextCapitalization.words,
-                    decoration: const InputDecoration(
+                    decoration: zanateInput(
                       labelText: 'Nombre completo para reintentar',
                       hintText: 'Ej. Juan José Pérez Gómez',
-                      prefixIcon: Icon(Icons.person_outline, size: 20),
+                      prefixIcon: Icon(
+                        PhosphorIconsRegular.user,
+                        size: 20,
+                        color: subtleColor,
+                      ),
                     ),
                     validator: (val) {
                       if (val == null || val.trim().length < 3) {
@@ -277,7 +362,7 @@ class _CarneValidationModalState extends State<CarneValidationModal> {
                         _statusMessage = null;
                       });
                     },
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(10),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       child: Row(
@@ -285,7 +370,7 @@ class _CarneValidationModalState extends State<CarneValidationModal> {
                         children: [
                           Checkbox(
                             value: _consentChecked,
-                            activeColor: const Color(0xFF059669),
+                            activeColor: ZanateColors.zanateBlack,
                             onChanged: (val) {
                               setState(() {
                                 _consentChecked = val ?? false;
@@ -298,8 +383,9 @@ class _CarneValidationModalState extends State<CarneValidationModal> {
                             child: Text(
                               'Autorizo usar mi carné y nombre solo en esta sesión. No se guardan en el dispositivo y esto no verifica mi condición estudiantil.',
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: 11.5,
                                 fontWeight: FontWeight.w500,
+                                color: subtleColor,
                               ),
                             ),
                           ),
@@ -312,7 +398,10 @@ class _CarneValidationModalState extends State<CarneValidationModal> {
                     const SizedBox(height: 10),
                     Text(
                       _errorMessage!,
-                      style: const TextStyle(color: Colors.red, fontSize: 12),
+                      style: const TextStyle(
+                        color: Color(0xFFEF4444),
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                   if (_statusMessage != null) ...[
@@ -321,41 +410,58 @@ class _CarneValidationModalState extends State<CarneValidationModal> {
                       liveRegion: true,
                       child: Text(
                         _statusMessage!,
-                        style: const TextStyle(
-                          color: Color(0xFF0369A1),
+                        style: TextStyle(
+                          color: isDark
+                              ? ZanateColors.zanateEyeYellow
+                              : ZanateColors.zanateBlack,
                           fontSize: 12,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
                   ],
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 14),
 
                   // Action Buttons
                   Align(
                     alignment: Alignment.centerRight,
                     child: Wrap(
                       alignment: WrapAlignment.end,
-                      spacing: 8,
+                      spacing: 10,
                       runSpacing: 8,
                       children: [
                         TextButton(
+                          style: TextButton.styleFrom(
+                            foregroundColor: subtleColor,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
                           onPressed: _isSavingDraft
                               ? null
                               : () => Navigator.of(context).pop(),
-                          child: const Text('Cancelar'),
+                          child: const Text(
+                            'Cancelar',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
                         ),
                         ElevatedButton.icon(
                           onPressed: _isSavingDraft ? null : _saveDraftForRetry,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0284C7),
-                            foregroundColor: Colors.white,
+                            backgroundColor: isDark
+                                ? ZanateColors.zanateEyeYellow
+                                : ZanateColors.zanateBlack,
+                            foregroundColor: isDark
+                                ? ZanateColors.zanateBlack
+                                : Colors.white,
+                            elevation: 0,
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
+                              horizontal: 18,
                               vertical: 12,
                             ),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(14),
                             ),
                           ),
                           icon: _isSavingDraft
@@ -367,12 +473,15 @@ class _CarneValidationModalState extends State<CarneValidationModal> {
                                     color: Colors.white,
                                   ),
                                 )
-                              : const Icon(Icons.save_outlined, size: 18),
+                              : const Icon(
+                                  PhosphorIconsBold.floppyDisk,
+                                  size: 18,
+                                ),
                           label: Text(
                             _isSavingDraft
                                 ? 'Guardando...'
                                 : 'Guardar borrador',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            style: const TextStyle(fontWeight: FontWeight.w700),
                           ),
                         ),
                       ],

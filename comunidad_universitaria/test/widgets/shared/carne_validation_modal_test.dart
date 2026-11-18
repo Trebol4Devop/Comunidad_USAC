@@ -83,6 +83,7 @@ void main() {
       await tester.pumpAndSettle();
 
       final saveButton = find.text('Guardar borrador');
+      await tester.ensureVisible(saveButton);
       await tester.tap(saveButton);
       await tester.pumpAndSettle();
 
@@ -94,6 +95,7 @@ void main() {
         'Número de Carné Universitario',
       );
       await tester.enterText(carneField, '1234');
+      await tester.ensureVisible(saveButton);
       await tester.tap(saveButton);
       await tester.pumpAndSettle();
 

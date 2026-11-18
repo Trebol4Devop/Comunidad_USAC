@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:comunidad_universitaria/core/config/app_theme.dart';
 import 'package:comunidad_universitaria/core/services/local_storage_service.dart';
 import 'package:comunidad_universitaria/features/profile/screens/profile_screen.dart';
-import 'package:comunidad_universitaria/features/shared/widgets/empty_state_widget.dart';
 import '../helpers/test_setup.dart';
 
 void main() {
@@ -83,16 +82,14 @@ void main() {
       await tester.pumpWidget(buildTestProfile());
       await tester.pumpAndSettle();
 
-      // Alias y estado de perfil
+      // Alias y acceso al editor de seudónimo Zanate
       expect(find.text('Estudiante Sancarlista #505'), findsWidgets);
       expect(find.text('Perfil Estudiantil'), findsOneWidget);
+      expect(find.text('Editar seudónimo'), findsOneWidget);
 
-      // Campos de edición principales
-      expect(find.text('Seudónimo Visible en la Comunidad'), findsOneWidget);
-      expect(find.text('Presentación o Bio Estudiantil'), findsOneWidget);
-
-      // Tarjeta de validación de carné
-      expect(find.text('Validación con Carné Universitario'), findsOneWidget);
+      // Secciones académicas y de contacto
+      expect(find.text('Información Académica (Opcional)'), findsOneWidget);
+      expect(find.text('Canales de Contacto (Opcional)'), findsOneWidget);
 
       // Botón de guardar cambios
       expect(find.text('Guardar Cambios de Perfil'), findsOneWidget);
@@ -111,8 +108,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // Secciones académicas y de contacto
-      expect(find.text('Información Académica'), findsWidgets);
-      expect(find.text('Canales de Contacto'), findsWidgets);
+      expect(find.text('Información Académica (Opcional)'), findsWidgets);
+      expect(find.text('Canales de Contacto (Opcional)'), findsWidgets);
 
       // Campos de contacto
       expect(find.widgetWithText(TextField, 'WhatsApp Predeterminado'), findsOneWidget);
@@ -120,7 +117,7 @@ void main() {
       expect(find.widgetWithText(TextField, 'Instagram'), findsOneWidget);
     });
 
-    testWidgets('Permite generar un nuevo seudónimo aleatorio y editar la bio', (tester) async {
+    testWidgets('Permite generar un nuevo seudónimo aleatorio desde el modal', (tester) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -128,7 +125,12 @@ void main() {
       await tester.pumpWidget(buildTestProfile());
       await tester.pumpAndSettle();
 
-      // Botón de generar alias aleatorio (ícono shuffle)
+      // Abrimos el modal de edición de seudónimo Zanate
+      await tester.tap(find.text('Editar seudónimo'));
+      await tester.pumpAndSettle();
+      expect(find.text('Editar Seudónimo'), findsOneWidget);
+
+      // Botón de generar alias aleatorio (ícono dado)
       final shuffleButton = find.byTooltip('Generar seudónimo aleatorio');
       expect(shuffleButton, findsOneWidget);
 
@@ -138,14 +140,9 @@ void main() {
       // El campo debe haber sido actualizado con el prefijo 'Estudiante USAC #'
       expect(find.textContaining('Estudiante USAC #'), findsWidgets);
 
-      // Editamos la bio estudiantil
-      final bioField = find.widgetWithText(TextField, 'Presentación o Bio Estudiantil');
-      expect(bioField, findsOneWidget);
-
-      await tester.enterText(bioField, 'Estudiante entusiasta de Ingeniería de Software USAC.');
+      await tester.tap(find.text('Listo'));
       await tester.pumpAndSettle();
-
-      expect(find.text('Estudiante entusiasta de Ingeniería de Software USAC.'), findsOneWidget);
+      expect(find.text('Editar Seudónimo'), findsNothing);
     });
 
     testWidgets('Guardar perfil dispara onAliasChanged y muestra SnackBar de confirmación', (tester) async {
@@ -165,8 +162,14 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final aliasField = find.widgetWithText(TextField, 'Seudónimo Visible en la Comunidad');
+      await tester.tap(find.text('Editar seudónimo'));
+      await tester.pumpAndSettle();
+
+      final aliasField = find.widgetWithText(TextField, 'Seudónimo visible en la comunidad');
       await tester.enterText(aliasField, 'Ingeniero Actualizado #777');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Listo'));
       await tester.pumpAndSettle();
 
       final saveButton = find.text('Guardar Cambios de Perfil');
@@ -191,7 +194,6 @@ void main() {
       await tester.pumpAndSettle();
 
       // Tab inicial: Mis Posts vacío
-      expect(find.byType(EmptyStateWidget), findsOneWidget);
       expect(find.text('Sin publicaciones en el foro'), findsOneWidget);
 
       // Scroll para que TabBar esté bien visible
@@ -199,13 +201,17 @@ void main() {
       await tester.pumpAndSettle();
 
       // Cambiar a pestaña Mis Grupos (índice 1)
-      await tester.tap(find.byType(Tab).at(1));
+      final groupsTab = find.byType(Tab).at(1);
+      await tester.ensureVisible(groupsTab);
+      await tester.tap(groupsTab);
       await tester.pumpAndSettle();
 
       expect(find.text('Sin grupos de estudio compartidos'), findsOneWidget);
 
       // Cambiar a pestaña Mis Anuncios (índice 2)
-      await tester.tap(find.byType(Tab).at(2));
+      final adsTab = find.byType(Tab).at(2);
+      await tester.ensureVisible(adsTab);
+      await tester.tap(adsTab);
       await tester.pumpAndSettle();
 
       expect(find.text('Sin anuncios en el Marketplace'), findsOneWidget);
