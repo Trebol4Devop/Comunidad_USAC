@@ -1,7 +1,7 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
-import '../../../core/constants/zanate_colors.dart';
 import '../../rules/screens/rules_screen.dart';
 import '../../verification/state/verification_controller.dart';
 import '../state/session_controller.dart';
@@ -10,13 +10,19 @@ import 'auth_gateway_screen.dart';
 /// Pantalla de bienvenida inicial para usuarios sin sesión activa ni preferencia de invitado.
 class WelcomeScreen extends StatelessWidget {
   final VoidCallback? onSignIn;
+  final VoidCallback? onCreateAccount;
   final VoidCallback? onContinueAsGuest;
   final VerificationController? verificationController;
   final SessionController? sessionController;
 
+  // Paleta inspirada en el dibujo del Zanate: blanco puro, negro plumaje y amarillo del ojo
+  static const Color _zanateBlack = Color(0xFF0B0D10);
+  static const Color _zanateEyeYellow = Color(0xFFF5C518);
+
   const WelcomeScreen({
     super.key,
     this.onSignIn,
+    this.onCreateAccount,
     this.onContinueAsGuest,
     this.verificationController,
     this.sessionController,
@@ -31,6 +37,26 @@ class WelcomeScreen extends StatelessWidget {
       context,
       verificationController: verificationController,
       sessionController: sessionController,
+      modal: false,
+    );
+  }
+
+  void _handleCreateAccount(BuildContext context) {
+    if (onCreateAccount != null) {
+      onCreateAccount!();
+      return;
+    }
+    if (onSignIn != null) {
+      onSignIn!();
+      return;
+    }
+    AuthGatewayScreen.show(
+      context,
+      verificationController: verificationController,
+      sessionController: sessionController,
+      title: 'Crear cuenta',
+      subtitle:
+          'Regístrate con tu cuenta de Google institucional o personal para empezar.',
       modal: false,
     );
   }
@@ -52,174 +78,695 @@ class WelcomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final accent = ZanateColors.zanateAccent;
-    final panelBg = isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC);
-    final panelBorder =
-        isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
-
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Logo / Ícono institucional Zanate
-                  Center(
-                    child: Container(
-                      width: 84,
-                      height: 84,
-                      decoration: BoxDecoration(
-                        color: accent.withAlpha(isDark ? 40 : 25),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: accent, width: 2),
-                      ),
-                      child: Center(
-                        child: Icon(
-                          PhosphorIconsRegular.graduationCap,
-                          size: 42,
-                          color: accent,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
+      backgroundColor: Colors.white,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth >= 780;
 
-                  // Título principal
-                  Text(
-                    'Comunidad USAC',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.outfit(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.5,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Subtítulo
-                  Text(
-                    'Tu portal estudiantil independiente para foro, grupos, marketplace y campus universitario.',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-                      height: 1.4,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Tarjeta explicativa del Modo Lectura
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: panelBg,
-                      border: Border.all(color: panelBorder),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          PhosphorIconsRegular.info,
-                          size: 20,
-                          color: accent,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'Modo lectura: podrás explorar el foro y el marketplace, pero necesitas una cuenta para publicar.',
-                            style: TextStyle(
-                              fontSize: 12,
-                              height: 1.4,
-                              color: isDark
-                                  ? Colors.grey.shade300
-                                  : const Color(0xFF334155),
-                              fontWeight: FontWeight.w500,
+          if (isWide) {
+            return Row(
+              children: [
+                // Panel izquierdo: blanco puro con el Zanate protagonista y frase abajo a la izquierda
+                const Expanded(
+                  flex: 11,
+                  child: _WhiteBrandPanel(),
+                ),
+                const VerticalDivider(
+                  width: 1,
+                  thickness: 1,
+                  color: Color(0xFFE2E8F0),
+                ),
+                // Panel derecho: blanco puro con acciones e insignia abajo a la derecha
+                Expanded(
+                  flex: 9,
+                  child: Container(
+                    color: Colors.white,
+                    child: SafeArea(
+                      child: Stack(
+                        children: [
+                          Center(
+                            child: SingleChildScrollView(
+                              padding: const EdgeInsets.fromLTRB(
+                                32,
+                                32,
+                                32,
+                                56,
+                              ),
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 410),
+                                child: _EntranceTransition(
+                                  child: _ActionsColumn(
+                                    showPanelHeading: true,
+                                    onSignIn: () => _handleSignIn(context),
+                                    onCreateAccount: () =>
+                                        _handleCreateAccount(context),
+                                    onContinueAsGuest: () =>
+                                        _handleContinueAsGuest(context),
+                                    onOpenRules: () => _openRules(context),
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
+                          const Positioned(
+                            right: 28,
+                            bottom: 10,
+                            child: _TrebolCreditBadge(onDark: false),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }
+
+          // Vista móvil / estrecha: pantalla completamente blanca, mejor distribución y crédito al límite inferior
+          return SafeArea(
+            child: LayoutBuilder(
+              builder: (context, mobileConstraints) {
+                final logoSize = math.min(
+                  118.0,
+                  math.max(82.0, mobileConstraints.maxHeight * 0.14),
+                );
+                final isCompactHeight = mobileConstraints.maxHeight < 680;
+
+                return SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: mobileConstraints.maxHeight,
+                    ),
+                    child: IntrinsicHeight(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(
+                              child: Center(
+                                child: ConstrainedBox(
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 440,
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      Padding(
+                                        padding: EdgeInsets.only(
+                                          top: isCompactHeight ? 12 : 20,
+                                          bottom: isCompactHeight ? 12 : 20,
+                                        ),
+                                        child: _CompactMobileHeader(
+                                          logoSize: logoSize,
+                                          compact: isCompactHeight,
+                                        ),
+                                      ),
+                                      _EntranceTransition(
+                                        child: _ActionsColumn(
+                                          showPanelHeading: false,
+                                          compact: isCompactHeight,
+                                          onSignIn: () =>
+                                              _handleSignIn(context),
+                                          onCreateAccount: () =>
+                                              _handleCreateAccount(context),
+                                          onContinueAsGuest: () =>
+                                              _handleContinueAsGuest(context),
+                                          onOpenRules: () =>
+                                              _openRules(context),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const Padding(
+                              padding: EdgeInsets.only(top: 10, bottom: 6),
+                              child: Align(
+                                alignment: Alignment.centerRight,
+                                child: _TrebolCreditBadge(onDark: false),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-
-                  // Botón Principal: Iniciar sesión
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: accent,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.zero,
-                      ),
-                    ),
-                    onPressed: () => _handleSignIn(context),
-                    child: const Text(
-                      'Iniciar sesión',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.2,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
 
-                  // Botón Secundario: Continuar como anónimo
-                  OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: isDark ? Colors.white : const Color(0xFF1E293B),
-                      side: BorderSide(color: panelBorder, width: 1.2),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.zero,
-                      ),
-                    ),
-                    onPressed: () => _handleContinueAsGuest(context),
-                    child: const Text(
-                      'Continuar como anónimo',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
+class _EntranceTransition extends StatelessWidget {
+  final Widget child;
+
+  const _EntranceTransition({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 420),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, 14 * (1 - value)),
+            child: child,
+          ),
+        );
+      },
+      child: child,
+    );
+  }
+}
+
+class _WhiteBrandPanel extends StatelessWidget {
+  const _WhiteBrandPanel();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.white,
+      child: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Duplica el tamaño del logo en escritorio y escala en ventanas más bajas
+            final logoSize = math.min(
+              400.0,
+              math.max(190.0, constraints.maxHeight * 0.44),
+            );
+            final taglineSize = constraints.maxHeight < 700 ? 30.0 : 38.0;
+
+            return Stack(
+              children: [
+                Align(
+                  alignment: const Alignment(0, -0.35),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 36),
+                    child: _BrandHero(
+                      logoSize: logoSize,
+                      titleSize: 56,
                     ),
                   ),
-                  const SizedBox(height: 32),
+                ),
+                Positioned(
+                  left: 36,
+                  bottom: 28,
+                  child: _ExplorationTagline(fontSize: taglineSize),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
 
-                  // Enlace a normas
-                  Center(
-                    child: TextButton.icon(
-                      style: TextButton.styleFrom(
-                        foregroundColor:
-                            isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-                      ),
-                      icon: const Icon(
-                        PhosphorIconsRegular.shieldCheck,
-                        size: 16,
-                      ),
-                      label: const Text(
-                        'Normas Comunitarias & Descargo Legal',
-                        style: TextStyle(
-                          fontSize: 12,
-                          decoration: TextDecoration.underline,
-                        ),
-                      ),
-                      onPressed: () => _openRules(context),
+class _CompactMobileHeader extends StatelessWidget {
+  final double logoSize;
+  final bool compact;
+
+  const _CompactMobileHeader({
+    this.logoSize = 104,
+    this.compact = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final titleSize = compact ? 34.0 : 40.0;
+    final phraseSize = compact ? 16.0 : 17.5;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: logoSize,
+          height: logoSize,
+          child: Image.asset(
+            'assets/images/zanate_logo.png',
+            fit: BoxFit.contain,
+            semanticLabel: 'Logo de Zanate',
+            errorBuilder: (context, error, stackTrace) => Icon(
+              PhosphorIconsRegular.bird,
+              size: logoSize * 0.6,
+              color: WelcomeScreen._zanateBlack,
+            ),
+          ),
+        ),
+        SizedBox(height: compact ? 6 : 10),
+        Text(
+          'Zanate',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.croissantOne(
+            fontSize: titleSize,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.5,
+            color: WelcomeScreen._zanateBlack,
+          ),
+        ),
+        SizedBox(height: compact ? 8 : 12),
+        Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.start,
+          children: [
+            Text(
+              'Explora lo que se vive ',
+              style: GoogleFonts.outfit(
+                fontSize: phraseSize,
+                fontWeight: FontWeight.w600,
+                height: 1.25,
+                color: const Color(0xFF334155),
+              ),
+            ),
+            IntrinsicWidth(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'en la USAC',
+                    maxLines: 1,
+                    softWrap: false,
+                    style: GoogleFonts.outfit(
+                      fontSize: phraseSize + 0.5,
+                      fontWeight: FontWeight.w800,
+                      height: 1.25,
+                      color: WelcomeScreen._zanateBlack,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Container(
+                    height: 3,
+                    decoration: BoxDecoration(
+                      color: WelcomeScreen._zanateEyeYellow,
+                      borderRadius: BorderRadius.circular(999),
                     ),
                   ),
                 ],
               ),
             ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _BrandHero extends StatelessWidget {
+  final double logoSize;
+  final double titleSize;
+
+  const _BrandHero({
+    required this.logoSize,
+    required this.titleSize,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: logoSize,
+          height: logoSize,
+          child: Image.asset(
+            'assets/images/zanate_logo.png',
+            fit: BoxFit.contain,
+            semanticLabel: 'Logo de Zanate',
+            errorBuilder: (context, error, stackTrace) => Icon(
+              PhosphorIconsRegular.bird,
+              size: logoSize * 0.6,
+              color: WelcomeScreen._zanateBlack,
+            ),
           ),
         ),
+        const SizedBox(height: 8),
+        Text(
+          'Zanate',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.croissantOne(
+            fontSize: titleSize,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.6,
+            color: WelcomeScreen._zanateBlack,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ExplorationTagline extends StatelessWidget {
+  final double fontSize;
+
+  const _ExplorationTagline({required this.fontSize});
+
+  @override
+  Widget build(BuildContext context) {
+    final baseStyle = GoogleFonts.outfit(
+      fontSize: fontSize,
+      fontWeight: FontWeight.w700,
+      height: 1.08,
+      letterSpacing: -0.6,
+      color: const Color(0xFF334155),
+    );
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Explora', style: baseStyle),
+        Text('lo que se', style: baseStyle),
+        Text('vive en', style: baseStyle),
+        const SizedBox(height: 2),
+        IntrinsicWidth(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'la USAC',
+                maxLines: 1,
+                softWrap: false,
+                style: GoogleFonts.outfit(
+                  fontSize: fontSize + 2,
+                  fontWeight: FontWeight.w800,
+                  height: 1.08,
+                  letterSpacing: -0.6,
+                  color: WelcomeScreen._zanateBlack,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                height: 4.5,
+                decoration: BoxDecoration(
+                  color: WelcomeScreen._zanateEyeYellow,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ActionsColumn extends StatelessWidget {
+  final bool showPanelHeading;
+  final bool compact;
+  final VoidCallback onSignIn;
+  final VoidCallback onCreateAccount;
+  final VoidCallback onContinueAsGuest;
+  final VoidCallback onOpenRules;
+
+  const _ActionsColumn({
+    required this.showPanelHeading,
+    this.compact = false,
+    required this.onSignIn,
+    required this.onCreateAccount,
+    required this.onContinueAsGuest,
+    required this.onOpenRules,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const subtleText = Color(0xFF475569);
+    const mutedText = Color(0xFF64748B);
+    const lightBorder = Color(0xFFE2E8F0);
+    final buttonHeight = compact ? 48.0 : 54.0;
+    final buttonPadding = EdgeInsets.symmetric(
+      horizontal: compact ? 20 : 24,
+      vertical: compact ? 12 : 15,
+    );
+    final buttonRadius = BorderRadius.circular(compact ? 14 : 16);
+    final gap = compact ? 10.0 : 12.0;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (showPanelHeading) ...[
+          Text(
+            'Ingresa a la comunidad',
+            style: GoogleFonts.outfit(
+              fontSize: 26,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.3,
+              color: WelcomeScreen._zanateBlack,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Elige cómo quieres entrar hoy.',
+            style: TextStyle(
+              fontSize: 14,
+              color: subtleText,
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
+
+        // Botón Principal: Iniciar sesión (Amarillo del ojo del Zanate)
+        ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: WelcomeScreen._zanateEyeYellow,
+            foregroundColor: WelcomeScreen._zanateBlack,
+            elevation: 0,
+            minimumSize: Size.fromHeight(buttonHeight),
+            padding: buttonPadding,
+            shape: RoundedRectangleBorder(borderRadius: buttonRadius),
+          ),
+          onPressed: onSignIn,
+          icon: Icon(PhosphorIconsBold.signIn, size: compact ? 19 : 21),
+          label: Text(
+            'Iniciar sesión',
+            style: TextStyle(
+              fontSize: compact ? 15 : 16,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ),
+        SizedBox(height: gap),
+
+        // Botón para nuevos usuarios: Crear cuenta (Negro Zanate sobre blanco)
+        ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: WelcomeScreen._zanateBlack,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            minimumSize: Size.fromHeight(buttonHeight),
+            padding: buttonPadding,
+            shape: RoundedRectangleBorder(borderRadius: buttonRadius),
+          ),
+          onPressed: onCreateAccount,
+          icon: Icon(PhosphorIconsBold.userPlus, size: compact ? 18 : 20),
+          label: Text(
+            'Crear cuenta',
+            style: TextStyle(
+              fontSize: compact ? 14.5 : 15.5,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ),
+
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: compact ? 10 : 14),
+          child: const Row(
+            children: [
+              Expanded(child: Divider(color: lightBorder, height: 1)),
+              Flexible(
+                flex: 0,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 10),
+                  child: Text(
+                    'o explora sin registro',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: mutedText,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(child: Divider(color: lightBorder, height: 1)),
+            ],
+          ),
+        ),
+
+        // Botón Secundario: Continuar como anónimo
+        OutlinedButton.icon(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: WelcomeScreen._zanateBlack,
+            backgroundColor: const Color(0xFFF8FAFC),
+            side: const BorderSide(
+              color: Color(0xFFCBD5E1),
+              width: 1.3,
+            ),
+            minimumSize: Size.fromHeight(buttonHeight),
+            padding: buttonPadding,
+            shape: RoundedRectangleBorder(borderRadius: buttonRadius),
+          ),
+          onPressed: onContinueAsGuest,
+          icon: Icon(
+            PhosphorIconsRegular.eye,
+            size: compact ? 18 : 20,
+            color: subtleText,
+          ),
+          label: Text(
+            'Continuar como anónimo',
+            style: TextStyle(
+              fontSize: compact ? 14.5 : 15,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        SizedBox(height: compact ? 12 : 16),
+
+        // Tarjeta explicativa del Modo Anónimo
+        _AnonymousModeNoticeCard(compact: compact),
+        SizedBox(height: compact ? 8 : 16),
+
+        // Enlace a normas
+        Center(
+          child: TextButton.icon(
+            style: TextButton.styleFrom(
+              foregroundColor: subtleText,
+              padding: EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: compact ? 4 : 8,
+              ),
+              tapTargetSize: compact
+                  ? MaterialTapTargetSize.shrinkWrap
+                  : MaterialTapTargetSize.padded,
+            ),
+            icon: const Icon(PhosphorIconsRegular.shieldCheck, size: 16),
+            label: const Text(
+              'Normas Comunitarias & Descargo Legal',
+              style: TextStyle(
+                fontSize: 12,
+                decoration: TextDecoration.underline,
+              ),
+            ),
+            onPressed: onOpenRules,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TrebolCreditBadge extends StatelessWidget {
+  final bool onDark;
+
+  const _TrebolCreditBadge({required this.onDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = onDark ? Colors.white : WelcomeScreen._zanateBlack;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Image.asset(
+          'assets/images/Logo Trébol Asociados_sinFondo.png',
+          width: 24,
+          height: 24,
+          fit: BoxFit.contain,
+          color: textColor,
+          colorBlendMode: BlendMode.srcIn,
+          semanticLabel: 'Logo de Trebol4Devop',
+          errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+        ),
+        const SizedBox(width: 7),
+        Text(
+          'Trebol4Devop',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: textColor,
+            letterSpacing: 0.2,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AnonymousModeNoticeCard extends StatelessWidget {
+  final bool compact;
+
+  const _AnonymousModeNoticeCard({this.compact = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 12 : 14,
+        vertical: compact ? 10 : 13,
+      ),
+      decoration: BoxDecoration(
+        color: WelcomeScreen._zanateEyeYellow.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: WelcomeScreen._zanateEyeYellow.withValues(alpha: 0.6),
+          width: 1.1,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 1),
+            child: Icon(
+              PhosphorIconsFill.info,
+              size: compact ? 17 : 19,
+              color: const Color(0xFFB45309),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                style: TextStyle(
+                  fontSize: compact ? 12 : 12.5,
+                  height: 1.35,
+                  color: const Color(0xFF334155),
+                  fontWeight: FontWeight.w500,
+                ),
+                children: const [
+                  TextSpan(
+                    text: 'Modo anónimo: ',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: WelcomeScreen._zanateBlack,
+                    ),
+                  ),
+                  TextSpan(
+                    text:
+                        'podrás explorar el foro y el marketplace, pero necesitas una cuenta para publicar.',
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
