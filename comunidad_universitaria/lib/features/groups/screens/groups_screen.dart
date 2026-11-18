@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../core/constants/categories.dart';
-import '../../../core/constants/zanate_colors.dart';
 import '../../../core/models/whatsapp_group.dart';
 import '../../../core/services/groups_service.dart';
 import '../../../core/services/local_storage_service.dart';
@@ -12,8 +12,7 @@ import '../../../core/services/supabase_service.dart';
 import '../widgets/create_group_dialog.dart';
 import '../widgets/group_card.dart';
 import '../../shared/widgets/auth_modal.dart';
-import '../../shared/widgets/empty_state_widget.dart';
-import '../../shared/widgets/settings_bottom_sheet.dart';
+import '../../shared/screens/settings_screen.dart';
 
 class GroupsScreen extends StatefulWidget {
   final String activeAlias;
@@ -298,14 +297,20 @@ class GroupsScreenState extends State<GroupsScreen> {
     return 'Facultad';
   }
 
+  static const _zanateBlack = Color(0xFF0B0D10);
+  static const _zanateEyeYellow = Color(0xFFF5C518);
+  static const _subtleText = Color(0xFF475569);
+
   void _showPreferencesSheet(BuildContext context, bool isDark) {
     String tempFacultad = _selectedFacultad;
 
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
@@ -314,28 +319,38 @@ class GroupsScreenState extends State<GroupsScreen> {
                 padding: EdgeInsets.only(
                   left: 20,
                   right: 20,
-                  top: 16,
-                  bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
+                  top: 12,
+                  bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 20,
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE2E8F0),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                    ),
                     Row(
                       children: [
                         const Icon(
                           PhosphorIconsRegular.slidersHorizontal,
                           size: 20,
-                          color: ZanateColors.zanateAccent,
+                          color: _zanateBlack,
                         ),
                         const SizedBox(width: 8),
                         Text(
                           'Filtrar por Facultad',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.2,
-                            color: isDark ? Colors.white : ZanateColors.zanateDark,
+                          style: GoogleFonts.outfit(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                            color: _zanateBlack,
                           ),
                         ),
                         const Spacer(),
@@ -357,29 +372,36 @@ class GroupsScreenState extends State<GroupsScreen> {
                     ),
                     const SizedBox(height: 14),
 
-                    Text(
+                    const Text(
                       'Selecciona tu facultad o unidad académica',
                       style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: _subtleText,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg,
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
-                          width: 0.8,
+                          color: const Color(0xFFE2E8F0),
+                          width: 1.2,
                         ),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           value: tempFacultad,
                           isExpanded: true,
-                          icon: const Icon(PhosphorIconsRegular.caretDown, size: 14),
+                          dropdownColor: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          icon: const Icon(
+                            PhosphorIconsRegular.caretDown,
+                            size: 16,
+                            color: _zanateBlack,
+                          ),
                           items: USACConstants.facultades
                               .map(
                                 (f) => DropdownMenuItem<String>(
@@ -387,26 +409,28 @@ class GroupsScreenState extends State<GroupsScreen> {
                                   child: Text(
                                     f['nombre'].toString(),
                                     overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 12.5,
-                                      color: isDark ? Colors.white : ZanateColors.zanateDark,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: _zanateBlack,
                                     ),
                                   ),
                                 ),
                               )
                               .toList(),
                           onChanged: (val) {
-                            if (val != null) setSheetState(() => tempFacultad = val);
+                            if (val != null) {
+                              setSheetState(() => tempFacultad = val);
+                            }
                           },
                         ),
                       ),
                     ),
 
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 20),
 
                     SizedBox(
                       width: double.infinity,
-                      height: 42,
+                      height: 48,
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.of(sheetContext).pop();
@@ -414,15 +438,17 @@ class GroupsScreenState extends State<GroupsScreen> {
                           _loadGroups();
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: ZanateColors.zanateAccent,
+                          backgroundColor: _zanateBlack,
                           foregroundColor: Colors.white,
                           elevation: 0,
-                          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                         ),
                         child: const Text(
                           'Aplicar Filtro',
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 14,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -438,19 +464,16 @@ class GroupsScreenState extends State<GroupsScreen> {
     );
   }
 
-  // 1. Squared Full-Width Header: Clean, Simple, Centered Title without Symbol, Gear for Settings on Left
+  // 1. Zanate Header: Clean White, Centered Title, Gear for Settings on Left
   Widget _buildSquaredHeader(bool isDark, String titleText) {
     return Container(
-      height: 56,
+      height: 58,
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: const BoxDecoration(
+        color: Colors.white,
         border: Border(
-          bottom: BorderSide(
-            color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
-            width: 0.8,
-          ),
+          bottom: BorderSide(color: Color(0xFFE2E8F0)),
         ),
       ),
       child: Row(
@@ -458,47 +481,44 @@ class GroupsScreenState extends State<GroupsScreen> {
           // Left: Settings Button (Configuración y Perfil)
           IconButton(
             tooltip: 'Configuración y Perfil',
-            onPressed: () => SettingsBottomSheet.show(
+            onPressed: () => SettingsScreen.show(
               context,
               activeAlias: widget.activeAlias,
               onAliasChanged: widget.onAliasChanged,
               onToggleTheme: widget.onToggleTheme,
             ),
-            icon: Icon(
+            icon: const Icon(
               PhosphorIconsRegular.gear,
-              size: 21,
-              color: isDark ? Colors.white : ZanateColors.zanateDark,
+              size: 22,
+              color: _zanateBlack,
             ),
             splashRadius: 22,
           ),
 
-          // Center: Clean, simple, centered title (Matching Forum layout, no symbol box)
+          // Center: Clean, simple, centered title
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(
+                const Text(
                   'DIRECTORIO ESTUDIANTIL',
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.8,
-                    color: isDark
-                        ? const Color(0xFF94A3B8)
-                        : Colors.blueGrey.shade400,
+                    color: Color(0xFF64748B),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 1),
                 Text(
                   titleText,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.3,
-                    color: isDark ? Colors.white : ZanateColors.zanateDark,
+                  style: GoogleFonts.outfit(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: _zanateBlack,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -511,10 +531,10 @@ class GroupsScreenState extends State<GroupsScreen> {
           IconButton(
             tooltip: 'Compartir Grupo',
             onPressed: _openCreateGroupDialog,
-            icon: Icon(
+            icon: const Icon(
               PhosphorIconsBold.plus,
               size: 22,
-              color: isDark ? Colors.white : ZanateColors.zanateDark,
+              color: _zanateBlack,
             ),
             splashRadius: 22,
           ),
@@ -523,80 +543,96 @@ class GroupsScreenState extends State<GroupsScreen> {
     );
   }
 
-  // 2. Squared Full-Width Search & Preferences Bar
+  // 2. Zanate Search & Preferences Bar
   Widget _buildSquaredSearchBar(bool isDark) {
     return Container(
-      height: 48,
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: const BoxDecoration(
+        color: Colors.white,
         border: Border(
-          bottom: BorderSide(
-            color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
-            width: 0.8,
-          ),
+          bottom: BorderSide(color: Color(0xFFE2E8F0)),
         ),
       ),
       child: Row(
         children: [
-          Icon(
-            PhosphorIconsRegular.magnifyingGlass,
-            size: 18,
-            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-          ),
-          const SizedBox(width: 10),
           Expanded(
-            child: TextField(
-              controller: _searchController,
-              onChanged: _onSearchChanged,
-              onSubmitted: _submitSearch,
-              textInputAction: TextInputAction.search,
-              decoration: const InputDecoration(
-                hintText: 'Buscar cursos, secciones o palabras clave...',
-                hintStyle: TextStyle(
-                  fontSize: 12.5,
-                  color: Color(0xFF94A3B8),
-                  fontWeight: FontWeight.w400,
+            child: Container(
+              height: 40,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFFE2E8F0),
+                  width: 1.2,
                 ),
-                border: InputBorder.none,
-                isDense: true,
-                contentPadding: EdgeInsets.symmetric(vertical: 12),
               ),
-              style: TextStyle(
-                fontSize: 13,
-                color: isDark ? Colors.white : ZanateColors.zanateDark,
+              child: Row(
+                children: [
+                  const Icon(
+                    PhosphorIconsRegular.magnifyingGlass,
+                    size: 17,
+                    color: _subtleText,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: _onSearchChanged,
+                      onSubmitted: _submitSearch,
+                      textInputAction: TextInputAction.search,
+                      decoration: const InputDecoration(
+                        hintText: 'Buscar cursos, secciones o palabras clave...',
+                        hintStyle: TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF94A3B8),
+                          fontWeight: FontWeight.w400,
+                        ),
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      style: const TextStyle(
+                        fontSize: 13.5,
+                        color: _zanateBlack,
+                      ),
+                    ),
+                  ),
+                  if (_searchQuery.isNotEmpty)
+                    InkWell(
+                      borderRadius: BorderRadius.circular(999),
+                      onTap: () {
+                        _searchController.clear();
+                        _onSearchChanged('');
+                      },
+                      child: const Padding(
+                        padding: EdgeInsets.all(4),
+                        child: Icon(
+                          PhosphorIconsRegular.x,
+                          size: 15,
+                          color: _subtleText,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
           ),
-          if (_searchQuery.isNotEmpty)
-            IconButton(
-              icon: const Icon(PhosphorIconsRegular.x, size: 15),
-              splashRadius: 16,
-              onPressed: () {
-                _searchController.clear();
-                _onSearchChanged('');
-              },
-            ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 8),
 
-          // Discrete Preferences Pill
+          // Discrete Zanate Preferences Pill
           InkWell(
             onTap: () => _showPreferencesSheet(context, isDark),
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(12),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+              height: 40,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
                 color: _hasActivePreferences
-                    ? ZanateColors.zanateAccent.withValues(alpha: isDark ? 0.25 : 0.1)
-                    : (isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color: _hasActivePreferences
-                      ? ZanateColors.zanateAccent
-                      : (isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder),
-                  width: 0.8,
-                ),
+                    ? _zanateEyeYellow
+                    : const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -605,33 +641,31 @@ class GroupsScreenState extends State<GroupsScreen> {
                     _hasActivePreferences
                         ? PhosphorIconsFill.slidersHorizontal
                         : PhosphorIconsRegular.slidersHorizontal,
-                    size: 13,
-                    color: _hasActivePreferences
-                        ? ZanateColors.zanateAccent
-                        : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                    size: 15,
+                    color: _zanateBlack,
                   ),
-                  const SizedBox(width: 5),
+                  const SizedBox(width: 6),
                   Text(
                     _getActivePreferencesLabel(),
                     style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: _hasActivePreferences ? FontWeight.w700 : FontWeight.w500,
-                      color: _hasActivePreferences
-                          ? ZanateColors.zanateAccent
-                          : (isDark ? const Color(0xFFE2E8F0) : ZanateColors.zanateDark),
+                      fontSize: 12,
+                      fontWeight: _hasActivePreferences
+                          ? FontWeight.w700
+                          : FontWeight.w600,
+                      color: _zanateBlack,
                     ),
                   ),
                   if (_hasActivePreferences) ...[
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 6),
                     InkWell(
                       onTap: () {
                         setState(() => _selectedFacultad = 'todas');
                         _loadGroups();
                       },
                       child: const Icon(
-                        PhosphorIconsRegular.x,
-                        size: 12,
-                        color: ZanateColors.zanateAccent,
+                        PhosphorIconsBold.x,
+                        size: 13,
+                        color: _zanateBlack,
                       ),
                     ),
                   ],
@@ -681,7 +715,7 @@ class GroupsScreenState extends State<GroupsScreen> {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(40),
-          child: CircularProgressIndicator(),
+          child: CircularProgressIndicator(color: _zanateBlack),
         ),
       );
     }
@@ -693,13 +727,53 @@ class GroupsScreenState extends State<GroupsScreen> {
     if (_groups.isEmpty) {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-        children: const [
-          EmptyStateWidget(
-            icon: PhosphorIconsRegular.usersThree,
-            title: 'No se encontraron grupos para este filtro',
-            description:
-                'Prueba ajustando tus preferencias o usa el botón + superior para compartir un enlace con tus compañeros.',
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+        children: [
+          Center(
+            child: Column(
+              children: [
+                Container(
+                  width: 76,
+                  height: 76,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFFF8FAFC),
+                    border: Border.all(
+                      color: const Color(0xFFE2E8F0),
+                      width: 1.2,
+                    ),
+                  ),
+                  child: const Icon(
+                    PhosphorIconsRegular.usersThree,
+                    size: 34,
+                    color: _zanateBlack,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'No se encontraron grupos para este filtro',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.outfit(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: _zanateBlack,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 360),
+                  child: const Text(
+                    'Prueba ajustando tus preferencias o usa el botón + superior para compartir un enlace con tus compañeros.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      height: 1.4,
+                      color: _subtleText,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       );
@@ -721,22 +795,23 @@ class GroupsScreenState extends State<GroupsScreen> {
         : 'Grupos de Estudio';
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+      backgroundColor: Colors.white,
       body: Column(
         children: [
-          // 1. Squared Top Header (Matching Forum layout)
+          // 1. Zanate Top Header
           _buildSquaredHeader(isDark, titleText),
 
-          // 2. Squared Search & Preference Bar
+          // 2. Zanate Search & Preference Bar
           _buildSquaredSearchBar(isDark),
 
           if (_loadError != null && _groups.isNotEmpty) ...[
             _buildLoadError(),
           ],
 
-          // 3. Squared Feed (ListView with 1px border dividers)
+          // 3. Feed
           Expanded(
             child: RefreshIndicator(
+              color: _zanateBlack,
               onRefresh: _loadGroups,
               child: _buildGroupsFeed(isDark),
             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../core/constants/zanate_colors.dart';
 import '../../../core/models/whatsapp_group.dart';
@@ -148,17 +149,21 @@ class GroupCard extends StatelessWidget {
                 if (onReport != null)
                   PopupMenuButton<String>(
                     tooltip: 'Más opciones',
-                    color: theme.colorScheme.surface,
+                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
                     surfaceTintColor: Colors.transparent,
                     elevation: 2,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      side: BorderSide(color: theme.colorScheme.outlineVariant),
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(
+                        color: isDark
+                            ? const Color(0xFF334155)
+                            : ZanateColors.subtleBorder,
+                      ),
                     ),
-                    icon: Icon(
-                      Icons.more_vert,
+                    icon: PhosphorIcon(
+                      PhosphorIconsBold.dotsThreeVertical,
                       size: 18,
-                      color: theme.colorScheme.onSurface,
+                      color: isDark ? Colors.white : ZanateColors.zanateBlack,
                     ),
                     onSelected: (val) {
                       if (val == 'report' && onReport != null) {
@@ -183,10 +188,12 @@ class GroupCard extends StatelessWidget {
                         height: 44,
                         child: Row(
                           children: [
-                            Icon(
-                              Icons.flag_outlined,
+                            PhosphorIcon(
+                              PhosphorIconsRegular.flag,
                               size: 17,
-                              color: theme.colorScheme.onSurface,
+                              color: isDark
+                                  ? Colors.white
+                                  : ZanateColors.zanateBlack,
                             ),
                             const SizedBox(width: 10),
                             const Text('Reportar'),
@@ -203,10 +210,12 @@ class GroupCard extends StatelessWidget {
             // Creator and time
             Row(
               children: [
-                Icon(
-                  Icons.person_outline,
+                PhosphorIcon(
+                  PhosphorIconsRegular.user,
                   size: 15,
-                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
+                  color: isDark
+                      ? const Color(0xFF94A3B8)
+                      : ZanateColors.mutedText,
                 ),
                 const SizedBox(width: 5),
                 Flexible(
@@ -216,12 +225,18 @@ class GroupCard extends StatelessWidget {
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
+                      color: isDark
+                          ? const Color(0xFFCBD5E1)
+                          : ZanateColors.subtleText,
                     ),
                   ),
                 ),
                 Text(
                   ' · ${TimeUtils.timeAgo(group.createdAt)}',
-                  style: theme.textTheme.bodySmall?.copyWith(fontSize: 11),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontSize: 11,
+                    color: ZanateColors.mutedText,
+                  ),
                 ),
               ],
             ),
@@ -230,9 +245,11 @@ class GroupCard extends StatelessWidget {
             // Course Name (Big)
             Text(
               group.curso.isNotEmpty ? group.curso : group.title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
+              style: GoogleFonts.outfit(
+                fontWeight: FontWeight.w700,
+                fontSize: 16.5,
+                height: 1.25,
+                color: isDark ? Colors.white : ZanateColors.zanateBlack,
               ),
             ),
 
@@ -290,8 +307,8 @@ class GroupCard extends StatelessWidget {
                             color: Colors.black.withValues(alpha: 0.6),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: const Icon(
-                            Icons.zoom_in,
+                          child: const PhosphorIcon(
+                            PhosphorIconsRegular.magnifyingGlassPlus,
                             color: Colors.white,
                             size: 16,
                           ),
@@ -305,10 +322,10 @@ class GroupCard extends StatelessWidget {
 
             const SizedBox(height: 12),
             Container(
-              height: 0.8,
+              height: 1.0,
               color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
 
             // Actions Row: Upvote, Copy link, Join Button
             LayoutBuilder(
@@ -316,58 +333,87 @@ class GroupCard extends StatelessWidget {
                 final compactJoinAction = constraints.maxWidth < 360;
                 return Row(
                   children: [
-                    // Upvote pill button
+                    // Upvote pill button (>=48px accessible hit target)
                     InkWell(
                       onTap: onUpvote,
-                      borderRadius: BorderRadius.circular(20),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: group.isUpvotedByMe
-                              ? ZanateColors.zanateAccent.withValues(alpha: 0.12)
-                              : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC)),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: group.isUpvotedByMe
-                                ? ZanateColors.zanateAccent
-                                : (isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder),
-                            width: 0.8,
-                          ),
+                      borderRadius: BorderRadius.circular(12),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          minHeight: 48,
+                          minWidth: 48,
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              group.isUpvotedByMe
-                                  ? PhosphorIconsFill.arrowFatUp
-                                  : PhosphorIconsRegular.arrowFatUp,
-                              size: 15,
-                              color: group.isUpvotedByMe
-                                  ? ZanateColors.zanateAccent
-                                  : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 7,
                             ),
-                            const SizedBox(width: 5),
-                            Text(
-                              '${group.upvotes}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
+                            decoration: BoxDecoration(
+                              color: group.isUpvotedByMe
+                                  ? ZanateColors.zanateEyeYellow.withValues(
+                                      alpha: isDark ? 0.24 : 0.32,
+                                    )
+                                  : (isDark
+                                      ? const Color(0xFF0F172A)
+                                      : ZanateColors.surfaceBg),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
                                 color: group.isUpvotedByMe
-                                    ? ZanateColors.zanateAccent
-                                    : (isDark ? const Color(0xFFE2E8F0) : ZanateColors.zanateDark),
+                                    ? (isDark
+                                        ? ZanateColors.zanateEyeYellow
+                                        : ZanateColors.zanateBlack)
+                                    : (isDark
+                                        ? const Color(0xFF334155)
+                                        : ZanateColors.subtleBorder),
+                                width: group.isUpvotedByMe ? 1.2 : 1.0,
                               ),
                             ),
-                          ],
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                PhosphorIcon(
+                                  group.isUpvotedByMe
+                                      ? PhosphorIconsFill.arrowFatUp
+                                      : PhosphorIconsRegular.arrowFatUp,
+                                  size: 15,
+                                  color: group.isUpvotedByMe
+                                      ? (isDark
+                                          ? ZanateColors.zanateEyeYellow
+                                          : ZanateColors.zanateBlack)
+                                      : (isDark
+                                          ? const Color(0xFF94A3B8)
+                                          : ZanateColors.mutedText),
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  '${group.upvotes}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: group.isUpvotedByMe
+                                        ? (isDark
+                                            ? ZanateColors.zanateEyeYellow
+                                            : ZanateColors.zanateBlack)
+                                        : (isDark
+                                            ? const Color(0xFFE2E8F0)
+                                            : ZanateColors.zanateBlack),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     // Minimalist copy button
                     IconButton(
-                      icon: Icon(
+                      icon: PhosphorIcon(
                         PhosphorIconsRegular.copy,
                         size: 17,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        color: isDark
+                            ? const Color(0xFF94A3B8)
+                            : ZanateColors.mutedText,
                       ),
                       tooltip: 'Copiar enlace',
                       onPressed: () => UrlUtils.copyToClipboard(
