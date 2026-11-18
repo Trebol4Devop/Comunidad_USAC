@@ -120,6 +120,7 @@ void main() {
       final studentBtn = find.byKey(const Key('student_support_button'));
       expect(studentBtn, findsOneWidget);
 
+      await tester.ensureVisible(studentBtn);
       await tester.tap(studentBtn);
       await tester.pumpAndSettle();
 
