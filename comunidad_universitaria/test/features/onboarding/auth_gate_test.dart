@@ -52,7 +52,7 @@ void main() {
 
       expect(find.byType(WelcomeScreen), findsOneWidget);
       expect(find.text('MainAppChild'), findsNothing);
-      expect(find.text('Comunidad USAC'), findsOneWidget);
+      expect(find.text('Zanate'), findsOneWidget);
     });
 
     testWidgets('muestra child en authenticated', (tester) async {
