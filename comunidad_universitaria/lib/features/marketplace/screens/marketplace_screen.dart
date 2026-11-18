@@ -739,7 +739,19 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             splashRadius: 22,
           ),
 
-          // Title
+          // Saved Listings shortcut (mismo lado que ajustes)
+          IconButton(
+            tooltip: 'Productos guardados',
+            onPressed: _openSavedListings,
+            icon: const Icon(
+              PhosphorIconsRegular.bookmarkSimple,
+              size: 20,
+              color: _zanateBlack,
+            ),
+            splashRadius: 22,
+          ),
+
+          // Title (centrado)
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -758,7 +770,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                 ),
                 const SizedBox(height: 1),
                 Text(
-                  'Marketplace & Tutorías',
+                  'Marketplace',
                   style: GoogleFonts.outfit(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -769,18 +781,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                 ),
               ],
             ),
-          ),
-
-          // Saved Listings shortcut
-          IconButton(
-            tooltip: 'Productos guardados',
-            onPressed: _openSavedListings,
-            icon: const Icon(
-              PhosphorIconsRegular.bookmarkSimple,
-              size: 20,
-              color: _zanateBlack,
-            ),
-            splashRadius: 22,
           ),
 
           // My Sales shortcut
@@ -840,7 +840,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                 Semantics(
                   header: true,
                   child: Text(
-                    'Marketplace & Tutorías Estudiantiles',
+                    'Marketplace Estudiantil',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.outfit(
