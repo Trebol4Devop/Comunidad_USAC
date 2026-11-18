@@ -40,16 +40,80 @@ class NoInstitutionalEmailScreen extends StatefulWidget {
 }
 
 class _NoInstitutionalEmailScreenState
-    extends State<NoInstitutionalEmailScreen> {
+    extends State<NoInstitutionalEmailScreen>
+    with WidgetsBindingObserver {
   bool _isBusy = false;
   bool _waitingForGoogle = false;
   bool? _pendingStudent;
   StreamSubscription<AuthState>? _authSubscription;
+  Timer? _resumeGraceTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _resumeGraceTimer?.cancel();
     unawaited(_authSubscription?.cancel());
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _waitingForGoogle) {
+      _resumeGraceTimer?.cancel();
+      _resumeGraceTimer = Timer(
+        const Duration(milliseconds: 1500),
+        _verifyAuthAfterResume,
+      );
+    }
+  }
+
+  void _verifyAuthAfterResume() {
+    if (!mounted || !_waitingForGoogle) return;
+    if (_isAuthenticated) {
+      final wasStudent = _pendingStudent;
+      _resumeGraceTimer?.cancel();
+      unawaited(_authSubscription?.cancel());
+      _authSubscription = null;
+      setState(() {
+        _isBusy = false;
+        _waitingForGoogle = false;
+        _pendingStudent = null;
+      });
+      if (wasStudent == true) {
+        _navigateToSupport();
+      } else if (wasStudent == false) {
+        _navigateToMerchant();
+      }
+      return;
+    }
+
+    _cancelPendingGoogleWait(
+      message: 'No se completó el acceso con Google. Puedes intentarlo de nuevo.',
+    );
+  }
+
+  void _cancelPendingGoogleWait({String? message}) {
+    _resumeGraceTimer?.cancel();
+    unawaited(_authSubscription?.cancel());
+    _authSubscription = null;
+    unawaited(LocalStorageService.clearPendingAuthIntent());
+    if (!mounted) return;
+    setState(() {
+      _isBusy = false;
+      _waitingForGoogle = false;
+      _pendingStudent = null;
+    });
+    if (message != null) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(message)));
+    }
   }
 
   bool get _isAuthenticated {
@@ -124,6 +188,7 @@ class _NoInstitutionalEmailScreenState
       if (state.event == AuthChangeEvent.signedIn &&
           user != null &&
           !user.isAnonymous) {
+        _resumeGraceTimer?.cancel();
         unawaited(_authSubscription?.cancel());
         _authSubscription = null;
         if (mounted) {
@@ -221,9 +286,9 @@ class _NoInstitutionalEmailScreenState
               ),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                SizedBox(
+                const SizedBox(
                   width: 18,
                   height: 18,
                   child: CircularProgressIndicator(
@@ -231,14 +296,34 @@ class _NoInstitutionalEmailScreenState
                     color: NoInstitutionalEmailScreen._zanateBlack,
                   ),
                 ),
-                SizedBox(width: 12),
-                Expanded(
+                const SizedBox(width: 12),
+                const Expanded(
                   child: Text(
                     'Completa el acceso en Google y regresa a la app para continuar.',
                     style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w500,
                       color: Color(0xFF334155),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                TextButton(
+                  onPressed: () => _cancelPendingGoogleWait(),
+                  style: TextButton.styleFrom(
+                    foregroundColor: NoInstitutionalEmailScreen._zanateBlack,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text(
+                    'Cancelar',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
