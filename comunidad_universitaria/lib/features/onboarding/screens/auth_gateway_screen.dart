@@ -364,8 +364,6 @@ class _AuthGatewayScreenState extends State<AuthGatewayScreen>
     final accentColor = isDark ? Colors.white : AuthGatewayScreen._zanateBlack;
     final subtleText =
         isDark ? Colors.grey.shade400 : const Color(0xFF475569);
-    final mutedText =
-        isDark ? Colors.grey.shade400 : const Color(0xFF64748B);
     final dividerColor =
         isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
     final buttonBorderColor =
