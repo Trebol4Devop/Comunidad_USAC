@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../../core/constants/zanate_colors.dart';
-import '../../../shared/widgets/settings_bottom_sheet.dart';
+import '../../../shared/screens/settings_screen.dart';
 import '../../models/discord_forum_models.dart';
 
 class ForumChannelSidebar extends StatelessWidget {
@@ -94,11 +95,11 @@ class ForumChannelSidebar extends StatelessWidget {
                             .trim(),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
+                        style: GoogleFonts.outfit(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
                           letterSpacing: -0.2,
-                          color: isDark ? Colors.white : ZanateColors.zanateDark,
+                          color: isDark ? Colors.white : ZanateColors.zanateBlack,
                         ),
                       ),
                       const SizedBox(height: 3),
@@ -111,7 +112,7 @@ class ForumChannelSidebar extends StatelessWidget {
                           fontWeight: FontWeight.w500,
                           color: isDark
                               ? const Color(0xFF94A3B8)
-                              : Colors.blueGrey.shade400,
+                              : ZanateColors.mutedText,
                         ),
                       ),
                     ],
@@ -226,7 +227,8 @@ class ForumChannelSidebar extends StatelessWidget {
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: () => SettingsBottomSheet.show(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () => SettingsScreen.show(
                   context,
                   activeAlias: activeAlias ?? 'Estudiante',
                   onAliasChanged: onAliasChanged ?? (_) {},
@@ -237,7 +239,8 @@ class ForumChannelSidebar extends StatelessWidget {
                   height: 40,
                   decoration: BoxDecoration(
                     color: bgTile,
-                    border: Border.all(color: borderColor, width: 0.8),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: borderColor, width: 1.0),
                   ),
                   child: Center(
                     child: PhosphorIcon(
@@ -277,15 +280,15 @@ class ForumChannelSidebar extends StatelessWidget {
     bool isDark,
   ) {
     final activeBg = isDark
-        ? ZanateColors.zanateAccent.withValues(alpha: 0.25)
-        : ZanateColors.zanateAccent.withValues(alpha: 0.10);
-    final activeTextColor = isDark ? Colors.white : ZanateColors.zanateDark;
+        ? ZanateColors.zanateEyeYellow.withValues(alpha: 0.20)
+        : ZanateColors.zanateEyeYellow.withValues(alpha: 0.28);
+    final activeTextColor = isDark ? Colors.white : ZanateColors.zanateBlack;
     final inactiveTextColor =
-        isDark ? const Color(0xFF94A3B8) : Colors.blueGrey.shade700;
+        isDark ? const Color(0xFF94A3B8) : ZanateColors.subtleText;
 
     final iconColor = isActive
-        ? ZanateColors.zanateAccent
-        : (isDark ? const Color(0xFF64748B) : Colors.blueGrey.shade500);
+        ? (isDark ? ZanateColors.zanateEyeYellow : ZanateColors.zanateBlack)
+        : (isDark ? const Color(0xFF64748B) : ZanateColors.mutedText);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),

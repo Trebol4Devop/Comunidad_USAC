@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../core/config/supabase_config.dart';
@@ -804,15 +805,16 @@ class _ForumScreenState extends State<ForumScreen> {
   }
 
   Widget _buildMobileGroupsHeader(ThemeData theme, bool isDark) {
+    final titleColor = isDark ? Colors.white : ZanateColors.zanateBlack;
     return Container(
-      height: 52,
+      height: 54,
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
         border: Border(
           bottom: BorderSide(
             color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
-            width: 0.8,
+            width: 1.0,
           ),
         ),
       ),
@@ -823,50 +825,57 @@ class _ForumScreenState extends State<ForumScreen> {
             icon: PhosphorIcon(
               PhosphorIconsRegular.list,
               size: 22,
-              color: isDark ? Colors.white : ZanateColors.zanateDark,
+              color: titleColor,
             ),
             tooltip: 'Menú de canales',
             splashRadius: 22,
           ),
           const SizedBox(width: 4),
-          const PhosphorIcon(
-            PhosphorIconsFill.whatsappLogo,
-            size: 20,
-            color: Color(0xFF25D366),
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: ZanateColors.zanateEyeYellow.withValues(alpha: 0.22),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: PhosphorIcon(
+              PhosphorIconsFill.usersThree,
+              size: 16,
+              color: isDark ? ZanateColors.zanateEyeYellow : ZanateColors.zanateBlack,
+            ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               _groupsActiveChannel.name,
-              style: TextStyle(
+              style: GoogleFonts.outfit(
                 fontWeight: FontWeight.w700,
-                fontSize: 14.5,
-                color: isDark ? Colors.white : ZanateColors.zanateDark,
+                fontSize: 15.5,
+                color: titleColor,
               ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: const Color(0xFF25D366).withValues(alpha: 0.15),
+              color: ZanateColors.zanateEyeYellow,
               borderRadius: BorderRadius.circular(6),
             ),
             child: const Text(
-              'WAPP',
+              'GRUPOS',
               style: TextStyle(
                 fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF25D366),
+                fontWeight: FontWeight.w800,
+                color: ZanateColors.zanateBlack,
               ),
             ),
           ),
           const SizedBox(width: 4),
           IconButton(
-            icon: const PhosphorIcon(
+            icon: PhosphorIcon(
               PhosphorIconsFill.flame,
               size: 20,
-              color: Color(0xFFF59E0B),
+              color: isDark ? ZanateColors.zanateEyeYellow : ZanateColors.zanateBlack,
             ),
             tooltip: 'Comunidades Populares',
             onPressed: () => _showPopularServersModal(context),
@@ -885,6 +894,7 @@ class _ForumScreenState extends State<ForumScreen> {
 
   Widget _buildMobileChannelHeader(ThemeData theme) {
     final isDark = theme.brightness == Brightness.dark;
+    final titleColor = isDark ? Colors.white : ZanateColors.zanateBlack;
     final serverName = _activeServer.name
         .replaceAll(RegExp(r'\s*\([^)]*\)'), '')
         .trim()
@@ -893,32 +903,29 @@ class _ForumScreenState extends State<ForumScreen> {
 
     return Container(
       constraints: const BoxConstraints(minHeight: 56),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
         border: Border(
           bottom: BorderSide(
             color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
-            width: 0.8,
+            width: 1.0,
           ),
         ),
       ),
       child: Row(
         children: [
-          // Botón de menú minimalista (sin contenedor de color)
           IconButton(
             onPressed: () => _scaffoldKey.currentState?.openDrawer(),
             icon: PhosphorIcon(
               PhosphorIconsRegular.list,
-              size: 24,
-              color: isDark ? Colors.white : ZanateColors.zanateDark,
+              size: 23,
+              color: titleColor,
             ),
             tooltip: 'Menú de canales',
             splashRadius: 22,
           ),
           const SizedBox(width: 4),
-
-          // Título central con doble jerarquía
           Expanded(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -933,35 +940,33 @@ class _ForumScreenState extends State<ForumScreen> {
                     letterSpacing: 0.8,
                     color: isDark
                         ? const Color(0xFF94A3B8)
-                        : Colors.blueGrey.shade400,
+                        : ZanateColors.mutedText,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 1),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
+                    Text(
                       '#',
-                      style: TextStyle(
+                      style: GoogleFonts.outfit(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
-                        color: ZanateColors.zanateAccent,
+                        color: titleColor,
                       ),
                     ),
                     const SizedBox(width: 3),
                     Flexible(
                       child: Text(
                         channelName,
-                        style: TextStyle(
-                          fontSize: 15,
+                        style: GoogleFonts.outfit(
+                          fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          letterSpacing: -0.3,
-                          color: isDark
-                              ? Colors.white
-                              : ZanateColors.zanateDark,
+                          letterSpacing: -0.2,
+                          color: titleColor,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -973,15 +978,13 @@ class _ForumScreenState extends State<ForumScreen> {
             ),
           ),
           const SizedBox(width: 4),
-
-          // Botón + minimalista (sin contenedor de color)
           if (!_activeChannel.isSpecial)
             IconButton(
               onPressed: _openCreateDialog,
               icon: PhosphorIcon(
                 PhosphorIconsBold.plus,
                 size: 22,
-                color: isDark ? Colors.white : ZanateColors.zanateDark,
+                color: titleColor,
               ),
               tooltip: 'Nueva consulta',
               splashRadius: 22,
@@ -1008,25 +1011,89 @@ class _ForumScreenState extends State<ForumScreen> {
   }
 
   void _showSearchDialog() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final titleColor = isDark ? Colors.white : ZanateColors.zanateBlack;
+    final subtleColor =
+        isDark ? const Color(0xFF94A3B8) : ZanateColors.subtleText;
+    final borderColor =
+        isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
+
     showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-        title: const Text('Buscar en el foro'),
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: borderColor, width: 1.0),
+        ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Buscar en el foro',
+              style: GoogleFonts.outfit(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: titleColor,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              width: 44,
+              height: 4,
+              decoration: BoxDecoration(
+                color: ZanateColors.zanateEyeYellow,
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+          ],
+        ),
         content: TextField(
           controller: _searchController,
           autofocus: true,
           textInputAction: TextInputAction.search,
+          style: TextStyle(fontSize: 13.5, color: titleColor),
           decoration: InputDecoration(
             hintText: 'Buscar publicaciones...',
-            prefixIcon: const Icon(Icons.search_rounded),
+            hintStyle: const TextStyle(
+              fontSize: 13.5,
+              color: ZanateColors.hintText,
+            ),
+            filled: true,
+            fillColor: isDark
+                ? const Color(0xFF0F172A)
+                : ZanateColors.surfaceBg,
+            prefixIcon: Icon(
+              PhosphorIconsRegular.magnifyingGlass,
+              size: 18,
+              color: subtleColor,
+            ),
             suffixIcon: _searchController.text.isEmpty
                 ? null
                 : IconButton(
                     tooltip: 'Limpiar búsqueda',
                     onPressed: _searchController.clear,
-                    icon: const Icon(Icons.close_rounded),
+                    icon: Icon(
+                      PhosphorIconsRegular.x,
+                      size: 16,
+                      color: subtleColor,
+                    ),
                   ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: borderColor, width: 1.2),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: borderColor, width: 1.2),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: titleColor, width: 1.6),
+            ),
           ),
           onSubmitted: (value) {
             Navigator.of(dialogContext).pop();
@@ -1036,16 +1103,41 @@ class _ForumScreenState extends State<ForumScreen> {
         ),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: subtleColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancelar'),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
           ),
-          FilledButton(
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isDark
+                  ? ZanateColors.zanateEyeYellow
+                  : ZanateColors.zanateBlack,
+              foregroundColor: isDark
+                  ? ZanateColors.zanateBlack
+                  : Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+            ),
             onPressed: () {
               Navigator.of(dialogContext).pop();
               setState(() => _searchQuery = _searchController.text.trim());
               _loadPosts();
             },
-            child: const Text('Buscar'),
+            child: const Text(
+              'Buscar',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
           ),
         ],
       ),
@@ -1053,11 +1145,15 @@ class _ForumScreenState extends State<ForumScreen> {
   }
 
   void _showPopularServersModal(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      clipBehavior: Clip.antiAlias,
+      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (ctx) {
         return SizedBox(
           height: 480,
@@ -1136,27 +1232,21 @@ class _ForumScreenState extends State<ForumScreen> {
 
     final isHot = _feedMode == FeedMode.hot;
     final isRecent = _feedMode == FeedMode.recent;
+    final activeBg = ZanateColors.zanateEyeYellow;
+    final inactiveBg = isDark ? const Color(0xFF0F172A) : ZanateColors.pillBg;
+    final inactiveText =
+        isDark ? const Color(0xFF94A3B8) : ZanateColors.subtleText;
+    final borderColor =
+        isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
         border: Border(
-          bottom: BorderSide(
-            color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
-            width: 0.8,
-          ),
+          bottom: BorderSide(color: borderColor, width: 1.0),
         ),
-        boxShadow: isDark
-            ? null
-            : [
-                BoxShadow(
-                  color: const Color(0xFF0F172A).withValues(alpha: 0.03),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -1176,31 +1266,11 @@ class _ForumScreenState extends State<ForumScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                 decoration: BoxDecoration(
-                  gradient: isHot ? ZanateColors.hotFlameGradient : null,
-                  color: isHot
-                      ? null
-                      : (isDark
-                          ? const Color(0xFF0F172A)
-                          : ZanateColors.surfaceBg),
-                  borderRadius: BorderRadius.circular(24),
+                  color: isHot ? activeBg : inactiveBg,
+                  borderRadius: BorderRadius.circular(12),
                   border: isHot
                       ? null
-                      : Border.all(
-                          color: isDark
-                              ? const Color(0xFF334155)
-                              : ZanateColors.subtleBorder,
-                          width: 0.8,
-                        ),
-                  boxShadow: isHot
-                      ? [
-                          BoxShadow(
-                            color: const Color(0xFFFF512F)
-                                .withValues(alpha: 0.28),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ]
-                      : null,
+                      : Border.all(color: borderColor, width: 1.0),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -1209,7 +1279,7 @@ class _ForumScreenState extends State<ForumScreen> {
                       PhosphorIconsFill.flame,
                       size: 16,
                       color: isHot
-                          ? Colors.white
+                          ? ZanateColors.zanateBlack
                           : (isDark
                               ? const Color(0xFFF97316)
                               : const Color(0xFFEA580C)),
@@ -1217,14 +1287,10 @@ class _ForumScreenState extends State<ForumScreen> {
                     const SizedBox(width: 6),
                     Text(
                       'En Llamas',
-                      style: TextStyle(
-                        fontSize: 12.5,
+                      style: GoogleFonts.outfit(
+                        fontSize: 13,
                         fontWeight: isHot ? FontWeight.w700 : FontWeight.w600,
-                        color: isHot
-                            ? Colors.white
-                            : (isDark
-                                ? const Color(0xFF94A3B8)
-                                : Colors.blueGrey.shade600),
+                        color: isHot ? ZanateColors.zanateBlack : inactiveText,
                       ),
                     ),
                   ],
@@ -1247,34 +1313,11 @@ class _ForumScreenState extends State<ForumScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                 decoration: BoxDecoration(
-                  color: isRecent
-                      ? (isDark
-                          ? ZanateColors.zanateAccent
-                          : ZanateColors.zanateDark)
-                      : (isDark
-                          ? const Color(0xFF0F172A)
-                          : ZanateColors.surfaceBg),
-                  borderRadius: BorderRadius.circular(24),
+                  color: isRecent ? activeBg : inactiveBg,
+                  borderRadius: BorderRadius.circular(12),
                   border: isRecent
                       ? null
-                      : Border.all(
-                          color: isDark
-                              ? const Color(0xFF334155)
-                              : ZanateColors.subtleBorder,
-                          width: 0.8,
-                        ),
-                  boxShadow: isRecent
-                      ? [
-                          BoxShadow(
-                            color: (isDark
-                                    ? ZanateColors.zanateAccent
-                                    : ZanateColors.zanateDark)
-                                .withValues(alpha: 0.22),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
-                          ),
-                        ]
-                      : null,
+                      : Border.all(color: borderColor, width: 1.0),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -1282,24 +1325,17 @@ class _ForumScreenState extends State<ForumScreen> {
                     PhosphorIcon(
                       PhosphorIconsFill.clock,
                       size: 16,
-                      color: isRecent
-                          ? Colors.white
-                          : (isDark
-                              ? const Color(0xFF94A3B8)
-                              : Colors.blueGrey.shade600),
+                      color: isRecent ? ZanateColors.zanateBlack : inactiveText,
                     ),
                     const SizedBox(width: 6),
                     Text(
                       'Recientes',
-                      style: TextStyle(
-                        fontSize: 12.5,
+                      style: GoogleFonts.outfit(
+                        fontSize: 13,
                         fontWeight:
                             isRecent ? FontWeight.w700 : FontWeight.w600,
-                        color: isRecent
-                            ? Colors.white
-                            : (isDark
-                                ? const Color(0xFF94A3B8)
-                                : Colors.blueGrey.shade600),
+                        color:
+                            isRecent ? ZanateColors.zanateBlack : inactiveText,
                       ),
                     ),
                   ],
@@ -1397,36 +1433,37 @@ class _ForumScreenState extends State<ForumScreen> {
     final isDesktop = !Responsive.isMobile(context);
 
     if (isDesktop) {
+      final borderColor =
+          isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
+
       return Container(
-        height: 60,
+        height: 62,
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E293B) : Colors.white,
           border: Border(
-            bottom: BorderSide(
-              color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
-              width: 0.8,
-            ),
+            bottom: BorderSide(color: borderColor, width: 1.0),
           ),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
-              width: 34,
-              height: 34,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
-                color: isDark
-                    ? const Color(0xFF0F172A)
-                    : ZanateColors.zanateAccent.withValues(alpha: 0.1),
+                color: isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg,
                 borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: borderColor, width: 1.0),
               ),
               child: Center(
                 child: Icon(
                   _activeChannel.icon,
                   size: 18,
-                  color: ZanateColors.zanateAccent,
+                  color: isDark
+                      ? ZanateColors.zanateEyeYellow
+                      : ZanateColors.zanateBlack,
                 ),
               ),
             ),
@@ -1438,23 +1475,23 @@ class _ForumScreenState extends State<ForumScreen> {
                 children: [
                   Text(
                     _welcomeChannelTitle(),
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13.5,
+                    style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14.5,
                       letterSpacing: -0.2,
-                      color: isDark ? Colors.white : ZanateColors.zanateDark,
+                      color: isDark ? Colors.white : ZanateColors.zanateBlack,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 1),
                   Text(
                     _activeChannel.description,
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 11.5,
                       color: isDark
                           ? const Color(0xFF94A3B8)
-                          : Colors.blueGrey.shade400,
+                          : ZanateColors.mutedText,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -1464,28 +1501,26 @@ class _ForumScreenState extends State<ForumScreen> {
             ),
             const SizedBox(width: 12),
             SizedBox(
-              width: 200,
-              height: 36,
+              width: 220,
+              height: 38,
               child: TextField(
                 controller: _searchController,
                 style: TextStyle(
-                  fontSize: 12,
-                  color: isDark ? Colors.white : ZanateColors.zanateDark,
+                  fontSize: 13,
+                  color: isDark ? Colors.white : ZanateColors.zanateBlack,
                 ),
                 decoration: InputDecoration(
                   hintText: 'Buscar...',
-                  hintStyle: TextStyle(
-                    fontSize: 11.5,
-                    color: isDark
-                        ? const Color(0xFF64748B)
-                        : Colors.blueGrey.shade400,
+                  hintStyle: const TextStyle(
+                    fontSize: 12.5,
+                    color: ZanateColors.hintText,
                   ),
                   prefixIcon: PhosphorIcon(
                     PhosphorIconsRegular.magnifyingGlass,
                     size: 16,
                     color: isDark
                         ? const Color(0xFF94A3B8)
-                        : Colors.blueGrey.shade500,
+                        : ZanateColors.mutedText,
                   ),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
@@ -1509,28 +1544,20 @@ class _ForumScreenState extends State<ForumScreen> {
                   fillColor:
                       isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(
-                      color: isDark
-                          ? const Color(0xFF334155)
-                          : ZanateColors.subtleBorder,
-                      width: 0.8,
-                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: borderColor, width: 1.0),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(
-                      color: isDark
-                          ? const Color(0xFF334155)
-                          : ZanateColors.subtleBorder,
-                      width: 0.8,
-                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: borderColor, width: 1.0),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(
-                      color: ZanateColors.zanateAccent,
-                      width: 1.2,
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: isDark
+                          ? ZanateColors.zanateEyeYellow
+                          : ZanateColors.zanateBlack,
+                      width: 1.5,
                     ),
                   ),
                 ),
@@ -1541,16 +1568,24 @@ class _ForumScreenState extends State<ForumScreen> {
               ),
             ),
             if (!_activeChannel.isSpecial) ...[
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               IconButton(
                 tooltip: 'Nueva publicación',
-                icon: PhosphorIcon(
+                style: IconButton.styleFrom(
+                  backgroundColor: isDark
+                      ? ZanateColors.zanateEyeYellow
+                      : ZanateColors.zanateBlack,
+                  foregroundColor:
+                      isDark ? ZanateColors.zanateBlack : Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                icon: const PhosphorIcon(
                   PhosphorIconsBold.plus,
-                  size: 20,
-                  color: isDark ? Colors.white : ZanateColors.zanateDark,
+                  size: 18,
                 ),
                 onPressed: _openCreateDialog,
-                splashRadius: 20,
               ),
             ],
           ],

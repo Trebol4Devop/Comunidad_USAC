@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../../core/constants/categories.dart';
 import '../../../../core/constants/zanate_colors.dart';
@@ -147,13 +148,14 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
     }).toList();
 
     final borderColor = isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
-    final primaryTextColor = isDark ? Colors.white : ZanateColors.zanateDark;
-    final secondaryTextColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+    final primaryTextColor = isDark ? Colors.white : ZanateColors.zanateBlack;
+    final secondaryTextColor =
+        isDark ? const Color(0xFF94A3B8) : ZanateColors.mutedText;
 
     return Dialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: borderColor, width: 0.8),
+        side: BorderSide(color: borderColor, width: 1.0),
       ),
       backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
       child: ConstrainedBox(
@@ -169,13 +171,15 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: ZanateColors.zanateAccent.withValues(alpha: 0.12),
+                      color: ZanateColors.zanateEyeYellow.withValues(alpha: 0.22),
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Center(
+                    child: Center(
                       child: PhosphorIcon(
                         PhosphorIconsRegular.compass,
-                        color: ZanateColors.zanateAccent,
+                        color: isDark
+                            ? ZanateColors.zanateEyeYellow
+                            : ZanateColors.zanateBlack,
                         size: 22,
                       ),
                     ),
@@ -187,9 +191,9 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
                       children: [
                         Text(
                           'Agregar servidor',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 18,
+                          style: GoogleFonts.outfit(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 19,
                             letterSpacing: -0.3,
                             color: primaryTextColor,
                           ),
@@ -198,8 +202,17 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
                         Text(
                           'Elige una carrera o facultad para añadirla a tu lista',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 12.5,
                             color: secondaryTextColor,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          width: 44,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: ZanateColors.zanateEyeYellow,
+                            borderRadius: BorderRadius.circular(2),
                           ),
                         ),
                       ],
@@ -253,17 +266,19 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: borderColor, width: 0.8),
+                    borderSide: BorderSide(color: borderColor, width: 1.2),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: borderColor, width: 0.8),
+                    borderSide: BorderSide(color: borderColor, width: 1.2),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(
-                      color: ZanateColors.zanateAccent,
-                      width: 1.5,
+                    borderSide: BorderSide(
+                      color: isDark
+                          ? ZanateColors.zanateEyeYellow
+                          : ZanateColors.zanateBlack,
+                      width: 1.6,
                     ),
                   ),
                 ),

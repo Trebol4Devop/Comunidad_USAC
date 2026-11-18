@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../core/constants/categories.dart';
@@ -57,9 +58,11 @@ class CreatePostDialog extends StatefulWidget {
         context: context,
         isScrollControlled: true,
         useSafeArea: true,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF0F172A)
+            : Colors.white,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         builder: (ctx) => CreatePostDialog(
           activeAlias: activeAlias,
@@ -343,8 +346,11 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
 
     final bgFill = isDark ? const Color(0xFF1E293B) : ZanateColors.surfaceBg;
     final borderColor = isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
-    final primaryTextColor = isDark ? Colors.white : ZanateColors.zanateDark;
-    final secondaryTextColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+    final primaryTextColor = isDark ? Colors.white : ZanateColors.zanateBlack;
+    final secondaryTextColor =
+        isDark ? const Color(0xFF94A3B8) : ZanateColors.mutedText;
+    final focusColor =
+        isDark ? ZanateColors.zanateEyeYellow : ZanateColors.zanateBlack;
 
     Widget content = Form(
       key: _formKey,
@@ -356,6 +362,19 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (isMobile) ...[
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: borderColor,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+              ],
               // Header
               Row(
                 children: [
@@ -363,15 +382,19 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: ZanateColors.zanateAccent.withValues(alpha: 0.12),
+                      color: ZanateColors.zanateEyeYellow.withValues(alpha: 0.22),
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: Icon(
-                      widget.quotedPost != null
-                          ? PhosphorIconsRegular.quotes
-                          : PhosphorIconsRegular.chatCircleText,
-                      color: ZanateColors.zanateAccent,
-                      size: 22,
+                    child: Center(
+                      child: PhosphorIcon(
+                        widget.quotedPost != null
+                            ? PhosphorIconsRegular.quotes
+                            : PhosphorIconsRegular.chatCircleText,
+                        color: isDark
+                            ? ZanateColors.zanateEyeYellow
+                            : ZanateColors.zanateBlack,
+                        size: 22,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -383,9 +406,9 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                           widget.quotedPost != null
                               ? 'Citar Publicación'
                               : 'Nueva Consulta en el Foro',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
+                          style: GoogleFonts.outfit(
+                            fontSize: 19,
+                            fontWeight: FontWeight.w700,
                             letterSpacing: -0.4,
                             color: primaryTextColor,
                           ),
@@ -396,7 +419,16 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: ZanateColors.zanateAccent,
+                            color: secondaryTextColor,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          width: 44,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: ZanateColors.zanateEyeYellow,
+                            borderRadius: BorderRadius.circular(2),
                           ),
                         ),
                       ],
@@ -452,10 +484,10 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                   ),
                   child: Row(
                     children: [
-                      Icon(
+                      PhosphorIcon(
                         PhosphorIconsRegular.quotes,
                         size: 20,
-                        color: ZanateColors.zanateAccent,
+                        color: focusColor,
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -496,10 +528,13 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                   dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
                   decoration: InputDecoration(
                     labelText: 'Canal de publicación',
-                    prefixIcon: Icon(
-                      PhosphorIconsRegular.hash,
-                      size: 20,
-                      color: ZanateColors.zanateAccent,
+                    prefixIcon: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: PhosphorIcon(
+                        PhosphorIconsRegular.hash,
+                        size: 20,
+                        color: focusColor,
+                      ),
                     ),
                     helperText:
                         'Publica tu consulta en el canal correspondiente dentro de $_serverLabel.',
@@ -511,17 +546,17 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: borderColor),
+                      borderSide: BorderSide(color: borderColor, width: 1.2),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: borderColor),
+                      borderSide: BorderSide(color: borderColor, width: 1.2),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(
-                        color: ZanateColors.zanateAccent,
-                        width: 1.5,
+                      borderSide: BorderSide(
+                        color: focusColor,
+                        width: 1.6,
                       ),
                     ),
                   ),
@@ -581,10 +616,10 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                   ),
                   child: Row(
                     children: [
-                      Icon(
+                      PhosphorIcon(
                         PhosphorIconsBold.hash,
                         size: 20,
-                        color: ZanateColors.zanateAccent,
+                        color: focusColor,
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -611,17 +646,16 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                                     vertical: 3,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: ZanateColors.zanateAccent.withValues(
-                                      alpha: 0.12,
-                                    ),
+                                    color: ZanateColors.zanateEyeYellow
+                                        .withValues(alpha: 0.25),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
-                                  child: const Text(
+                                  child: Text(
                                     'Canal asignado',
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w700,
-                                      color: ZanateColors.zanateAccent,
+                                      color: focusColor,
                                     ),
                                   ),
                                 ),
@@ -638,7 +672,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                           ],
                         ),
                       ),
-                      Icon(
+                      PhosphorIcon(
                         PhosphorIconsRegular.lockSimple,
                         size: 16,
                         color: secondaryTextColor,
@@ -657,10 +691,13 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                   dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
                   decoration: InputDecoration(
                     labelText: 'Carrera o Especialidad',
-                    prefixIcon: Icon(
-                      PhosphorIconsRegular.graduationCap,
-                      size: 20,
-                      color: ZanateColors.zanateAccent,
+                    prefixIcon: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: PhosphorIcon(
+                        PhosphorIconsRegular.graduationCap,
+                        size: 20,
+                        color: focusColor,
+                      ),
                     ),
                     helperText:
                         'Selecciona la carrera correspondiente dentro de $_serverLabel.',
@@ -672,17 +709,17 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: borderColor),
+                      borderSide: BorderSide(color: borderColor, width: 1.2),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: borderColor),
+                      borderSide: BorderSide(color: borderColor, width: 1.2),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(
-                        color: ZanateColors.zanateAccent,
-                        width: 1.5,
+                      borderSide: BorderSide(
+                        color: focusColor,
+                        width: 1.6,
                       ),
                     ),
                   ),
@@ -721,17 +758,17 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: borderColor),
+                    borderSide: BorderSide(color: borderColor, width: 1.2),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: borderColor),
+                    borderSide: BorderSide(color: borderColor, width: 1.2),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(
-                      color: ZanateColors.zanateAccent,
-                      width: 1.5,
+                    borderSide: BorderSide(
+                      color: focusColor,
+                      width: 1.6,
                     ),
                   ),
                 ),
@@ -766,17 +803,17 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: borderColor),
+                    borderSide: BorderSide(color: borderColor, width: 1.2),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: borderColor),
+                    borderSide: BorderSide(color: borderColor, width: 1.2),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(
-                      color: ZanateColors.zanateAccent,
-                      width: 1.5,
+                    borderSide: BorderSide(
+                      color: focusColor,
+                      width: 1.6,
                     ),
                   ),
                 ),
@@ -807,10 +844,10 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                       ),
                     ),
                     onPressed: _isUploadingImage ? null : _pickAndUploadImage,
-                    icon: Icon(
+                    icon: PhosphorIcon(
                       PhosphorIconsRegular.image,
                       size: 17,
-                      color: ZanateColors.zanateAccent,
+                      color: focusColor,
                     ),
                     label: const Text('Foto', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                   ),
@@ -839,25 +876,29 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                         },
                       );
                     },
-                    icon: Icon(
+                    icon: PhosphorIcon(
                       PhosphorIconsRegular.gif,
                       size: 17,
-                      color: ZanateColors.zanateAccent,
+                      color: focusColor,
                     ),
                     label: const Text('GIF', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                   ),
                   const SizedBox(width: 8),
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: _showPollForm ? Colors.white : primaryTextColor,
+                      foregroundColor: _showPollForm
+                          ? ZanateColors.zanateBlack
+                          : primaryTextColor,
                       side: BorderSide(
-                        color: _showPollForm ? ZanateColors.zanateAccent : borderColor,
+                        color: _showPollForm
+                            ? ZanateColors.zanateEyeYellow
+                            : borderColor,
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       backgroundColor: _showPollForm
-                          ? ZanateColors.zanateAccent
+                          ? ZanateColors.zanateEyeYellow
                           : bgFill,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
@@ -866,16 +907,20 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                     ),
                     onPressed: () =>
                         setState(() => _showPollForm = !_showPollForm),
-                    icon: Icon(
+                    icon: PhosphorIcon(
                       PhosphorIconsRegular.chartBar,
                       size: 17,
-                      color: _showPollForm ? Colors.white : ZanateColors.zanateAccent,
+                      color: _showPollForm
+                          ? ZanateColors.zanateBlack
+                          : focusColor,
                     ),
                     label: Text(
                       'Encuesta',
                       style: TextStyle(
                         fontSize: 12,
-                        color: _showPollForm ? Colors.white : primaryTextColor,
+                        color: _showPollForm
+                            ? ZanateColors.zanateBlack
+                            : primaryTextColor,
                         fontWeight: _showPollForm
                             ? FontWeight.w700
                             : FontWeight.w600,
@@ -903,10 +948,10 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                         children: [
                           Row(
                             children: [
-                              Icon(
+                              PhosphorIcon(
                                 PhosphorIconsRegular.chartBar,
                                 size: 16,
-                                color: ZanateColors.zanateAccent,
+                                color: focusColor,
                               ),
                               const SizedBox(width: 6),
                               Text(
@@ -941,7 +986,15 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: borderColor),
+                            borderSide: BorderSide(color: borderColor, width: 1.2),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: borderColor, width: 1.2),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: focusColor, width: 1.6),
                           ),
                         ),
                       ),
@@ -967,7 +1020,15 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                                     ),
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide(color: borderColor),
+                                      borderSide: BorderSide(color: borderColor, width: 1.2),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(color: borderColor, width: 1.2),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(color: focusColor, width: 1.6),
                                     ),
                                   ),
                                 ),
@@ -988,7 +1049,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                       if (_pollOptionControllers.length < 5)
                         TextButton.icon(
                           style: TextButton.styleFrom(
-                            foregroundColor: ZanateColors.zanateAccent,
+                            foregroundColor: focusColor,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -1030,8 +1091,8 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                             color: Colors.black.withValues(alpha: 0.65),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
-                            Icons.close,
+                          child: PhosphorIcon(
+                            PhosphorIconsRegular.x,
                             size: 16,
                             color: Colors.white,
                           ),
@@ -1081,8 +1142,8 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                             color: Colors.black.withValues(alpha: 0.65),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
-                            Icons.close,
+                          child: PhosphorIcon(
+                            PhosphorIconsRegular.x,
                             size: 16,
                             color: Colors.white,
                           ),
@@ -1102,13 +1163,14 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                   borderRadius: BorderRadius.circular(16),
                   side: BorderSide(
                     color: _isEphemeral
-                        ? ZanateColors.zanateAccent.withValues(alpha: 0.35)
+                        ? ZanateColors.zanateEyeYellow
                         : borderColor,
+                    width: _isEphemeral ? 1.4 : 1.0,
                   ),
                 ),
                 child: SwitchListTile.adaptive(
                   value: _isEphemeral,
-                  activeTrackColor: ZanateColors.zanateAccent,
+                  activeTrackColor: ZanateColors.zanateBlack,
                   onChanged: (val) => setState(() => _isEphemeral = val),
                   title: Text(
                     'Desaparece en 24h',
@@ -1130,14 +1192,16 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                     height: 36,
                     decoration: BoxDecoration(
                       color: _isEphemeral
-                          ? ZanateColors.zanateAccent.withValues(alpha: 0.15)
+                          ? ZanateColors.zanateEyeYellow.withValues(alpha: 0.28)
                           : borderColor.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(
+                    child: PhosphorIcon(
                       PhosphorIconsRegular.moonStars,
                       color: _isEphemeral
-                          ? ZanateColors.zanateAccent
+                          ? (isDark
+                              ? ZanateColors.zanateEyeYellow
+                              : ZanateColors.zanateBlack)
                           : secondaryTextColor,
                       size: 20,
                     ),
@@ -1219,8 +1283,12 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        backgroundColor: ZanateColors.zanateDark,
-                        foregroundColor: Colors.white,
+                        backgroundColor: isDark
+                            ? ZanateColors.zanateEyeYellow
+                            : ZanateColors.zanateBlack,
+                        foregroundColor: isDark
+                            ? ZanateColors.zanateBlack
+                            : Colors.white,
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 20,
@@ -1229,15 +1297,23 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                       ),
                       onPressed: _isSubmitting ? null : _submit,
                       icon: _isSubmitting
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 16,
                               height: 16,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Colors.white,
+                                color: isDark
+                                    ? ZanateColors.zanateBlack
+                                    : Colors.white,
                               ),
                             )
-                          : Icon(PhosphorIconsBold.paperPlaneTilt, size: 16, color: Colors.white),
+                          : PhosphorIcon(
+                              PhosphorIconsBold.paperPlaneTilt,
+                              size: 16,
+                              color: isDark
+                                  ? ZanateColors.zanateBlack
+                                  : Colors.white,
+                            ),
                       label: Text(
                         _isSubmitting ? 'Publicando...' : 'Publicar',
                         style: const TextStyle(fontWeight: FontWeight.w700),

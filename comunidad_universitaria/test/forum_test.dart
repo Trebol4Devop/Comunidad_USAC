@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:comunidad_universitaria/core/models/post.dart';
 import 'package:comunidad_universitaria/features/forum/screens/forum_screen.dart';
@@ -189,7 +190,7 @@ void main() {
       await tester.pumpAndSettle();
 
       final sendButton = find.ancestor(
-        of: find.byIcon(Icons.send),
+        of: find.byIcon(PhosphorIconsBold.paperPlaneTilt),
         matching: find.byType(IconButton),
       );
       expect(tester.widget<IconButton>(sendButton).onPressed, isNull);
