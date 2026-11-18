@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:comunidad_universitaria/features/onboarding/screens/merchant_support_screen.dart';
 import 'package:comunidad_universitaria/features/onboarding/screens/no_institutional_email_screen.dart';
 import 'package:comunidad_universitaria/features/onboarding/screens/welcome_screen.dart';
@@ -248,6 +249,58 @@ void main() {
         expect(clearCalled, isFalse);
         expect(find.text('MainAppChild'), findsOneWidget);
         expect(find.byType(VerificationFlowScreen), findsNothing);
+      });
+
+      testWidgets('Limpia rutas previas de onboarding al despachar post-login para salir en un solo atrás', (tester) async {
+        String? currentIntent = 'student';
+        final fakeApi = FakeAuthApi();
+        final controller = SessionController(api: fakeApi);
+        await controller.bootstrap();
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AuthGate(
+              sessionController: controller,
+              getPendingIntent: () async => currentIntent,
+              clearPendingIntent: () async {
+                currentIntent = null;
+              },
+              child: const Scaffold(body: Text('MainAppChild')),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Simular que el usuario navegó: WelcomeScreen -> Crear cuenta -> No cuentas con correo institucional
+        await tester.tap(find.text('Crear cuenta'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('¿No cuentas con correo institucional?'));
+        await tester.pumpAndSettle();
+        expect(find.byType(NoInstitutionalEmailScreen), findsOneWidget);
+
+        // Simular inicio de sesión con Google completado
+        final user = createFakeUser(id: 'u-personal', email: 'persona@gmail.com');
+        fakeApi.currentUser = user;
+        fakeApi.emitAuthState(AuthState(
+          AuthChangeEvent.signedIn,
+          Session(
+            accessToken: 'token-123',
+            tokenType: 'bearer',
+            user: user,
+          ),
+        ));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(VerificationFlowScreen), findsOneWidget);
+        expect(find.byType(NoInstitutionalEmailScreen), findsNothing);
+
+        // Un solo "regresar" debe llevar directo a MainAppChild
+        final nav = tester.state<NavigatorState>(find.byType(Navigator));
+        nav.pop();
+        await tester.pumpAndSettle();
+
+        expect(find.byType(VerificationFlowScreen), findsNothing);
+        expect(find.text('MainAppChild'), findsOneWidget);
       });
     });
   });

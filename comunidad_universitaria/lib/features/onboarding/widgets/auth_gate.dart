@@ -105,6 +105,10 @@ class _AuthGateState extends State<AuthGate> {
 
       if (!mounted) return;
 
+      // Limpiar rutas de onboarding/autenticación apiladas (p. ej. AuthGatewayScreen
+      // y NoInstitutionalEmailScreen) para que el usuario regrese en un solo paso.
+      nav.popUntil((route) => route.isFirst);
+
       final effectiveCtrl = widget.verificationController ??
           VerificationGate.maybeOf(context);
 

@@ -212,28 +212,41 @@ class _NoInstitutionalEmailScreenState
     });
 
     try {
+      final redirectUrl = SupabaseService.oauthRedirectUrl;
       bool launched = false;
       if (sCtrl != null) {
-        launched = await sCtrl.signInWithGoogle();
+        launched = await sCtrl.signInWithGoogle(redirectTo: redirectUrl);
       } else if (api != null) {
-        launched = await api.signInWithGoogle();
+        launched = await api.signInWithGoogle(redirectTo: redirectUrl);
       } else {
-        launched = await SupabaseService.signInWithGoogle();
-      }
-      if (!launched && mounted) {
-        setState(() {
-          _isBusy = false;
-          _waitingForGoogle = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se pudo iniciar sesión con Google.')),
+        launched = await SupabaseService.signInWithGoogle(
+          redirectTo: redirectUrl,
         );
       }
+      if (!launched) {
+        _authSubscription?.cancel();
+        _authSubscription = null;
+        await LocalStorageService.clearPendingAuthIntent();
+        if (mounted) {
+          setState(() {
+            _isBusy = false;
+            _waitingForGoogle = false;
+            _pendingStudent = null;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No se pudo iniciar sesión con Google.')),
+          );
+        }
+      }
     } catch (e) {
+      _authSubscription?.cancel();
+      _authSubscription = null;
+      await LocalStorageService.clearPendingAuthIntent();
       if (mounted) {
         setState(() {
           _isBusy = false;
           _waitingForGoogle = false;
+          _pendingStudent = null;
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al conectar con Google: $e')),
