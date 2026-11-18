@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../core/constants/categories.dart';
 import '../../../core/constants/zanate_colors.dart';
@@ -51,7 +52,8 @@ class PostCard extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final defaultColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
     final color = isActive
-        ? (activeColor ?? ZanateColors.zanateAccent)
+        ? (activeColor ??
+            (isDark ? ZanateColors.zanateEyeYellow : ZanateColors.zanateBlack))
         : defaultColor;
 
     return Semantics(
@@ -113,7 +115,8 @@ class PostCard extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          hoverColor: ZanateColors.zanateAccent.withValues(alpha: 0.03),
+          hoverColor: (isDark ? ZanateColors.zanateEyeYellow : ZanateColors.zanateBlack)
+              .withValues(alpha: 0.03),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
@@ -152,25 +155,37 @@ class PostCard extends StatelessWidget {
               ],
               // Pinned badge if applicable
               if (post.isPinned) ...[
-                Row(
-                  children: [
-                    Icon(
-                      PhosphorIconsFill.pushPin,
-                      size: 14,
-                      color: ZanateColors.zanateAccent,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Publicación Fijada',
-                      style: TextStyle(
-                        color: ZanateColors.zanateAccent,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11,
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: ZanateColors.zanateEyeYellow.withValues(alpha: 0.22),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      PhosphorIcon(
+                        PhosphorIconsFill.pushPin,
+                        size: 13,
+                        color: isDark
+                            ? ZanateColors.zanateEyeYellow
+                            : ZanateColors.zanateBlack,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 5),
+                      Text(
+                        'Publicación Fijada',
+                        style: GoogleFonts.outfit(
+                          color: isDark
+                              ? ZanateColors.zanateEyeYellow
+                              : ZanateColors.zanateBlack,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 11.5,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
               ],
 
               // Header: Author alias, Carrera/Faculty badge, Time ago
@@ -181,14 +196,23 @@ class PostCard extends StatelessWidget {
                     width: 34,
                     height: 34,
                     decoration: BoxDecoration(
-                      color: ZanateColors.zanateAccent.withValues(alpha: 0.12),
+                      color: isDark
+                          ? const Color(0xFF1E293B)
+                          : ZanateColors.zanateEyeYellow.withValues(alpha: 0.24),
                       shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isDark
+                            ? const Color(0xFF334155)
+                            : ZanateColors.zanateEyeYellow.withValues(alpha: 0.45),
+                      ),
                     ),
                     child: Center(
-                      child: Icon(
+                      child: PhosphorIcon(
                         PhosphorIconsBold.user,
                         size: 16,
-                        color: ZanateColors.zanateAccent,
+                        color: isDark
+                            ? ZanateColors.zanateEyeYellow
+                            : ZanateColors.zanateBlack,
                       ),
                     ),
                   ),
@@ -315,10 +339,11 @@ class PostCard extends StatelessWidget {
               // Post Title
               Text(
                 post.title,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16.5,
                   height: 1.25,
+                  color: isDark ? Colors.white : ZanateColors.zanateBlack,
                 ),
               ),
               const SizedBox(height: 6),
@@ -329,9 +354,9 @@ class PostCard extends StatelessWidget {
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  fontSize: 13,
+                  fontSize: 13.5,
                   color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
-                  height: 1.4,
+                  height: 1.45,
                 ),
               ),
 
@@ -341,41 +366,69 @@ class PostCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: isDark ? Colors.grey.shade800 : Colors.grey.shade300),
+                    color: isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.format_quote, size: 14, color: theme.colorScheme.primary),
-                          const SizedBox(width: 4),
+                          PhosphorIcon(
+                            PhosphorIconsRegular.quotes,
+                            size: 14,
+                            color: isDark
+                                ? ZanateColors.zanateEyeYellow
+                                : ZanateColors.zanateBlack,
+                          ),
+                          const SizedBox(width: 5),
                           Expanded(
                             child: Text(
                               post.quotedPost!.authorAlias,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12,
+                                color: isDark
+                                    ? Colors.white
+                                    : ZanateColors.zanateBlack,
+                              ),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           const SizedBox(width: 6),
                           Text(
                             TimeUtils.timeAgo(post.quotedPost!.createdAt),
-                            style: TextStyle(color: Colors.grey.shade500, fontSize: 10),
+                            style: const TextStyle(
+                              color: ZanateColors.mutedText,
+                              fontSize: 10.5,
+                            ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 4),
                       Text(
                         post.quotedPost!.title,
-                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                        style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          color: isDark
+                              ? Colors.white
+                              : ZanateColors.zanateBlack,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
                         post.quotedPost!.content,
-                        style: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.grey.shade600, fontSize: 12),
+                        style: TextStyle(
+                          color: isDark
+                              ? const Color(0xFF94A3B8)
+                              : ZanateColors.subtleText,
+                          fontSize: 12,
+                        ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -390,24 +443,39 @@ class PostCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.6) : const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(10),
+                    color: isDark
+                        ? const Color(0xFF1E293B).withValues(alpha: 0.6)
+                        : ZanateColors.surfaceBg,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isDark
+                          ? const Color(0xFF334155)
+                          : ZanateColors.subtleBorder,
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          Icon(
-                            Icons.poll_outlined,
+                          PhosphorIcon(
+                            PhosphorIconsRegular.chartBar,
                             size: 16,
-                            color: theme.colorScheme.primary,
+                            color: isDark
+                                ? ZanateColors.zanateEyeYellow
+                                : ZanateColors.zanateBlack,
                           ),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
                               post.poll!.question,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                              style: GoogleFonts.outfit(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13.5,
+                                color: isDark
+                                    ? Colors.white
+                                    : ZanateColors.zanateBlack,
+                              ),
                             ),
                           ),
                         ],
@@ -433,8 +501,12 @@ class PostCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
                                   color: isMyVote
-                                      ? theme.colorScheme.primary
-                                      : (isDark ? const Color(0xFF334155) : Colors.grey.shade300),
+                                      ? (isDark
+                                          ? ZanateColors.zanateEyeYellow
+                                          : ZanateColors.zanateBlack)
+                                      : (isDark
+                                          ? const Color(0xFF334155)
+                                          : ZanateColors.subtleBorder),
                                   width: isMyVote ? 1.5 : 1.0,
                                 ),
                               ),
@@ -447,12 +519,13 @@ class PostCard extends StatelessWidget {
                                         widthFactor: percent,
                                         child: Container(
                                           color: isMyVote
-                                              ? (isDark
-                                                  ? const Color(0xFF3B82F6).withValues(alpha: 0.35)
-                                                  : const Color(0xFF004B87).withValues(alpha: 0.22))
+                                              ? ZanateColors.zanateEyeYellow
+                                                  .withValues(
+                                                    alpha: isDark ? 0.25 : 0.34,
+                                                  )
                                               : (isDark
-                                                  ? Colors.white.withValues(alpha: 0.1)
-                                                  : Colors.grey.withValues(alpha: 0.15)),
+                                                  ? Colors.white.withValues(alpha: 0.08)
+                                                  : ZanateColors.pillBg),
                                         ),
                                       ),
                                     Padding(
@@ -464,10 +537,12 @@ class PostCard extends StatelessWidget {
                                             child: Row(
                                               children: [
                                                 if (isMyVote) ...[
-                                                  Icon(
-                                                    Icons.check_circle,
-                                                    size: 14,
-                                                    color: theme.colorScheme.primary,
+                                                  PhosphorIcon(
+                                                    PhosphorIconsFill.checkCircle,
+                                                    size: 15,
+                                                    color: isDark
+                                                        ? ZanateColors.zanateEyeYellow
+                                                        : ZanateColors.zanateBlack,
                                                   ),
                                                   const SizedBox(width: 6),
                                                 ],
@@ -491,8 +566,12 @@ class PostCard extends StatelessWidget {
                                                 fontSize: 11,
                                                 fontWeight: FontWeight.w600,
                                                 color: isMyVote
-                                                    ? (isDark ? const Color(0xFF93C5FD) : const Color(0xFF004B87))
-                                                    : (isDark ? Colors.grey.shade400 : Colors.grey.shade600),
+                                                    ? (isDark
+                                                        ? ZanateColors.zanateEyeYellow
+                                                        : ZanateColors.zanateBlack)
+                                                    : (isDark
+                                                        ? const Color(0xFF94A3B8)
+                                                        : ZanateColors.subtleText),
                                               ),
                                             ),
                                         ],
@@ -552,7 +631,9 @@ class PostCard extends StatelessWidget {
                     onTap: onLike,
                     count: post.likes,
                     isActive: post.isLikedByMe,
-                    activeColor: ZanateColors.zanateAccent,
+                    activeColor: isDark
+                        ? ZanateColors.zanateEyeYellow
+                        : ZanateColors.zanateBlack,
                   ),
                   const SizedBox(width: 14),
                   _buildAction(
@@ -594,7 +675,7 @@ class PostCard extends StatelessWidget {
                           : 'Guardar',
                       onTap: onBookmark,
                       isActive: post.isBookmarkedByMe,
-                      activeColor: const Color(0xFFF59E0B),
+                      activeColor: ZanateColors.zanateEyeYellow,
                     ),
                 ],
               ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../../core/constants/zanate_colors.dart';
 import '../../models/discord_forum_models.dart';
@@ -43,14 +44,16 @@ class PopularServersSidebar extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF1E293B) : Colors.white,
-            border: Border(bottom: BorderSide(color: borderColor, width: 0.8)),
+            border: Border(bottom: BorderSide(color: borderColor, width: 1.0)),
           ),
           child: Row(
             children: [
               PhosphorIcon(
-                PhosphorIconsRegular.trendUp,
+                PhosphorIconsBold.trendUp,
                 size: 16,
-                color: ZanateColors.zanateAccent,
+                color: isDark
+                    ? ZanateColors.zanateEyeYellow
+                    : ZanateColors.zanateBlack,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -58,13 +61,13 @@ class PopularServersSidebar extends StatelessWidget {
                   'MÁS POPULARES',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.8,
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.7,
                     color: isDark
                         ? const Color(0xFF94A3B8)
-                        : const Color(0xFF475569),
+                        : ZanateColors.subtleText,
                   ),
                 ),
               ),
@@ -82,7 +85,8 @@ class PopularServersSidebar extends StatelessWidget {
                       : PhosphorIcon(
                           PhosphorIconsRegular.arrowsClockwise,
                           size: 14,
-                          color: isDark ? Colors.white70 : Colors.blueGrey.shade500,
+                          color:
+                              isDark ? Colors.white70 : ZanateColors.mutedText,
                         ),
                   onPressed: isLoading ? null : onRefresh,
                 ),
@@ -103,12 +107,12 @@ class PopularServersSidebar extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          Icons.bar_chart_outlined,
+                        PhosphorIcon(
+                          PhosphorIconsRegular.chartBar,
                           size: 24,
                           color: isDark
                               ? const Color(0xFF4E5058)
-                              : const Color(0xFFCBD5E1),
+                              : ZanateColors.hintText,
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -172,30 +176,32 @@ class PopularServersSidebar extends StatelessWidget {
             activeServer.facultadId == item.server.facultadId);
 
     final cardBg = isSelected
-        ? ZanateColors.zanateAccent.withValues(alpha: isDark ? 0.16 : 0.08)
+        ? ZanateColors.zanateEyeYellow.withValues(alpha: isDark ? 0.16 : 0.22)
         : (isDark ? const Color(0xFF1E293B) : Colors.white);
 
     final cardBorder = isSelected
         ? Border.all(
-            color: ZanateColors.zanateAccent.withValues(alpha: 0.5),
-            width: 1,
+            color: isDark
+                ? ZanateColors.zanateEyeYellow.withValues(alpha: 0.6)
+                : ZanateColors.zanateBlack,
+            width: 1.2,
           )
         : Border.all(
             color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
-            width: 0.8,
+            width: 1.0,
           );
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         onTap: () => onSelectServer(item.server),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
           decoration: BoxDecoration(
             color: cardBg,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             border: cardBorder,
           ),
           child: Row(
@@ -205,14 +211,16 @@ class PopularServersSidebar extends StatelessWidget {
                 width: 22,
                 child: Text(
                   '#$rank',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
                     color: rank == 1
-                        ? ZanateColors.zanateAccent
+                        ? (isDark
+                            ? ZanateColors.zanateEyeYellow
+                            : ZanateColors.zanateBlack)
                         : (isDark
-                              ? const Color(0xFF94A3B8)
-                              : const Color(0xFF64748B)),
+                            ? const Color(0xFF94A3B8)
+                            : ZanateColors.mutedText),
                   ),
                 ),
               ),
@@ -264,14 +272,14 @@ class PopularServersSidebar extends StatelessWidget {
                       item.server.name
                           .replaceAll(RegExp(r'\s*\([^)]*\)'), '')
                           .trim(),
-                      style: TextStyle(
-                        fontSize: 11.5,
+                      style: GoogleFonts.outfit(
+                        fontSize: 12,
                         fontWeight: isSelected
                             ? FontWeight.w700
                             : FontWeight.w600,
-                        color: isSelected
-                            ? theme.colorScheme.primary
-                            : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                        color: isDark
+                            ? Colors.white
+                            : ZanateColors.zanateBlack,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -282,10 +290,10 @@ class PopularServersSidebar extends StatelessWidget {
                           .replaceAll(RegExp(r'\s*\([^)]*\)'), '')
                           .trim(),
                       style: TextStyle(
-                        fontSize: 9.5,
+                        fontSize: 10,
                         color: isDark
                             ? const Color(0xFF949BA4)
-                            : Colors.grey.shade500,
+                            : ZanateColors.mutedText,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -295,31 +303,31 @@ class PopularServersSidebar extends StatelessWidget {
                     // Métricas de popularidad (publicaciones y reacciones)
                     Row(
                       children: [
-                        Icon(
-                          Icons.forum_outlined,
-                          size: 10,
+                        PhosphorIcon(
+                          PhosphorIconsRegular.chatsCircle,
+                          size: 11,
                           color: isDark
                               ? const Color(0xFF949BA4)
-                              : Colors.grey.shade500,
+                              : ZanateColors.mutedText,
                         ),
                         const SizedBox(width: 3),
                         Text(
                           '${item.postCount}',
                           style: TextStyle(
-                            fontSize: 9.5,
+                            fontSize: 10,
                             fontWeight: FontWeight.w600,
                             color: isDark
                                 ? const Color(0xFF949BA4)
-                                : Colors.grey.shade600,
+                                : ZanateColors.subtleText,
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Icon(
-                          Icons.thumb_up_alt_outlined,
-                          size: 10,
+                        PhosphorIcon(
+                          PhosphorIconsRegular.thumbsUp,
+                          size: 11,
                           color: isDark
                               ? const Color(0xFF949BA4)
-                              : Colors.grey.shade500,
+                              : ZanateColors.mutedText,
                         ),
                         const SizedBox(width: 3),
                         Text(

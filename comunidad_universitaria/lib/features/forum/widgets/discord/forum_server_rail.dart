@@ -36,7 +36,7 @@ class ForumServerRail extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final railBackground =
-        isDark ? const Color(0xFF111827) : ZanateColors.railBg;
+        isDark ? const Color(0xFF111827) : ZanateColors.surfaceBg;
     final borderColor =
         isDark ? const Color(0xFF1F2937) : ZanateColors.subtleBorder;
 
@@ -126,7 +126,7 @@ class _ServerButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final activeBg =
-        isDark ? ZanateColors.zanateAccent : ZanateColors.zanateDark;
+        isDark ? ZanateColors.zanateAccent : ZanateColors.zanateBlack;
     final inactiveBg = isDark ? const Color(0xFF313338) : Colors.white;
     final activeFg = Colors.white;
     final inactiveFg =
@@ -156,8 +156,8 @@ class _ServerButton extends StatelessWidget {
                 height: isSelected ? 28 : 0,
                 decoration: BoxDecoration(
                   color: isDark
-                      ? ZanateColors.zanateAccent
-                      : ZanateColors.zanateDark,
+                      ? ZanateColors.zanateEyeYellow
+                      : ZanateColors.zanateBlack,
                   borderRadius: const BorderRadius.only(
                     topRight: Radius.circular(4),
                     bottomRight: Radius.circular(4),

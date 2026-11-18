@@ -101,15 +101,19 @@ class CommentItemWidget extends StatelessWidget {
                           PhosphorIcon(
                             PhosphorIconsRegular.arrowBendDownRight,
                             size: 14,
-                            color: ZanateColors.zanateAccent,
+                            color: isDark
+                                ? ZanateColors.zanateEyeYellow
+                                : ZanateColors.zanateBlack,
                           ),
                           const SizedBox(width: 4),
-                          const Text(
+                          Text(
                             'Responder',
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: 11.5,
                               fontWeight: FontWeight.w700,
-                              color: ZanateColors.zanateAccent,
+                              color: isDark
+                                  ? ZanateColors.zanateEyeYellow
+                                  : ZanateColors.zanateBlack,
                             ),
                           ),
                         ],

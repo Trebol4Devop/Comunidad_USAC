@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../core/constants/categories.dart';
@@ -287,24 +288,65 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   }
 
   Future<void> _handleDeletePost() async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Eliminar Publicación'),
-        content: const Text(
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Eliminar Publicación',
+              style: GoogleFonts.outfit(
+                fontWeight: FontWeight.w700,
+                fontSize: 19,
+                color: isDark ? Colors.white : ZanateColors.zanateBlack,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              width: 44,
+              height: 4,
+              decoration: BoxDecoration(
+                color: ZanateColors.zanateEyeYellow,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
           '¿Estás seguro de que deseas eliminar esta publicación?',
+          style: TextStyle(
+            color: isDark ? const Color(0xFFCBD5E1) : ZanateColors.subtleText,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(
+              'Cancelar',
+              style: TextStyle(
+                color: isDark ? const Color(0xFF94A3B8) : ZanateColors.mutedText,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
             onPressed: () => Navigator.of(ctx).pop(true),
             child: const Text(
               'Eliminar',
-              style: TextStyle(color: Colors.white),
+              style: TextStyle(fontWeight: FontWeight.w700),
             ),
           ),
         ],
@@ -429,21 +471,21 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         scrolledUnderElevation: 0,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(color: panelBorder, height: 0.8),
+          child: Container(color: panelBorder, height: 1.0),
         ),
         title: Text(
           'Consulta en el Foro',
-          style: TextStyle(
+          style: GoogleFonts.outfit(
             color: primaryTextColor,
-            fontSize: 16,
+            fontSize: 17,
             fontWeight: FontWeight.w700,
           ),
         ),
         leading: IconButton(
           icon: PhosphorIcon(
-            PhosphorIconsRegular.arrowLeft,
+            PhosphorIconsBold.caretLeft,
             color: primaryTextColor,
-            size: 20,
+            size: 22,
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -463,7 +505,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               _post.isBookmarkedByMe
                   ? PhosphorIconsFill.bookmarkSimple
                   : PhosphorIconsRegular.bookmarkSimple,
-              color: _post.isBookmarkedByMe ? const Color(0xFFF59E0B) : primaryTextColor,
+              color: _post.isBookmarkedByMe
+                  ? ZanateColors.zanateEyeYellow
+                  : primaryTextColor,
               size: 20,
             ),
             tooltip: 'Guardar publicación',
@@ -541,23 +585,39 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         children: [
                           // Pinned badge if applicable
                           if (_post.isPinned) ...[
-                            Row(
-                              children: [
-                                const PhosphorIcon(
-                                  PhosphorIconsFill.pushPin,
-                                  size: 15,
-                                  color: ZanateColors.zanateAccent,
-                                ),
-                                const SizedBox(width: 6),
-                                const Text(
-                                  'Publicación Fijada / Anuncio Oficial',
-                                  style: TextStyle(
-                                    color: ZanateColors.zanateAccent,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 11,
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: ZanateColors.zanateEyeYellow
+                                    .withValues(alpha: 0.22),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  PhosphorIcon(
+                                    PhosphorIconsFill.pushPin,
+                                    size: 14,
+                                    color: isDark
+                                        ? ZanateColors.zanateEyeYellow
+                                        : ZanateColors.zanateBlack,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Publicación Fijada / Anuncio Oficial',
+                                    style: GoogleFonts.outfit(
+                                      color: isDark
+                                          ? ZanateColors.zanateEyeYellow
+                                          : ZanateColors.zanateBlack,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 11.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                             const SizedBox(height: 12),
                           ],
@@ -569,14 +629,25 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 width: 38,
                                 height: 38,
                                 decoration: BoxDecoration(
-                                  color: ZanateColors.zanateAccent.withValues(alpha: 0.12),
+                                  color: isDark
+                                      ? const Color(0xFF0F172A)
+                                      : ZanateColors.zanateEyeYellow
+                                          .withValues(alpha: 0.24),
                                   shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: isDark
+                                        ? const Color(0xFF334155)
+                                        : ZanateColors.zanateEyeYellow
+                                            .withValues(alpha: 0.45),
+                                  ),
                                 ),
-                                child: const Center(
+                                child: Center(
                                   child: PhosphorIcon(
                                     PhosphorIconsBold.user,
                                     size: 18,
-                                    color: ZanateColors.zanateAccent,
+                                    color: isDark
+                                        ? ZanateColors.zanateEyeYellow
+                                        : ZanateColors.zanateBlack,
                                   ),
                                 ),
                               ),
@@ -630,12 +701,14 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           // Title
                           Text(
                             _post.title,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 19,
-                              height: 1.3,
+                            style: GoogleFonts.outfit(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 20,
+                              height: 1.25,
                               letterSpacing: -0.3,
-                              color: primaryTextColor,
+                              color: isDark
+                                  ? Colors.white
+                                  : ZanateColors.zanateBlack,
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -665,10 +738,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 children: [
                                   Row(
                                     children: [
-                                      const PhosphorIcon(
+                                      PhosphorIcon(
                                         PhosphorIconsRegular.quotes,
                                         size: 16,
-                                        color: ZanateColors.zanateAccent,
+                                        color: isDark
+                                            ? ZanateColors.zanateEyeYellow
+                                            : ZanateColors.zanateBlack,
                                       ),
                                       const SizedBox(width: 6),
                                       Expanded(
@@ -734,19 +809,23 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 children: [
                                   Row(
                                     children: [
-                                      const PhosphorIcon(
+                                      PhosphorIcon(
                                         PhosphorIconsRegular.chartBar,
                                         size: 18,
-                                        color: ZanateColors.zanateAccent,
+                                        color: isDark
+                                            ? ZanateColors.zanateEyeYellow
+                                            : ZanateColors.zanateBlack,
                                       ),
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: Text(
                                           _post.poll!.question,
-                                          style: TextStyle(
+                                          style: GoogleFonts.outfit(
                                             fontWeight: FontWeight.w700,
-                                            fontSize: 14,
-                                            color: primaryTextColor,
+                                            fontSize: 14.5,
+                                            color: isDark
+                                                ? Colors.white
+                                                : ZanateColors.zanateBlack,
                                           ),
                                         ),
                                       ),
@@ -782,7 +861,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                             borderRadius: BorderRadius.circular(10),
                                             border: Border.all(
                                               color: isMyVote
-                                                  ? ZanateColors.zanateAccent
+                                                  ? (isDark
+                                                      ? ZanateColors.zanateEyeYellow
+                                                      : ZanateColors.zanateBlack)
                                                   : panelBorder,
                                               width: isMyVote ? 1.5 : 1.0,
                                             ),
@@ -796,10 +877,15 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                                     widthFactor: percent,
                                                     child: Container(
                                                       color: isMyVote
-                                                          ? ZanateColors.zanateAccent.withValues(alpha: 0.15)
+                                                          ? ZanateColors.zanateEyeYellow
+                                                              .withValues(
+                                                                alpha: isDark
+                                                                    ? 0.25
+                                                                    : 0.34,
+                                                              )
                                                           : (isDark
                                                                 ? Colors.white.withValues(alpha: 0.08)
-                                                                : Colors.grey.withValues(alpha: 0.12)),
+                                                                : ZanateColors.pillBg),
                                                     ),
                                                   ),
                                                 Padding(
@@ -816,10 +902,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                                         child: Row(
                                                           children: [
                                                             if (isMyVote) ...[
-                                                              const PhosphorIcon(
+                                                              PhosphorIcon(
                                                                 PhosphorIconsFill.checkCircle,
                                                                 size: 16,
-                                                                color: ZanateColors.zanateAccent,
+                                                                color: isDark
+                                                                    ? ZanateColors.zanateEyeYellow
+                                                                    : ZanateColors.zanateBlack,
                                                               ),
                                                               const SizedBox(
                                                                 width: 8,
@@ -915,7 +1003,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             children: [
                               InkWell(
                                 onTap: _handleLike,
-                                borderRadius: BorderRadius.circular(20),
+                                borderRadius: BorderRadius.circular(12),
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 14,
@@ -923,14 +1011,17 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                   ),
                                   decoration: BoxDecoration(
                                     color: _post.isLikedByMe
-                                        ? ZanateColors.zanateAccent.withValues(alpha: 0.12)
+                                        ? ZanateColors.zanateEyeYellow
+                                            .withValues(alpha: isDark ? 0.22 : 0.30)
                                         : panelSurface,
-                                    borderRadius: BorderRadius.circular(20),
+                                    borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
                                       color: _post.isLikedByMe
-                                          ? ZanateColors.zanateAccent.withValues(alpha: 0.3)
+                                          ? (isDark
+                                              ? ZanateColors.zanateEyeYellow
+                                              : ZanateColors.zanateBlack)
                                           : panelBorder,
-                                      width: 0.8,
+                                      width: _post.isLikedByMe ? 1.2 : 1.0,
                                     ),
                                   ),
                                   child: Row(
@@ -942,7 +1033,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                             : PhosphorIconsRegular.thumbsUp,
                                         size: 17,
                                         color: _post.isLikedByMe
-                                            ? ZanateColors.zanateAccent
+                                            ? (isDark
+                                                ? ZanateColors.zanateEyeYellow
+                                                : ZanateColors.zanateBlack)
                                             : secondaryTextColor,
                                       ),
                                       const SizedBox(width: 7),
@@ -952,7 +1045,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                           fontSize: 12,
                                           fontWeight: FontWeight.w700,
                                           color: _post.isLikedByMe
-                                              ? ZanateColors.zanateAccent
+                                              ? (isDark
+                                                  ? ZanateColors.zanateEyeYellow
+                                                  : ZanateColors.zanateBlack)
                                               : primaryTextColor,
                                         ),
                                       ),
@@ -1070,17 +1165,19 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     // Comments Section Header
                     Row(
                       children: [
-                        const PhosphorIcon(
+                        PhosphorIcon(
                           PhosphorIconsRegular.chatsCircle,
                           size: 20,
-                          color: ZanateColors.zanateAccent,
+                          color: isDark
+                              ? ZanateColors.zanateEyeYellow
+                              : ZanateColors.zanateBlack,
                         ),
                         const SizedBox(width: 8),
                         Text(
                           'Comentarios y Respuestas',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 16,
+                          style: GoogleFonts.outfit(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 17,
                             letterSpacing: -0.2,
                             color: primaryTextColor,
                           ),
@@ -1091,12 +1188,14 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
                     // Comments List
                     if (_isLoadingComments)
-                      const Center(
+                      Center(
                         child: Padding(
-                          padding: EdgeInsets.all(28),
+                          padding: const EdgeInsets.all(28),
                           child: CircularProgressIndicator(
                             strokeWidth: 2.5,
-                            color: ZanateColors.zanateAccent,
+                            color: isDark
+                                ? ZanateColors.zanateEyeYellow
+                                : ZanateColors.zanateBlack,
                           ),
                         ),
                       )
@@ -1237,19 +1336,25 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         ),
                         margin: const EdgeInsets.only(bottom: 8),
                         decoration: BoxDecoration(
-                          color: ZanateColors.zanateAccent.withValues(alpha: 0.08),
+                          color: ZanateColors.zanateEyeYellow.withValues(
+                            alpha: isDark ? 0.16 : 0.24,
+                          ),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: ZanateColors.zanateAccent.withValues(alpha: 0.25),
-                            width: 0.8,
+                            color: ZanateColors.zanateEyeYellow.withValues(
+                              alpha: 0.45,
+                            ),
+                            width: 1.0,
                           ),
                         ),
                         child: Row(
                           children: [
-                            const PhosphorIcon(
+                            PhosphorIcon(
                               PhosphorIconsRegular.arrowBendDownRight,
                               size: 15,
-                              color: ZanateColors.zanateAccent,
+                              color: isDark
+                                  ? ZanateColors.zanateEyeYellow
+                                  : ZanateColors.zanateBlack,
                             ),
                             const SizedBox(width: 8),
                             Expanded(
@@ -1257,9 +1362,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 'Respondiendo a ${_replyTarget!.authorAlias}: "${_replyTarget!.content}"',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11.5,
-                                  color: ZanateColors.zanateAccent,
+                                  color: isDark
+                                      ? ZanateColors.zanateEyeYellow
+                                      : ZanateColors.zanateBlack,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -1328,7 +1435,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           icon: PhosphorIcon(
                             PhosphorIconsRegular.gif,
                             size: 20,
-                            color: ZanateColors.zanateAccent,
+                            color: isDark
+                                ? ZanateColors.zanateEyeYellow
+                                : ZanateColors.zanateBlack,
                           ),
                           tooltip: 'Insertar GIF',
                           onPressed: () {
@@ -1366,18 +1475,20 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 vertical: 10,
                               ),
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(22),
-                                borderSide: BorderSide(color: panelBorder, width: 0.8),
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(color: panelBorder, width: 1.0),
                               ),
                               enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(22),
-                                borderSide: BorderSide(color: panelBorder, width: 0.8),
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(color: panelBorder, width: 1.0),
                               ),
                               focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(22),
-                                borderSide: const BorderSide(
-                                  color: ZanateColors.zanateAccent,
-                                  width: 1.5,
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(
+                                  color: isDark
+                                      ? ZanateColors.zanateEyeYellow
+                                      : ZanateColors.zanateBlack,
+                                  width: 1.6,
                                 ),
                               ),
                             ),
@@ -1386,26 +1497,31 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         const SizedBox(width: 8),
                         IconButton(
                           style: IconButton.styleFrom(
-                            backgroundColor: ZanateColors.zanateDark,
-                            foregroundColor: Colors.white,
+                            backgroundColor: isDark
+                                ? ZanateColors.zanateEyeYellow
+                                : ZanateColors.zanateBlack,
+                            foregroundColor: isDark
+                                ? ZanateColors.zanateBlack
+                                : Colors.white,
                             padding: const EdgeInsets.all(10),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
                             ),
                           ),
                           icon: _isSendingComment
-                              ? const SizedBox(
+                              ? SizedBox(
                                   width: 18,
                                   height: 18,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: Colors.white,
+                                    color: isDark
+                                        ? ZanateColors.zanateBlack
+                                        : Colors.white,
                                   ),
                                 )
                               : const PhosphorIcon(
                                   PhosphorIconsBold.paperPlaneTilt,
                                   size: 18,
-                                  color: Colors.white,
                                 ),
                           onPressed:
                               _isSendingComment ||
