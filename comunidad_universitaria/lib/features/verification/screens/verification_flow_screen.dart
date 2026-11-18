@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/zanate_colors.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../core/utils/responsive.dart';
 import '../state/verification_controller.dart';
 import '../widgets/verification_gate.dart';
@@ -32,7 +33,8 @@ class VerificationFlowScreen extends StatefulWidget {
         context: context,
         isScrollControlled: true,
         useSafeArea: true,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        clipBehavior: Clip.antiAlias,
+        backgroundColor: Colors.white,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
@@ -45,7 +47,9 @@ class VerificationFlowScreen extends StatefulWidget {
       return showDialog(
         context: context,
         builder: (ctx) => Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          clipBehavior: Clip.antiAlias,
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 620, maxHeight: 720),
             child: VerificationFlowScreen(
@@ -90,55 +94,83 @@ class _VerificationFlowScreenState extends State<VerificationFlowScreen>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    const zanateBlack = Color(0xFF0B0D10);
+    const zanateEyeYellow = Color(0xFFF5C518);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Verificación Estudiantil USAC',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          tooltip: 'Cerrar',
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(50),
-          child: Container(
-            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
-            child: TabBar(
-              controller: _tabController,
-              indicatorColor: ZanateColors.zanateAccent,
-              labelColor: isDark ? Colors.white : ZanateColors.zanateAccent,
-              unselectedLabelColor: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-              tabs: const [
-                Tab(
-                  icon: Icon(Icons.verified_user_outlined, size: 20),
-                  text: 'Verificación automática',
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.only(top: 4, left: 4, right: 12),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  bottom: BorderSide(color: Color(0xFFE2E8F0)),
                 ),
-                Tab(
-                  icon: Icon(Icons.support_agent, size: 20),
-                  text: 'Contactar con soporte',
-                ),
-              ],
+              ),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(
+                      PhosphorIconsBold.caretLeft,
+                      size: 22,
+                      color: zanateBlack,
+                    ),
+                    tooltip: 'Regresar',
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  Expanded(
+                    child: TabBar(
+                      controller: _tabController,
+                      indicatorColor: zanateEyeYellow,
+                      indicatorWeight: 3,
+                      dividerColor: Colors.transparent,
+                      labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+                      labelColor: zanateBlack,
+                      unselectedLabelColor: const Color(0xFF64748B),
+                      labelStyle: GoogleFonts.outfit(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      unselectedLabelStyle: GoogleFonts.outfit(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      tabs: const [
+                        Tab(
+                          icon: Icon(PhosphorIconsRegular.sealCheck, size: 18),
+                          text: 'Verificación automática',
+                        ),
+                        Tab(
+                          icon: Icon(PhosphorIconsRegular.headset, size: 18),
+                          text: 'Contactar con soporte',
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  InstitutionalEmailStep(
+                    controller: widget.controller,
+                    onSelectSupportPath: () => _tabController.animateTo(1),
+                    onSuccess: _onSuccess,
+                  ),
+                  SupportContactScreen(
+                    onSelectAutomaticPath: () => _tabController.animateTo(0),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          InstitutionalEmailStep(
-            controller: widget.controller,
-            onSelectSupportPath: () => _tabController.animateTo(1),
-            onSuccess: _onSuccess,
-          ),
-          SupportContactScreen(
-            onSelectAutomaticPath: () => _tabController.animateTo(0),
-          ),
-        ],
       ),
     );
   }

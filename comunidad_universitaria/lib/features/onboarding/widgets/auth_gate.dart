@@ -32,6 +32,11 @@ class AuthGate extends StatefulWidget {
     this.checkIsVerified,
   });
 
+  static int _activeInstances = 0;
+
+  /// Indica si existe un [AuthGate] activo encargado de despachar el post-login.
+  static bool get hasActiveInstance => _activeInstances > 0;
+
   @override
   State<AuthGate> createState() => _AuthGateState();
 }
@@ -42,6 +47,7 @@ class _AuthGateState extends State<AuthGate> {
   @override
   void initState() {
     super.initState();
+    AuthGate._activeInstances++;
     widget.sessionController.addListener(_onSessionStateChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAndDispatch();
@@ -59,6 +65,8 @@ class _AuthGateState extends State<AuthGate> {
 
   @override
   void dispose() {
+    AuthGate._activeInstances =
+        (AuthGate._activeInstances - 1).clamp(0, 1 << 30);
     widget.sessionController.removeListener(_onSessionStateChanged);
     super.dispose();
   }
