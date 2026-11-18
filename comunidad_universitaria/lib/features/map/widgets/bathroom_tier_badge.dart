@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../core/constants/zanate_colors.dart';
 import '../models/bathroom_tier_config.dart';
 
 /// Distintivo visual para la escala semántica de sanitarios USAC.
@@ -18,15 +20,16 @@ class BathroomTierBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final tier = BathroomTierConfig.resolve(averageRating);
     final tierColor = Color(tier.colorHex);
 
     if (compact) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+        padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
         decoration: BoxDecoration(
-          color: tierColor.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(8.0),
+          color: tierColor.withValues(alpha: 0.14),
+          borderRadius: BorderRadius.circular(10.0),
           border: Border.all(color: tierColor.withValues(alpha: 0.4), width: 1.0),
         ),
         child: Row(
@@ -36,9 +39,9 @@ class BathroomTierBadge extends StatelessWidget {
             const SizedBox(width: 4.0),
             Text(
               tier.label,
-              style: TextStyle(
+              style: GoogleFonts.outfit(
                 fontSize: 12.0,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w700,
                 color: tierColor,
               ),
             ),
@@ -48,7 +51,7 @@ class BathroomTierBadge extends StatelessWidget {
                 '${averageRating.toStringAsFixed(1)} ★',
                 style: TextStyle(
                   fontSize: 11.0,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                   color: tierColor,
                 ),
               ),
@@ -59,11 +62,14 @@ class BathroomTierBadge extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.all(12.0),
+      padding: const EdgeInsets.all(14.0),
       decoration: BoxDecoration(
-        color: tierColor.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(12.0),
-        border: Border.all(color: tierColor.withValues(alpha: 0.35), width: 1.5),
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(14.0),
+        border: Border.all(
+          color: tierColor.withValues(alpha: 0.45),
+          width: 1.2,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,24 +77,26 @@ class BathroomTierBadge extends StatelessWidget {
           Row(
             children: [
               Text(tier.emoji, style: const TextStyle(fontSize: 22.0)),
-              const SizedBox(width: 8.0),
+              const SizedBox(width: 10.0),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       tier.label,
-                      style: TextStyle(
-                        fontSize: 15.0,
-                        fontWeight: FontWeight.bold,
-                        color: tierColor,
+                      style: GoogleFonts.outfit(
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : ZanateColors.zanateBlack,
                       ),
                     ),
                     Text(
                       tier.description,
                       style: TextStyle(
-                        fontSize: 11.5,
-                        color: Colors.grey.shade700,
+                        fontSize: 12.0,
+                        color: isDark
+                            ? const Color(0xFF94A3B8)
+                            : ZanateColors.subtleText,
                         height: 1.25,
                       ),
                     ),
@@ -98,18 +106,18 @@ class BathroomTierBadge extends StatelessWidget {
               if (averageRating > 0)
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8.0,
-                    vertical: 4.0,
+                    horizontal: 10.0,
+                    vertical: 5.0,
                   ),
                   decoration: BoxDecoration(
                     color: tierColor,
-                    borderRadius: BorderRadius.circular(8.0),
+                    borderRadius: BorderRadius.circular(10.0),
                   ),
                   child: Text(
                     '${averageRating.toStringAsFixed(1)} ★',
                     style: const TextStyle(
                       color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w700,
                       fontSize: 13.0,
                     ),
                   ),
@@ -117,9 +125,14 @@ class BathroomTierBadge extends StatelessWidget {
             ],
           ),
           if (tagsSummary.isNotEmpty) ...[
+            const SizedBox(height: 10.0),
+            Divider(
+              height: 1.0,
+              color: isDark
+                  ? const Color(0xFF334155)
+                  : ZanateColors.subtleBorder,
+            ),
             const SizedBox(height: 8.0),
-            const Divider(height: 1.0),
-            const SizedBox(height: 6.0),
             Wrap(
               spacing: 6.0,
               runSpacing: 4.0,
@@ -128,12 +141,27 @@ class BathroomTierBadge extends StatelessWidget {
                 return Chip(
                   label: Text(
                     '$label (${entry.value})',
-                    style: const TextStyle(fontSize: 11.0),
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: isDark
+                          ? const Color(0xFFCBD5E1)
+                          : ZanateColors.subtleText,
+                    ),
                   ),
                   padding: EdgeInsets.zero,
                   visualDensity: VisualDensity.compact,
-                  backgroundColor: Colors.white.withValues(alpha: 0.8),
-                  side: BorderSide(color: Colors.grey.shade300),
+                  backgroundColor: isDark
+                      ? const Color(0xFF0F172A)
+                      : ZanateColors.surfaceBg,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  side: BorderSide(
+                    color: isDark
+                        ? const Color(0xFF334155)
+                        : ZanateColors.subtleBorder,
+                  ),
                 );
               }).toList(),
             ),
