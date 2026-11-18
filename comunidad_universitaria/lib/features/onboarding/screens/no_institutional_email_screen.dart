@@ -11,6 +11,7 @@ import '../../verification/screens/verification_flow_screen.dart';
 import '../../verification/state/verification_controller.dart';
 import '../../verification/widgets/verification_gate.dart';
 import '../state/session_controller.dart';
+import '../widgets/auth_gate.dart';
 import 'merchant_support_screen.dart';
 
 /// Pantalla que se presenta a usuarios sin correo institucional (@usac.edu.gt).
@@ -85,6 +86,7 @@ class _NoInstitutionalEmailScreenState
         _waitingForGoogle = false;
         _pendingStudent = null;
       });
+      if (AuthGate.hasActiveInstance) return;
       if (wasStudent == true) {
         _navigateToSupport();
       } else if (wasStudent == false) {
@@ -192,13 +194,17 @@ class _NoInstitutionalEmailScreenState
         unawaited(_authSubscription?.cancel());
         _authSubscription = null;
         if (mounted) {
+          final wasStudent = _pendingStudent;
           setState(() {
             _isBusy = false;
             _waitingForGoogle = false;
+            _pendingStudent = null;
           });
-          if (_pendingStudent == true) {
+          // Si AuthGate está activo en la app, él despacha la ruta post-login una sola vez.
+          if (AuthGate.hasActiveInstance) return;
+          if (wasStudent == true) {
             _navigateToSupport();
-          } else if (_pendingStudent == false) {
+          } else if (wasStudent == false) {
             _navigateToMerchant();
           }
         }

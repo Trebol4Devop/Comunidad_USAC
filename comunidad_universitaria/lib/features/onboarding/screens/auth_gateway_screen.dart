@@ -13,6 +13,7 @@ import '../../verification/state/verification_controller.dart';
 import '../../verification/utils/verification_validators.dart';
 import '../../verification/widgets/verification_gate.dart';
 import '../state/session_controller.dart';
+import '../widgets/auth_gate.dart';
 import 'no_institutional_email_screen.dart';
 
 /// Destino posterior a un inicio de sesión exitoso.
@@ -187,6 +188,11 @@ class _AuthGatewayScreenState extends State<AuthGatewayScreen>
         _isLoading = false;
         _waitingForGoogle = false;
       });
+      if (AuthGate.hasActiveInstance) {
+        widget.onAuthenticatedSuccess?.call();
+        Navigator.of(context).pop(true);
+        return;
+      }
       _handlePostLogin(currentUser);
       return;
     }
@@ -289,6 +295,11 @@ class _AuthGatewayScreenState extends State<AuthGatewayScreen>
             _isLoading = false;
             _waitingForGoogle = false;
           });
+          if (AuthGate.hasActiveInstance) {
+            widget.onAuthenticatedSuccess?.call();
+            Navigator.of(context).pop(true);
+            return;
+          }
           _handlePostLogin(user);
         }
       }
