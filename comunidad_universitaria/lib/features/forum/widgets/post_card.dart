@@ -6,6 +6,7 @@ import '../../../core/constants/zanate_colors.dart';
 import '../../../core/models/post.dart';
 import '../../../core/utils/time_utils.dart';
 import '../../shared/widgets/report_dialog.dart';
+import '../../shared/widgets/user_avatar_circle.dart';
 import 'discord/discord_media_attachment.dart';
 
 class PostCard extends StatelessWidget {
@@ -192,29 +193,14 @@ class PostCard extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Container(
-                    width: 34,
-                    height: 34,
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF1E293B)
-                          : ZanateColors.zanateEyeYellow.withValues(alpha: 0.24),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isDark
-                            ? const Color(0xFF334155)
-                            : ZanateColors.zanateEyeYellow.withValues(alpha: 0.45),
-                      ),
-                    ),
-                    child: Center(
-                      child: PhosphorIcon(
-                        PhosphorIconsBold.user,
-                        size: 16,
-                        color: isDark
-                            ? ZanateColors.zanateEyeYellow
-                            : ZanateColors.zanateBlack,
-                      ),
-                    ),
+                  UserAvatarCircle(
+                    authorAlias: post.authorAlias,
+                    authorHash: post.authorHash,
+                    avatarColorIndex: post.avatarColorIndex,
+                    avatarIconIndex: post.avatarIconIndex,
+                    isMine: post.isMine,
+                    size: 34,
+                    iconSize: 16,
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -513,24 +499,29 @@ class PostCard extends StatelessWidget {
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(7),
                                 child: Stack(
+                                  alignment: Alignment.centerLeft,
                                   children: [
                                     if (hasVoted)
-                                      FractionallySizedBox(
-                                        widthFactor: percent,
-                                        child: Container(
-                                          color: isMyVote
-                                              ? ZanateColors.zanateEyeYellow
-                                                  .withValues(
-                                                    alpha: isDark ? 0.25 : 0.34,
-                                                  )
-                                              : (isDark
-                                                  ? Colors.white.withValues(alpha: 0.08)
-                                                  : ZanateColors.pillBg),
+                                      Positioned.fill(
+                                        child: FractionallySizedBox(
+                                          alignment: Alignment.centerLeft,
+                                          widthFactor: percent,
+                                          child: Container(
+                                            color: isMyVote
+                                                ? ZanateColors.zanateEyeYellow
+                                                    .withValues(
+                                                      alpha: isDark ? 0.25 : 0.34,
+                                                    )
+                                                : (isDark
+                                                    ? Colors.white.withValues(alpha: 0.08)
+                                                    : ZanateColors.pillBg),
+                                          ),
                                         ),
                                       ),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                                      child: Row(
+                                    Center(
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                                        child: Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
                                           Expanded(
@@ -575,6 +566,7 @@ class PostCard extends StatelessWidget {
                                               ),
                                             ),
                                         ],
+                                        ),
                                       ),
                                     ),
                                   ],

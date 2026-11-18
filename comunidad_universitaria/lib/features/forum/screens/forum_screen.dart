@@ -18,7 +18,6 @@ import '../widgets/create_post_dialog.dart';
 import '../widgets/discord/forum_channel_sidebar.dart';
 import '../widgets/discord/forum_carrera_picker_dialog.dart';
 import '../widgets/discord/forum_server_rail.dart';
-import '../widgets/discord/popular_servers_sidebar.dart';
 import '../widgets/post_card.dart';
 import 'post_detail_screen.dart';
 import '../../groups/screens/groups_screen.dart';
@@ -72,8 +71,6 @@ class _ForumScreenState extends State<ForumScreen> {
   late ForumChannel _groupsActiveChannel;
   List<ForumChannel> _channels = List.from(ForumChannel.defaultChannels);
   List<ForumFaculty> _faculties = List.from(ForumFaculty.defaultFaculties);
-  List<PopularServerItem> _popularServers = [];
-  bool _isLoadingPopular = false;
 
   // Data & Search States
   List<Post> _posts = [];
@@ -111,18 +108,12 @@ class _ForumScreenState extends State<ForumScreen> {
       _faculties,
     );
     _groupsActiveChannel = initialGroupsChannels.first;
-    if (widget.initialPopularServers != null) {
-      _popularServers = List.from(widget.initialPopularServers!);
-    }
     _searchQuery = widget.searchQuery;
     if (_searchQuery.isNotEmpty) {
       _searchController.text = _searchQuery;
     }
     _loadUserProfile();
     _loadForumStructure();
-    if (widget.initialPopularServers == null) {
-      _loadPopularServers();
-    }
     if (!_activeServer.isGroups) {
       _loadPosts();
     }
@@ -138,23 +129,6 @@ class _ForumScreenState extends State<ForumScreen> {
         }
       }
     });
-  }
-
-  Future<void> _loadPopularServers() async {
-    setState(() => _isLoadingPopular = true);
-    try {
-      final popular = await ForumService.fetchPopularServers(
-        faculties: _faculties,
-      );
-      if (mounted) {
-        setState(() {
-          _popularServers = popular;
-          _isLoadingPopular = false;
-        });
-      }
-    } catch (_) {
-      if (mounted) setState(() => _isLoadingPopular = false);
-    }
   }
 
   Future<void> _loadForumStructure() async {
@@ -541,17 +515,176 @@ class _ForumScreenState extends State<ForumScreen> {
     if (SupabaseConfig.isConfigured && !SupabaseService.isAuthenticated) {
       AuthModal.show(
         context,
-        title: 'Inicia Sesión para Citar',
+        title: 'Inicia Sesión para Repostear',
         subtitle:
-            'Para republicar o citar esta consulta en el foro, debes iniciar sesión.',
+            'Para repostear o citar esta consulta en el foro, debes iniciar sesión.',
         onAuthenticated: () => _handleQuotePost(post),
       );
       return;
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = isDark ? Colors.white : ZanateColors.zanateBlack;
+    final subtleColor = isDark ? const Color(0xFF94A3B8) : ZanateColors.mutedText;
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF334155)
+                      : ZanateColors.subtleBorder,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              ListTile(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: ZanateColors.zanateEyeYellow.withValues(alpha: 0.22),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: PhosphorIcon(
+                      PhosphorIconsBold.arrowsClockwise,
+                      size: 20,
+                      color: isDark
+                          ? ZanateColors.zanateEyeYellow
+                          : ZanateColors.zanateBlack,
+                    ),
+                  ),
+                ),
+                title: Text(
+                  'Repostear ahora',
+                  style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    color: primaryColor,
+                  ),
+                ),
+                subtitle: Text(
+                  'Comparte esta publicación en el foro al instante',
+                  style: TextStyle(fontSize: 12, color: subtleColor),
+                ),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _performDirectRepost(post);
+                },
+              ),
+              const SizedBox(height: 4),
+              ListTile(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(0xFF1E293B)
+                        : ZanateColors.surfaceBg,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: PhosphorIcon(
+                      PhosphorIconsRegular.quotes,
+                      size: 20,
+                      color: primaryColor,
+                    ),
+                  ),
+                ),
+                title: Text(
+                  'Citar publicación',
+                  style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    color: primaryColor,
+                  ),
+                ),
+                subtitle: Text(
+                  'Agrega tu comentario o punto de vista',
+                  style: TextStyle(fontSize: 12, color: subtleColor),
+                ),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _openQuoteDialog(post);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _performDirectRepost(Post post) async {
+    try {
+      final profile = await LocalStorageService.getUserProfile();
+      final effectiveAlias = profile.alias.trim().isNotEmpty
+          ? profile.alias.trim()
+          : widget.activeAlias;
+      final created = await ForumService.createPost(
+        title: 'Repost: ${post.title}',
+        content: post.content.isNotEmpty ? post.content : post.title,
+        category: post.category,
+        carrera: post.carrera,
+        authorAlias: effectiveAlias,
+        quotedPostId: post.id,
+      );
+      if (!mounted) return;
+      if (created != null) {
+        setState(() {
+          final idx = _posts.indexWhere((p) => p.id == post.id);
+          if (idx != -1) {
+            _posts[idx] = _posts[idx].copyWith(
+              repostsCount: _posts[idx].repostsCount + 1,
+            );
+          }
+          _posts.insert(0, created.copyWith(quotedPost: post));
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Publicación reposteada en el foro.'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No se pudo repostear: ${e.toString().replaceAll('Exception: ', '')}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _openQuoteDialog(Post post) async {
+    final profile = await LocalStorageService.getUserProfile();
+    if (!mounted) return;
+    final effectiveAlias = profile.alias.trim().isNotEmpty
+        ? profile.alias.trim()
+        : widget.activeAlias;
     CreatePostDialog.show(
       context,
-      activeAlias: widget.activeAlias,
+      activeAlias: effectiveAlias,
       quotedPost: post,
       serverName: _activeServer.name,
       channelName: _activeChannel.name,
@@ -565,6 +698,12 @@ class _ForumScreenState extends State<ForumScreen> {
       onAliasChanged: widget.onAliasChanged,
       onPostCreated: (newPost) {
         setState(() {
+          final idx = _posts.indexWhere((p) => p.id == post.id);
+          if (idx != -1) {
+            _posts[idx] = _posts[idx].copyWith(
+              repostsCount: _posts[idx].repostsCount + 1,
+            );
+          }
           _posts.insert(0, newPost);
         });
       },
@@ -588,11 +727,16 @@ class _ForumScreenState extends State<ForumScreen> {
     _showCreateDialog();
   }
 
-  void _showCreateDialog() {
+  Future<void> _showCreateDialog() async {
     if (_activeChannel.isSpecial) return;
+    final profile = await LocalStorageService.getUserProfile();
+    if (!mounted) return;
+    final effectiveAlias = profile.alias.trim().isNotEmpty
+        ? profile.alias.trim()
+        : widget.activeAlias;
     CreatePostDialog.show(
       context,
-      activeAlias: widget.activeAlias,
+      activeAlias: effectiveAlias,
       serverName: _activeServer.name,
       channelName: _activeChannel.name,
       initialCategory: _activeChannel.id == 'todos'
@@ -626,7 +770,6 @@ class _ForumScreenState extends State<ForumScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isDesktopOrTablet = !Responsive.isMobile(context);
-    final showRightSidebar = Responsive.isDesktop(context);
 
     final feedBg = isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg;
 
@@ -682,15 +825,7 @@ class _ForumScreenState extends State<ForumScreen> {
             else
               Expanded(child: _buildFeedContainer(theme, isDark)),
 
-            // 4. Barra lateral derecha fija y general: Top 5 comunidades más populares
-            if (showRightSidebar)
-              PopularServersSidebar(
-                popularServers: _popularServers,
-                activeServer: _activeServer,
-                isLoading: _isLoadingPopular,
-                onSelectServer: _onSelectServer,
-                onRefresh: _loadPopularServers,
-              ),
+            // 4. Barra lateral derecha eliminada: el filtro "En Llamas" ya cubre lo popular.
           ],
         ),
       );
@@ -744,15 +879,6 @@ class _ForumScreenState extends State<ForumScreen> {
                           ),
                           tooltip: 'Buscar publicaciones',
                           onPressed: _openSearchFromDrawer,
-                        ),
-                        IconButton(
-                          icon: const PhosphorIcon(
-                            PhosphorIconsFill.flame,
-                            size: 20,
-                            color: Color(0xFFF59E0B),
-                          ),
-                          tooltip: 'Comunidades populares',
-                          onPressed: _openPopularServersFromDrawer,
                         ),
                       ],
                     ),
@@ -869,16 +995,6 @@ class _ForumScreenState extends State<ForumScreen> {
                 color: ZanateColors.zanateBlack,
               ),
             ),
-          ),
-          const SizedBox(width: 4),
-          IconButton(
-            icon: PhosphorIcon(
-              PhosphorIconsFill.flame,
-              size: 20,
-              color: isDark ? ZanateColors.zanateEyeYellow : ZanateColors.zanateBlack,
-            ),
-            tooltip: 'Comunidades Populares',
-            onPressed: () => _showPopularServersModal(context),
           ),
         ],
       ),
@@ -1000,13 +1116,6 @@ class _ForumScreenState extends State<ForumScreen> {
     Navigator.of(context).pop();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _showSearchDialog();
-    });
-  }
-
-  void _openPopularServersFromDrawer() {
-    Navigator.of(context).pop();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _showPopularServersModal(context);
     });
   }
 
@@ -1144,35 +1253,6 @@ class _ForumScreenState extends State<ForumScreen> {
     );
   }
 
-  void _showPopularServersModal(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    showModalBottomSheet(
-      context: context,
-      useSafeArea: true,
-      clipBehavior: Clip.antiAlias,
-      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) {
-        return SizedBox(
-          height: 480,
-          child: PopularServersSidebar(
-            popularServers: _popularServers,
-            activeServer: _activeServer,
-            isLoading: _isLoadingPopular,
-            isModal: true,
-            onSelectServer: (srv) {
-              Navigator.of(ctx).pop();
-              _onSelectServer(srv);
-            },
-            onRefresh: _loadPopularServers,
-          ),
-        );
-      },
-    );
-  }
-
   Widget _buildFeedContainer(ThemeData theme, bool isDark) {
     return Column(
       children: [
@@ -1219,6 +1299,8 @@ class _ForumScreenState extends State<ForumScreen> {
         // Área scrolleable de publicaciones con scrollbar dedicada y física estándar
         Expanded(
           child: RefreshIndicator(
+            color: isDark ? ZanateColors.zanateEyeYellow : ZanateColors.zanateBlack,
+            backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
             onRefresh: _loadPosts,
             child: _buildPostsFeed(theme, isDark),
           ),
@@ -1279,10 +1361,10 @@ class _ForumScreenState extends State<ForumScreen> {
                       PhosphorIconsFill.flame,
                       size: 16,
                       color: isHot
-                          ? ZanateColors.zanateBlack
+                          ? const Color(0xFF475569)
                           : (isDark
-                              ? const Color(0xFFF97316)
-                              : const Color(0xFFEA580C)),
+                              ? const Color(0xFF94A3B8)
+                              : ZanateColors.mutedText),
                     ),
                     const SizedBox(width: 6),
                     Text(
