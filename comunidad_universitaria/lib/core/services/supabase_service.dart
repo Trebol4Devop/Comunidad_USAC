@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../config/google_auth_config.dart';
 import '../config/supabase_config.dart';
+import 'google_auth_desktop_service.dart';
 
 class SupabaseService {
   @visibleForTesting
@@ -28,12 +30,31 @@ class SupabaseService {
     return base.replace(fragment: '').toString();
   }
 
+  /// Controla si en escritorio se debe usar el flujo directo con Google loopback en vez de deep link.
+  /// Por defecto es `false` para usar el flujo nativo de Supabase vía `comunidadusac://login-callback/`.
+  static const bool useDirectGoogleAuthOnDesktop = bool.fromEnvironment(
+    'USE_DIRECT_GOOGLE_AUTH_DESKTOP',
+    defaultValue: false,
+  );
+
+  @visibleForTesting
+  static bool? debugUseDirectGoogleAuthOnDesktop;
+
+  static bool get effectiveUseDirectGoogleAuthOnDesktop =>
+      debugUseDirectGoogleAuthOnDesktop ?? useDirectGoogleAuthOnDesktop;
+
   @visibleForTesting
   static void resetForTests() {
+    debugUseDirectGoogleAuthOnDesktop = null;
     debugClient = null;
     debugUserId = null;
+    lastGoogleAuthError = null;
     // ignore: invalid_use_of_visible_for_testing_member
     SupabaseConfig.debugOverrideConfigured = null;
+    // ignore: invalid_use_of_visible_for_testing_member
+    GoogleAuthConfig.resetForTests();
+    // ignore: invalid_use_of_visible_for_testing_member
+    GoogleAuthDesktopService.resetForTests();
   }
 
   static Future<void> ensureSession() async {
@@ -52,18 +73,81 @@ class SupabaseService {
     }
   }
 
+  /// Último error registrado durante la autenticación con Google.
+  static String? lastGoogleAuthError;
+
   static Future<bool> signInWithGoogle({String? redirectTo}) async {
-    if (!SupabaseConfig.isConfigured) return false;
+    lastGoogleAuthError = null;
+    if (!SupabaseConfig.isConfigured) {
+      lastGoogleAuthError = 'Supabase no está configurado.';
+      return false;
+    }
     try {
+      if (GoogleAuthConfig.isDesktop && effectiveUseDirectGoogleAuthOnDesktop) {
+        if (!GoogleAuthConfig.isConfigured) {
+          final errorMsg =
+              'Faltan credenciales de Google OAuth para escritorio.\n'
+              'Inicia la app con:\n'
+              '--dart-define=GOOGLE_CLIENT_ID="tu-client-id.apps.googleusercontent.com"\n'
+              '--dart-define=GOOGLE_CLIENT_SECRET="tu-client-secret"';
+          debugPrint('Aviso de configuración Google Desktop:\n$errorMsg');
+          lastGoogleAuthError = errorMsg;
+          return false;
+        }
+
+        final creds = await GoogleAuthDesktopService.signIn();
+        if (creds == null) {
+          final errorMsg = GoogleAuthDesktopService.lastError ??
+              'Google Sign-In fue cancelado, expiró el tiempo de espera o no se recibieron credenciales en el navegador.';
+          debugPrint(errorMsg);
+          lastGoogleAuthError = errorMsg;
+          return false;
+        }
+
+        final idToken = creds.idToken;
+        if (idToken == null || idToken.isEmpty) {
+          final errorMsg =
+              'Google no retornó un id_token válido. Verifica que el cliente OAuth incluya el scope "openid".';
+          debugPrint('Error: $errorMsg');
+          lastGoogleAuthError = errorMsg;
+          return false;
+        }
+
+        final response = await client.auth.signInWithIdToken(
+          provider: OAuthProvider.google,
+          idToken: idToken,
+          accessToken: creds.accessToken,
+        );
+
+        if (response.session == null) {
+          lastGoogleAuthError =
+              'Supabase no pudo inicializar la sesión con el token de Google.';
+          return false;
+        }
+
+        return true;
+      }
+
       final redirectUrl =
           redirectTo ??
           (kIsWeb ? '${Uri.base.origin}/' : 'comunidadusac://login-callback/');
-      return await client.auth.signInWithOAuth(
+      final res = await client.auth.signInWithOAuth(
         OAuthProvider.google,
         redirectTo: redirectUrl,
       );
+      if (!res) {
+        lastGoogleAuthError = 'No se pudo abrir el proveedor de OAuth de Google.';
+      }
+      return res;
+    } on AuthException catch (e) {
+      final msg = 'Error de Supabase Auth: ${e.message}';
+      debugPrint(msg);
+      lastGoogleAuthError = msg;
+      return false;
     } catch (e) {
-      debugPrint('Error en Google Sign-In: $e');
+      final msg = 'Error en Google Sign-In: $e';
+      debugPrint(msg);
+      lastGoogleAuthError = msg;
       return false;
     }
   }
@@ -208,6 +292,13 @@ class SupabaseService {
   }
 
   static Future<void> signOut() async {
+    if (GoogleAuthConfig.isDesktop && effectiveUseDirectGoogleAuthOnDesktop) {
+      try {
+        await GoogleAuthDesktopService.signOut();
+      } catch (e) {
+        debugPrint('Aviso al cerrar sesión Google Desktop: $e');
+      }
+    }
     if (!SupabaseConfig.isConfigured) return;
     await client.auth.signOut();
   }

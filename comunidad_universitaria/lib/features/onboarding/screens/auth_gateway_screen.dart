@@ -323,6 +323,21 @@ class _AuthGatewayScreenState extends State<AuthGatewayScreen>
         throw StateError('No se pudo iniciar el acceso con Google.');
       }
 
+      final currentUser =
+          widget.authApi?.currentUser ?? SupabaseService.currentUser;
+      if (currentUser != null && !currentUser.isAnonymous) {
+        unawaited(_authSubscription?.cancel());
+        _authSubscription = null;
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _waitingForGoogle = false;
+          });
+          _handlePostLogin(currentUser);
+        }
+        return;
+      }
+
       if (mounted) {
         setState(() {
           _isLoading = false;

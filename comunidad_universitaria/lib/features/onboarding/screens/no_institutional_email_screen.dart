@@ -219,6 +219,7 @@ class _NoInstitutionalEmailScreenState
       } else if (api != null) {
         launched = await api.signInWithGoogle(redirectTo: redirectUrl);
       } else {
+      } else {
         launched = await SupabaseService.signInWithGoogle(
           redirectTo: redirectUrl,
         );
@@ -233,10 +234,31 @@ class _NoInstitutionalEmailScreenState
             _waitingForGoogle = false;
             _pendingStudent = null;
           });
+          final msg = SupabaseService.lastGoogleAuthError ??
+              'No se pudo iniciar sesión con Google.';
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No se pudo iniciar sesión con Google.')),
+            SnackBar(content: Text(msg)),
           );
         }
+        return;
+      }
+
+      final currentUser = api?.currentUser ?? SupabaseService.currentUser;
+      if (currentUser != null && !currentUser.isAnonymous) {
+        unawaited(_authSubscription?.cancel());
+        _authSubscription = null;
+        if (mounted) {
+          setState(() {
+            _isBusy = false;
+            _waitingForGoogle = false;
+          });
+          if (_pendingStudent == true) {
+            _navigateToStudent();
+          } else if (_pendingStudent == false) {
+            _navigateToMerchant();
+          }
+        }
+        return;
       }
     } catch (e) {
       _authSubscription?.cancel();

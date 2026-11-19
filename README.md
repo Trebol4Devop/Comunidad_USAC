@@ -189,6 +189,7 @@ remoto; no las uses como si hubiera un R2 local aislado.
 
 - [Estado de autenticación y fases](AUTENTICACION_FASES_1_A_8.md)
 - [Guía técnica de Supabase Auth](auth-supabase-login-signup.md)
+- [Google Sign-In en Escritorio (Windows / Linux)](docs/google-sign-in-desktop.md)
 - [Requisitos UX](docs/ux/README.md)
 - [Pruebas E2E](comunidad_universitaria/integration_test/README.md)
 - [Worker de imágenes](worker/README.md)
