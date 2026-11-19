@@ -1,0 +1,43 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Comunidad USAC (Windows Desktop)",
+      "cwd": "comunidad_universitaria",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [
+        "-d",
+        "windows",
+        "--dart-define=GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com",
+        "--dart-define=GOOGLE_CLIENT_SECRET=YOUR_GOOGLE_CLIENT_SECRET"
+      ]
+    },
+    {
+      "name": "Comunidad USAC (Chrome Web)",
+      "cwd": "comunidad_universitaria",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [
+        "-d",
+        "chrome",
+        "--web-port=8080",
+        "--dart-define=GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+      ]
+    },
+    {
+      "name": "Comunidad USAC (Android)",
+      "cwd": "comunidad_universitaria",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [
+        "-d",
+        "android",
+        "--dart-define=GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+      ]
+    }
+  ]
+}
