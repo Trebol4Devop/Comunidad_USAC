@@ -226,6 +226,43 @@ void main() {
     );
 
     testWidgets(
+      'En móvil muestra buscador directo sin abrir submenú modal',
+      (tester) async {
+        tester.view.physicalSize = const Size(400, 800);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: ForumScreen(
+              activeAlias: 'Estudiante',
+              onAliasChanged: _ignoreAlias,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final searchField = find.widgetWithText(
+          TextField,
+          'Buscar publicaciones...',
+        );
+        expect(searchField, findsOneWidget);
+        expect(find.byTooltip('Buscar en el foro'), findsNothing);
+
+        await tester.enterText(searchField, 'parcial');
+        await tester.pump(const Duration(milliseconds: 350));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(AlertDialog), findsNothing);
+        expect(find.byTooltip('Limpiar búsqueda'), findsOneWidget);
+
+        await tester.tap(find.byTooltip('Limpiar búsqueda'));
+        await tester.pumpAndSettle();
+        expect(find.byTooltip('Limpiar búsqueda'), findsNothing);
+      },
+    );
+
+    testWidgets(
       'En móvil se conservan rail de servidores y canales dentro del drawer',
       (tester) async {
         tester.view.physicalSize = const Size(400, 800);

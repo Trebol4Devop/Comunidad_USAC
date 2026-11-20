@@ -99,16 +99,14 @@ class AnonymousAuthorHeader extends StatelessWidget {
     final mineBadge = Container(
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF334155) : ZanateColors.surfaceBg,
+        color: ZanateColors.surface(isDark),
         borderRadius: BorderRadius.circular(5),
-        border: Border.all(
-          color: isDark ? const Color(0xFF475569) : ZanateColors.subtleBorder,
-        ),
+        border: Border.all(color: ZanateColors.border(isDark)),
       ),
       child: Text(
         'Tú',
         style: TextStyle(
-          color: isDark ? Colors.grey.shade200 : ZanateColors.zanateBlack,
+          color: ZanateColors.textPrimary(isDark),
           fontSize: compact ? 9 : 10,
           fontWeight: FontWeight.w600,
         ),
@@ -122,12 +120,10 @@ class AnonymousAuthorHeader extends StatelessWidget {
           width: compact ? 24 : 30,
           height: compact ? 24 : 30,
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : ZanateColors.surfaceBg,
+            color: ZanateColors.surface(isDark),
             shape: BoxShape.circle,
             border: Border.all(
-              color: isDark
-                  ? const Color(0xFF334155)
-                  : ZanateColors.subtleBorder,
+              color: ZanateColors.border(isDark),
               width: 1.0,
             ),
           ),
@@ -135,7 +131,7 @@ class AnonymousAuthorHeader extends StatelessWidget {
             child: Icon(
               PhosphorIconsRegular.user,
               size: compact ? 13 : 16,
-              color: isDark ? Colors.white : ZanateColors.zanateBlack,
+              color: ZanateColors.textPrimary(isDark),
             ),
           ),
         ),
@@ -151,7 +147,7 @@ class AnonymousAuthorHeader extends StatelessWidget {
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                   fontSize: compact ? 12.5 : 13.5,
-                  color: isDark ? Colors.white : ZanateColors.zanateBlack,
+                  color: ZanateColors.textPrimary(isDark),
                 ),
               ),
               ?hashChip,
@@ -162,9 +158,7 @@ class AnonymousAuthorHeader extends StatelessWidget {
                   '• ${TimeUtils.timeAgo(createdAt!)}',
                   style: theme.textTheme.bodySmall?.copyWith(
                     fontSize: compact ? 10.5 : 11,
-                    color: isDark
-                        ? const Color(0xFF94A3B8)
-                        : ZanateColors.mutedText,
+                    color: ZanateColors.textMuted(isDark),
                   ),
                 ),
             ],
@@ -187,7 +181,7 @@ class AnonymousAuthorHeader extends StatelessWidget {
             icon: Icon(
               PhosphorIconsRegular.flag,
               size: 16,
-              color: isDark ? const Color(0xFF94A3B8) : ZanateColors.mutedText,
+              color: ZanateColors.textMuted(isDark),
             ),
             tooltip: 'Reportar',
             padding: EdgeInsets.zero,

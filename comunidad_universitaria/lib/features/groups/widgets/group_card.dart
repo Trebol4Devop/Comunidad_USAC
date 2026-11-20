@@ -61,7 +61,7 @@ class GroupCard extends StatelessWidget {
       case GroupPlatform.drive:
         return const Color(0xFF0F9D58);
       case GroupPlatform.other:
-        return ZanateColors.zanateAccent;
+        return ZanateColors.zanateBlack;
     }
   }
 
@@ -100,10 +100,10 @@ class GroupCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A) : Colors.white,
+        color: ZanateColors.bg(isDark),
         border: Border(
           bottom: BorderSide(
-            color: isDark ? const Color(0xFF1E293B) : ZanateColors.subtleBorder,
+            color: ZanateColors.border(isDark),
             width: 0.8,
           ),
         ),
@@ -149,15 +149,13 @@ class GroupCard extends StatelessWidget {
                 if (onReport != null)
                   PopupMenuButton<String>(
                     tooltip: 'Más opciones',
-                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    color: ZanateColors.card(isDark),
                     surfaceTintColor: Colors.transparent,
                     elevation: 2,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                       side: BorderSide(
-                        color: isDark
-                            ? const Color(0xFF334155)
-                            : ZanateColors.subtleBorder,
+                        color: ZanateColors.border(isDark),
                       ),
                     ),
                     icon: PhosphorIcon(
@@ -323,7 +321,7 @@ class GroupCard extends StatelessWidget {
             const SizedBox(height: 12),
             Container(
               height: 1.0,
-              color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+              color: ZanateColors.border(isDark),
             ),
             const SizedBox(height: 10),
 
@@ -353,18 +351,12 @@ class GroupCard extends StatelessWidget {
                                   ? ZanateColors.zanateEyeYellow.withValues(
                                       alpha: isDark ? 0.24 : 0.32,
                                     )
-                                  : (isDark
-                                      ? const Color(0xFF0F172A)
-                                      : ZanateColors.surfaceBg),
+                                  : ZanateColors.surface(isDark),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: group.isUpvotedByMe
-                                    ? (isDark
-                                        ? ZanateColors.zanateEyeYellow
-                                        : ZanateColors.zanateBlack)
-                                    : (isDark
-                                        ? const Color(0xFF334155)
-                                        : ZanateColors.subtleBorder),
+                                    ? ZanateColors.focusBorder(isDark)
+                                    : ZanateColors.border(isDark),
                                 width: group.isUpvotedByMe ? 1.2 : 1.0,
                               ),
                             ),

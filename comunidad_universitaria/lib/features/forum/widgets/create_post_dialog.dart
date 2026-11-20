@@ -319,12 +319,9 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
     bool isDense = false,
     Color? fillColor,
   }) {
-    final borderColor =
-        isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
-    final focusColor =
-        isDark ? ZanateColors.zanateEyeYellow : ZanateColors.zanateBlack;
-    final labelColor =
-        isDark ? const Color(0xFF94A3B8) : ZanateColors.mutedText;
+    final borderColor = ZanateColors.border(isDark);
+    final focusColor = ZanateColors.focusBorder(isDark);
+    final labelColor = ZanateColors.textMuted(isDark);
     return InputDecoration(
       labelText: labelText,
       hintText: hintText,
@@ -336,7 +333,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
         fontWeight: FontWeight.w600,
       ),
       filled: true,
-      fillColor: fillColor ?? (isDark ? const Color(0xFF1E293B) : ZanateColors.surfaceBg),
+      fillColor: fillColor ?? ZanateColors.surface(isDark),
       contentPadding: EdgeInsets.symmetric(
         horizontal: 14,
         vertical: isDense ? 10 : 12,
@@ -362,14 +359,12 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
     final isDark = theme.brightness == Brightness.dark;
     final isMobile = Responsive.isMobile(context);
 
-    final scaffoldBg = isDark ? const Color(0xFF0F172A) : Colors.white;
-    final bgFill = isDark ? const Color(0xFF1E293B) : ZanateColors.surfaceBg;
-    final borderColor = isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
-    final primaryTextColor = isDark ? Colors.white : ZanateColors.zanateBlack;
-    final secondaryTextColor =
-        isDark ? const Color(0xFF94A3B8) : ZanateColors.mutedText;
-    final focusColor =
-        isDark ? ZanateColors.zanateEyeYellow : ZanateColors.zanateBlack;
+    final scaffoldBg = ZanateColors.bg(isDark);
+    final bgFill = ZanateColors.surface(isDark);
+    final borderColor = ZanateColors.border(isDark);
+    final primaryTextColor = ZanateColors.textPrimary(isDark);
+    final secondaryTextColor = ZanateColors.textMuted(isDark);
+    final focusColor = ZanateColors.focusBorder(isDark);
 
     final pageTitle = widget.quotedPost != null
         ? 'Citar Publicación'
@@ -443,7 +438,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                 DropdownButtonFormField<String>(
                   isExpanded: true,
                   initialValue: _selectedCategory,
-                  dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  dropdownColor: ZanateColors.card(isDark),
                   decoration: InputDecoration(
                     labelText: 'Canal de publicación',
                     prefixIcon: Padding(
@@ -606,7 +601,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                 DropdownButtonFormField<String>(
                   isExpanded: true,
                   initialValue: _selectedCarrera,
-                  dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  dropdownColor: ZanateColors.card(isDark),
                   decoration: InputDecoration(
                     labelText: 'Carrera o Especialidad',
                     prefixIcon: Padding(
@@ -887,7 +882,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                           labelText: 'Pregunta de la encuesta',
                           hintText: 'Opcional, por defecto usará el título',
                           isDense: true,
-                          fillColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+                          fillColor: ZanateColors.bg(isDark),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -932,9 +927,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                                     isDark,
                                     labelText: 'Opción ${idx + 1}',
                                     isDense: true,
-                                    fillColor: isDark
-                                        ? const Color(0xFF0F172A)
-                                        : Colors.white,
+                                    fillColor: ZanateColors.bg(isDark),
                                   ),
                                 ),
                               ),

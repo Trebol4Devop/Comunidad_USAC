@@ -44,19 +44,11 @@ class CommentItemWidget extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               color: depth == 0
-                  ? (isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC))
-                  : (isDark
-                        ? const Color(0xFF162032)
-                        : const Color(0xFFF1F5F9)),
-              borderRadius: BorderRadius.circular(12),
+                  ? ZanateColors.card(isDark)
+                  : ZanateColors.surface(isDark),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: depth == 0
-                    ? (isDark
-                          ? const Color(0xFF334155)
-                          : const Color(0xFFE2E8F0))
-                    : (isDark
-                          ? const Color(0xFF243044)
-                          : const Color(0xFFE2E8F0).withValues(alpha: 0.5)),
+                color: ZanateColors.border(isDark),
               ),
             ),
             padding: const EdgeInsets.all(12),

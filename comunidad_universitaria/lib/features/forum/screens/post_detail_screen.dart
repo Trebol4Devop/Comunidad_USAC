@@ -17,6 +17,7 @@ import '../widgets/create_post_dialog.dart';
 import '../../legal/widgets/terms_consent_modal.dart';
 import '../../../core/services/profile_service.dart';
 import '../../shared/widgets/auth_modal.dart';
+import '../../shared/widgets/empty_state_widget.dart';
 import '../../shared/widgets/gif_picker_modal.dart';
 import '../../shared/widgets/report_dialog.dart';
 import '../../shared/widgets/user_avatar_circle.dart';
@@ -161,7 +162,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Publicación compartida ($newCount veces). El texto se copió.'),
-          backgroundColor: ZanateColors.zanateAccent,
+          backgroundColor: ZanateColors.zanateBlack,
         ),
       );
       return;
@@ -292,8 +293,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: ZanateColors.card(isDark),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: ZanateColors.border(isDark)),
+        ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -303,7 +307,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               style: GoogleFonts.outfit(
                 fontWeight: FontWeight.w700,
                 fontSize: 19,
-                color: isDark ? Colors.white : ZanateColors.zanateBlack,
+                color: ZanateColors.textPrimary(isDark),
               ),
             ),
             const SizedBox(height: 8),
@@ -320,7 +324,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         content: Text(
           '¿Estás seguro de que deseas eliminar esta publicación?',
           style: TextStyle(
-            color: isDark ? const Color(0xFFCBD5E1) : ZanateColors.subtleText,
+            color: ZanateColors.textSecondary(isDark),
           ),
         ),
         actions: [
@@ -329,7 +333,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             child: Text(
               'Cancelar',
               style: TextStyle(
-                color: isDark ? const Color(0xFF94A3B8) : ZanateColors.mutedText,
+                color: ZanateColors.textMuted(isDark),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -453,27 +457,33 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final primaryTextColor = isDark ? Colors.white : ZanateColors.zanateDark;
-    final secondaryTextColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
-    final panelColor = isDark ? const Color(0xFF1E293B) : Colors.white;
-    final panelSurface = isDark
-        ? const Color(0xFF0F172A)
-        : ZanateColors.surfaceBg;
-    final panelBorder = isDark
-        ? const Color(0xFF334155)
-        : ZanateColors.subtleBorder;
+    final primaryTextColor = ZanateColors.textPrimary(isDark);
+    final secondaryTextColor = ZanateColors.textMuted(isDark);
+    final panelColor = ZanateColors.card(isDark);
+    final panelSurface = ZanateColors.surface(isDark);
+    final panelBorder = ZanateColors.border(isDark);
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg,
+      backgroundColor: ZanateColors.bg(isDark),
       appBar: AppBar(
-        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        backgroundColor: panelColor,
         elevation: 0,
         scrolledUnderElevation: 0,
+        centerTitle: true,
+        title: Text(
+          'Publicación',
+          style: GoogleFonts.outfit(
+            fontSize: 17.5,
+            fontWeight: FontWeight.w700,
+            color: primaryTextColor,
+          ),
+        ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(color: panelBorder, height: 1.0),
         ),
         leading: IconButton(
+          tooltip: 'Volver',
           icon: PhosphorIcon(
             PhosphorIconsBold.caretLeft,
             color: primaryTextColor,
@@ -482,16 +492,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
-          if (_post.isMine)
-            IconButton(
-              icon: PhosphorIcon(
-                PhosphorIconsRegular.trash,
-                color: Colors.red.shade400,
-                size: 20,
-              ),
-              tooltip: 'Eliminar publicación',
-              onPressed: _handleDeletePost,
-            ),
           IconButton(
             icon: PhosphorIcon(
               _post.isBookmarkedByMe
@@ -505,48 +505,124 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             tooltip: 'Guardar publicación',
             onPressed: _handleBookmark,
           ),
-          IconButton(
+          PopupMenuButton<String>(
+            tooltip: 'Más opciones',
+            color: panelColor,
+            surfaceTintColor: Colors.transparent,
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+              side: BorderSide(color: panelBorder),
+            ),
             icon: PhosphorIcon(
-              PhosphorIconsRegular.repeat,
+              PhosphorIconsRegular.dotsThreeVertical,
               color: primaryTextColor,
               size: 20,
             ),
-            tooltip: 'Citar publicación',
-            onPressed: _handleQuotePost,
-          ),
-          IconButton(
-            icon: PhosphorIcon(
-              PhosphorIconsRegular.shareNetwork,
-              color: primaryTextColor,
-              size: 20,
-            ),
-            tooltip: 'Compartir publicación',
-            onPressed: _handleShare,
-          ),
-          IconButton(
-            icon: PhosphorIcon(
-              PhosphorIconsRegular.flag,
-              color: primaryTextColor,
-              size: 20,
-            ),
-            tooltip: 'Reportar post',
-            onPressed: () {
-              ReportDialog.show(
-                context,
-                title: 'Reportar Publicación',
-                subtitle: 'Publicación de ${_post.authorAlias}',
-                onSubmitted: (reason) {
-                  ForumService.reportPost(postId: _post.id, reason: reason);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Gracias por tu reporte. Se ha enviado al equipo de moderación.',
-                      ),
-                    ),
+            onSelected: (value) {
+              switch (value) {
+                case 'quote':
+                  _handleQuotePost();
+                  break;
+                case 'share':
+                  _handleShare();
+                  break;
+                case 'report':
+                  ReportDialog.show(
+                    context,
+                    title: 'Reportar Publicación',
+                    subtitle: 'Publicación de ${_post.authorAlias}',
+                    onSubmitted: (reason) {
+                      ForumService.reportPost(
+                        postId: _post.id,
+                        reason: reason,
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Gracias por tu reporte. Se ha enviado al equipo de moderación.',
+                          ),
+                        ),
+                      );
+                    },
                   );
-                },
-              );
+                  break;
+                case 'delete':
+                  _handleDeletePost();
+                  break;
+              }
             },
+            itemBuilder: (ctx) => [
+              PopupMenuItem(
+                value: 'quote',
+                child: Row(
+                  children: [
+                    PhosphorIcon(
+                      PhosphorIconsRegular.repeat,
+                      size: 18,
+                      color: primaryTextColor,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Citar publicación',
+                      style: TextStyle(color: primaryTextColor),
+                    ),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'share',
+                child: Row(
+                  children: [
+                    PhosphorIcon(
+                      PhosphorIconsRegular.shareNetwork,
+                      size: 18,
+                      color: primaryTextColor,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Compartir publicación',
+                      style: TextStyle(color: primaryTextColor),
+                    ),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'report',
+                child: Row(
+                  children: [
+                    PhosphorIcon(
+                      PhosphorIconsRegular.flag,
+                      size: 18,
+                      color: primaryTextColor,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Reportar post',
+                      style: TextStyle(color: primaryTextColor),
+                    ),
+                  ],
+                ),
+              ),
+              if (_post.isMine)
+                PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      PhosphorIcon(
+                        PhosphorIconsRegular.trash,
+                        size: 18,
+                        color: Colors.red.shade400,
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Eliminar publicación',
+                        style: TextStyle(color: Colors.red.shade400),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
           ),
           const SizedBox(width: 4),
         ],
@@ -694,7 +770,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             style: TextStyle(
                               fontSize: 14.5,
                               height: 1.55,
-                              color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
+                              color: ZanateColors.textSecondary(isDark),
                             ),
                           ),
 
@@ -1151,50 +1227,16 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     else if (_comments.isEmpty)
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.all(28),
                         decoration: BoxDecoration(
                           color: panelColor,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(color: panelBorder, width: 0.9),
                         ),
-                        child: Column(
-                          children: [
-                            Container(
-                              width: 56,
-                              height: 56,
-                              decoration: BoxDecoration(
-                                color: ZanateColors.zanateEyeYellow
-                                    .withValues(alpha: isDark ? 0.18 : 0.28),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Center(
-                                child: PhosphorIcon(
-                                  PhosphorIconsRegular.chatCircleDots,
-                                  size: 26,
-                                  color: isDark
-                                      ? ZanateColors.zanateEyeYellow
-                                      : ZanateColors.zanateBlack,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'Aún no hay respuestas',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 15,
-                                color: primaryTextColor,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
+                        child: const EmptyStateWidget(
+                          icon: PhosphorIconsRegular.chatCircleDots,
+                          title: 'Aún no hay respuestas',
+                          description:
                               'Sé el primero en aportar a esta consulta estudiantil.',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: secondaryTextColor,
-                              ),
-                            ),
-                          ],
                         ),
                       )
                     else

@@ -96,11 +96,9 @@ class _AppShellState extends State<AppShell> {
       requestFocus: true,
       builder: (ctx) {
         final isDark = Theme.of(ctx).brightness == Brightness.dark;
-        final bg = isDark ? const Color(0xFF1E293B) : Colors.white;
-        final titleColor = isDark ? Colors.white : ZanateColors.zanateBlack;
-        final bodyColor = isDark
-            ? const Color(0xFFCBD5E1)
-            : ZanateColors.subtleText;
+        final bg = ZanateColors.card(isDark);
+        final titleColor = ZanateColors.textPrimary(isDark);
+        final bodyColor = ZanateColors.textSecondary(isDark);
         return AlertDialog(
           backgroundColor: bg,
           surfaceTintColor: Colors.transparent,
@@ -108,9 +106,7 @@ class _AppShellState extends State<AppShell> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
             side: BorderSide(
-              color: isDark
-                  ? const Color(0xFF334155)
-                  : ZanateColors.subtleBorder,
+              color: ZanateColors.border(isDark),
             ),
           ),
           title: Column(
@@ -220,13 +216,10 @@ class _AppShellState extends State<AppShell> {
           : AppBar(
               toolbarHeight: 60,
               elevation: 0,
-              backgroundColor:
-                  widget.isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+              backgroundColor: ZanateColors.card(widget.isDarkMode),
               shape: Border(
                 bottom: BorderSide(
-                  color: widget.isDarkMode
-                      ? const Color(0xFF334155)
-                      : ZanateColors.subtleBorder,
+                  color: ZanateColors.border(widget.isDarkMode),
                   width: 0.8,
                 ),
               ),
@@ -254,9 +247,9 @@ class _AppShellState extends State<AppShell> {
                                   fontSize: 22,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 0.5,
-                                  color: widget.isDarkMode
-                                      ? Colors.white
-                                      : ZanateColors.zanateDark,
+                                  color: ZanateColors.textPrimary(
+                                    widget.isDarkMode,
+                                  ),
                                 ),
                               ),
                             ],
@@ -267,7 +260,7 @@ class _AppShellState extends State<AppShell> {
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: widget.isDarkMode
-                                  ? const Color(0xFF94A3B8)
+                                  ? ZanateColors.darkTextMuted
                                   : Colors.blueGrey.shade400,
                               fontSize: 10.5,
                               fontWeight: FontWeight.w500,
@@ -296,14 +289,10 @@ class _AppShellState extends State<AppShell> {
                 preferredSize: const Size.fromHeight(48),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: widget.isDarkMode
-                        ? const Color(0xFF1C1C1C)
-                        : Colors.white,
+                    color: ZanateColors.card(widget.isDarkMode),
                     border: Border(
                       bottom: BorderSide(
-                        color: widget.isDarkMode
-                            ? const Color(0xFF303030)
-                            : const Color(0xFFE2E8F0),
+                        color: ZanateColors.border(widget.isDarkMode),
                         width: 1.5,
                       ),
                     ),
@@ -388,9 +377,7 @@ class _AppShellState extends State<AppShell> {
             ? Column(
                 children: [
                   ColoredBox(
-                    color:
-                        theme.appBarTheme.backgroundColor ??
-                        const Color(0xFF1C1C1C),
+                    color: ZanateColors.card(widget.isDarkMode),
                     child: SafeArea(
                       bottom: false,
                       child: AnimatedSize(
@@ -427,14 +414,10 @@ class _AppShellState extends State<AppShell> {
                     ? Container(
                         height: 60,
                         decoration: BoxDecoration(
-                          color: widget.isDarkMode
-                              ? const Color(0xFF1E293B)
-                              : Colors.white,
+                          color: ZanateColors.card(widget.isDarkMode),
                           border: Border(
                             top: BorderSide(
-                              color: widget.isDarkMode
-                                  ? const Color(0xFF334155)
-                                  : ZanateColors.subtleBorder,
+                              color: ZanateColors.border(widget.isDarkMode),
                               width: 0.8,
                             ),
                           ),
@@ -488,9 +471,10 @@ class _AppShellState extends State<AppShell> {
     final isSelected = currentNavIndex == navIndex;
     final isDark = widget.isDarkMode;
 
-    final activeColor = isDark ? Colors.white : ZanateColors.zanateBlack;
-    final inactiveColor =
-        isDark ? const Color(0xFF94A3B8) : ZanateColors.mutedText;
+    final activeColor = isDark
+        ? ZanateColors.zanateEyeYellow
+        : ZanateColors.zanateBlack;
+    final inactiveColor = ZanateColors.textMuted(isDark);
 
     return Semantics(
       label: label,
@@ -548,10 +532,10 @@ class _AppShellState extends State<AppShell> {
       height: 60,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: ZanateColors.card(isDark),
         border: Border(
           bottom: BorderSide(
-            color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            color: ZanateColors.border(isDark),
             width: 0.8,
           ),
         ),
@@ -569,7 +553,7 @@ class _AppShellState extends State<AppShell> {
                 fontSize: 21,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.5,
-                color: isDark ? Colors.white : ZanateColors.zanateDark,
+                color: ZanateColors.textPrimary(isDark),
               ),
             ),
           ],
@@ -623,7 +607,11 @@ class _AppShellState extends State<AppShell> {
         _visitedTabs.contains(3)
             ? ExcludeSemantics(
                 excluding: _currentIndex != 3,
-                child: const CampusMapScreen(),
+                child: CampusMapScreen(
+                  activeAlias: widget.activeAlias,
+                  onAliasChanged: widget.onAliasChanged,
+                  onToggleTheme: widget.onToggleTheme,
+                ),
               )
             : const SizedBox.shrink(),
       ],
@@ -649,12 +637,8 @@ class _AppShellState extends State<AppShell> {
     required IconData inactiveIcon,
   }) {
     final isSelected = _currentIndex == index;
-    final activeColor = widget.isDarkMode
-        ? Colors.white
-        : ZanateColors.zanateBlack;
-    final inactiveColor = widget.isDarkMode
-        ? const Color(0xFF94A3B8)
-        : ZanateColors.subtleText;
+    final activeColor = ZanateColors.textPrimary(widget.isDarkMode);
+    final inactiveColor = ZanateColors.textMuted(widget.isDarkMode);
 
     return Semantics(
       container: true,

@@ -81,55 +81,32 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
   IconData _getIconForFacultad(String facId) {
     switch (facId) {
       case '01':
-        return Icons.eco;
+        return PhosphorIconsRegular.plant;
       case '02':
-        return Icons.architecture;
+        return PhosphorIconsRegular.compassTool;
       case '03':
-        return Icons.trending_up;
+        return PhosphorIconsRegular.trendUp;
       case '04':
-        return Icons.gavel;
+        return PhosphorIconsRegular.scales;
       case '05':
-        return Icons.medical_services;
+        return PhosphorIconsRegular.firstAidKit;
       case '06':
-        return Icons.biotech;
+        return PhosphorIconsRegular.flask;
       case '07':
-        return Icons.psychology;
+        return PhosphorIconsRegular.brain;
       case '08':
-        return Icons.engineering;
+        return PhosphorIconsRegular.gear;
       case '09':
-        return Icons.medical_information;
+        return PhosphorIconsRegular.stethoscope;
       case '10':
-        return Icons.pets;
+        return PhosphorIconsRegular.pawPrint;
       default:
-        return Icons.school;
+        return PhosphorIconsRegular.graduationCap;
     }
   }
 
   Color _getColorForFacultad(String facId, {bool isDark = false}) {
-    switch (facId) {
-      case '01':
-        return const Color(0xFF16A34A);
-      case '02':
-        return const Color(0xFF059669);
-      case '03':
-        return const Color(0xFF0D9488);
-      case '04':
-        return const Color(0xFF7C3AED);
-      case '05':
-        return const Color(0xFFDC2626);
-      case '06':
-        return const Color(0xFFE11D48);
-      case '07':
-        return const Color(0xFFD97706);
-      case '08':
-        return const Color(0xFF0284C7);
-      case '09':
-        return const Color(0xFF004B87);
-      case '10':
-        return const Color(0xFF9333EA);
-      default:
-        return isDark ? const Color(0xFF0066CC) : const Color(0xFF004B87);
-    }
+    return isDark ? ZanateColors.zanateEyeYellow : ZanateColors.zanateBlack;
   }
 
   @override
@@ -147,10 +124,9 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
       return cName.contains(q) || fName.contains(q) || code.contains(q);
     }).toList();
 
-    final borderColor = isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
-    final primaryTextColor = isDark ? Colors.white : ZanateColors.zanateBlack;
-    final secondaryTextColor =
-        isDark ? const Color(0xFF94A3B8) : ZanateColors.mutedText;
+    final borderColor = ZanateColors.border(isDark);
+    final primaryTextColor = ZanateColors.textPrimary(isDark);
+    final secondaryTextColor = ZanateColors.textMuted(isDark);
 
     final screenSize = MediaQuery.of(context).size;
     final isMobile = screenSize.width < 600;
@@ -164,7 +140,7 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
         borderRadius: BorderRadius.circular(20),
         side: BorderSide(color: borderColor, width: 1.0),
       ),
-      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+      backgroundColor: ZanateColors.bg(isDark),
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: 640,
@@ -267,9 +243,7 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
                         )
                       : null,
                   filled: true,
-                  fillColor: isDark
-                      ? const Color(0xFF1E293B)
-                      : ZanateColors.surfaceBg,
+                  fillColor: ZanateColors.surface(isDark),
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 14,
                     vertical: 12,
@@ -353,14 +327,10 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
                               height: 40,
                               padding: const EdgeInsets.all(4),
                               decoration: BoxDecoration(
-                                color: isDark
-                                    ? const Color(0xFF26282B)
-                                    : const Color(0xFFF8FAFC),
+                                color: ZanateColors.surface(isDark),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: isDark
-                                      ? const Color(0xFF383A40)
-                                      : const Color(0xFFE2E8F0),
+                                  color: ZanateColors.border(isDark),
                                   width: 1,
                                 ),
                               ),
