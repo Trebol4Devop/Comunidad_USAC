@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import '../../../core/constants/zanate_colors.dart';
 import '../../../core/utils/responsive.dart';
 import '../state/verification_controller.dart';
 import '../widgets/verification_gate.dart';
@@ -28,15 +29,17 @@ class VerificationFlowScreen extends StatefulWidget {
     final effectiveController =
         controller ?? VerificationGate.maybeOf(context) ?? VerificationController();
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (Responsive.isMobile(context)) {
       return showModalBottomSheet(
         context: context,
         isScrollControlled: true,
         useSafeArea: true,
         clipBehavior: Clip.antiAlias,
-        backgroundColor: Colors.white,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        backgroundColor: ZanateColors.bg(isDark),
+        shape: RoundedRectangleBorder(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          side: BorderSide(color: ZanateColors.border(isDark)),
         ),
         builder: (ctx) => VerificationFlowScreen(
           controller: effectiveController,
@@ -48,8 +51,11 @@ class VerificationFlowScreen extends StatefulWidget {
         context: context,
         builder: (ctx) => Dialog(
           clipBehavior: Clip.antiAlias,
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          backgroundColor: ZanateColors.bg(isDark),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: ZanateColors.border(isDark)),
+          ),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 620, maxHeight: 720),
             child: VerificationFlowScreen(
@@ -94,30 +100,30 @@ class _VerificationFlowScreenState extends State<VerificationFlowScreen>
 
   @override
   Widget build(BuildContext context) {
-    const zanateBlack = Color(0xFF0B0D10);
-    const zanateEyeYellow = Color(0xFFF5C518);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = ZanateColors.textPrimary(isDark);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: ZanateColors.bg(isDark),
       body: SafeArea(
         bottom: false,
         child: Column(
           children: [
             Container(
               padding: const EdgeInsets.only(top: 4, left: 4, right: 12),
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: ZanateColors.card(isDark),
                 border: Border(
-                  bottom: BorderSide(color: Color(0xFFE2E8F0)),
+                  bottom: BorderSide(color: ZanateColors.border(isDark)),
                 ),
               ),
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       PhosphorIconsBold.caretLeft,
                       size: 22,
-                      color: zanateBlack,
+                      color: textPrimary,
                     ),
                     tooltip: 'Regresar',
                     onPressed: () => Navigator.of(context).pop(),
@@ -125,12 +131,12 @@ class _VerificationFlowScreenState extends State<VerificationFlowScreen>
                   Expanded(
                     child: TabBar(
                       controller: _tabController,
-                      indicatorColor: zanateEyeYellow,
+                      indicatorColor: ZanateColors.zanateEyeYellow,
                       indicatorWeight: 3,
                       dividerColor: Colors.transparent,
                       labelPadding: const EdgeInsets.symmetric(horizontal: 4),
-                      labelColor: zanateBlack,
-                      unselectedLabelColor: const Color(0xFF64748B),
+                      labelColor: textPrimary,
+                      unselectedLabelColor: ZanateColors.textMuted(isDark),
                       labelStyle: GoogleFonts.outfit(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700,
