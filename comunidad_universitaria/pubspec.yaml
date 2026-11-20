@@ -32,6 +32,11 @@ dependencies:
   mobile_scanner: ^7.5.0
   google_sign_in_all_platforms: ^2.0.3
 
+dependency_overrides:
+  shared_preferences_android: 2.4.28
+  jni: 1.0.3
+  jni_flutter: 1.0.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
