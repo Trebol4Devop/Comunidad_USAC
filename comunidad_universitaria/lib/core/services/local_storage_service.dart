@@ -15,6 +15,7 @@ class LocalStorageService {
   static const String _keyWhatsapp = 'usac_contact_whatsapp';
   static const String _keyTelegram = 'usac_contact_telegram';
   static const String _keyInstagram = 'usac_contact_instagram';
+  static const String _keyMessenger = 'usac_contact_messenger';
   static const String _keyCarne = 'usac_student_carne';
   static const String _keyStudentName = 'usac_student_name';
   static const String _keyCarneVerified = 'usac_carne_verified';
@@ -81,6 +82,7 @@ class LocalStorageService {
     final whatsapp = prefs.getString(_keyWhatsapp);
     final telegram = prefs.getString(_keyTelegram);
     final instagram = prefs.getString(_keyInstagram);
+    final messenger = prefs.getString(_keyMessenger);
     // Anti-doxxing: el carné no se persiste en claro. Limpiar si existe valor previo.
     if (prefs.containsKey(_keyCarne)) {
       await prefs.remove(_keyCarne);
@@ -108,6 +110,7 @@ class LocalStorageService {
       contactWhatsapp: whatsapp,
       contactTelegram: telegram,
       contactInstagram: instagram,
+      contactMessenger: messenger,
       email: email,
       carne: carne,
       studentName: studentName,
@@ -152,6 +155,12 @@ class LocalStorageService {
       await prefs.setString(_keyInstagram, profile.contactInstagram!.trim());
     } else {
       await prefs.remove(_keyInstagram);
+    }
+
+    if (profile.contactMessenger != null) {
+      await prefs.setString(_keyMessenger, profile.contactMessenger!.trim());
+    } else {
+      await prefs.remove(_keyMessenger);
     }
   }
 
