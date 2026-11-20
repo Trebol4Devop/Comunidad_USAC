@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:comunidad_universitaria/core/config/app_theme.dart';
 import 'package:comunidad_universitaria/core/models/whatsapp_group.dart';
 import 'package:comunidad_universitaria/features/groups/widgets/create_group_dialog.dart';
+import 'package:comunidad_universitaria/features/profile/widgets/alias_modal.dart';
 import '../../helpers/test_setup.dart';
 
 void main() {
@@ -40,7 +42,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Compartir Enlace de Grupo'), findsOneWidget);
-      expect(find.text('Publicado por: Líder Estudiantil #88'), findsOneWidget);
+      expect(find.textContaining('Publicado por:'), findsNothing);
 
       // Selector de tipo y dropdowns
       expect(find.text('Tipo de Grupo / Propósito'), findsOneWidget);
@@ -120,6 +122,21 @@ void main() {
       // Debe exigir https://
       expect(find.text('Ingresa el nombre del curso'), findsNothing);
       expect(find.text('El enlace debe comenzar con https://'), findsOneWidget);
+    });
+
+    testWidgets('No muestra botón ni submenú para editar alias', (tester) async {
+      tester.view.physicalSize = const Size(400, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(buildTestDialog());
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Publicado por:'), findsNothing);
+      expect(find.byIcon(PhosphorIconsRegular.usersThree), findsNothing);
+      expect(find.text('Alias'), findsNothing);
+      expect(find.byIcon(PhosphorIconsRegular.pencilSimple), findsNothing);
+      expect(find.byType(AliasModal), findsNothing);
     });
   });
 }
