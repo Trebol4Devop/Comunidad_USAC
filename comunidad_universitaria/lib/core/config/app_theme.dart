@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import '../constants/zanate_colors.dart';
 
 class AppTheme {
   // USAC Palette & Modern Tech Aesthetic
@@ -15,13 +17,13 @@ class AppTheme {
   static const Color lightTextPrimary = Color(0xFF0F172A);
   static const Color lightTextSecondary = Color(0xFF64748B);
 
-  // Dark colors (Matte grey palette matching mobile drawer)
-  static const Color darkBg = Color(0xFF171717);
-  static const Color darkCard = Color(0xFF1E1E1E);
-  static const Color darkCardSubtle = Color(0xFF252525);
-  static const Color darkBorder = Color(0xFF303030);
-  static const Color darkTextPrimary = Color(0xFFF5F5F5);
-  static const Color darkTextSecondary = Color(0xFFAAAAAA);
+  // Dark colors (Negro Plumaje + Amarillo Zanate)
+  static const Color darkBg = ZanateColors.darkBg;
+  static const Color darkCard = ZanateColors.darkSurface;
+  static const Color darkCardSubtle = ZanateColors.darkSurfaceSubtle;
+  static const Color darkBorder = ZanateColors.darkBorder;
+  static const Color darkTextPrimary = ZanateColors.darkTextPrimary;
+  static const Color darkTextSecondary = ZanateColors.darkTextSecondary;
 
   static ThemeData get lightTheme {
     final baseTextTheme = GoogleFonts.interTextTheme();
@@ -29,73 +31,123 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.light,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: usacBlue,
-        primary: usacBlue,
-        secondary: usacGold,
-        surface: lightCard,
+        seedColor: ZanateColors.zanateBlack,
+        primary: ZanateColors.zanateBlack,
+        onPrimary: Colors.white,
+        secondary: ZanateColors.zanateEyeYellow,
+        onSecondary: ZanateColors.zanateBlack,
+        surface: ZanateColors.cardBg,
+        outline: ZanateColors.subtleBorder,
+        onSurface: ZanateColors.zanateBlack,
+        onSurfaceVariant: ZanateColors.subtleText,
       ),
-      scaffoldBackgroundColor: lightBg,
+      scaffoldBackgroundColor: Colors.white,
       textTheme: baseTextTheme.copyWith(
         titleLarge: baseTextTheme.titleLarge?.copyWith(
           fontWeight: FontWeight.bold,
-          color: lightTextPrimary,
+          color: ZanateColors.zanateBlack,
         ),
         titleMedium: baseTextTheme.titleMedium?.copyWith(
           fontWeight: FontWeight.w600,
-          color: lightTextPrimary,
+          color: ZanateColors.zanateBlack,
         ),
-        bodyMedium: baseTextTheme.bodyMedium?.copyWith(color: lightTextPrimary),
-        bodySmall: baseTextTheme.bodySmall?.copyWith(color: lightTextSecondary),
+        bodyMedium: baseTextTheme.bodyMedium?.copyWith(
+          color: ZanateColors.zanateBlack,
+        ),
+        bodySmall: baseTextTheme.bodySmall?.copyWith(
+          color: ZanateColors.subtleText,
+        ),
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.white,
-        foregroundColor: lightTextPrimary,
+        foregroundColor: ZanateColors.zanateBlack,
         elevation: 0,
         centerTitle: false,
-        scrolledUnderElevation: 1,
+        scrolledUnderElevation: 0,
+      ),
+      actionIconTheme: ActionIconThemeData(
+        backButtonIconBuilder: (_) =>
+            const Icon(PhosphorIconsBold.caretLeft, size: 22),
+      ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: ZanateColors.zanateBlack,
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: ZanateColors.subtleBorder),
+        ),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: Colors.white,
+        modalBackgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          side: BorderSide(color: ZanateColors.subtleBorder),
+        ),
       ),
       cardTheme: CardThemeData(
-        color: lightCard,
+        color: ZanateColors.cardBg,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: lightBorder, width: 1),
+          side: const BorderSide(color: ZanateColors.subtleBorder, width: 1),
         ),
         margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
       ),
       chipTheme: ChipThemeData(
-        backgroundColor: const Color(0xFFF1F5F9),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        backgroundColor: ZanateColors.pillBg,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         side: BorderSide.none,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFFF8FAFC),
+        fillColor: ZanateColors.surfaceBg,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 14,
           vertical: 12,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: lightBorder),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: ZanateColors.subtleBorder),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: lightBorder),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: ZanateColors.subtleBorder),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: usacBlue, width: 1.5),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(
+            color: ZanateColors.zanateBlack,
+            width: 1.6,
+          ),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: usacBlue,
+          backgroundColor: ZanateColors.zanateBlack,
           foregroundColor: Colors.white,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          textStyle: GoogleFonts.inter(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: ZanateColors.zanateBlack,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
           ),
           textStyle: GoogleFonts.inter(
             fontWeight: FontWeight.w600,
@@ -105,12 +157,17 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: usacBlue,
-          side: const BorderSide(color: lightBorder),
+          foregroundColor: ZanateColors.zanateBlack,
+          side: const BorderSide(color: ZanateColors.subtleBorder),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(14),
           ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: ZanateColors.zanateBlack,
         ),
       ),
     );
@@ -124,15 +181,17 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: usacBlueLight,
+        seedColor: ZanateColors.zanateEyeYellow,
         brightness: Brightness.dark,
-        primary: usacBlueLight,
-        secondary: usacGold,
+        primary: ZanateColors.zanateEyeYellow,
+        onPrimary: ZanateColors.zanateBlack,
+        secondary: ZanateColors.zanateEyeYellow,
+        onSecondary: ZanateColors.zanateBlack,
         surface: darkCard,
         surfaceContainer: darkCard,
         surfaceContainerLow: darkBg,
         surfaceContainerHigh: darkCardSubtle,
-        surfaceContainerHighest: const Color(0xFF2A2A2A),
+        surfaceContainerHighest: darkCardSubtle,
         outline: darkBorder,
         outlineVariant: darkBorder,
         onSurface: darkTextPrimary,
@@ -141,6 +200,9 @@ class AppTheme {
       scaffoldBackgroundColor: darkBg,
       dividerColor: darkBorder,
       canvasColor: darkBg,
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: ZanateColors.zanateEyeYellow,
+      ),
       textTheme: baseTextTheme.copyWith(
         titleLarge: baseTextTheme.titleLarge?.copyWith(
           fontWeight: FontWeight.bold,
@@ -154,41 +216,51 @@ class AppTheme {
         bodySmall: baseTextTheme.bodySmall?.copyWith(color: darkTextSecondary),
       ),
       appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF1C1C1C),
+        backgroundColor: darkCard,
         foregroundColor: darkTextPrimary,
         elevation: 0,
         centerTitle: false,
-        scrolledUnderElevation: 1,
+        scrolledUnderElevation: 0,
+      ),
+      actionIconTheme: ActionIconThemeData(
+        backButtonIconBuilder: (_) =>
+            const Icon(PhosphorIconsBold.caretLeft, size: 22),
       ),
       drawerTheme: const DrawerThemeData(
-        backgroundColor: Color(0xFF171717),
+        backgroundColor: darkBg,
         elevation: 0,
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: darkCard,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           side: const BorderSide(color: darkBorder),
         ),
       ),
       bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: darkCard,
-        modalBackgroundColor: darkCard,
+        backgroundColor: darkBg,
+        modalBackgroundColor: darkBg,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           side: BorderSide(color: darkBorder),
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: const Color(0xFF1C1C1C),
+        backgroundColor: darkCard,
         indicatorColor: Colors.transparent,
         elevation: 0,
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: Colors.white, size: 23);
+            return const IconThemeData(
+              color: ZanateColors.zanateEyeYellow,
+              size: 23,
+            );
           }
-          return const IconThemeData(color: Color(0xFFAAAAAA), size: 23);
+          return const IconThemeData(
+            color: ZanateColors.darkTextMuted,
+            size: 23,
+          );
         }),
       ),
       cardTheme: CardThemeData(
@@ -202,7 +274,7 @@ class AppTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: darkCardSubtle,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         side: const BorderSide(color: darkBorder),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -212,33 +284,66 @@ class AppTheme {
           horizontal: 14,
           vertical: 12,
         ),
-        hintStyle: const TextStyle(color: Color(0xFF777777)),
+        hintStyle: const TextStyle(color: ZanateColors.darkTextMuted),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: darkBorder),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: darkBorder),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: usacBlueLight, width: 1.5),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(
+            color: ZanateColors.zanateEyeYellow,
+            width: 1.6,
+          ),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: usacBlueLight,
-          foregroundColor: Colors.white,
+          backgroundColor: ZanateColors.zanateEyeYellow,
+          foregroundColor: ZanateColors.zanateBlack,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(14),
           ),
           textStyle: GoogleFonts.inter(
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
             fontSize: 14,
           ),
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: ZanateColors.zanateEyeYellow,
+          foregroundColor: ZanateColors.zanateBlack,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          textStyle: GoogleFonts.inter(
+            fontWeight: FontWeight.w700,
+            fontSize: 14,
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: darkTextPrimary,
+          side: const BorderSide(color: darkBorder),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: ZanateColors.zanateEyeYellow,
         ),
       ),
     );

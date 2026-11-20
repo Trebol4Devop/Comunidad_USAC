@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import '../../../core/constants/zanate_colors.dart';
 
 class SkeletonCard extends StatelessWidget {
   final double height;
@@ -15,12 +17,8 @@ class SkeletonCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final baseColor = isDark
-        ? const Color(0xFF1E293B)
-        : const Color(0xFFE2E8F0);
-    final highlightColor = isDark
-        ? const Color(0xFF334155)
-        : const Color(0xFFF1F5F9);
+    final baseColor = ZanateColors.surface(isDark);
+    final highlightColor = ZanateColors.border(isDark);
 
     return Container(
       height: height,
@@ -94,9 +92,14 @@ class SkeletonCard extends StatelessWidget {
 }
 
 class OfflineBanner extends StatelessWidget {
+  final String message;
   final VoidCallback? onRetry;
 
-  const OfflineBanner({super.key, this.onRetry});
+  const OfflineBanner({
+    super.key,
+    this.message = 'Sin conexión. Mostrando contenido en caché.',
+    this.onRetry,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -117,14 +120,14 @@ class OfflineBanner extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            Icons.wifi_off,
+            PhosphorIconsRegular.wifiSlash,
             size: 16,
             color: isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309),
           ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Sin conexión. Mostrando contenido en caché.',
+              message,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,

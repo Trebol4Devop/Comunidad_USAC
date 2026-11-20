@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import '../../../core/constants/zanate_colors.dart';
 import '../../../core/services/local_storage_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../onboarding/screens/merchant_support_screen.dart';
@@ -44,9 +45,6 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  static const _zanateBlack = Color(0xFF0B0D10);
-  static const _subtleText = Color(0xFF475569);
-
   late String _currentAlias;
 
   @override
@@ -61,14 +59,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildMenuItem({
+    required bool isDark,
     required IconData icon,
     required String title,
     String? subtitle,
     required VoidCallback onTap,
-    Color iconColor = _zanateBlack,
-    Color titleColor = _zanateBlack,
+    Color? iconColor,
+    Color? titleColor,
     Widget? trailing,
   }) {
+    final defaultFg = ZanateColors.textPrimary(isDark);
     return InkWell(
       borderRadius: BorderRadius.circular(12),
       onTap: onTap,
@@ -76,7 +76,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 14),
         child: Row(
           children: [
-            Icon(icon, size: 22, color: iconColor),
+            Icon(icon, size: 22, color: iconColor ?? defaultFg),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
@@ -87,17 +87,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: GoogleFonts.outfit(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: titleColor,
+                      color: titleColor ?? defaultFg,
                     ),
                   ),
                   if (subtitle != null) ...[
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         height: 1.35,
-                        color: _subtleText,
+                        color: ZanateColors.textSecondary(isDark),
                       ),
                     ),
                   ],
@@ -121,34 +121,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final canRequestMerchant =
         isAuthenticated &&
         !(VerificationGate.maybeOf(context)?.isMerchantVerified ?? false);
+    final textPrimary = ZanateColors.textPrimary(isDark);
+    final borderColor = ZanateColors.border(isDark);
 
-    const trailingCaret = Icon(
+    final trailingCaret = Icon(
       PhosphorIconsBold.caretRight,
       size: 16,
-      color: Color(0xFF94A3B8),
+      color: ZanateColors.textMuted(isDark),
     );
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: ZanateColors.bg(isDark),
       body: SafeArea(
         bottom: false,
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              height: 58,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                color: ZanateColors.card(isDark),
                 border: Border(
-                  bottom: BorderSide(color: Color(0xFFE2E8F0)),
+                  bottom: BorderSide(color: borderColor),
                 ),
               ),
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       PhosphorIconsBold.caretLeft,
                       size: 22,
-                      color: _zanateBlack,
+                      color: textPrimary,
                     ),
                     tooltip: 'Regresar',
                     onPressed: () => Navigator.of(context).pop(),
@@ -158,9 +161,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       'Configuración',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.outfit(
-                        fontSize: 16,
+                        fontSize: 17.5,
                         fontWeight: FontWeight.w700,
-                        color: _zanateBlack,
+                        color: textPrimary,
                       ),
                     ),
                   ),
@@ -181,6 +184,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         _buildMenuItem(
+                          isDark: isDark,
                           icon: PhosphorIconsRegular.userCircle,
                           title: 'Mi Perfil y Preferencias',
                           subtitle: 'Alias actual: $_currentAlias',
@@ -198,10 +202,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             );
                           },
                         ),
-                        const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                        Divider(height: 1, color: borderColor),
 
                         if (widget.onToggleTheme != null) ...[
                           _buildMenuItem(
+                            isDark: isDark,
                             icon: isDark
                                 ? PhosphorIconsRegular.sun
                                 : PhosphorIconsRegular.moon,
@@ -209,16 +214,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             subtitle: isDark ? 'Activado' : 'Desactivado',
                             trailing: Switch.adaptive(
                               value: isDark,
-                              activeTrackColor: _zanateBlack,
-                              activeThumbColor: Colors.white,
+                              activeTrackColor: ZanateColors.ctaBg(isDark),
+                              activeThumbColor: ZanateColors.ctaFg(isDark),
                               onChanged: (_) => widget.onToggleTheme?.call(),
                             ),
                             onTap: () => widget.onToggleTheme?.call(),
                           ),
-                          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                          Divider(height: 1, color: borderColor),
                         ],
 
                         _buildMenuItem(
+                          isDark: isDark,
                           icon: PhosphorIconsRegular.shieldCheck,
                           title: 'Normas Comunitarias y Descargo',
                           trailing: trailingCaret,
@@ -232,8 +238,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
 
                         if (canRequestMerchant) ...[
-                          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                          Divider(height: 1, color: borderColor),
                           _buildMenuItem(
+                            isDark: isDark,
                             icon: PhosphorIconsRegular.storefront,
                             title: 'Quiero vender',
                             subtitle:
@@ -298,8 +305,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         else
                           ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: _zanateBlack,
-                              foregroundColor: Colors.white,
+                              backgroundColor: ZanateColors.ctaBg(isDark),
+                              foregroundColor: ZanateColors.ctaFg(isDark),
                               elevation: 0,
                               minimumSize: const Size.fromHeight(52),
                               padding: const EdgeInsets.symmetric(vertical: 14),

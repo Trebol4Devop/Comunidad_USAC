@@ -5,9 +5,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/config/supabase_config.dart';
+import '../../../core/constants/zanate_colors.dart';
 import '../../../core/services/local_storage_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
+import '../../shared/widgets/zanate_ui.dart';
 import '../../verification/screens/verification_flow_screen.dart';
 import '../../verification/state/verification_controller.dart';
 import '../../verification/utils/verification_validators.dart';
@@ -33,9 +35,6 @@ class AuthGatewayScreen extends StatefulWidget {
   final String? title;
   final String? subtitle;
   final VoidCallback? onAuthenticatedSuccess;
-
-  static const Color _zanateBlack = Color(0xFF0B0D10);
-  static const Color _zanateEyeYellow = Color(0xFFF5C518);
 
   const AuthGatewayScreen({
     super.key,
@@ -376,15 +375,11 @@ class _AuthGatewayScreenState extends State<AuthGatewayScreen>
     bool showLogoBadge = true,
   }) {
     final theme = Theme.of(context);
-    final accentColor = isDark ? Colors.white : AuthGatewayScreen._zanateBlack;
-    final subtleText =
-        isDark ? Colors.grey.shade400 : const Color(0xFF475569);
-    final dividerColor =
-        isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
-    final buttonBorderColor =
-        isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1);
-    final buttonBgColor =
-        isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC);
+    final accentColor = ZanateColors.textPrimary(isDark);
+    final subtleText = ZanateColors.textSecondary(isDark);
+    final dividerColor = ZanateColors.border(isDark);
+    final buttonBorderColor = ZanateColors.border(isDark);
+    final buttonBgColor = ZanateColors.surface(isDark);
     final isBusy = _isLoading || _waitingForGoogle;
 
     final titleText = widget.title ?? 'Inicio de sesión';
@@ -442,14 +437,7 @@ class _AuthGatewayScreenState extends State<AuthGatewayScreen>
         const SizedBox(height: 8),
         Align(
           alignment: showLogoBadge ? Alignment.center : Alignment.centerLeft,
-          child: Container(
-            width: 44,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AuthGatewayScreen._zanateEyeYellow,
-              borderRadius: BorderRadius.circular(999),
-            ),
-          ),
+          child: const ZanateAccentBar(),
         ),
         const SizedBox(height: 12),
         Text(
@@ -469,12 +457,12 @@ class _AuthGatewayScreenState extends State<AuthGatewayScreen>
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: isDark
-                  ? const Color(0xFF3B1E1E)
+                  ? const Color(0xFF3F1616)
                   : const Color(0xFFFEF2F2),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: isDark
-                    ? const Color(0xFFEF4444)
+                    ? const Color(0xFF991B1B)
                     : const Color(0xFFFCA5A5),
               ),
             ),
@@ -483,9 +471,11 @@ class _AuthGatewayScreenState extends State<AuthGatewayScreen>
               children: [
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       PhosphorIconsRegular.warningCircle,
-                      color: Color(0xFFEF4444),
+                      color: isDark
+                          ? const Color(0xFFF87171)
+                          : const Color(0xFFEF4444),
                       size: 20,
                     ),
                     const SizedBox(width: 8),
@@ -493,8 +483,9 @@ class _AuthGatewayScreenState extends State<AuthGatewayScreen>
                       child: Text(
                         _errorMessage!,
                         style: TextStyle(
-                          color:
-                              isDark ? Colors.white : const Color(0xFF991B1B),
+                          color: isDark
+                              ? const Color(0xFFFCA5A5)
+                              : const Color(0xFF991B1B),
                           fontSize: 12.5,
                         ),
                       ),
@@ -506,7 +497,9 @@ class _AuthGatewayScreenState extends State<AuthGatewayScreen>
                   alignment: Alignment.centerRight,
                   child: TextButton.icon(
                     style: TextButton.styleFrom(
-                      foregroundColor: const Color(0xFFEF4444),
+                      foregroundColor: isDark
+                          ? const Color(0xFFF87171)
+                          : const Color(0xFFEF4444),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10,
                         vertical: 4,
@@ -550,7 +543,7 @@ class _AuthGatewayScreenState extends State<AuthGatewayScreen>
                     color: accentColor,
                   ),
                 )
-              : const _GoogleGIcon(size: 20),
+              : const ZanateGoogleIcon(size: 20),
           label: Text(
             _isLoading ? 'Conectando...' : 'Continuar con Google',
             style: const TextStyle(
@@ -566,16 +559,19 @@ class _AuthGatewayScreenState extends State<AuthGatewayScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: AuthGatewayScreen._zanateEyeYellow.withValues(alpha: 0.14),
+              color: ZanateColors.zanateEyeYellow
+                  .withValues(alpha: isDark ? 0.16 : 0.14),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
+                Icon(
                   PhosphorIconsFill.info,
                   size: 18,
-                  color: Color(0xFFB45309),
+                  color: isDark
+                      ? ZanateColors.zanateEyeYellow
+                      : const Color(0xFFB45309),
                 ),
                 const SizedBox(width: 8),
                 Flexible(
@@ -585,7 +581,9 @@ class _AuthGatewayScreenState extends State<AuthGatewayScreen>
                     style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w500,
-                      color: isDark ? Colors.white : const Color(0xFF334155),
+                      color: isDark
+                          ? const Color(0xFFFDE68A)
+                          : const Color(0xFF334155),
                     ),
                   ),
                 ),
@@ -623,8 +621,7 @@ class _AuthGatewayScreenState extends State<AuthGatewayScreen>
           child: TextButton(
             onPressed: isBusy ? null : _handleOpenNoInstitutional,
             style: TextButton.styleFrom(
-              foregroundColor:
-                  isDark ? Colors.grey.shade300 : AuthGatewayScreen._zanateBlack,
+              foregroundColor: accentColor,
             ),
             child: Text(
               '¿No cuentas con correo institucional?',
@@ -633,8 +630,8 @@ class _AuthGatewayScreenState extends State<AuthGatewayScreen>
                 fontWeight: FontWeight.w600,
                 decoration: TextDecoration.underline,
                 color: isDark
-                    ? Colors.grey.shade300
-                    : const Color(0xFF1E293B),
+                    ? ZanateColors.darkTextSecondary
+                    : ZanateColors.zanateBlack,
               ),
             ),
           ),
@@ -649,7 +646,7 @@ class _AuthGatewayScreenState extends State<AuthGatewayScreen>
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A) : Colors.white,
+        color: ZanateColors.bg(isDark),
         borderRadius: isMobile
             ? const BorderRadius.vertical(top: Radius.circular(20))
             : BorderRadius.circular(20),
@@ -676,8 +673,12 @@ class _AuthGatewayScreenState extends State<AuthGatewayScreen>
       }
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = ZanateColors.bg(isDark);
+    final textPrimary = ZanateColors.textPrimary(isDark);
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: bgColor,
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = constraints.maxWidth >= 780;
@@ -689,15 +690,15 @@ class _AuthGatewayScreenState extends State<AuthGatewayScreen>
                   flex: 11,
                   child: _AuthBrandPanel(),
                 ),
-                const VerticalDivider(
+                VerticalDivider(
                   width: 1,
                   thickness: 1,
-                  color: Color(0xFFE2E8F0),
+                  color: ZanateColors.border(isDark),
                 ),
                 Expanded(
                   flex: 9,
                   child: Container(
-                    color: Colors.white,
+                    color: bgColor,
                     child: SafeArea(
                       child: Stack(
                         children: [
@@ -707,10 +708,10 @@ class _AuthGatewayScreenState extends State<AuthGatewayScreen>
                             child: IconButton(
                               onPressed: () => Navigator.of(context).pop(false),
                               tooltip: 'Regresar',
-                              icon: const Icon(
+                              icon: Icon(
                                 PhosphorIconsBold.caretLeft,
-                                size: 24,
-                                color: AuthGatewayScreen._zanateBlack,
+                                size: 22,
+                                color: textPrimary,
                               ),
                             ),
                           ),
@@ -727,7 +728,7 @@ class _AuthGatewayScreenState extends State<AuthGatewayScreen>
                                 child: _AuthEntranceTransition(
                                   child: _buildAuthContent(
                                     context,
-                                    isDark: false,
+                                    isDark: isDark,
                                     showLogoBadge: false,
                                   ),
                                 ),
@@ -767,10 +768,10 @@ class _AuthGatewayScreenState extends State<AuthGatewayScreen>
                               child: Row(
                                 children: [
                                   IconButton(
-                                    icon: const Icon(
+                                    icon: Icon(
                                       PhosphorIconsBold.caretLeft,
-                                      size: 24,
-                                      color: AuthGatewayScreen._zanateBlack,
+                                      size: 22,
+                                      color: textPrimary,
                                     ),
                                     tooltip: 'Regresar',
                                     onPressed: () =>
@@ -792,7 +793,7 @@ class _AuthGatewayScreenState extends State<AuthGatewayScreen>
                                     child: _AuthEntranceTransition(
                                       child: _buildAuthContent(
                                         context,
-                                        isDark: false,
+                                        isDark: isDark,
                                         showLogoBadge: true,
                                       ),
                                     ),
@@ -852,8 +853,12 @@ class _AuthBrandPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = ZanateColors.textPrimary(isDark);
+    final textSecondary = ZanateColors.textSecondary(isDark);
+
     return Container(
-      color: Colors.white,
+      color: ZanateColors.bg(isDark),
       child: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -867,7 +872,7 @@ class _AuthBrandPanel extends StatelessWidget {
               fontWeight: FontWeight.w700,
               height: 1.08,
               letterSpacing: -0.6,
-              color: const Color(0xFF334155),
+              color: textSecondary,
             );
 
             return Stack(
@@ -889,7 +894,7 @@ class _AuthBrandPanel extends StatelessWidget {
                             errorBuilder: (context, error, stackTrace) => Icon(
                               PhosphorIconsRegular.bird,
                               size: logoSize * 0.6,
-                              color: AuthGatewayScreen._zanateBlack,
+                              color: textPrimary,
                             ),
                           ),
                         ),
@@ -901,7 +906,7 @@ class _AuthBrandPanel extends StatelessWidget {
                             fontSize: 56,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.6,
-                            color: AuthGatewayScreen._zanateBlack,
+                            color: textPrimary,
                           ),
                         ),
                       ],
@@ -933,14 +938,14 @@ class _AuthBrandPanel extends StatelessWidget {
                                 fontWeight: FontWeight.w800,
                                 height: 1.08,
                                 letterSpacing: -0.6,
-                                color: AuthGatewayScreen._zanateBlack,
+                                color: textPrimary,
                               ),
                             ),
                             const SizedBox(height: 6),
                             Container(
                               height: 4.5,
                               decoration: BoxDecoration(
-                                color: AuthGatewayScreen._zanateEyeYellow,
+                                color: ZanateColors.zanateEyeYellow,
                                 borderRadius: BorderRadius.circular(999),
                               ),
                             ),
@@ -964,6 +969,8 @@ class _AuthTrebolCreditBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fg = ZanateColors.textPrimary(isDark);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -972,117 +979,22 @@ class _AuthTrebolCreditBadge extends StatelessWidget {
           width: 24,
           height: 24,
           fit: BoxFit.contain,
-          color: AuthGatewayScreen._zanateBlack,
+          color: fg,
           colorBlendMode: BlendMode.srcIn,
           semanticLabel: 'Logo de Trebol4Devop',
           errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
         ),
         const SizedBox(width: 7),
-        const Text(
+        Text(
           'Trebol4Devop',
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: AuthGatewayScreen._zanateBlack,
+            color: fg,
             letterSpacing: 0.2,
           ),
         ),
       ],
     );
   }
-}
-
-class _GoogleGIcon extends StatelessWidget {
-  final double size;
-
-  const _GoogleGIcon({this.size = 20});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: CustomPaint(
-        painter: _GoogleGPainter(),
-      ),
-    );
-  }
-}
-
-class _GoogleGPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final strokeWidth = size.width * 0.21;
-    final radius = size.width * 0.37;
-    final arcRect = Rect.fromCircle(center: center, radius: radius);
-
-    Paint arcPaint(Color color) => Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.butt;
-
-    const deg = math.pi / 180;
-
-    // Rojo (parte superior)
-    canvas.drawArc(
-      arcRect,
-      -150 * deg,
-      110 * deg,
-      false,
-      arcPaint(const Color(0xFFEA4335)),
-    );
-
-    // Amarillo (lado izquierdo)
-    canvas.drawArc(
-      arcRect,
-      147 * deg,
-      65 * deg,
-      false,
-      arcPaint(const Color(0xFFFBBC05)),
-    );
-
-    // Verde (parte inferior)
-    canvas.drawArc(
-      arcRect,
-      44 * deg,
-      105 * deg,
-      false,
-      arcPaint(const Color(0xFF34A853)),
-    );
-
-    // Azul (lado derecho inferior) + barra horizontal de la G
-    final blueColor = const Color(0xFF4285F4);
-    canvas.drawArc(
-      arcRect,
-      -6 * deg,
-      52 * deg,
-      false,
-      arcPaint(blueColor),
-    );
-
-    canvas.save();
-    final outerClip = Path()
-      ..addOval(
-        Rect.fromCircle(
-          center: center,
-          radius: radius + strokeWidth / 2,
-        ),
-      );
-    canvas.clipPath(outerClip);
-    canvas.drawRect(
-      Rect.fromLTRB(
-        center.dx,
-        center.dy - strokeWidth * 0.46,
-        size.width,
-        center.dy + strokeWidth * 0.46,
-      ),
-      Paint()..color = blueColor,
-    );
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
