@@ -39,6 +39,31 @@ class ZanateColors {
   /// Superficie blanca limpia de tarjetas y barras
   static const Color cardBg = Colors.white;
 
+  // ── Dark mode (Negro Plumaje + Amarillo Zanate) ────────────────────────────
+  static const Color darkBg = Color(0xFF0B0D10);
+  static const Color darkSurface = Color(0xFF14181F);
+  static const Color darkSurfaceSubtle = Color(0xFF1C212B);
+  static const Color darkBorder = Color(0xFF28303D);
+  static const Color darkTextPrimary = Color(0xFFF8FAFC);
+  static const Color darkTextSecondary = Color(0xFFCBD5E1);
+  static const Color darkTextMuted = Color(0xFF94A3B8);
+
+  // ── Semantic light/dark helpers ────────────────────────────────────────────
+  static Color bg(bool isDark) => isDark ? darkBg : Colors.white;
+  static Color card(bool isDark) => isDark ? darkSurface : cardBg;
+  static Color surface(bool isDark) => isDark ? darkSurfaceSubtle : surfaceBg;
+  static Color pill(bool isDark) => isDark ? darkSurfaceSubtle : pillBg;
+  static Color border(bool isDark) => isDark ? darkBorder : subtleBorder;
+  static Color textPrimary(bool isDark) =>
+      isDark ? darkTextPrimary : zanateBlack;
+  static Color textSecondary(bool isDark) =>
+      isDark ? darkTextSecondary : subtleText;
+  static Color textMuted(bool isDark) => isDark ? darkTextMuted : mutedText;
+  static Color focusBorder(bool isDark) =>
+      isDark ? zanateEyeYellow : zanateBlack;
+  static Color ctaBg(bool isDark) => isDark ? zanateEyeYellow : zanateBlack;
+  static Color ctaFg(bool isDark) => isDark ? zanateBlack : Colors.white;
+
   /// Gradiente activo de "En Llamas"
   static const LinearGradient hotFlameGradient = LinearGradient(
     colors: [Color(0xFFFF512F), Color(0xFFF09819)],
