@@ -216,13 +216,15 @@ class _MySalesScreenState extends State<MySalesScreen> {
     return MarketplaceTheme.wrap(
       context,
       Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+      backgroundColor: ZanateColors.bg(isDark),
       appBar: AppBar(
+        centerTitle: true,
         leading: IconButton(
+          tooltip: 'Volver',
           icon: PhosphorIcon(
             PhosphorIconsBold.caretLeft,
             size: 22,
-            color: isDark ? Colors.white : ZanateColors.zanateBlack,
+            color: ZanateColors.textPrimary(isDark),
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -231,7 +233,7 @@ class _MySalesScreenState extends State<MySalesScreen> {
           style: GoogleFonts.outfit(
             fontWeight: FontWeight.w700,
             fontSize: 18,
-            color: isDark ? Colors.white : ZanateColors.zanateBlack,
+            color: ZanateColors.textPrimary(isDark),
           ),
         ),
       ),
@@ -317,10 +319,10 @@ class _MySalesScreenState extends State<MySalesScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: ZanateColors.card(isDark),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+          color: ZanateColors.border(isDark),
           width: 1.0,
         ),
       ),
@@ -408,13 +410,15 @@ class _MySalesScreenState extends State<MySalesScreen> {
   }
 
   Widget _buildPresenceCard(bool isDark, ThemeData theme) {
+    final textPrimary = ZanateColors.textPrimary(isDark);
+    final borderColor = ZanateColors.border(isDark);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: ZanateColors.card(isDark),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+          color: borderColor,
           width: 1.0,
         ),
       ),
@@ -430,7 +434,10 @@ class _MySalesScreenState extends State<MySalesScreen> {
                   const SizedBox(width: 8),
                   Text(
                     'Entregando ahora en el campus',
-                    style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: textPrimary,
+                    ),
                   ),
                 ],
               ),
@@ -445,26 +452,59 @@ class _MySalesScreenState extends State<MySalesScreen> {
             const SizedBox(height: 8),
             Row(
               children: [
-                const Text('Edificio: ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                Text(
+                  'Edificio: ',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: ZanateColors.textSecondary(isDark),
+                  ),
+                ),
                 const SizedBox(width: 6),
-                DropdownButton<String>(
-                  value: _selectedBuilding,
-                  isDense: true,
-                  items: USACConstants.campusBuildings
-                      .where((b) => b['sede_id'] == 'central')
-                      .map(
-                        (b) => DropdownMenuItem<String>(
-                          value: b['building_code']?.toString(),
-                          child: Text('${b['building_code']} · ${b['nombre']}', style: const TextStyle(fontSize: 12)),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (val) {
-                    if (val != null) {
-                      setState(() => _selectedBuilding = val);
-                      _handleTogglePresence(true);
-                    }
-                  },
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: ZanateColors.surface(isDark),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: borderColor),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _selectedBuilding,
+                        isDense: true,
+                        isExpanded: true,
+                        dropdownColor: ZanateColors.card(isDark),
+                        borderRadius: BorderRadius.circular(12),
+                        style: TextStyle(fontSize: 12, color: textPrimary),
+                        items: USACConstants.campusBuildings
+                            .where((b) => b['sede_id'] == 'central')
+                            .map(
+                              (b) => DropdownMenuItem<String>(
+                                value: b['building_code']?.toString(),
+                                child: Text(
+                                  '${b['building_code']} · ${b['nombre']}',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: textPrimary,
+                                  ),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (val) {
+                          if (val != null) {
+                            setState(() => _selectedBuilding = val);
+                            _handleTogglePresence(true);
+                          }
+                        },
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -493,13 +533,15 @@ class _MySalesScreenState extends State<MySalesScreen> {
 
     final overallContactRate = totalViews > 0 ? (totalClicks / totalViews * 100).toStringAsFixed(1) : '0.0';
 
+    final textPrimary = ZanateColors.textPrimary(isDark);
+    final borderColor = ZanateColors.border(isDark);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: ZanateColors.card(isDark),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+          color: borderColor,
           width: 1.0,
         ),
       ),
@@ -513,23 +555,51 @@ class _MySalesScreenState extends State<MySalesScreen> {
                 header: true,
                 child: Text(
                   'Rendimiento y Conversión',
-                  style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800, fontSize: 15),
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                    color: textPrimary,
+                  ),
                 ),
               ),
-              DropdownButton<int>(
-                value: _selectedMetricsDays,
-                isDense: true,
-                underline: const SizedBox.shrink(),
-                items: const [
-                  DropdownMenuItem(value: 7, child: Text('Últimos 7 días', style: TextStyle(fontSize: 12))),
-                  DropdownMenuItem(value: 30, child: Text('Últimos 30 días', style: TextStyle(fontSize: 12))),
-                ],
-                onChanged: (val) {
-                  if (val != null && val != _selectedMetricsDays) {
-                    setState(() => _selectedMetricsDays = val);
-                    _loadMetrics();
-                  }
-                },
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: ZanateColors.pill(isDark),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: borderColor),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<int>(
+                    value: _selectedMetricsDays,
+                    isDense: true,
+                    dropdownColor: ZanateColors.card(isDark),
+                    borderRadius: BorderRadius.circular(12),
+                    style: TextStyle(fontSize: 12, color: textPrimary),
+                    items: [
+                      DropdownMenuItem(
+                        value: 7,
+                        child: Text(
+                          'Últimos 7 días',
+                          style: TextStyle(fontSize: 12, color: textPrimary),
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 30,
+                        child: Text(
+                          'Últimos 30 días',
+                          style: TextStyle(fontSize: 12, color: textPrimary),
+                        ),
+                      ),
+                    ],
+                    onChanged: (val) {
+                      if (val != null && val != _selectedMetricsDays) {
+                        setState(() => _selectedMetricsDays = val);
+                        _loadMetrics();
+                      }
+                    },
+                  ),
+                ),
               ),
             ],
           ),
@@ -605,10 +675,10 @@ class _MySalesScreenState extends State<MySalesScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg,
+        color: ZanateColors.surface(isDark),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+          color: ZanateColors.border(isDark),
           width: 1.0,
         ),
       ),
@@ -620,9 +690,7 @@ class _MySalesScreenState extends State<MySalesScreen> {
               Icon(
                 icon,
                 size: 14,
-                color: isDark
-                    ? ZanateColors.zanateEyeYellow
-                    : ZanateColors.zanateBlack,
+                color: ZanateColors.focusBorder(isDark),
               ),
               const SizedBox(width: 4),
               Expanded(
@@ -630,9 +698,7 @@ class _MySalesScreenState extends State<MySalesScreen> {
                   label,
                   style: TextStyle(
                     fontSize: 10.5,
-                    color: isDark
-                        ? const Color(0xFF94A3B8)
-                        : ZanateColors.mutedText,
+                    color: ZanateColors.textMuted(isDark),
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -680,10 +746,10 @@ class _MySalesScreenState extends State<MySalesScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: ZanateColors.card(isDark),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+          color: ZanateColors.border(isDark),
           width: 1.0,
         ),
       ),
@@ -703,9 +769,7 @@ class _MySalesScreenState extends State<MySalesScreen> {
               height: 60,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
-                color: isDark
-                    ? const Color(0xFF0F172A)
-                    : ZanateColors.surfaceBg,
+                color: ZanateColors.surface(isDark),
               ),
               clipBehavior: Clip.antiAlias,
               child: item.imageUrls.isNotEmpty
