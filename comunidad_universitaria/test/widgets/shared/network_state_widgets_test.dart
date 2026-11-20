@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:comunidad_universitaria/core/config/app_theme.dart';
 import 'package:comunidad_universitaria/features/shared/widgets/network_state_widgets.dart';
 
@@ -56,7 +57,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byIcon(Icons.wifi_off), findsOneWidget);
+      expect(find.byIcon(PhosphorIconsRegular.wifiSlash), findsOneWidget);
       expect(find.text('Sin conexión. Mostrando contenido en caché.'), findsOneWidget);
       expect(find.widgetWithText(TextButton, 'Reintentar'), findsOneWidget);
 
