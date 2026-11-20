@@ -95,13 +95,15 @@ class _SavedListingsScreenState extends State<SavedListingsScreen> {
     return MarketplaceTheme.wrap(
       context,
       Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+      backgroundColor: ZanateColors.bg(isDark),
       appBar: AppBar(
+        centerTitle: true,
         leading: IconButton(
+          tooltip: 'Volver',
           icon: PhosphorIcon(
             PhosphorIconsBold.caretLeft,
             size: 22,
-            color: isDark ? Colors.white : ZanateColors.zanateBlack,
+            color: ZanateColors.textPrimary(isDark),
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -110,7 +112,7 @@ class _SavedListingsScreenState extends State<SavedListingsScreen> {
           style: GoogleFonts.outfit(
             fontWeight: FontWeight.w700,
             fontSize: 18,
-            color: isDark ? Colors.white : ZanateColors.zanateBlack,
+            color: ZanateColors.textPrimary(isDark),
           ),
         ),
       ),
@@ -147,7 +149,7 @@ class _SavedListingsScreenState extends State<SavedListingsScreen> {
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                  color: ZanateColors.textMuted(isDark),
                                 ),
                               ),
                               const SizedBox(height: 12),
