@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import '../../../core/constants/zanate_colors.dart';
 
 class ImageViewerDialog extends StatelessWidget {
   final String imageUrl;
@@ -53,15 +55,15 @@ class ImageViewerDialog extends StatelessWidget {
                   errorBuilder: (context, error, stackTrace) => Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1E293B),
+                      color: ZanateColors.darkSurface,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: const [
                         Icon(
-                          Icons.broken_image_outlined,
-                          color: Colors.amber,
+                          PhosphorIconsRegular.imageBroken,
+                          color: ZanateColors.zanateEyeYellow,
                           size: 48,
                         ),
                         SizedBox(height: 12),
@@ -93,7 +95,7 @@ class ImageViewerDialog extends StatelessWidget {
               color: Colors.black.withValues(alpha: 0.6),
               shape: const CircleBorder(),
               child: IconButton(
-                icon: const Icon(Icons.close, color: Colors.white),
+                icon: const Icon(PhosphorIconsRegular.x, color: Colors.white),
                 tooltip: 'Cerrar visor',
                 onPressed: () => Navigator.of(context).pop(),
               ),
