@@ -64,7 +64,7 @@ class BathroomTierBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14.0),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: ZanateColors.card(isDark),
         borderRadius: BorderRadius.circular(14.0),
         border: Border.all(
           color: tierColor.withValues(alpha: 0.45),
@@ -87,16 +87,14 @@ class BathroomTierBadge extends StatelessWidget {
                       style: GoogleFonts.outfit(
                         fontSize: 15.5,
                         fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : ZanateColors.zanateBlack,
+                        color: ZanateColors.textPrimary(isDark),
                       ),
                     ),
                     Text(
                       tier.description,
                       style: TextStyle(
                         fontSize: 12.0,
-                        color: isDark
-                            ? const Color(0xFF94A3B8)
-                            : ZanateColors.subtleText,
+                        color: ZanateColors.textMuted(isDark),
                         height: 1.25,
                       ),
                     ),
@@ -128,9 +126,7 @@ class BathroomTierBadge extends StatelessWidget {
             const SizedBox(height: 10.0),
             Divider(
               height: 1.0,
-              color: isDark
-                  ? const Color(0xFF334155)
-                  : ZanateColors.subtleBorder,
+              color: ZanateColors.border(isDark),
             ),
             const SizedBox(height: 8.0),
             Wrap(
@@ -144,23 +140,17 @@ class BathroomTierBadge extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w600,
-                      color: isDark
-                          ? const Color(0xFFCBD5E1)
-                          : ZanateColors.subtleText,
+                      color: ZanateColors.textSecondary(isDark),
                     ),
                   ),
                   padding: EdgeInsets.zero,
                   visualDensity: VisualDensity.compact,
-                  backgroundColor: isDark
-                      ? const Color(0xFF0F172A)
-                      : ZanateColors.surfaceBg,
+                  backgroundColor: ZanateColors.surface(isDark),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                   side: BorderSide(
-                    color: isDark
-                        ? const Color(0xFF334155)
-                        : ZanateColors.subtleBorder,
+                    color: ZanateColors.border(isDark),
                   ),
                 );
               }).toList(),
