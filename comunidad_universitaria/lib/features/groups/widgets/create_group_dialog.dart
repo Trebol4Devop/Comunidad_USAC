@@ -10,7 +10,6 @@ import '../../../core/services/groups_service.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
-import '../../profile/widgets/alias_modal.dart';
 import '../../shared/widgets/auth_modal.dart';
 
 class CreateGroupDialog extends StatefulWidget {
@@ -200,7 +199,7 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Grupo estudiantil compartido con éxito.'),
-              backgroundColor: Color(0xFF004B87),
+              backgroundColor: ZanateColors.zanateBlack,
             ),
           );
         }
@@ -229,16 +228,14 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
     String? hintText,
     Widget? prefixIcon,
   }) {
-    final borderColor =
-        isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
-    final focusColor =
-        isDark ? ZanateColors.zanateEyeYellow : ZanateColors.zanateBlack;
+    final borderColor = ZanateColors.border(isDark);
+    final focusColor = ZanateColors.focusBorder(isDark);
     return InputDecoration(
       labelText: labelText,
       hintText: hintText,
       prefixIcon: prefixIcon,
       filled: true,
-      fillColor: isDark ? const Color(0xFF1E293B) : ZanateColors.surfaceBg,
+      fillColor: ZanateColors.surface(isDark),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
@@ -260,13 +257,11 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isMobile = Responsive.isMobile(context);
-    final primaryTextColor = isDark ? Colors.white : ZanateColors.zanateBlack;
-    final secondaryTextColor =
-        isDark ? const Color(0xFF94A3B8) : ZanateColors.mutedText;
-    final borderColor =
-        isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
+    final primaryTextColor = ZanateColors.textPrimary(isDark);
+    final secondaryTextColor = ZanateColors.textMuted(isDark);
+    final borderColor = ZanateColors.border(isDark);
 
-    final scaffoldBg = isDark ? const Color(0xFF0F172A) : Colors.white;
+    final scaffoldBg = ZanateColors.bg(isDark);
 
     Widget content = Form(
       key: _formKey,
@@ -282,82 +277,11 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-              // Header
-              Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: ZanateColors.zanateEyeYellow.withValues(alpha: 0.22),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Center(
-                      child: PhosphorIcon(
-                        PhosphorIconsRegular.usersThree,
-                        color: isDark
-                            ? ZanateColors.zanateEyeYellow
-                            : ZanateColors.zanateBlack,
-                        size: 22,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Publicado por: ${widget.activeAlias}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: primaryTextColor,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Container(
-                          width: 44,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: ZanateColors.zanateEyeYellow,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  TextButton.icon(
-                    style: TextButton.styleFrom(
-                      foregroundColor: isDark
-                          ? ZanateColors.zanateEyeYellow
-                          : ZanateColors.zanateBlack,
-                    ),
-                    icon: const PhosphorIcon(
-                      PhosphorIconsRegular.pencilSimple,
-                      size: 15,
-                    ),
-                    label: const Text(
-                      'Alias',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-                    ),
-                    onPressed: () {
-                      AliasModal.show(
-                        context,
-                        currentAlias: widget.activeAlias,
-                        onSaved: widget.onAliasChanged,
-                      );
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18),
-
               // Group Type Selector
               DropdownButtonFormField<String>(
                 initialValue: _groupType,
                 isExpanded: true,
-                dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                dropdownColor: ZanateColors.card(isDark),
                 decoration: _zanateInput(
                   isDark,
                   labelText: 'Tipo de Grupo / Propósito',
@@ -421,8 +345,7 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
                     child: DropdownButtonFormField<String>(
                       initialValue: _selectedFacultad,
                       isExpanded: true,
-                      dropdownColor:
-                          isDark ? const Color(0xFF1E293B) : Colors.white,
+                      dropdownColor: ZanateColors.card(isDark),
                       decoration: _zanateInput(
                         isDark,
                         labelText: 'Facultad / Unidad',
@@ -453,8 +376,7 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
                       key: ValueKey('carrera_$_selectedFacultad'),
                       initialValue: _selectedCarrera,
                       isExpanded: true,
-                      dropdownColor:
-                          isDark ? const Color(0xFF1E293B) : Colors.white,
+                      dropdownColor: ZanateColors.card(isDark),
                       decoration: _zanateInput(
                         isDark,
                         labelText: 'Carrera',
@@ -599,9 +521,7 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
                         fit: BoxFit.cover,
                         errorBuilder: (ctx, err, stack) => Container(
                           height: 130,
-                          color: isDark
-                              ? const Color(0xFF1E293B)
-                              : ZanateColors.surfaceBg,
+                          color: ZanateColors.surface(isDark),
                           child: Center(
                             child: PhosphorIcon(
                               PhosphorIconsRegular.imageBroken,
@@ -636,9 +556,7 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
                 OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
                     foregroundColor: primaryTextColor,
-                    backgroundColor: isDark
-                        ? const Color(0xFF1E293B)
-                        : ZanateColors.surfaceBg,
+                    backgroundColor: ZanateColors.surface(isDark),
                     side: BorderSide(color: borderColor, width: 1.2),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
