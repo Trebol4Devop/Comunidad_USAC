@@ -148,15 +148,15 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
     final prof = _profile;
     if (prof == null) return;
 
+    final isDarkModal = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF0F172A)
-          : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      backgroundColor: ZanateColors.bg(isDarkModal),
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        side: BorderSide(color: ZanateColors.border(isDarkModal)),
       ),
       builder: (ctx) => _EditStoreSheet(
         profile: prof,
@@ -175,38 +175,70 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
     final isDesktop = Responsive.isDesktop(context);
 
     if (_isLoading && _profile == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Cargando tienda...')),
-        body: const Center(child: CircularProgressIndicator()),
+      return MarketplaceTheme.wrap(
+        context,
+        Scaffold(
+          backgroundColor: ZanateColors.bg(isDark),
+          appBar: AppBar(
+            centerTitle: true,
+            leading: IconButton(
+              tooltip: 'Volver',
+              icon: PhosphorIcon(
+                PhosphorIconsBold.caretLeft,
+                size: 22,
+                color: ZanateColors.textPrimary(isDark),
+              ),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            title: const Text('Cargando tienda...'),
+          ),
+          body: const Center(child: CircularProgressIndicator()),
+        ),
       );
     }
 
     if (_hasError || _profile == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Tienda')),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  PhosphorIconsRegular.storefront,
-                  size: 48,
-                  color: Color(0xFFEF4444),
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  'No pudimos cargar la información de esta tienda.',
-                  style: theme.textTheme.titleMedium,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 18),
-                ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Volver'),
-                ),
-              ],
+      return MarketplaceTheme.wrap(
+        context,
+        Scaffold(
+          backgroundColor: ZanateColors.bg(isDark),
+          appBar: AppBar(
+            centerTitle: true,
+            leading: IconButton(
+              tooltip: 'Volver',
+              icon: PhosphorIcon(
+                PhosphorIconsBold.caretLeft,
+                size: 22,
+                color: ZanateColors.textPrimary(isDark),
+              ),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            title: const Text('Tienda'),
+          ),
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    PhosphorIconsRegular.storefront,
+                    size: 48,
+                    color: Color(0xFFEF4444),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    'No pudimos cargar la información de esta tienda.',
+                    style: theme.textTheme.titleMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 18),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Volver'),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -221,13 +253,15 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
     return MarketplaceTheme.wrap(
       context,
       Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+      backgroundColor: ZanateColors.bg(isDark),
       appBar: AppBar(
+        centerTitle: true,
         leading: IconButton(
+          tooltip: 'Volver',
           icon: PhosphorIcon(
             PhosphorIconsBold.caretLeft,
             size: 22,
-            color: isDark ? Colors.white : ZanateColors.zanateBlack,
+            color: ZanateColors.textPrimary(isDark),
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -385,7 +419,10 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
               decoration: BoxDecoration(
                 gradient: bannerUrl == null
                     ? const LinearGradient(
-                        colors: [ZanateColors.zanateBlack, Color(0xFF1E293B)],
+                        colors: [
+                          ZanateColors.zanateBlack,
+                          ZanateColors.darkSurfaceSubtle,
+                        ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       )
@@ -405,9 +442,9 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
                 height: 76,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  color: ZanateColors.card(isDark),
                   border: Border.all(
-                    color: isDark ? const Color(0xFF334155) : Colors.white,
+                    color: ZanateColors.border(isDark),
                     width: 3,
                   ),
                   boxShadow: [
@@ -506,9 +543,11 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            Icons.circle,
+                            PhosphorIconsFill.circle,
                             size: 8,
-                            color: isOpen == true ? const Color(0xFF059669) : Colors.grey,
+                            color: isOpen == true
+                                ? const Color(0xFF059669)
+                                : ZanateColors.textMuted(isDark),
                           ),
                           const SizedBox(width: 5),
                           Text(
@@ -516,7 +555,9 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
-                              color: isOpen == true ? const Color(0xFF059669) : Colors.grey.shade700,
+                              color: isOpen == true
+                                  ? const Color(0xFF059669)
+                                  : ZanateColors.textSecondary(isDark),
                             ),
                           ),
                         ],
@@ -617,10 +658,10 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
       borderRadius: BorderRadius.circular(14),
       child: Container(
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: ZanateColors.card(isDark),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            color: ZanateColors.border(isDark),
             width: 1.0,
           ),
         ),
@@ -631,9 +672,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
             Expanded(
               child: Container(
                 width: double.infinity,
-                color: isDark
-                    ? const Color(0xFF0F172A)
-                    : ZanateColors.surfaceBg,
+                color: ZanateColors.surface(isDark),
                 child: item.imageUrls.isNotEmpty
                     ? Image.network(
                         item.imageUrls.first,
@@ -776,16 +815,14 @@ class _EditStoreSheetState extends State<_EditStoreSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final borderColor =
-        isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
-    final focusColor =
-        isDark ? ZanateColors.zanateEyeYellow : ZanateColors.zanateBlack;
-    final primaryText = isDark ? Colors.white : ZanateColors.zanateBlack;
+    final borderColor = ZanateColors.border(isDark);
+    final focusColor = ZanateColors.focusBorder(isDark);
+    final primaryText = ZanateColors.textPrimary(isDark);
 
     InputDecoration zanateField(String label) => InputDecoration(
       labelText: label,
       filled: true,
-      fillColor: isDark ? const Color(0xFF1E293B) : ZanateColors.surfaceBg,
+      fillColor: ZanateColors.surface(isDark),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
@@ -844,11 +881,13 @@ class _EditStoreSheetState extends State<_EditStoreSheet> {
             const SizedBox(height: 16),
             TextField(
               controller: _nameController,
+              style: TextStyle(color: primaryText),
               decoration: zanateField('Nombre comercial de la tienda'),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _descController,
+              style: TextStyle(color: primaryText),
               maxLines: 3,
               maxLength: 300,
               decoration: zanateField('Descripción de la tienda o productos'),
@@ -856,7 +895,7 @@ class _EditStoreSheetState extends State<_EditStoreSheet> {
             const SizedBox(height: 8),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              activeTrackColor: ZanateColors.zanateBlack,
+              activeTrackColor: ZanateColors.ctaBg(isDark),
               title: Text(
                 'Entregando ahora en el campus',
                 style: GoogleFonts.outfit(
@@ -865,7 +904,10 @@ class _EditStoreSheetState extends State<_EditStoreSheet> {
                   color: primaryText,
                 ),
               ),
-              subtitle: const Text('Muestra un distintivo verde en tu perfil y publicaciones.'),
+              subtitle: Text(
+                'Muestra un distintivo verde en tu perfil y publicaciones.',
+                style: TextStyle(color: ZanateColors.textMuted(isDark)),
+              ),
               value: _isOnCampus,
               onChanged: (val) => setState(() => _isOnCampus = val),
             ),
@@ -874,7 +916,8 @@ class _EditStoreSheetState extends State<_EditStoreSheet> {
               DropdownButtonFormField<String>(
                 key: ValueKey(_selectedBuilding),
                 initialValue: _selectedBuilding,
-                dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                dropdownColor: ZanateColors.card(isDark),
+                style: TextStyle(color: primaryText, fontSize: 14),
                 decoration: zanateField('Edificio de entrega'),
                 items: USACConstants.campusBuildings
                     .where((b) => b['sede_id'] == 'central')
@@ -890,6 +933,7 @@ class _EditStoreSheetState extends State<_EditStoreSheet> {
               const SizedBox(height: 12),
               TextField(
                 controller: _noteController,
+                style: TextStyle(color: primaryText),
                 maxLength: 120,
                 decoration: zanateField(
                   'Nota de ubicación (ej. Frente a fotocopiadora)',
