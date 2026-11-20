@@ -377,20 +377,19 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
 
       // Comerciante en revisión
       final isDark = Theme.of(context).brightness == Brightness.dark;
-      final dialogBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+      final dialogBg = ZanateColors.card(isDark);
       final dialogShape = RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: ZanateColors.border(isDark)),
       );
       final bodyStyle = TextStyle(
         fontSize: 13.5,
         height: 1.45,
-        color: isDark ? const Color(0xFFCBD5E1) : ZanateColors.subtleText,
+        color: ZanateColors.textSecondary(isDark),
       );
       final primaryBtnStyle = ElevatedButton.styleFrom(
-        backgroundColor: isDark
-            ? ZanateColors.zanateEyeYellow
-            : ZanateColors.zanateBlack,
-        foregroundColor: isDark ? ZanateColors.zanateBlack : Colors.white,
+        backgroundColor: ZanateColors.ctaBg(isDark),
+        foregroundColor: ZanateColors.ctaFg(isDark),
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -406,7 +405,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             style: GoogleFonts.outfit(
               fontSize: 19,
               fontWeight: FontWeight.w700,
-              color: isDark ? Colors.white : ZanateColors.zanateBlack,
+              color: ZanateColors.textPrimary(isDark),
             ),
           ),
           const SizedBox(height: 8),
@@ -683,24 +682,23 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   }
 
   // Top Squared Header with Settings, Navigation Actions & Publish
-  static const _zanateBlack = Color(0xFF0B0D10);
-  static const _zanateEyeYellow = Color(0xFFF5C518);
-  static const _subtleText = Color(0xFF475569);
-
-  InputDecoration _zanateFilterDecoration(String hintText) {
+  InputDecoration _zanateFilterDecoration(String hintText, bool isDark) {
     final border = OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1.2),
+      borderSide: BorderSide(color: ZanateColors.border(isDark), width: 1.2),
     );
     final focusedBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: _zanateBlack, width: 1.6),
+      borderSide: BorderSide(
+        color: ZanateColors.focusBorder(isDark),
+        width: 1.6,
+      ),
     );
     return InputDecoration(
       hintText: hintText,
-      hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+      hintStyle: TextStyle(fontSize: 12, color: ZanateColors.textMuted(isDark)),
       filled: true,
-      fillColor: const Color(0xFFF8FAFC),
+      fillColor: ZanateColors.surface(isDark),
       isDense: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
       border: border,
@@ -710,14 +708,15 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   }
 
   Widget _buildSquaredHeader(bool isDark) {
+    final textPrimary = ZanateColors.textPrimary(isDark);
     return Container(
       height: 58,
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 8),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: ZanateColors.card(isDark),
         border: Border(
-          bottom: BorderSide(color: Color(0xFFE2E8F0)),
+          bottom: BorderSide(color: ZanateColors.border(isDark)),
         ),
       ),
       child: Row(
@@ -731,10 +730,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               onAliasChanged: widget.onAliasChanged,
               onToggleTheme: widget.onToggleTheme,
             ),
-            icon: const Icon(
+            icon: Icon(
               PhosphorIconsRegular.gear,
               size: 22,
-              color: _zanateBlack,
+              color: textPrimary,
             ),
             splashRadius: 22,
           ),
@@ -743,10 +742,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
           IconButton(
             tooltip: 'Productos guardados',
             onPressed: _openSavedListings,
-            icon: const Icon(
+            icon: Icon(
               PhosphorIconsRegular.bookmarkSimple,
               size: 20,
-              color: _zanateBlack,
+              color: textPrimary,
             ),
             splashRadius: 22,
           ),
@@ -757,13 +756,13 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const Text(
+                Text(
                   'ZANATE STORE',
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.8,
-                    color: Color(0xFF64748B),
+                    color: ZanateColors.textMuted(isDark),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -774,7 +773,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                   style: GoogleFonts.outfit(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: _zanateBlack,
+                    color: textPrimary,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -787,10 +786,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
           IconButton(
             tooltip: 'Mis ventas',
             onPressed: _openMySales,
-            icon: const Icon(
+            icon: Icon(
               PhosphorIconsRegular.storefront,
               size: 20,
-              color: _zanateBlack,
+              color: textPrimary,
             ),
             splashRadius: 22,
           ),
@@ -799,10 +798,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
           IconButton(
             tooltip: 'Publicar Anuncio',
             onPressed: _handleCreateListingClick,
-            icon: const Icon(
+            icon: Icon(
               PhosphorIconsBold.plus,
               size: 22,
-              color: _zanateBlack,
+              color: textPrimary,
             ),
             splashRadius: 22,
           ),
@@ -812,13 +811,14 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   }
 
   Widget _buildTopBanner(bool isDark, bool isDesktop) {
+    final textPrimary = ZanateColors.textPrimary(isDark);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: ZanateColors.card(isDark),
         border: Border(
-          bottom: BorderSide(color: Color(0xFFE2E8F0)),
+          bottom: BorderSide(color: ZanateColors.border(isDark)),
         ),
       ),
       child: Row(
@@ -827,7 +827,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             width: 4,
             height: 36,
             decoration: BoxDecoration(
-              color: _zanateEyeYellow,
+              color: ZanateColors.zanateEyeYellow,
               borderRadius: BorderRadius.circular(999),
             ),
           ),
@@ -846,17 +846,17 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                     style: GoogleFonts.outfit(
                       fontSize: 14.5,
                       fontWeight: FontWeight.w700,
-                      color: _zanateBlack,
+                      color: textPrimary,
                     ),
                   ),
                 ),
                 const SizedBox(height: 2),
-                const Text(
+                Text(
                   'Espacio libre para emprendimientos sancarlistas: comidas, postres, tutorías de cursos y materiales universitarios. Trato directo, sin comisiones.',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: _subtleText,
+                    color: ZanateColors.textSecondary(isDark),
                     fontSize: 12,
                     height: 1.3,
                   ),
@@ -867,7 +867,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
           if (isDesktop) ...[
             TextButton(
               style: TextButton.styleFrom(
-                foregroundColor: _zanateBlack,
+                foregroundColor: textPrimary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -885,8 +885,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             const SizedBox(width: 8),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: _zanateBlack,
-                foregroundColor: Colors.white,
+                backgroundColor: ZanateColors.ctaBg(isDark),
+                foregroundColor: ZanateColors.ctaFg(isDark),
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -907,14 +907,14 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             InkWell(
               borderRadius: BorderRadius.circular(8),
               onTap: () => MarketplacePlansSheet.show(context),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
                 child: Text(
                   'Ver planes',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: _zanateBlack,
+                    color: ZanateColors.focusBorder(isDark),
                   ),
                 ),
               ),
@@ -925,21 +925,27 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   }
 
   Widget _buildSearchAndFilters(bool isDark, bool isDesktop) {
+    final borderColor = ZanateColors.border(isDark);
+    final textPrimary = ZanateColors.textPrimary(isDark);
+    final textSecondary = ZanateColors.textSecondary(isDark);
     final border = OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1.2),
+      borderSide: BorderSide(color: borderColor, width: 1.2),
     );
     final focusedBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: _zanateBlack, width: 1.6),
+      borderSide: BorderSide(
+        color: ZanateColors.focusBorder(isDark),
+        width: 1.6,
+      ),
     );
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+      decoration: BoxDecoration(
+        color: ZanateColors.card(isDark),
+        border: Border(bottom: BorderSide(color: borderColor)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -947,24 +953,24 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
           // Campo de búsqueda
           TextField(
             controller: _searchController,
-            style: const TextStyle(fontSize: 13.5, color: _zanateBlack),
+            style: TextStyle(fontSize: 13.5, color: textPrimary),
             decoration: InputDecoration(
               hintText: 'Buscar postres, almuerzos, tutorías o libros...',
-              hintStyle: const TextStyle(
+              hintStyle: TextStyle(
                 fontSize: 13,
-                color: Color(0xFF94A3B8),
+                color: ZanateColors.textMuted(isDark),
               ),
-              prefixIcon: const Icon(
+              prefixIcon: Icon(
                 PhosphorIconsRegular.magnifyingGlass,
                 size: 18,
-                color: _subtleText,
+                color: textSecondary,
               ),
               suffixIcon: _searchQuery.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         PhosphorIconsRegular.x,
                         size: 16,
-                        color: _subtleText,
+                        color: textSecondary,
                       ),
                       splashRadius: 16,
                       onPressed: () {
@@ -975,7 +981,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                     )
                   : null,
               filled: true,
-              fillColor: const Color(0xFFF8FAFC),
+              fillColor: ZanateColors.surface(isDark),
               isDense: true,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 12,
@@ -996,11 +1002,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
           if (isDesktop)
             Row(
               children: [
-                Expanded(child: _buildSedeDropdown()),
+                Expanded(child: _buildSedeDropdown(isDark)),
                 const SizedBox(width: 8),
-                Expanded(child: _buildFacultadDropdown()),
+                Expanded(child: _buildFacultadDropdown(isDark)),
                 const SizedBox(width: 8),
-                Expanded(child: _buildBuildingDropdown()),
+                Expanded(child: _buildBuildingDropdown(isDark)),
               ],
             )
           else
@@ -1008,13 +1014,13 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               children: [
                 Row(
                   children: [
-                    Expanded(child: _buildSedeDropdown()),
+                    Expanded(child: _buildSedeDropdown(isDark)),
                     const SizedBox(width: 8),
-                    Expanded(child: _buildFacultadDropdown()),
+                    Expanded(child: _buildFacultadDropdown(isDark)),
                   ],
                 ),
                 const SizedBox(height: 8),
-                _buildBuildingDropdown(),
+                _buildBuildingDropdown(isDark),
               ],
             ),
         ],
@@ -1022,15 +1028,16 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     );
   }
 
-  Widget _buildSedeDropdown() {
+  Widget _buildSedeDropdown(bool isDark) {
+    final textPrimary = ZanateColors.textPrimary(isDark);
     return DropdownButtonFormField<String>(
       key: ValueKey('sede_$_selectedSede'),
       initialValue: _selectedSede,
       isExpanded: true,
-      dropdownColor: Colors.white,
+      dropdownColor: ZanateColors.card(isDark),
       borderRadius: BorderRadius.circular(14),
-      decoration: _zanateFilterDecoration('Sede / Campus'),
-      style: const TextStyle(fontSize: 12, color: _zanateBlack),
+      decoration: _zanateFilterDecoration('Sede / Campus', isDark),
+      style: TextStyle(fontSize: 12, color: textPrimary),
       items: USACConstants.sedes
           .map(
             (s) => DropdownMenuItem<String>(
@@ -1038,7 +1045,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               child: Text(
                 s['nombre']!,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 12),
+                style: TextStyle(fontSize: 12, color: textPrimary),
               ),
             ),
           )
@@ -1060,15 +1067,16 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     );
   }
 
-  Widget _buildFacultadDropdown() {
+  Widget _buildFacultadDropdown(bool isDark) {
+    final textPrimary = ZanateColors.textPrimary(isDark);
     return DropdownButtonFormField<String>(
       key: ValueKey('facultad_$_selectedFacultad'),
       initialValue: _selectedFacultad,
       isExpanded: true,
-      dropdownColor: Colors.white,
+      dropdownColor: ZanateColors.card(isDark),
       borderRadius: BorderRadius.circular(14),
-      decoration: _zanateFilterDecoration('Facultad / Unidad'),
-      style: const TextStyle(fontSize: 12, color: _zanateBlack),
+      decoration: _zanateFilterDecoration('Facultad / Unidad', isDark),
+      style: TextStyle(fontSize: 12, color: textPrimary),
       items: USACConstants.facultades
           .map(
             (f) => DropdownMenuItem<String>(
@@ -1076,7 +1084,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               child: Text(
                 f['nombre'].toString(),
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 12),
+                style: TextStyle(fontSize: 12, color: textPrimary),
               ),
             ),
           )
@@ -1088,7 +1096,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     );
   }
 
-  Widget _buildBuildingDropdown() {
+  Widget _buildBuildingDropdown(bool isDark) {
+    final textPrimary = ZanateColors.textPrimary(isDark);
     final buildings = USACConstants.campusBuildings
         .where((b) => _selectedSede == 'todas' || b['sede_id'] == _selectedSede)
         .toList();
@@ -1097,14 +1106,17 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
       key: ValueKey('building_${_selectedSede}_$_selectedBuilding'),
       initialValue: _selectedBuilding,
       isExpanded: true,
-      dropdownColor: Colors.white,
+      dropdownColor: ZanateColors.card(isDark),
       borderRadius: BorderRadius.circular(14),
-      decoration: _zanateFilterDecoration('Edificio / Inmueble'),
-      style: const TextStyle(fontSize: 12, color: _zanateBlack),
+      decoration: _zanateFilterDecoration('Edificio / Inmueble', isDark),
+      style: TextStyle(fontSize: 12, color: textPrimary),
       items: [
-        const DropdownMenuItem<String>(
+        DropdownMenuItem<String>(
           value: 'todos',
-          child: Text('Todos los edificios', style: TextStyle(fontSize: 12)),
+          child: Text(
+            'Todos los edificios',
+            style: TextStyle(fontSize: 12, color: textPrimary),
+          ),
         ),
         ...buildings.map(
           (b) => DropdownMenuItem<String>(
@@ -1112,7 +1124,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             child: Text(
               '${b['building_code']} · ${b['nombre']}',
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 12),
+              style: TextStyle(fontSize: 12, color: textPrimary),
             ),
           ),
         ),
@@ -1163,14 +1175,16 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     final categories = USACConstants.marketplaceCategories
         .map((c) => (id: c.id, label: c.label))
         .toList();
+    final textPrimary = ZanateColors.textPrimary(isDark);
+    final textSecondary = ZanateColors.textSecondary(isDark);
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: ZanateColors.card(isDark),
         border: Border(
-          bottom: BorderSide(color: Color(0xFFE2E8F0)),
+          bottom: BorderSide(color: ZanateColors.border(isDark)),
         ),
       ),
       child: Column(
@@ -1181,7 +1195,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             style: GoogleFonts.outfit(
               fontSize: 15,
               fontWeight: FontWeight.w700,
-              color: _zanateBlack,
+              color: textPrimary,
             ),
           ),
           const SizedBox(height: 10),
@@ -1210,9 +1224,12 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                       ),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? _zanateEyeYellow
-                            : const Color(0xFFF1F5F9),
+                            ? ZanateColors.zanateEyeYellow
+                            : ZanateColors.pill(isDark),
                         borderRadius: BorderRadius.circular(12),
+                        border: isSelected
+                            ? null
+                            : Border.all(color: ZanateColors.border(isDark)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1221,17 +1238,21 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                           Icon(
                             visuals.icon,
                             size: 20,
-                            color: _zanateBlack,
+                            color: isSelected
+                                ? ZanateColors.zanateBlack
+                                : textPrimary,
                           ),
                           const SizedBox(height: 8),
                           Text(
                             cat.label,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12.5,
                               fontWeight: FontWeight.w700,
-                              color: _zanateBlack,
+                              color: isSelected
+                                  ? ZanateColors.zanateBlack
+                                  : textPrimary,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -1242,8 +1263,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                             style: TextStyle(
                               fontSize: 10.5,
                               color: isSelected
-                                  ? _zanateBlack.withValues(alpha: 0.75)
-                                  : _subtleText,
+                                  ? ZanateColors.zanateBlack
+                                      .withValues(alpha: 0.78)
+                                  : textSecondary,
                             ),
                           ),
                         ],
@@ -1267,15 +1289,16 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
         .toList();
 
     if (deals.isEmpty) return const SizedBox.shrink();
+    final textPrimary = ZanateColors.textPrimary(isDark);
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: ZanateColors.card(isDark),
         border: Border(
           bottom: BorderSide(
-            color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            color: ZanateColors.border(isDark),
             width: 0.8,
           ),
         ),
@@ -1288,7 +1311,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               const PhosphorIcon(
                 PhosphorIconsBold.lightning,
                 size: 16,
-                color: _zanateEyeYellow,
+                color: ZanateColors.zanateEyeYellow,
               ),
               const SizedBox(width: 6),
               Text(
@@ -1297,14 +1320,14 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                   letterSpacing: -0.2,
-                  color: isDark ? Colors.white : _zanateBlack,
+                  color: textPrimary,
                 ),
               ),
               const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: _zanateEyeYellow,
+                  color: ZanateColors.zanateEyeYellow,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Text(
@@ -1312,7 +1335,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                   style: TextStyle(
                     fontSize: 9.5,
                     fontWeight: FontWeight.w800,
-                    color: _zanateBlack,
+                    color: ZanateColors.zanateBlack,
                     letterSpacing: 0.4,
                   ),
                 ),
@@ -1335,14 +1358,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                   width: 245,
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? const Color(0xFF0F172A)
-                        : ZanateColors.surfaceBg,
+                    color: ZanateColors.surface(isDark),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: isDark
-                          ? const Color(0xFF334155)
-                          : ZanateColors.subtleBorder,
+                      color: ZanateColors.border(isDark),
                       width: 1.0,
                     ),
                   ),
@@ -1353,8 +1372,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                         child: Container(
                           width: 76,
                           height: 108,
-                          color:
-                              isDark ? const Color(0xFF1E293B) : Colors.white,
+                          color: ZanateColors.card(isDark),
                           child: item.imageUrls.isNotEmpty
                               ? Image.network(
                                   item.imageUrls.first,
@@ -1363,7 +1381,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                                     child: Icon(
                                       visuals.icon,
                                       size: 24,
-                                      color: ZanateColors.hintText,
+                                      color: ZanateColors.textMuted(isDark),
                                     ),
                                   ),
                                 )
@@ -1371,7 +1389,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                                   child: Icon(
                                     visuals.icon,
                                     size: 24,
-                                    color: ZanateColors.hintText,
+                                    color: ZanateColors.textMuted(isDark),
                                   ),
                                 ),
                         ),
@@ -1389,8 +1407,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                               ),
                               decoration: BoxDecoration(
                                 color: item.isFree
-                                    ? _zanateEyeYellow
-                                    : (isDark ? Colors.white : _zanateBlack),
+                                    ? ZanateColors.zanateEyeYellow
+                                    : (isDark
+                                        ? Colors.white
+                                        : ZanateColors.zanateBlack),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
@@ -1399,9 +1419,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.w800,
                                   color: item.isFree
-                                      ? _zanateBlack
+                                      ? ZanateColors.zanateBlack
                                       : (isDark
-                                          ? _zanateBlack
+                                          ? ZanateColors.zanateBlack
                                           : Colors.white),
                                 ),
                               ),
@@ -1414,7 +1434,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                               style: GoogleFonts.outfit(
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.w700,
-                                color: isDark ? Colors.white : _zanateBlack,
+                                color: textPrimary,
                               ),
                             ),
                             const SizedBox(height: 5),
@@ -1457,13 +1477,15 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
 
   // Encabezado del feed: conteo de publicaciones y filtro de gratuitos.
   Widget _buildFeedFilterHeader(bool isDark) {
+    final textPrimary = ZanateColors.textPrimary(isDark);
+    final borderColor = ZanateColors.border(isDark);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: ZanateColors.card(isDark),
         border: Border(
-          bottom: BorderSide(color: Color(0xFFE2E8F0)),
+          bottom: BorderSide(color: borderColor),
         ),
       ),
       child: Row(
@@ -1473,10 +1495,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               '${_listings.length} publicaciones disponibles',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w700,
-                color: _subtleText,
+                color: ZanateColors.textSecondary(isDark),
               ),
             ),
           ),
@@ -1492,9 +1514,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: _onlyFree
-                    ? _zanateEyeYellow
-                    : const Color(0xFFF1F5F9),
+                    ? ZanateColors.zanateEyeYellow
+                    : ZanateColors.pill(isDark),
                 borderRadius: BorderRadius.circular(10),
+                border: _onlyFree ? null : Border.all(color: borderColor),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -1504,7 +1527,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                         ? PhosphorIconsFill.checkCircle
                         : PhosphorIconsRegular.gift,
                     size: 14,
-                    color: _zanateBlack,
+                    color: _onlyFree ? ZanateColors.zanateBlack : textPrimary,
                   ),
                   const SizedBox(width: 5),
                   Text(
@@ -1512,7 +1535,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                     style: TextStyle(
                       fontSize: 11.5,
                       fontWeight: _onlyFree ? FontWeight.w700 : FontWeight.w600,
-                      color: _zanateBlack,
+                      color: _onlyFree ? ZanateColors.zanateBlack : textPrimary,
                     ),
                   ),
                 ],
@@ -1526,10 +1549,12 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
 
   Widget _buildPostsFeed(bool isDark) {
     if (_isLoading) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(40),
-          child: CircularProgressIndicator(color: _zanateBlack),
+          padding: const EdgeInsets.all(40),
+          child: CircularProgressIndicator(
+            color: ZanateColors.focusBorder(isDark),
+          ),
         ),
       );
     }
@@ -1601,7 +1626,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     return MarketplaceTheme.wrap(
       context,
       Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: ZanateColors.bg(isDark),
         body: Column(
           children: [
             // 1. Cabecera Zanate
@@ -1614,7 +1639,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             // ofertas, patrocinios y feed a ancho completo.
             Expanded(
               child: RefreshIndicator(
-                color: _zanateBlack,
+                color: ZanateColors.focusBorder(isDark),
+                backgroundColor: ZanateColors.card(isDark),
                 onRefresh: _loadData,
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
@@ -1657,8 +1683,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             ? FloatingActionButton.extended(
                 heroTag: 'marketplace_fab',
                 onPressed: _handleCreateListingClick,
-                backgroundColor: _zanateBlack,
-                foregroundColor: Colors.white,
+                backgroundColor: ZanateColors.ctaBg(isDark),
+                foregroundColor: ZanateColors.ctaFg(isDark),
                 elevation: 2,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -1700,10 +1726,9 @@ class _VerificationPathOption extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg,
+          color: ZanateColors.surface(isDark),
           border: Border.all(
-            color:
-                isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            color: ZanateColors.border(isDark),
             width: 1.0,
           ),
           borderRadius: BorderRadius.circular(14),
@@ -1721,9 +1746,7 @@ class _VerificationPathOption extends StatelessWidget {
                 child: PhosphorIcon(
                   icon,
                   size: 20,
-                  color: isDark
-                      ? ZanateColors.zanateEyeYellow
-                      : ZanateColors.zanateBlack,
+                  color: ZanateColors.focusBorder(isDark),
                 ),
               ),
             ),
@@ -1737,7 +1760,7 @@ class _VerificationPathOption extends StatelessWidget {
                     style: GoogleFonts.outfit(
                       fontWeight: FontWeight.w700,
                       fontSize: 13.5,
-                      color: isDark ? Colors.white : ZanateColors.zanateBlack,
+                      color: ZanateColors.textPrimary(isDark),
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -1746,9 +1769,7 @@ class _VerificationPathOption extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       height: 1.35,
-                      color: isDark
-                          ? const Color(0xFF94A3B8)
-                          : ZanateColors.subtleText,
+                      color: ZanateColors.textMuted(isDark),
                     ),
                   ),
                 ],
@@ -1757,7 +1778,7 @@ class _VerificationPathOption extends StatelessWidget {
             PhosphorIcon(
               PhosphorIconsRegular.caretRight,
               size: 16,
-              color: isDark ? const Color(0xFF94A3B8) : ZanateColors.mutedText,
+              color: ZanateColors.textMuted(isDark),
             ),
           ],
         ),
