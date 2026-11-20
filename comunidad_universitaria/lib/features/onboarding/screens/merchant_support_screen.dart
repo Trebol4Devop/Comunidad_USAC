@@ -5,6 +5,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/config/support_config.dart';
 import '../../../core/constants/categories.dart';
+import '../../../core/constants/zanate_colors.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../verification/utils/verification_validators.dart';
 
@@ -178,20 +179,26 @@ class _MerchantSupportScreenState extends State<MerchantSupportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const zanateBlack = Color(0xFF0B0D10);
-    const zanateEyeYellow = Color(0xFFF5C518);
-    const subtleText = Color(0xFF475569);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = ZanateColors.textPrimary(isDark);
+    final textSecondary = ZanateColors.textSecondary(isDark);
+    final textMuted = ZanateColors.textMuted(isDark);
+    final borderColor = ZanateColors.border(isDark);
+    final focusColor = ZanateColors.focusBorder(isDark);
     final inputBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1.2),
+      borderSide: BorderSide(color: borderColor, width: 1.2),
     );
     final focusedBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: zanateBlack, width: 1.6),
+      borderSide: BorderSide(color: focusColor, width: 1.6),
     );
     final errorBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.2),
+      borderSide: BorderSide(
+        color: isDark ? const Color(0xFFF87171) : const Color(0xFFEF4444),
+        width: 1.2,
+      ),
     );
     InputDecoration zanateInput({
       required String labelText,
@@ -209,28 +216,28 @@ class _MerchantSupportScreenState extends State<MerchantSupportScreen> {
         counterText: counterText,
         prefixIcon: prefixIcon,
         filled: true,
-        fillColor: const Color(0xFFF8FAFC),
+        fillColor: ZanateColors.surface(isDark),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 16,
         ),
-        labelStyle: const TextStyle(
+        labelStyle: TextStyle(
           fontSize: 13.5,
           fontWeight: FontWeight.w500,
-          color: Color(0xFF64748B),
+          color: textMuted,
         ),
-        floatingLabelStyle: const TextStyle(
+        floatingLabelStyle: TextStyle(
           fontSize: 12.5,
           fontWeight: FontWeight.w700,
-          color: zanateBlack,
+          color: focusColor,
         ),
-        hintStyle: const TextStyle(
+        hintStyle: TextStyle(
           fontSize: 13.5,
-          color: Color(0xFF94A3B8),
+          color: textMuted,
         ),
-        helperStyle: const TextStyle(
+        helperStyle: TextStyle(
           fontSize: 12,
-          color: Color(0xFF64748B),
+          color: textMuted,
         ),
         border: inputBorder,
         enabledBorder: inputBorder,
@@ -241,26 +248,27 @@ class _MerchantSupportScreenState extends State<MerchantSupportScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: ZanateColors.bg(isDark),
       body: SafeArea(
         bottom: false,
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              height: 58,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                color: ZanateColors.card(isDark),
                 border: Border(
-                  bottom: BorderSide(color: Color(0xFFE2E8F0)),
+                  bottom: BorderSide(color: borderColor),
                 ),
               ),
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       PhosphorIconsBold.caretLeft,
                       size: 22,
-                      color: zanateBlack,
+                      color: textPrimary,
                     ),
                     tooltip: 'Regresar',
                     onPressed: () => Navigator.of(context).pop(),
@@ -270,9 +278,9 @@ class _MerchantSupportScreenState extends State<MerchantSupportScreen> {
                       'Contactar con soporte',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.outfit(
-                        fontSize: 16,
+                        fontSize: 17.5,
                         fontWeight: FontWeight.w700,
-                        color: zanateBlack,
+                        color: textPrimary,
                       ),
                     ),
                   ),
@@ -302,7 +310,7 @@ class _MerchantSupportScreenState extends State<MerchantSupportScreen> {
                                 fontSize: 22,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: -0.3,
-                                color: zanateBlack,
+                                color: textPrimary,
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -312,18 +320,18 @@ class _MerchantSupportScreenState extends State<MerchantSupportScreen> {
                                 width: 44,
                                 height: 4,
                                 decoration: BoxDecoration(
-                                  color: zanateEyeYellow,
+                                  color: ZanateColors.zanateEyeYellow,
                                   borderRadius: BorderRadius.circular(999),
                                 ),
                               ),
                             ),
                             const SizedBox(height: 10),
-                            const Text(
+                            Text(
                               'Registra tu comercio en Zanate. Enviaremos tus datos a soporte para que revisen tu caso y te den de alta.',
                               style: TextStyle(
                                 fontSize: 13.5,
                                 height: 1.4,
-                                color: subtleText,
+                                color: textSecondary,
                               ),
                             ),
                             const SizedBox(height: 18),
@@ -335,27 +343,27 @@ class _MerchantSupportScreenState extends State<MerchantSupportScreen> {
                                   vertical: 11,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF8FAFC),
+                                  color: ZanateColors.surface(isDark),
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
-                                    color: const Color(0xFFE2E8F0),
+                                    color: borderColor,
                                   ),
                                 ),
                                 child: Row(
                                   children: [
-                                    const Icon(
+                                    Icon(
                                       PhosphorIconsRegular.at,
                                       size: 17,
-                                      color: subtleText,
+                                      color: textSecondary,
                                     ),
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: Text(
                                         'Correo de la cuenta: ${_accountEmail!}',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 12.5,
                                           fontWeight: FontWeight.w500,
-                                          color: zanateBlack,
+                                          color: textPrimary,
                                         ),
                                       ),
                                     ),
@@ -369,12 +377,13 @@ class _MerchantSupportScreenState extends State<MerchantSupportScreen> {
                               key: const Key('merchant_business_name'),
                               controller: _businessNameController,
                               textCapitalization: TextCapitalization.words,
+                              style: TextStyle(color: textPrimary),
                               decoration: zanateInput(
                                 labelText: 'Nombre del negocio *',
                                 hintText: 'Ej. Cafetería El Sancarlista',
-                                prefixIcon: const Icon(
+                                prefixIcon: Icon(
                                   PhosphorIconsRegular.storefront,
-                                  color: subtleText,
+                                  color: textSecondary,
                                 ),
                               ),
                               validator: (value) {
@@ -391,12 +400,13 @@ class _MerchantSupportScreenState extends State<MerchantSupportScreen> {
                               key: const Key('merchant_phone'),
                               controller: _phoneController,
                               keyboardType: TextInputType.phone,
+                              style: TextStyle(color: textPrimary),
                               decoration: zanateInput(
                                 labelText: 'Teléfono / WhatsApp *',
                                 hintText: 'Ej. +502 2345 6789 o 23456789',
-                                prefixIcon: const Icon(
+                                prefixIcon: Icon(
                                   PhosphorIconsRegular.phone,
-                                  color: subtleText,
+                                  color: textSecondary,
                                 ),
                               ),
                               validator: VerificationValidators.validatePhone,
@@ -408,13 +418,14 @@ class _MerchantSupportScreenState extends State<MerchantSupportScreen> {
                               controller: _locationController,
                               maxLength: 160,
                               textCapitalization: TextCapitalization.sentences,
+                              style: TextStyle(color: textPrimary),
                               decoration: zanateInput(
                                 labelText: 'Ubicación en el campus *',
                                 hintText:
                                     'Ej. Frente al edificio T-3, pasillo principal',
-                                prefixIcon: const Icon(
+                                prefixIcon: Icon(
                                   PhosphorIconsRegular.mapPin,
-                                  color: subtleText,
+                                  color: textSecondary,
                                 ),
                                 counterText: '',
                               ),
@@ -437,13 +448,17 @@ class _MerchantSupportScreenState extends State<MerchantSupportScreen> {
                                   ? null
                                   : _selectedCategoryId,
                               isExpanded: true,
-                              dropdownColor: Colors.white,
+                              dropdownColor: ZanateColors.card(isDark),
                               borderRadius: BorderRadius.circular(14),
+                              style: TextStyle(
+                                color: textPrimary,
+                                fontSize: 14,
+                              ),
                               decoration: zanateInput(
                                 labelText: 'Categoría *',
-                                prefixIcon: const Icon(
+                                prefixIcon: Icon(
                                   PhosphorIconsRegular.tag,
-                                  color: subtleText,
+                                  color: textSecondary,
                                 ),
                               ),
                               items: [
@@ -473,6 +488,7 @@ class _MerchantSupportScreenState extends State<MerchantSupportScreen> {
                               maxLength: 300,
                               maxLines: 4,
                               textCapitalization: TextCapitalization.sentences,
+                              style: TextStyle(color: textPrimary),
                               decoration: zanateInput(
                                 labelText: 'Descripción (opcional)',
                                 hintText:
@@ -485,8 +501,8 @@ class _MerchantSupportScreenState extends State<MerchantSupportScreen> {
                             ElevatedButton.icon(
                               key: const Key('merchant_send'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: zanateBlack,
-                                foregroundColor: Colors.white,
+                                backgroundColor: ZanateColors.ctaBg(isDark),
+                                foregroundColor: ZanateColors.ctaFg(isDark),
                                 elevation: 0,
                                 minimumSize: const Size.fromHeight(52),
                                 padding: const EdgeInsets.symmetric(
@@ -498,11 +514,11 @@ class _MerchantSupportScreenState extends State<MerchantSupportScreen> {
                               ),
                               onPressed: _isSending ? null : _handleSend,
                               icon: _isSending
-                                  ? const SizedBox(
+                                  ? SizedBox(
                                       width: 18,
                                       height: 18,
                                       child: CircularProgressIndicator(
-                                        color: Colors.white,
+                                        color: ZanateColors.ctaFg(isDark),
                                         strokeWidth: 2,
                                       ),
                                     )
