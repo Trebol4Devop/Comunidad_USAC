@@ -214,7 +214,6 @@ class PostCard extends StatelessWidget {
                           children: [
                             Text(
                               post.authorAlias,
-                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 13,
@@ -337,8 +336,6 @@ class PostCard extends StatelessWidget {
               // Post Preview Content
               Text(
                 post.content,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontSize: 13.5,
                   color: ZanateColors.textSecondary(isDark),
@@ -381,7 +378,6 @@ class PostCard extends StatelessWidget {
                                     ? Colors.white
                                     : ZanateColors.zanateBlack,
                               ),
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           const SizedBox(width: 6),
@@ -404,8 +400,6 @@ class PostCard extends StatelessWidget {
                               ? Colors.white
                               : ZanateColors.zanateBlack,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                       Text(
                         post.quotedPost!.content,
@@ -415,8 +409,6 @@ class PostCard extends StatelessWidget {
                               : ZanateColors.subtleText,
                           fontSize: 12,
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
@@ -478,7 +470,7 @@ class PostCard extends StatelessWidget {
                                 : null,
                             borderRadius: BorderRadius.circular(8),
                             child: Container(
-                              height: 36,
+                              constraints: const BoxConstraints(minHeight: 36),
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
@@ -510,10 +502,12 @@ class PostCard extends StatelessWidget {
                                           ),
                                         ),
                                       ),
-                                    Center(
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                                        child: Row(
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 7,
+                                      ),
+                                      child: Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
                                           Expanded(
@@ -536,13 +530,13 @@ class PostCard extends StatelessWidget {
                                                       fontSize: 12,
                                                       fontWeight: isMyVote ? FontWeight.bold : FontWeight.normal,
                                                     ),
-                                                    overflow: TextOverflow.ellipsis,
                                                   ),
                                                 ),
                                               ],
                                             ),
                                           ),
-                                          if (hasVoted)
+                                          if (hasVoted) ...[
+                                            const SizedBox(width: 8),
                                             Text(
                                               '${(percent * 100).toStringAsFixed(0)}% · ${opt.votesCount} votos',
                                               style: TextStyle(
@@ -557,8 +551,8 @@ class PostCard extends StatelessWidget {
                                                         : ZanateColors.subtleText),
                                               ),
                                             ),
+                                          ],
                                         ],
-                                        ),
                                       ),
                                     ),
                                   ],

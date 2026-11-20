@@ -47,9 +47,9 @@ class ForumChannelSidebar extends StatelessWidget {
         children: [
           // Cabecera del servidor activo
           Container(
-            height: 62,
+            constraints: const BoxConstraints(minHeight: 62),
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             alignment: Alignment.centerLeft,
             decoration: BoxDecoration(
               border: Border(
@@ -92,8 +92,6 @@ class ForumChannelSidebar extends StatelessWidget {
                         activeServer.name
                             .replaceAll(RegExp(r'\s*\([^)]*\)'), '')
                             .trim(),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.outfit(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
@@ -202,8 +200,6 @@ class ForumChannelSidebar extends StatelessWidget {
                           Flexible(
                             child: Text(
                               'Agregar servidor',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
@@ -292,8 +288,6 @@ class ForumChannelSidebar extends StatelessWidget {
                 Expanded(
                   child: Text(
                     channel.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 13.5,
                       fontWeight:

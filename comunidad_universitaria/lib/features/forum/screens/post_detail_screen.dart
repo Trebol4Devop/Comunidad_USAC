@@ -804,7 +804,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                             fontWeight: FontWeight.bold,
                                             fontSize: 12,
                                           ),
-                                          overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
                                       const SizedBox(width: 6),
@@ -826,8 +825,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                       fontWeight: FontWeight.w600,
                                       fontSize: 13,
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
                                   ),
                                   Text(
                                     _post.quotedPost!.content,
@@ -837,8 +834,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                           : Colors.grey.shade600,
                                       fontSize: 12,
                                     ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
                               ),
@@ -907,7 +902,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                         ),
                                         borderRadius: BorderRadius.circular(10),
                                         child: Container(
-                                          height: 40,
+                                          constraints: const BoxConstraints(minHeight: 40),
                                           decoration: BoxDecoration(
                                             borderRadius: BorderRadius.circular(10),
                                             border: Border.all(
@@ -943,13 +938,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                                       ),
                                                     ),
                                                   ),
-                                                Center(
-                                                  child: Padding(
-                                                    padding:
-                                                        const EdgeInsets.symmetric(
-                                                          horizontal: 12,
-                                                        ),
-                                                    child: Row(
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 12,
+                                                        vertical: 8,
+                                                      ),
+                                                  child: Row(
                                                     mainAxisAlignment:
                                                         MainAxisAlignment
                                                             .spaceBetween,
@@ -980,14 +975,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                                                       : FontWeight.w500,
                                                                   color: primaryTextColor,
                                                                 ),
-                                                                overflow:
-                                                                    TextOverflow.ellipsis,
                                                               ),
                                                             ),
                                                           ],
                                                         ),
                                                       ),
-                                                      if (hasVoted)
+                                                      if (hasVoted) ...[
+                                                        const SizedBox(width: 8),
                                                         Text(
                                                           '${(percent * 100).toStringAsFixed(0)}% · ${opt.votesCount} votos',
                                                           style: TextStyle(
@@ -1001,10 +995,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                                                 : secondaryTextColor,
                                                           ),
                                                         ),
+                                                      ],
                                                     ],
                                                   ),
                                                 ),
-                                              ),
                                               ],
                                             ),
                                           ),
@@ -1321,8 +1315,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             Expanded(
                               child: Text(
                                 'Respondiendo a ${_replyTarget!.authorAlias}: "${_replyTarget!.content}"',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontSize: 11.5,
                                   color: isDark

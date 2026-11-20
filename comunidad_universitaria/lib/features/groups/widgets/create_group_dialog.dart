@@ -281,6 +281,7 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
               DropdownButtonFormField<String>(
                 initialValue: _groupType,
                 isExpanded: true,
+                itemHeight: null,
                 dropdownColor: ZanateColors.card(isDark),
                 decoration: _zanateInput(
                   isDark,
@@ -291,42 +292,36 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
                     value: 'curso',
                     child: Text(
                       'Curso Académico',
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   DropdownMenuItem(
                     value: 'objetos_perdidos',
                     child: Text(
                       'Objetos Perdidos & Hallazgos',
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   DropdownMenuItem(
                     value: 'comunidad',
                     child: Text(
                       'Comunidad de Facultad / Sede',
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   DropdownMenuItem(
                     value: 'deportes',
                     child: Text(
                       'Deportes & Actividades Extracurriculares',
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   DropdownMenuItem(
                     value: 'avisos',
                     child: Text(
                       'Avisos & Organización Estudiantil',
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   DropdownMenuItem(
                     value: 'otro',
                     child: Text(
                       'Interés General / Otro',
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -345,6 +340,7 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
                     child: DropdownButtonFormField<String>(
                       initialValue: _selectedFacultad,
                       isExpanded: true,
+                      itemHeight: null,
                       dropdownColor: ZanateColors.card(isDark),
                       decoration: _zanateInput(
                         isDark,
@@ -356,7 +352,6 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
                               value: f['id'].toString(),
                               child: Text(
                                 f['nombre'].toString(),
-                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(fontSize: 12),
                               ),
                             ),
@@ -376,6 +371,7 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
                       key: ValueKey('carrera_$_selectedFacultad'),
                       initialValue: _selectedCarrera,
                       isExpanded: true,
+                      itemHeight: null,
                       dropdownColor: ZanateColors.card(isDark),
                       decoration: _zanateInput(
                         isDark,
@@ -387,7 +383,6 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
                               value: c['id'].toString(),
                               child: Text(
                                 c['nombre'].toString(),
-                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(fontSize: 12),
                               ),
                             ),

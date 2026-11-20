@@ -135,12 +135,13 @@ class GroupCard extends StatelessWidget {
                 const SizedBox(width: 8),
 
                 // Section tag
-                Text(
-                  '· ${group.section}',
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontSize: 11,
-                    color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                Flexible(
+                  child: Text(
+                    '· ${group.section}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontSize: 11,
+                      color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                    ),
                   ),
                 ),
 
@@ -219,7 +220,6 @@ class GroupCard extends StatelessWidget {
                 Flexible(
                   child: Text(
                     group.authorAlias,
-                    overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -268,8 +268,6 @@ class GroupCard extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 group.description,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodySmall?.copyWith(fontSize: 12),
               ),
             ],

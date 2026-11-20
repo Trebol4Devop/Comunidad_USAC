@@ -422,8 +422,6 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                                 fontSize: 12,
                                 color: secondaryTextColor,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
@@ -437,6 +435,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
               if (_canSelectChannel) ...[
                 DropdownButtonFormField<String>(
                   isExpanded: true,
+                  itemHeight: null,
                   initialValue: _selectedCategory,
                   dropdownColor: ZanateColors.card(isDark),
                   decoration: InputDecoration(
@@ -478,35 +477,30 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                       value: 'todos',
                       child: Text(
                         '#todos-los-temas · Todas las áreas / General',
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     DropdownMenuItem(
                       value: 'prerrequisitos',
                       child: Text(
                         '#dudas-y-pensum · Dudas & Pensum',
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     DropdownMenuItem(
                       value: 'catedraticos',
                       child: Text(
                         '#catedraticos-opiniones · Catedráticos',
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     DropdownMenuItem(
                       value: 'apuntes',
                       child: Text(
                         '#apuntes-y-recursos · Apuntes & Exámenes',
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     DropdownMenuItem(
                       value: 'horarios',
                       child: Text(
                         '#horarios-y-secciones · Horarios & Secciones',
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -539,20 +533,19 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
+                            Wrap(
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 8,
+                              runSpacing: 4,
                               children: [
-                                Flexible(
-                                  child: Text(
-                                    _channelLabel,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 13,
-                                      color: primaryTextColor,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
+                                Text(
+                                  _channelLabel,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13,
+                                    color: primaryTextColor,
                                   ),
                                 ),
-                                const SizedBox(width: 8),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 8,
@@ -600,6 +593,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                 const SizedBox(height: 14),
                 DropdownButtonFormField<String>(
                   isExpanded: true,
+                  itemHeight: null,
                   initialValue: _selectedCarrera,
                   dropdownColor: ZanateColors.card(isDark),
                   decoration: InputDecoration(
@@ -639,7 +633,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                   items: _availableCareers.map((c) {
                     return DropdownMenuItem<String>(
                       value: c.id,
-                      child: Text(c.name, overflow: TextOverflow.ellipsis),
+                      child: Text(c.name),
                     );
                   }).toList(),
                   onChanged: (val) {

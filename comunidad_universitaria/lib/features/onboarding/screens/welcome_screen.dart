@@ -608,8 +608,6 @@ class _ActionsColumn extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 10),
                   child: Text(
                     'o explora sin registro',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 12,
                       color: textMuted,

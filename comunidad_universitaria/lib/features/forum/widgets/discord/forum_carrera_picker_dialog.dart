@@ -364,8 +364,6 @@ class _ForumCarreraPickerDialogState extends State<ForumCarreraPickerDialog> {
                                 fontSize: 11,
                                 color: secondaryTextColor,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                             trailing: PhosphorIcon(
                               PhosphorIconsRegular.caretRight,

@@ -399,6 +399,7 @@ class GroupsScreenState extends State<GroupsScreen> {
                         child: DropdownButton<String>(
                           value: tempFacultad,
                           isExpanded: true,
+                          itemHeight: null,
                           dropdownColor: ZanateColors.card(isDark),
                           borderRadius: BorderRadius.circular(14),
                           icon: Icon(
@@ -412,7 +413,6 @@ class GroupsScreenState extends State<GroupsScreen> {
                                   value: f['id'].toString(),
                                   child: Text(
                                     f['nombre'].toString(),
-                                    overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       fontSize: 13,
                                       color: textPrimary,
@@ -472,9 +472,9 @@ class GroupsScreenState extends State<GroupsScreen> {
   Widget _buildSquaredHeader(bool isDark, String titleText) {
     final textPrimary = ZanateColors.textPrimary(isDark);
     return Container(
-      height: 58,
+      constraints: const BoxConstraints(minHeight: 58),
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
         color: ZanateColors.card(isDark),
         border: Border(
@@ -508,25 +508,23 @@ class GroupsScreenState extends State<GroupsScreen> {
               children: [
                 Text(
                   'DIRECTORIO ESTUDIANTIL',
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.8,
                     color: ZanateColors.textMuted(isDark),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 1),
                 Text(
                   titleText,
+                  textAlign: TextAlign.center,
                   style: GoogleFonts.outfit(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: textPrimary,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),

@@ -950,7 +950,6 @@ class _ForumScreenState extends State<ForumScreen> {
                 fontSize: 15.5,
                 color: titleColor,
               ),
-              overflow: TextOverflow.ellipsis,
             ),
           ),
           Container(
@@ -1022,14 +1021,13 @@ class _ForumScreenState extends State<ForumScreen> {
               children: [
                 Text(
                   serverName,
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.8,
                     color: ZanateColors.textMuted(isDark),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 1),
                 Row(
@@ -1048,14 +1046,13 @@ class _ForumScreenState extends State<ForumScreen> {
                     Flexible(
                       child: Text(
                         channelName,
+                        textAlign: TextAlign.center,
                         style: GoogleFonts.outfit(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                           letterSpacing: -0.2,
                           color: titleColor,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -1409,9 +1406,9 @@ class _ForumScreenState extends State<ForumScreen> {
       final borderColor = ZanateColors.border(isDark);
 
       return Container(
-        height: 62,
+        constraints: const BoxConstraints(minHeight: 62),
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: ZanateColors.card(isDark),
           border: Border(
@@ -1442,6 +1439,7 @@ class _ForumScreenState extends State<ForumScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1453,8 +1451,6 @@ class _ForumScreenState extends State<ForumScreen> {
                       letterSpacing: -0.2,
                       color: isDark ? Colors.white : ZanateColors.zanateBlack,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 1),
                   Text(
@@ -1465,17 +1461,19 @@ class _ForumScreenState extends State<ForumScreen> {
                           ? const Color(0xFF94A3B8)
                           : ZanateColors.mutedText,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ),
             const SizedBox(width: 12),
-            SizedBox(
-              width: 220,
-              height: 38,
-              child: _buildSearchField(isDark, isDesktop: true),
+            Flexible(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 220),
+                child: SizedBox(
+                  height: 38,
+                  child: _buildSearchField(isDark, isDesktop: true),
+                ),
+              ),
             ),
             if (!_activeChannel.isSpecial) ...[
               const SizedBox(width: 10),

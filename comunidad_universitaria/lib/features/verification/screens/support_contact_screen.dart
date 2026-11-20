@@ -295,6 +295,7 @@ class _SupportContactScreenState extends State<SupportContactScreen> {
                 DropdownButtonFormField<String>(
                   initialValue: _selectedReason,
                   isExpanded: true,
+                  itemHeight: null,
                   dropdownColor: ZanateColors.card(isDark),
                   borderRadius: BorderRadius.circular(14),
                   style: TextStyle(color: textPrimary, fontSize: 14),
@@ -311,7 +312,6 @@ class _SupportContactScreenState extends State<SupportContactScreen> {
                         value: reason,
                         child: Text(
                           reason,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                   ],

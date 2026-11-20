@@ -664,7 +664,6 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
                     fontSize: 10.5,
                     color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
           ],
@@ -950,6 +949,7 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
                 DropdownButtonFormField<String>(
                   initialValue: _selectedCarreraId,
                   isExpanded: true,
+                  itemHeight: null,
                   dropdownColor: ZanateColors.card(isDark),
                   borderRadius: BorderRadius.circular(14),
                   style: TextStyle(color: textPrimary, fontSize: 13.5),
@@ -965,7 +965,6 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
                       value: c['id'],
                       child: Text(
                         c['nombre'] ?? '',
-                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(fontSize: 13, color: textPrimary),
                       ),
                     );
