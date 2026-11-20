@@ -29,7 +29,7 @@ class GifPickerModal extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+      backgroundColor: ZanateColors.card(isDark),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -231,15 +231,13 @@ class _GifPickerModalState extends State<GifPickerModal> {
     final isDark = theme.brightness == Brightness.dark;
     final height = MediaQuery.of(context).size.height * 0.75;
 
-    final titleColor = isDark ? Colors.white : ZanateColors.zanateBlack;
-    final subtleText =
-        isDark ? const Color(0xFF94A3B8) : ZanateColors.subtleText;
-    final borderColor =
-        isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
+    final titleColor = ZanateColors.textPrimary(isDark);
+    final subtleText = ZanateColors.textSecondary(isDark);
+    final borderColor = ZanateColors.border(isDark);
 
     return Container(
       height: height,
-      color: isDark ? const Color(0xFF0F172A) : Colors.white,
+      color: ZanateColors.card(isDark),
       child: Column(
         children: [
           // Drag handle & Header
@@ -329,9 +327,7 @@ class _GifPickerModalState extends State<GifPickerModal> {
                           )
                         : null,
                     filled: true,
-                    fillColor: isDark
-                        ? const Color(0xFF1E293B)
-                        : ZanateColors.surfaceBg,
+                    fillColor: ZanateColors.surface(isDark),
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -376,15 +372,11 @@ class _GifPickerModalState extends State<GifPickerModal> {
                           isSelected ? FontWeight.w700 : FontWeight.w600,
                       color: isSelected
                           ? ZanateColors.zanateBlack
-                          : (isDark
-                                ? const Color(0xFFCBD5E1)
-                                : ZanateColors.subtleText),
+                          : ZanateColors.textSecondary(isDark),
                     ),
                   ),
                   selected: isSelected,
-                  backgroundColor: isDark
-                      ? const Color(0xFF1E293B)
-                      : ZanateColors.pillBg,
+                  backgroundColor: ZanateColors.surface(isDark),
                   selectedColor: ZanateColors.zanateEyeYellow,
                   side: BorderSide(
                     color: isSelected ? ZanateColors.zanateBlack : borderColor,
@@ -409,16 +401,16 @@ class _GifPickerModalState extends State<GifPickerModal> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
-                          Icons.sentiment_dissatisfied,
+                        Icon(
+                          PhosphorIconsRegular.smileySad,
                           size: 48,
-                          color: Colors.grey,
+                          color: ZanateColors.textMuted(isDark),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           'No se encontraron GIFs',
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: Colors.grey,
+                            color: ZanateColors.textMuted(isDark),
                           ),
                         ),
                       ],
@@ -456,7 +448,9 @@ class _GifPickerModalState extends State<GifPickerModal> {
                                 loadingBuilder: (ctx, child, progress) {
                                   if (progress == null) return child;
                                   return Container(
-                                    color: Colors.grey.shade200,
+                                    color: isDark
+                                        ? ZanateColors.darkSurfaceSubtle
+                                        : Colors.grey.shade200,
                                     child: const Center(
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2,
@@ -465,11 +459,13 @@ class _GifPickerModalState extends State<GifPickerModal> {
                                   );
                                 },
                                 errorBuilder: (ctx, err, stack) => Container(
-                                  color: Colors.grey.shade300,
-                                  child: const Center(
+                                  color: isDark
+                                      ? ZanateColors.darkSurface
+                                      : Colors.grey.shade300,
+                                  child: Center(
                                     child: Icon(
-                                      Icons.broken_image,
-                                      color: Colors.grey,
+                                      PhosphorIconsRegular.imageBroken,
+                                      color: ZanateColors.textMuted(isDark),
                                     ),
                                   ),
                                 ),
