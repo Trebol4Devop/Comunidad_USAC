@@ -54,21 +54,19 @@ class IdentityBadgeChip extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Row(
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text(
                         'Autor: ',
                         style: TextStyle(fontSize: 11.5, color: subtle),
                       ),
-                      Flexible(
-                        child: Text(
-                          displayName,
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w700,
-                            color: fg,
-                          ),
-                          overflow: TextOverflow.ellipsis,
+                      Text(
+                        displayName,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: fg,
                         ),
                       ),
                     ],
@@ -93,7 +91,6 @@ class IdentityBadgeChip extends StatelessWidget {
                             fontWeight: FontWeight.w500,
                             color: subtle,
                           ),
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -180,7 +177,6 @@ class IdentityBadgeChip extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                           color: fg,
                         ),
-                        overflow: TextOverflow.ellipsis,
                       ),
                       if (isVerified)
                         Container(
@@ -203,55 +199,38 @@ class IdentityBadgeChip extends StatelessWidget {
                         ),
                     ],
                   ),
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          isVerified
-                              ? 'Identidad validada con carné institucional USAC'
-                              : 'Perfil estudiantil de contacto directo',
-                          style: TextStyle(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w500,
-                            color: subtle,
+                  if (isVerified) ...[
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Identidad validada con carné institucional USAC',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w500,
+                              color: subtle,
+                            ),
                           ),
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
             if (onSwitchIdentity != null)
-              InkWell(
-                onTap: onSwitchIdentity,
-                borderRadius: BorderRadius.circular(8),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        PhosphorIconsRegular.shield,
-                        size: 13,
-                        color: fg,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Ajustes',
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
-                          color: fg,
-                        ),
-                      ),
-                    ],
-                  ),
+              IconButton(
+                tooltip: 'Ajustes',
+                onPressed: onSwitchIdentity,
+                icon: Icon(
+                  PhosphorIconsRegular.gear,
+                  size: 18,
+                  color: fg,
                 ),
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                padding: const EdgeInsets.all(6),
               ),
           ],
         ),

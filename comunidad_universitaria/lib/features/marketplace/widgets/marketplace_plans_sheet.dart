@@ -6,6 +6,7 @@ import '../../../core/services/marketplace_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
 import '../../shared/widgets/auth_modal.dart';
+import '../marketplace_theme.dart';
 import 'sponsor_request_dialog.dart';
 
 class MarketplacePlansSheet extends StatefulWidget {
@@ -21,36 +22,11 @@ class MarketplacePlansSheet extends StatefulWidget {
   });
 
   static Future<void> show(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    if (Responsive.isMobile(context)) {
-      return showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        useSafeArea: true,
-        backgroundColor: ZanateColors.bg(isDark),
-        shape: RoundedRectangleBorder(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          side: BorderSide(color: ZanateColors.border(isDark)),
-        ),
+    return Navigator.of(context).push<void>(
+      MaterialPageRoute(
         builder: (ctx) => const MarketplacePlansSheet(),
-      );
-    } else {
-      return showDialog(
-        context: context,
-        builder: (ctx) => Dialog(
-          backgroundColor: ZanateColors.bg(isDark),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: BorderSide(color: ZanateColors.border(isDark)),
-          ),
-          insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 960),
-            child: const MarketplacePlansSheet(),
-          ),
-        ),
-      );
-    }
+      ),
+    );
   }
 
   @override
@@ -144,197 +120,98 @@ class _MarketplacePlansSheetState extends State<MarketplacePlansSheet> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isDesktop = Responsive.isDesktop(context);
+    final isMobile = Responsive.isMobile(context);
+    final scaffoldBg = ZanateColors.bg(isDark);
+    final primaryText = ZanateColors.textPrimary(isDark);
+    final borderColor = ZanateColors.border(isDark);
 
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: isDesktop ? 32 : 18,
-        vertical: 20,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (!isDesktop) ...[
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: ZanateColors.border(isDark),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-          ],
-          // Header
-          Row(
+    Widget body;
+    if (_isLoading) {
+      body = const Center(child: CircularProgressIndicator());
+    } else if (_errorMessage != null) {
+      body = Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: ZanateColors.zanateEyeYellow.withValues(alpha: 0.25),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Center(
-                  child: PhosphorIcon(
-                    PhosphorIconsBold.sparkle,
-                    color: isDark
-                        ? ZanateColors.zanateEyeYellow
-                        : ZanateColors.zanateBlack,
-                    size: 22,
+              Text(
+                _errorMessage!,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isDark
+                      ? ZanateColors.zanateEyeYellow
+                      : ZanateColors.zanateBlack,
+                  foregroundColor:
+                      isDark ? ZanateColors.zanateBlack : Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Planes del Marketplace',
-                      style: GoogleFonts.outfit(
-                        fontSize: 19,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : ZanateColors.zanateBlack,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Más visibilidad, más catálogo, más herramientas. Sin comisiones por venta.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isDark
-                            ? const Color(0xFF94A3B8)
-                            : ZanateColors.mutedText,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Container(
-                      width: 44,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: ZanateColors.zanateEyeYellow,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                tooltip: 'Cerrar',
-                icon: PhosphorIcon(
-                  PhosphorIconsRegular.x,
-                  size: 20,
-                  color:
-                      isDark ? const Color(0xFF94A3B8) : ZanateColors.mutedText,
-                ),
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: _loadPlansAndStatus,
+                child: const Text('Reintentar'),
               ),
             ],
           ),
-          const SizedBox(height: 20),
-
-          // Content body
-          if (_isLoading)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(40),
-                child: CircularProgressIndicator(),
-              ),
-            )
-          else if (_errorMessage != null)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+        ),
+      );
+    } else {
+      body = SingleChildScrollView(
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 18 : 28,
+          vertical: isMobile ? 16 : 24,
+        ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: isDesktop ? 960 : 680),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Intro compacto
+                Row(
                   children: [
-                    Text(_errorMessage!),
-                    const SizedBox(height: 12),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: isDark
-                            ? ZanateColors.zanateEyeYellow
-                            : ZanateColors.zanateBlack,
-                        foregroundColor:
-                            isDark ? ZanateColors.zanateBlack : Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      onPressed: _loadPlansAndStatus,
-                      child: const Text('Reintentar'),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          else
-            Flexible(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    if (isDesktop)
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: _plans
-                            .map(
-                              (plan) => Expanded(
-                                child: Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(horizontal: 6),
-                                  child: _buildPlanCard(plan, isDark),
-                                ),
-                              ),
-                            )
-                            .toList(),
-                      )
-                    else
-                      Column(
-                        children: _plans
-                            .map(
-                              (plan) => Padding(
-                                padding: const EdgeInsets.only(bottom: 14),
-                                child: _buildPlanCard(plan, isDark),
-                              ),
-                            )
-                            .toList(),
-                      ),
-                    const SizedBox(height: 18),
-
-                    // Mandatory Note (UX-MKT-018)
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
+                      width: 40,
+                      height: 40,
                       decoration: BoxDecoration(
-                        color: ZanateColors.surface(isDark),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: ZanateColors.border(isDark),
-                          width: 0.8,
+                        color: ZanateColors.zanateEyeYellow.withValues(alpha: 0.25),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(
+                        child: PhosphorIcon(
+                          PhosphorIconsBold.sparkle,
+                          color: isDark
+                              ? ZanateColors.zanateEyeYellow
+                              : ZanateColors.zanateBlack,
+                          size: 20,
                         ),
                       ),
-                      child: Row(
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(
-                            PhosphorIconsRegular.info,
-                            size: 18,
-                            color: ZanateColors.textMuted(isDark),
+                          Text(
+                            'Más visibilidad, más catálogo, más herramientas. Sin comisiones por venta.',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              color: isDark
+                                  ? const Color(0xFF94A3B8)
+                                  : ZanateColors.mutedText,
+                            ),
                           ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'La coordinación y el pago del plan se realizan fuera de la app con el equipo. La plataforma no cobra comisiones por tus ventas.',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: ZanateColors.textSecondary(isDark),
-                                height: 1.3,
-                              ),
+                          const SizedBox(height: 6),
+                          Container(
+                            width: 44,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: ZanateColors.zanateEyeYellow,
+                              borderRadius: BorderRadius.circular(2),
                             ),
                           ),
                         ],
@@ -342,9 +219,109 @@ class _MarketplacePlansSheetState extends State<MarketplacePlansSheet> {
                     ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 16),
+
+                // Mandatory Note (UX-MKT-018) en la parte superior sin necesidad de scroll
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: ZanateColors.surface(isDark),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: borderColor,
+                      width: 0.8,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        PhosphorIconsRegular.info,
+                        size: 18,
+                        color: ZanateColors.textMuted(isDark),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'La coordinación y el pago del plan se realizan fuera de la app con el equipo. La plataforma no cobra comisiones por tus ventas.',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: ZanateColors.textSecondary(isDark),
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 18),
+
+                if (isDesktop)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: _plans
+                        .map(
+                          (plan) => Expanded(
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 6),
+                              child: _buildPlanCard(plan, isDark),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  )
+                else
+                  Column(
+                    children: _plans
+                        .map(
+                          (plan) => Padding(
+                            padding: const EdgeInsets.only(bottom: 14),
+                            child: _buildPlanCard(plan, isDark),
+                          ),
+                        )
+                        .toList(),
+                  ),
+              ],
             ),
-        ],
+          ),
+        ),
+      );
+    }
+
+    return MarketplaceTheme.wrap(
+      context,
+      Scaffold(
+        backgroundColor: scaffoldBg,
+        appBar: AppBar(
+          backgroundColor: scaffoldBg,
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            tooltip: 'Volver',
+            icon: PhosphorIcon(
+              PhosphorIconsBold.caretLeft,
+              color: primaryText,
+              size: 22,
+            ),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          title: Text(
+            'Planes del Marketplace',
+            style: GoogleFonts.outfit(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              color: primaryText,
+            ),
+          ),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Divider(height: 1, color: borderColor),
+          ),
+        ),
+        body: SafeArea(child: body),
       ),
     );
   }
@@ -377,14 +354,17 @@ class _MarketplacePlansSheetState extends State<MarketplacePlansSheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                plan.name,
-                style: GoogleFonts.outfit(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : ZanateColors.zanateBlack,
+              Expanded(
+                child: Text(
+                  plan.name,
+                  style: GoogleFonts.outfit(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : ZanateColors.zanateBlack,
+                  ),
                 ),
               ),
+              if (isCurrentPlan || isRecommended) const SizedBox(width: 8),
               if (isCurrentPlan)
                 Container(
                   padding:

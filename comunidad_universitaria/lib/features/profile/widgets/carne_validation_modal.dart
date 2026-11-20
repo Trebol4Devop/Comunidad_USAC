@@ -20,12 +20,12 @@ class CarneValidationModal extends StatefulWidget {
     required UserProfile currentProfile,
     required Function(UserProfile) onProfileUpdated,
   }) {
-    return showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => CarneValidationModal(
-        currentProfile: currentProfile,
-        onProfileUpdated: onProfileUpdated,
+    return Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (ctx) => CarneValidationModal(
+          currentProfile: currentProfile,
+          onProfileUpdated: onProfileUpdated,
+        ),
       ),
     );
   }
@@ -162,86 +162,96 @@ class _CarneValidationModalState extends State<CarneValidationModal> {
       );
     }
 
-    return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: borderColor, width: 1.0),
+    final scaffoldBg = ZanateColors.bg(isDark);
+
+    return Scaffold(
+      backgroundColor: scaffoldBg,
+      appBar: AppBar(
+        backgroundColor: scaffoldBg,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          tooltip: 'Volver',
+          icon: PhosphorIcon(
+            PhosphorIconsBold.caretLeft,
+            color: titleColor,
+            size: 22,
+          ),
+          onPressed: _isSavingDraft
+              ? null
+              : () => Navigator.of(context).pop(),
+        ),
+        title: Text(
+          'Datos para verificación de carné',
+          style: GoogleFonts.outfit(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            color: titleColor,
+          ),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Divider(height: 1, color: borderColor),
+        ),
       ),
-      surfaceTintColor: Colors.transparent,
-      elevation: 0,
-      backgroundColor: ZanateColors.card(isDark),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 460),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Form(
-            key: _formKey,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: ZanateColors.zanateEyeYellow.withValues(
-                            alpha: 0.22,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 680),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: ZanateColors.zanateEyeYellow.withValues(
+                              alpha: 0.22,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          borderRadius: BorderRadius.circular(12),
+                          child: Icon(
+                            PhosphorIconsFill.info,
+                            color: isDark
+                                ? ZanateColors.zanateEyeYellow
+                                : ZanateColors.zanateBlack,
+                            size: 20,
+                          ),
                         ),
-                        child: Icon(
-                          PhosphorIconsFill.info,
-                          color: isDark
-                              ? ZanateColors.zanateEyeYellow
-                              : ZanateColors.zanateBlack,
-                          size: 22,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Datos para verificación de carné',
-                              style: GoogleFonts.outfit(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 16.5,
-                                color: titleColor,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Sin fuente institucional conectada',
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: subtleColor,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Sin fuente institucional conectada',
-                              style: TextStyle(fontSize: 11.5, color: subtleColor),
-                            ),
-                          ],
+                              const SizedBox(height: 6),
+                              Container(
+                                width: 44,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  color: ZanateColors.zanateEyeYellow,
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      IconButton(
-                        icon: Icon(
-                          PhosphorIconsRegular.x,
-                          size: 20,
-                          color: titleColor,
-                        ),
-                        onPressed: _isSavingDraft
-                            ? null
-                            : () => Navigator.of(context).pop(),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    width: 44,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: ZanateColors.zanateEyeYellow,
-                      borderRadius: BorderRadius.circular(999),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 12),
+                    const SizedBox(height: 14),
 
                   // Consentimiento explícito para guardar el borrador local
                   Container(
@@ -481,7 +491,8 @@ class _CarneValidationModalState extends State<CarneValidationModal> {
                       ],
                     ),
                   ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

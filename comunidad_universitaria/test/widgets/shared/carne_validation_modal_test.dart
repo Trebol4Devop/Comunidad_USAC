@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:comunidad_universitaria/core/config/app_theme.dart';
 import 'package:comunidad_universitaria/core/models/user_profile.dart';
 import 'package:comunidad_universitaria/core/services/profile_service.dart';
@@ -30,16 +31,55 @@ void main() {
 
     return MaterialApp(
       theme: AppTheme.lightTheme,
-      home: Scaffold(
-        body: CarneValidationModal(
-          currentProfile: profile,
-          onProfileUpdated: onProfileUpdated ?? (_) {},
-        ),
+      home: CarneValidationModal(
+        currentProfile: profile,
+        onProfileUpdated: onProfileUpdated ?? (_) {},
       ),
     );
   }
 
   group('CarneValidationModal Widget Tests', () {
+    testWidgets(
+      'CarneValidationModal.show abre una vista separada con AppBar y caretLeft',
+      (tester) async {
+        tester.view.physicalSize = const Size(400, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
+
+        final profile = UserProfile(
+          userId: 'user-123',
+          alias: 'Estudiante #101',
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.lightTheme,
+            home: Scaffold(
+              body: Builder(
+                builder: (ctx) => ElevatedButton(
+                  onPressed: () => CarneValidationModal.show(
+                    ctx,
+                    currentProfile: profile,
+                    onProfileUpdated: (_) {},
+                  ),
+                  child: const Text('Abrir verificación de carné'),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Abrir verificación de carné'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(CarneValidationModal), findsOneWidget);
+        expect(find.byType(AppBar), findsOneWidget);
+        expect(find.text('Datos para verificación de carné'), findsOneWidget);
+        expect(find.byIcon(PhosphorIconsBold.caretLeft), findsOneWidget);
+        expect(find.byType(Dialog), findsNothing);
+      },
+    );
     testWidgets(
       'Renderiza en vista móvil con consentimiento desmarcado y bloqueo explícito',
       (tester) async {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:comunidad_universitaria/core/config/app_theme.dart';
 import 'package:comunidad_universitaria/core/models/marketplace_item.dart';
 import 'package:comunidad_universitaria/features/marketplace/widgets/create_listing_dialog.dart';
@@ -43,7 +44,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Publicar Producto o Servicio'), findsOneWidget);
+      expect(find.text('Marketplace Universitario · Comunidad USAC'), findsNothing);
+      expect(find.text('Perfil estudiantil de contacto directo'), findsNothing);
       expect(find.byType(IdentityBadgeChip), findsOneWidget);
+      expect(find.byIcon(PhosphorIconsRegular.gear), findsOneWidget);
 
       // Categoría y checkbox de gratuidad
       expect(find.text('Categoría'), findsOneWidget);
@@ -165,5 +169,51 @@ void main() {
       // Debe advertir por falta de canales de contacto
       expect(find.text('Debes proporcionar al menos un canal de contacto.'), findsOneWidget);
     });
+
+    testWidgets(
+      'CreateListingDialog.show abre una vista separada con AppBar y caretLeft en móvil',
+      (tester) async {
+        tester.view.physicalSize = const Size(400, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
+
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.lightTheme,
+            home: Scaffold(
+              body: Builder(
+                builder: (ctx) => ElevatedButton(
+                  onPressed: () => CreateListingDialog.show(
+                    ctx,
+                    activeAlias: 'Vendedora USAC #22',
+                    onAliasChanged: (_) {},
+                    onListingCreated: (_) {},
+                  ),
+                  child: const Text('Abrir crear anuncio'),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Abrir crear anuncio'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(CreateListingDialog), findsOneWidget);
+        expect(
+          find.descendant(
+            of: find.byType(CreateListingDialog),
+            matching: find.byType(Scaffold),
+          ),
+          findsOneWidget,
+        );
+        expect(find.byType(AppBar), findsOneWidget);
+        expect(find.text('Publicar Producto o Servicio'), findsOneWidget);
+        expect(find.byIcon(PhosphorIconsBold.caretLeft), findsOneWidget);
+        expect(find.byType(BottomSheet), findsNothing);
+        expect(find.byType(Dialog), findsNothing);
+      },
+    );
   });
 }

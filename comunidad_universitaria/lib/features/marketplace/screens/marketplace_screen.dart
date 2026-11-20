@@ -758,25 +758,23 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               children: [
                 Text(
                   'ZANATE STORE',
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.8,
                     color: ZanateColors.textMuted(isDark),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 1),
                 Text(
                   'Marketplace',
+                  textAlign: TextAlign.center,
                   style: GoogleFonts.outfit(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: textPrimary,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -822,10 +820,12 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
         ),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             width: 4,
-            height: 36,
+            height: 44,
+            margin: const EdgeInsets.only(top: 2),
             decoration: BoxDecoration(
               color: ZanateColors.zanateEyeYellow,
               borderRadius: BorderRadius.circular(999),
@@ -841,8 +841,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                   header: true,
                   child: Text(
                     'Marketplace Estudiantil',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.outfit(
                       fontSize: 14.5,
                       fontWeight: FontWeight.w700,
@@ -853,12 +851,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                 const SizedBox(height: 2),
                 Text(
                   'Espacio libre para emprendimientos sancarlistas: comidas, postres, tutorías de cursos y materiales universitarios. Trato directo, sin comisiones.',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: ZanateColors.textSecondary(isDark),
                     fontSize: 12,
-                    height: 1.3,
+                    height: 1.35,
                   ),
                 ),
               ],
@@ -1011,14 +1007,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             )
           else
             Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
-                  children: [
-                    Expanded(child: _buildSedeDropdown(isDark)),
-                    const SizedBox(width: 8),
-                    Expanded(child: _buildFacultadDropdown(isDark)),
-                  ],
-                ),
+                _buildSedeDropdown(isDark),
+                const SizedBox(height: 8),
+                _buildFacultadDropdown(isDark),
                 const SizedBox(height: 8),
                 _buildBuildingDropdown(isDark),
               ],
@@ -1034,6 +1027,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
       key: ValueKey('sede_$_selectedSede'),
       initialValue: _selectedSede,
       isExpanded: true,
+      itemHeight: null,
       dropdownColor: ZanateColors.card(isDark),
       borderRadius: BorderRadius.circular(14),
       decoration: _zanateFilterDecoration('Sede / Campus', isDark),
@@ -1044,7 +1038,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               value: s['id']!,
               child: Text(
                 s['nombre']!,
-                overflow: TextOverflow.ellipsis,
                 style: TextStyle(fontSize: 12, color: textPrimary),
               ),
             ),
@@ -1073,6 +1066,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
       key: ValueKey('facultad_$_selectedFacultad'),
       initialValue: _selectedFacultad,
       isExpanded: true,
+      itemHeight: null,
       dropdownColor: ZanateColors.card(isDark),
       borderRadius: BorderRadius.circular(14),
       decoration: _zanateFilterDecoration('Facultad / Unidad', isDark),
@@ -1083,7 +1077,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               value: f['id'].toString(),
               child: Text(
                 f['nombre'].toString(),
-                overflow: TextOverflow.ellipsis,
                 style: TextStyle(fontSize: 12, color: textPrimary),
               ),
             ),
@@ -1106,6 +1099,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
       key: ValueKey('building_${_selectedSede}_$_selectedBuilding'),
       initialValue: _selectedBuilding,
       isExpanded: true,
+      itemHeight: null,
       dropdownColor: ZanateColors.card(isDark),
       borderRadius: BorderRadius.circular(14),
       decoration: _zanateFilterDecoration('Edificio / Inmueble', isDark),
@@ -1123,7 +1117,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             value: b['building_code']?.toString() ?? '',
             child: Text(
               '${b['building_code']} · ${b['nombre']}',
-              overflow: TextOverflow.ellipsis,
               style: TextStyle(fontSize: 12, color: textPrimary),
             ),
           ),
@@ -1217,7 +1210,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                     borderRadius: BorderRadius.circular(12),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 180),
-                      width: 132,
+                      constraints: const BoxConstraints(minWidth: 140, maxWidth: 185),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
                         vertical: 11,
@@ -1245,8 +1238,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                           const SizedBox(height: 8),
                           Text(
                             cat.label,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: 12.5,
                               fontWeight: FontWeight.w700,
@@ -1258,8 +1249,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                           const SizedBox(height: 2),
                           Text(
                             visuals.subtitle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: 10.5,
                               color: isSelected
@@ -1343,131 +1332,135 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          SizedBox(
-            height: 132,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              itemCount: deals.length,
-              separatorBuilder: (context, index) => const SizedBox(width: 10),
-              itemBuilder: (context, idx) {
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: List.generate(deals.length, (idx) {
                 final item = deals[idx];
                 final visuals = _getCategoryVisuals(item.category);
 
-                return Container(
-                  width: 245,
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: ZanateColors.surface(isDark),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: ZanateColors.border(isDark),
-                      width: 1.0,
-                    ),
+                return Padding(
+                  padding: EdgeInsets.only(
+                    right: idx < deals.length - 1 ? 10 : 0,
                   ),
-                  child: Row(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Container(
-                          width: 76,
-                          height: 108,
-                          color: ZanateColors.card(isDark),
-                          child: item.imageUrls.isNotEmpty
-                              ? Image.network(
-                                  item.imageUrls.first,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (ctx, err, stack) => Center(
+                  child: Container(
+                    width: 245,
+                    constraints: const BoxConstraints(minHeight: 132),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: ZanateColors.surface(isDark),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: ZanateColors.border(isDark),
+                        width: 1.0,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            width: 76,
+                            height: 108,
+                            color: ZanateColors.card(isDark),
+                            child: item.imageUrls.isNotEmpty
+                                ? Image.network(
+                                    item.imageUrls.first,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (ctx, err, stack) => Center(
+                                      child: Icon(
+                                        visuals.icon,
+                                        size: 24,
+                                        color: ZanateColors.textMuted(isDark),
+                                      ),
+                                    ),
+                                  )
+                                : Center(
                                     child: Icon(
                                       visuals.icon,
                                       size: 24,
                                       color: ZanateColors.textMuted(isDark),
                                     ),
                                   ),
-                                )
-                              : Center(
-                                  child: Icon(
-                                    visuals.icon,
-                                    size: 24,
-                                    color: ZanateColors.textMuted(isDark),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 7,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: item.isFree
+                                      ? ZanateColors.zanateEyeYellow
+                                      : (isDark
+                                          ? Colors.white
+                                          : ZanateColors.zanateBlack),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  item.isFree ? 'GRATIS' : item.formattedPrice,
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: item.isFree
+                                        ? ZanateColors.zanateBlack
+                                        : (isDark
+                                            ? ZanateColors.zanateBlack
+                                            : Colors.white),
                                   ),
                                 ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 7,
-                                vertical: 3,
                               ),
-                              decoration: BoxDecoration(
-                                color: item.isFree
-                                    ? ZanateColors.zanateEyeYellow
-                                    : (isDark
-                                        ? Colors.white
-                                        : ZanateColors.zanateBlack),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                item.isFree ? 'GRATIS' : item.formattedPrice,
-                                style: TextStyle(
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: item.isFree
-                                      ? ZanateColors.zanateBlack
-                                      : (isDark
-                                          ? ZanateColors.zanateBlack
-                                          : Colors.white),
+                              const SizedBox(height: 5),
+                              Text(
+                                item.title,
+                                style: GoogleFonts.outfit(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: textPrimary,
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                              item.title,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.outfit(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w700,
-                                color: textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            Row(
-                              children: [
-                                const Icon(
-                                  PhosphorIconsRegular.mapPin,
-                                  size: 11,
-                                  color: Color(0xFF94A3B8),
-                                ),
-                                const SizedBox(width: 3),
-                                Expanded(
-                                  child: Text(
-                                    item.locationDetail.isNotEmpty
-                                        ? item.locationDetail
-                                        : item.sede,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 10,
+                              const SizedBox(height: 5),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Padding(
+                                    padding: EdgeInsets.only(top: 1),
+                                    child: Icon(
+                                      PhosphorIconsRegular.mapPin,
+                                      size: 11,
                                       color: Color(0xFF94A3B8),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
+                                  const SizedBox(width: 3),
+                                  Expanded(
+                                    child: Text(
+                                      item.locationDetail.isNotEmpty
+                                          ? item.locationDetail
+                                          : item.sede,
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        color: Color(0xFF94A3B8),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 );
-              },
+              }),
             ),
           ),
         ],
@@ -1493,8 +1486,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
           Expanded(
             child: Text(
               '${_listings.length} publicaciones disponibles',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w700,
@@ -1560,13 +1551,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     }
 
     if (_listings.isEmpty) {
-      return EmptyStateWidget(
+      return const EmptyStateWidget(
         icon: PhosphorIconsRegular.storefront,
         title: 'No hay publicaciones en esta categoría aún',
         description:
             'Prueba ajustando tus preferencias de búsqueda o usa el botón para publicar un anuncio.',
-        buttonText: 'Crear Primera Publicación',
-        onButtonPressed: _handleCreateListingClick,
       );
     }
 

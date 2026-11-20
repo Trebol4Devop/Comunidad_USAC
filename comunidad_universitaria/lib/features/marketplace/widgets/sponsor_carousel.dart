@@ -200,25 +200,24 @@ class SponsorCarousel extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 6,
+                        runSpacing: 2,
                         children: [
-                          Flexible(
-                            child: Text(
-                              (item.sellerBusinessName != null && item.sellerBusinessName!.trim().isNotEmpty)
-                                  ? item.sellerBusinessName!
-                                  : (item.normalizedSponsorBrandName ?? item.authorAlias),
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: isDark
-                                    ? ZanateColors.zanateEyeYellow
-                                    : ZanateColors.zanateBlack,
-                              ),
-                              overflow: TextOverflow.ellipsis,
+                          Text(
+                            (item.sellerBusinessName != null && item.sellerBusinessName!.trim().isNotEmpty)
+                                ? item.sellerBusinessName!
+                                : (item.normalizedSponsorBrandName ?? item.authorAlias),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: isDark
+                                  ? ZanateColors.zanateEyeYellow
+                                  : ZanateColors.zanateBlack,
                             ),
                           ),
-                          if (item.sellerBadgeText != null && item.sellerBadgeText!.isNotEmpty) ...[
-                            const SizedBox(width: 6),
+                          if (item.sellerBadgeText != null && item.sellerBadgeText!.isNotEmpty)
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 6,
@@ -240,7 +239,6 @@ class SponsorCarousel extends StatelessWidget {
                                 ),
                               ),
                             ),
-                          ],
                         ],
                       ),
                       const SizedBox(height: 3),
@@ -257,8 +255,6 @@ class SponsorCarousel extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         item.description,
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodySmall?.copyWith(
                           fontSize: 12,
                           height: 1.3,
