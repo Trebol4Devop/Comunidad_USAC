@@ -242,7 +242,6 @@ class _AppShellState extends State<AppShell> {
                             children: [
                               Text(
                                 'Zanate',
-                                overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.croissantOne(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w700,
@@ -256,8 +255,6 @@ class _AppShellState extends State<AppShell> {
                           ),
                           Text(
                             'Comunidad Universitaria',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: widget.isDarkMode
                                   ? ZanateColors.darkTextMuted
@@ -395,7 +392,13 @@ class _AppShellState extends State<AppShell> {
                       ),
                     ),
                   ),
-                  Expanded(child: _buildIndexedStack(isMobile)),
+                  Expanded(
+                    child: MediaQuery.removePadding(
+                      context: context,
+                      removeTop: true,
+                      child: _buildIndexedStack(isMobile),
+                    ),
+                  ),
                 ],
               )
             : _buildIndexedStack(isMobile),

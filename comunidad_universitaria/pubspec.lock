@@ -608,21 +608,21 @@ packages:
     source: hosted
     version: "0.20.3"
   jni:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
       name: jni
-      sha256: "822c3f004742158b80b558773ebed29891f407058d5798992436a68bdf14ccda"
+      sha256: f038e58b4dc2c9037f50e233175086337e0b305e356d28211bf55f21c504cbd3
       url: "https://pub.dev"
     source: hosted
-    version: "1.2.0"
+    version: "1.0.3"
   jni_flutter:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
       name: jni_flutter
-      sha256: "586594ad345b403bda8a794b0b8a9e34298238b86c2a7d7f15160b092fe9ef3d"
+      sha256: b2310cdd4c18c65c081ab141a41efa94aa26c65431803703ece51996f174f351
       url: "https://pub.dev"
     source: hosted
-    version: "1.1.0"
+    version: "1.0.3"
   jni_util:
     dependency: transitive
     description:
@@ -679,6 +679,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.1.0"
+  listen:
+    dependency: transitive
+    description:
+      name: listen
+      sha256: "47501a08016a43fcad79252439d723f50f14f88fa7bfd8a177e0a417e5c9e1f2"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.1"
   lists:
     dependency: transitive
     description:
@@ -1008,13 +1016,13 @@ packages:
     source: hosted
     version: "2.5.6"
   shared_preferences_android:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
       name: shared_preferences_android
-      sha256: "137dedccacb394b8f470d6c9b435ffc3d33faaa6ce2949c4f54a61007d64396d"
+      sha256: "1e12aafe408aa50da80edfd679a2a6bf63ba7ab37c7fa98286da459a757b3399"
       url: "https://pub.dev"
     source: hosted
-    version: "2.5.5"
+    version: "2.4.28"
   shared_preferences_foundation:
     dependency: transitive
     description:
@@ -1160,10 +1168,10 @@ packages:
     dependency: transitive
     description:
       name: test_api
-      sha256: "2a122cbe059f8b610d3a5415f42e255b6c17b1f21eee1d960f31080237fb4f11"
+      sha256: "0a10344e901e5b2e63819567951cb6a06673ed6b84f40462188ff5a0c41f371f"
       url: "https://pub.dev"
     source: hosted
-    version: "0.7.12"
+    version: "0.7.14"
   typed_data:
     dependency: transitive
     description:

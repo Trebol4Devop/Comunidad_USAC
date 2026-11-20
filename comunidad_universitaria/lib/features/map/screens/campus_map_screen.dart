@@ -74,9 +74,8 @@ class _CampusMapScreenState extends State<CampusMapScreen> {
   }
 
   Future<void> _initMapData() async {
-    // 1. Carga inicial ultrarrápida (desde caché local R2 o assets empaquetados)
+    // 1. Carga inicial desde caché local R2 o assets empaquetados
     await MapSyncService.loadRepositoryData(_controller.repository);
-    await _controller.loadData();
     if (mounted) setState(() {});
 
     // 2. Sincronización en segundo plano con Cloudflare R2 sin bloquear la UI
@@ -455,6 +454,7 @@ class _CampusMapScreenState extends State<CampusMapScreen> {
     return ZanatePageHeader(
       kicker: 'CAMPUS USAC',
       title: 'Mapa',
+      safeAreaTop: false,
       leading: IconButton(
         tooltip: 'Configuración y Perfil',
         onPressed: _openSettings,
@@ -689,8 +689,10 @@ class _CampusMapScreenState extends State<CampusMapScreen> {
     final searchResults = _controller.searchResults;
 
     return SafeArea(
+      top: false,
+      bottom: false,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
