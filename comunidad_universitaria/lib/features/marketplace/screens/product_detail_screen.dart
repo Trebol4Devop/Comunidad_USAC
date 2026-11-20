@@ -307,38 +307,70 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final isDesktop = Responsive.isDesktop(context);
 
     if (_isLoading && _item == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Cargando anuncio...')),
-        body: const Center(child: CircularProgressIndicator()),
+      return MarketplaceTheme.wrap(
+        context,
+        Scaffold(
+          backgroundColor: ZanateColors.bg(isDark),
+          appBar: AppBar(
+            centerTitle: true,
+            leading: IconButton(
+              tooltip: 'Volver',
+              icon: PhosphorIcon(
+                PhosphorIconsBold.caretLeft,
+                size: 22,
+                color: ZanateColors.textPrimary(isDark),
+              ),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            title: const Text('Cargando anuncio...'),
+          ),
+          body: const Center(child: CircularProgressIndicator()),
+        ),
       );
     }
 
     if (_hasError || _item == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Publicación')),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  PhosphorIconsRegular.warningCircle,
-                  size: 48,
-                  color: Color(0xFFEF4444),
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  _errorMessage ?? 'No pudimos cargar esta publicación.',
-                  style: theme.textTheme.titleMedium,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 18),
-                ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Volver'),
-                ),
-              ],
+      return MarketplaceTheme.wrap(
+        context,
+        Scaffold(
+          backgroundColor: ZanateColors.bg(isDark),
+          appBar: AppBar(
+            centerTitle: true,
+            leading: IconButton(
+              tooltip: 'Volver',
+              icon: PhosphorIcon(
+                PhosphorIconsBold.caretLeft,
+                size: 22,
+                color: ZanateColors.textPrimary(isDark),
+              ),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            title: const Text('Publicación'),
+          ),
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    PhosphorIconsRegular.warningCircle,
+                    size: 48,
+                    color: Color(0xFFEF4444),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    _errorMessage ?? 'No pudimos cargar esta publicación.',
+                    style: theme.textTheme.titleMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 18),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Volver'),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -350,13 +382,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return MarketplaceTheme.wrap(
       context,
       Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+      backgroundColor: ZanateColors.bg(isDark),
       appBar: AppBar(
+        centerTitle: true,
         leading: IconButton(
+          tooltip: 'Volver',
           icon: PhosphorIcon(
             PhosphorIconsBold.caretLeft,
             size: 22,
-            color: isDark ? Colors.white : ZanateColors.zanateBlack,
+            color: ZanateColors.textPrimary(isDark),
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -520,11 +554,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       return Container(
         height: 200,
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-          borderRadius: BorderRadius.circular(4),
+          color: ZanateColors.surface(isDark),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: ZanateColors.border(isDark)),
         ),
-        child: const Center(
-          child: Icon(PhosphorIconsRegular.image, size: 56, color: Color(0xFF94A3B8)),
+        child: Center(
+          child: Icon(
+            PhosphorIconsRegular.image,
+            size: 56,
+            color: ZanateColors.textMuted(isDark),
+          ),
         ),
       );
     }
@@ -534,13 +573,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       children: [
         if (item.imageUrls.isNotEmpty)
           ClipRRect(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(14),
             child: Stack(
               children: [
                 AspectRatio(
                   aspectRatio: 4 / 3,
                   child: Container(
-                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                    color: ZanateColors.surface(isDark),
                     child: PageView.builder(
                       itemCount: item.imageUrls.length,
                       onPageChanged: (idx) => setState(() => _currentImageIndex = idx),
@@ -572,7 +611,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.65),
-                        borderRadius: BorderRadius.circular(4),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
                         '${_currentImageIndex + 1}/${item.imageUrls.length}',
@@ -594,13 +633,25 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
               minimumSize: const Size(double.infinity, 48),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-              side: const BorderSide(color: ZanateColors.zanateAccent, width: 1),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              side: BorderSide(
+                color: ZanateColors.focusBorder(isDark),
+                width: 1.2,
+              ),
             ),
-            icon: const Icon(PhosphorIconsFill.playCircle, color: ZanateColors.zanateAccent, size: 20),
-            label: const Text(
+            icon: Icon(
+              PhosphorIconsFill.playCircle,
+              color: ZanateColors.focusBorder(isDark),
+              size: 20,
+            ),
+            label: Text(
               'Ver video promocional',
-              style: TextStyle(fontWeight: FontWeight.w700, color: ZanateColors.zanateAccent),
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: ZanateColors.focusBorder(isDark),
+              ),
             ),
             onPressed: () => UrlUtils.openUrl(context, item.videoUrl!),
           ),
@@ -776,10 +827,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : ZanateColors.surfaceBg,
+        color: ZanateColors.surface(isDark),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+          color: ZanateColors.border(isDark),
           width: 1.0,
         ),
       ),
@@ -924,7 +975,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       return Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : ZanateColors.pillBg,
+          color: ZanateColors.pill(isDark),
           borderRadius: BorderRadius.circular(14),
         ),
         child: const Center(
@@ -1030,19 +1081,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             // Upvote button
             InkWell(
               onTap: _handleToggleUpvote,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(14),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: item.isUpvotedByMe
-                      ? const Color(0xFFEF4444).withValues(alpha: 0.1)
-                      : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
-                  borderRadius: BorderRadius.circular(20),
+                      ? ZanateColors.zanateEyeYellow
+                          .withValues(alpha: isDark ? 0.22 : 0.30)
+                      : ZanateColors.surface(isDark),
+                  borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: item.isUpvotedByMe
-                        ? const Color(0xFFEF4444)
-                        : (isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder),
-                    width: 0.8,
+                        ? ZanateColors.focusBorder(isDark)
+                        : ZanateColors.border(isDark),
+                    width: item.isUpvotedByMe ? 1.2 : 0.9,
                   ),
                 ),
                 child: Row(
@@ -1050,10 +1102,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   children: [
                     Icon(
                       item.isUpvotedByMe
-                          ? PhosphorIconsFill.heart
-                          : PhosphorIconsRegular.heart,
+                          ? PhosphorIconsFill.thumbsUp
+                          : PhosphorIconsRegular.thumbsUp,
                       size: 16,
-                      color: item.isUpvotedByMe ? const Color(0xFFEF4444) : Colors.grey,
+                      color: item.isUpvotedByMe
+                          ? ZanateColors.focusBorder(isDark)
+                          : ZanateColors.textMuted(isDark),
                     ),
                     const SizedBox(width: 6),
                     Text(
@@ -1061,7 +1115,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       style: TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.bold,
-                        color: item.isUpvotedByMe ? const Color(0xFFEF4444) : null,
+                        color: item.isUpvotedByMe
+                            ? ZanateColors.focusBorder(isDark)
+                            : ZanateColors.textSecondary(isDark),
                       ),
                     ),
                   ],
@@ -1166,12 +1222,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 child: Container(
                   width: 136,
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    color: ZanateColors.card(isDark),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: isDark
-                          ? const Color(0xFF334155)
-                          : ZanateColors.subtleBorder,
+                      color: ZanateColors.border(isDark),
                       width: 1.0,
                     ),
                   ),
@@ -1182,9 +1236,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       Container(
                         height: 90,
                         width: double.infinity,
-                        color: isDark
-                            ? const Color(0xFF0F172A)
-                            : ZanateColors.surfaceBg,
+                        color: ZanateColors.surface(isDark),
                         child: other.imageUrls.isNotEmpty
                             ? Image.network(
                                 other.imageUrls.first,
@@ -1285,12 +1337,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               },
               child: Container(
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  color: ZanateColors.card(isDark),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: isDark
-                        ? const Color(0xFF334155)
-                        : ZanateColors.subtleBorder,
+                    color: ZanateColors.border(isDark),
                     width: 1.0,
                   ),
                 ),
@@ -1301,9 +1351,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     Expanded(
                       child: Container(
                         width: double.infinity,
-                        color: isDark
-                            ? const Color(0xFF0F172A)
-                            : ZanateColors.surfaceBg,
+                        color: ZanateColors.surface(isDark),
                         child: rel.imageUrls.isNotEmpty
                             ? Image.network(
                                 rel.imageUrls.first,
