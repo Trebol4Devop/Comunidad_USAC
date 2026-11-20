@@ -80,16 +80,12 @@ class _ReportDialogState extends State<ReportDialog> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final titleColor = isDark ? Colors.white : ZanateColors.zanateBlack;
-    final subtleText = isDark
-        ? const Color(0xFF94A3B8)
-        : ZanateColors.subtleText;
-    final borderColor = isDark
-        ? const Color(0xFF334155)
-        : ZanateColors.subtleBorder;
+    final titleColor = ZanateColors.textPrimary(isDark);
+    final subtleText = ZanateColors.textSecondary(isDark);
+    final borderColor = ZanateColors.border(isDark);
 
     return Dialog(
-      backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+      backgroundColor: ZanateColors.card(isDark),
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -187,9 +183,7 @@ class _ReportDialogState extends State<ReportDialog> {
                               size: 18,
                               color: isSelected
                                   ? titleColor
-                                  : (isDark
-                                        ? const Color(0xFF64748B)
-                                        : ZanateColors.hintText),
+                                  : ZanateColors.textMuted(isDark),
                             ),
                             const SizedBox(width: 10),
                             Expanded(
@@ -216,6 +210,7 @@ class _ReportDialogState extends State<ReportDialog> {
                 TextField(
                   controller: _customReasonController,
                   maxLength: 120,
+                  style: TextStyle(fontSize: 13.5, color: titleColor),
                   decoration: InputDecoration(
                     hintText: 'Explica brevemente la razón...',
                     hintStyle: const TextStyle(
@@ -223,9 +218,7 @@ class _ReportDialogState extends State<ReportDialog> {
                       fontSize: 13,
                     ),
                     filled: true,
-                    fillColor: isDark
-                        ? const Color(0xFF0F172A)
-                        : ZanateColors.surfaceBg,
+                    fillColor: ZanateColors.surface(isDark),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 14,
                       vertical: 12,
