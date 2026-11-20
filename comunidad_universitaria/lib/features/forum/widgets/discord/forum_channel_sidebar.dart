@@ -31,9 +31,8 @@ class ForumChannelSidebar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final background = isDark ? const Color(0xFF1E293B) : Colors.white;
-    final borderColor =
-        isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
+    final background = ZanateColors.card(isDark);
+    final borderColor = ZanateColors.border(isDark);
 
     final channelList =
         channels ??
@@ -66,10 +65,10 @@ class ForumChannelSidebar extends StatelessWidget {
                     margin: const EdgeInsets.only(right: 10),
                     padding: const EdgeInsets.all(2),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF26282B) : Colors.white,
+                      color: ZanateColors.surface(isDark),
                       borderRadius: BorderRadius.circular(6),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF383A40) : const Color(0xFFE2E8F0),
+                        color: ZanateColors.border(isDark),
                         width: 1,
                       ),
                     ),
@@ -168,11 +167,11 @@ class ForumChannelSidebar extends StatelessWidget {
     bool isDark,
     Color borderColor,
   ) {
-    final muted = isDark ? const Color(0xFF94A3B8) : Colors.blueGrey.shade600;
+    final muted = ZanateColors.textMuted(isDark);
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A) : Colors.white,
+        color: ZanateColors.bg(isDark),
         border: Border(top: BorderSide(color: borderColor, width: 0.8)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
