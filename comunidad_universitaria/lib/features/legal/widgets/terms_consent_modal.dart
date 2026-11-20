@@ -64,11 +64,9 @@ class _TermsConsentModalState extends State<TermsConsentModal> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final titleColor = isDark ? Colors.white : ZanateColors.zanateBlack;
-    final subtleColor =
-        isDark ? const Color(0xFF94A3B8) : ZanateColors.subtleText;
-    final borderColor =
-        isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
+    final titleColor = ZanateColors.textPrimary(isDark);
+    final subtleColor = ZanateColors.textSecondary(isDark);
+    final borderColor = ZanateColors.border(isDark);
 
     return PopScope(
       canPop: !_isSubmitting,
@@ -80,7 +78,7 @@ class _TermsConsentModalState extends State<TermsConsentModal> {
           borderRadius: BorderRadius.circular(20),
           side: BorderSide(color: borderColor, width: 1.0),
         ),
-        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        backgroundColor: ZanateColors.card(isDark),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 540, maxHeight: 680),
           child: Padding(
@@ -147,9 +145,7 @@ class _TermsConsentModalState extends State<TermsConsentModal> {
                   child: Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF0F172A)
-                          : ZanateColors.surfaceBg,
+                      color: ZanateColors.surface(isDark),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(color: borderColor, width: 1.2),
                     ),
@@ -212,7 +208,8 @@ class _TermsConsentModalState extends State<TermsConsentModal> {
                 // Checkbox
                 CheckboxListTile(
                   contentPadding: EdgeInsets.zero,
-                  activeColor: ZanateColors.zanateBlack,
+                  activeColor: ZanateColors.ctaBg(isDark),
+                  checkColor: ZanateColors.ctaFg(isDark),
                   value: _accepted,
                   onChanged: _isSubmitting
                       ? null
@@ -259,12 +256,8 @@ class _TermsConsentModalState extends State<TermsConsentModal> {
                       ),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: isDark
-                              ? ZanateColors.zanateEyeYellow
-                              : ZanateColors.zanateBlack,
-                          foregroundColor: isDark
-                              ? ZanateColors.zanateBlack
-                              : Colors.white,
+                          backgroundColor: ZanateColors.ctaBg(isDark),
+                          foregroundColor: ZanateColors.ctaFg(isDark),
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
@@ -278,12 +271,12 @@ class _TermsConsentModalState extends State<TermsConsentModal> {
                             ? _handleAccept
                             : null,
                         child: _isSubmitting
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 16,
                                 height: 16,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: Colors.white,
+                                  color: ZanateColors.ctaFg(isDark),
                                 ),
                               )
                             : const Text(
@@ -308,7 +301,7 @@ class _TermsConsentModalState extends State<TermsConsentModal> {
       style: GoogleFonts.outfit(
         fontWeight: FontWeight.w700,
         fontSize: 13,
-        color: isDark ? Colors.white : ZanateColors.zanateBlack,
+        color: ZanateColors.textPrimary(isDark),
       ),
     );
   }
@@ -319,7 +312,7 @@ class _TermsConsentModalState extends State<TermsConsentModal> {
       style: TextStyle(
         fontSize: 12,
         height: 1.45,
-        color: isDark ? Colors.grey.shade300 : ZanateColors.subtleText,
+        color: ZanateColors.textSecondary(isDark),
       ),
     );
   }
