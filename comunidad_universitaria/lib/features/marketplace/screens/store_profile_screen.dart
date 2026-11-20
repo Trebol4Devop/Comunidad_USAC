@@ -148,22 +148,12 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
     final prof = _profile;
     if (prof == null) return;
 
-    final isDarkModal = Theme.of(context).brightness == Brightness.dark;
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: ZanateColors.bg(isDarkModal),
-      shape: RoundedRectangleBorder(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        side: BorderSide(color: ZanateColors.border(isDarkModal)),
-      ),
-      builder: (ctx) => _EditStoreSheet(
-        profile: prof,
-        onProfileUpdated: (updated) {
-          setState(() => _profile = updated);
-          _loadStoreData();
-        },
+    Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (ctx) => _EditStoreScreen(
+          profile: prof,
+          onProfileUpdated: _loadStoreData,
+        ),
       ),
     );
   }
@@ -267,11 +257,9 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
         ),
         title: Text(
           storeName,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
           style: GoogleFonts.outfit(
             fontWeight: FontWeight.w700,
-            fontSize: 18,
+            fontSize: 16.5,
             color: isDark ? Colors.white : ZanateColors.zanateBlack,
           ),
         ),
@@ -328,16 +316,19 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Semantics(
-                          header: true,
-                          child: Text(
-                            'Catálogo de publicaciones',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 16,
+                        Expanded(
+                          child: Semantics(
+                            header: true,
+                            child: Text(
+                              'Catálogo de publicaciones',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 16,
+                              ),
                             ),
                           ),
                         ),
+                        const SizedBox(width: 8),
                         Text(
                           '${_catalog.length} disponibles',
                           style: TextStyle(
@@ -383,7 +374,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
                                 crossAxisCount: 2,
                                 crossAxisSpacing: 10,
                                 mainAxisSpacing: 10,
-                                childAspectRatio: 0.74,
+                                childAspectRatio: 0.68,
                               ),
                               itemBuilder: (ctx, i) => _buildCatalogItem(_catalog[i]),
                             ),
@@ -697,10 +688,8 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
                 children: [
                   Text(
                     item.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.outfit(
-                      fontSize: 12.5,
+                      fontSize: 12,
                       fontWeight: FontWeight.w700,
                       color: isDark ? Colors.white : ZanateColors.zanateBlack,
                     ),
@@ -736,20 +725,20 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
   }
 }
 
-class _EditStoreSheet extends StatefulWidget {
+class _EditStoreScreen extends StatefulWidget {
   final SellerProfile profile;
-  final ValueChanged<SellerProfile> onProfileUpdated;
+  final VoidCallback onProfileUpdated;
 
-  const _EditStoreSheet({
+  const _EditStoreScreen({
     required this.profile,
     required this.onProfileUpdated,
   });
 
   @override
-  State<_EditStoreSheet> createState() => _EditStoreSheetState();
+  State<_EditStoreScreen> createState() => _EditStoreScreenState();
 }
 
-class _EditStoreSheetState extends State<_EditStoreSheet> {
+class _EditStoreScreenState extends State<_EditStoreScreen> {
   late final TextEditingController _nameController;
   late final TextEditingController _descController;
   late final TextEditingController _noteController;
@@ -790,6 +779,7 @@ class _EditStoreSheetState extends State<_EditStoreSheet> {
 
       if (!mounted) return;
       if (success) {
+        widget.onProfileUpdated();
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -815,6 +805,8 @@ class _EditStoreSheetState extends State<_EditStoreSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isMobile = Responsive.isMobile(context);
+    final scaffoldBg = ZanateColors.bg(isDark);
     final borderColor = ZanateColors.border(isDark);
     final focusColor = ZanateColors.focusBorder(isDark);
     final primaryText = ZanateColors.textPrimary(isDark);
@@ -838,140 +830,156 @@ class _EditStoreSheetState extends State<_EditStoreSheet> {
       ),
     );
 
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-        left: 20,
-        right: 20,
-        top: 14,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: borderColor,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
+    return MarketplaceTheme.wrap(
+      context,
+      Scaffold(
+        backgroundColor: scaffoldBg,
+        appBar: AppBar(
+          backgroundColor: scaffoldBg,
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            tooltip: 'Volver',
+            icon: PhosphorIcon(
+              PhosphorIconsBold.caretLeft,
+              color: primaryText,
+              size: 22,
             ),
-            Text(
-              'Editar Perfil Comercial',
-              style: GoogleFonts.outfit(
-                fontSize: 19,
-                fontWeight: FontWeight.w700,
-                color: primaryText,
-              ),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          title: Text(
+            'Editar Perfil Comercial',
+            style: GoogleFonts.outfit(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              color: primaryText,
             ),
-            const SizedBox(height: 6),
-            Container(
-              width: 44,
-              height: 4,
-              decoration: BoxDecoration(
-                color: ZanateColors.zanateEyeYellow,
-                borderRadius: BorderRadius.circular(2),
-              ),
+          ),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Divider(height: 1, color: borderColor),
+          ),
+        ),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? 18 : 28,
+              vertical: isMobile ? 16 : 24,
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _nameController,
-              style: TextStyle(color: primaryText),
-              decoration: zanateField('Nombre comercial de la tienda'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _descController,
-              style: TextStyle(color: primaryText),
-              maxLines: 3,
-              maxLength: 300,
-              decoration: zanateField('Descripción de la tienda o productos'),
-            ),
-            const SizedBox(height: 8),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              activeTrackColor: ZanateColors.ctaBg(isDark),
-              title: Text(
-                'Entregando ahora en el campus',
-                style: GoogleFonts.outfit(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                  color: primaryText,
-                ),
-              ),
-              subtitle: Text(
-                'Muestra un distintivo verde en tu perfil y publicaciones.',
-                style: TextStyle(color: ZanateColors.textMuted(isDark)),
-              ),
-              value: _isOnCampus,
-              onChanged: (val) => setState(() => _isOnCampus = val),
-            ),
-            if (_isOnCampus) ...[
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                key: ValueKey(_selectedBuilding),
-                initialValue: _selectedBuilding,
-                dropdownColor: ZanateColors.card(isDark),
-                style: TextStyle(color: primaryText, fontSize: 14),
-                decoration: zanateField('Edificio de entrega'),
-                items: USACConstants.campusBuildings
-                    .where((b) => b['sede_id'] == 'central')
-                    .map(
-                      (b) => DropdownMenuItem<String>(
-                        value: b['building_code']?.toString(),
-                        child: Text('${b['building_code']} · ${b['nombre']}'),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 640),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: ZanateColors.zanateEyeYellow,
+                        borderRadius: BorderRadius.circular(2),
                       ),
-                    )
-                    .toList(),
-                onChanged: (val) => setState(() => _selectedBuilding = val),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _noteController,
-                style: TextStyle(color: primaryText),
-                maxLength: 120,
-                decoration: zanateField(
-                  'Nota de ubicación (ej. Frente a fotocopiadora)',
-                ),
-              ),
-            ],
-            const SizedBox(height: 16),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: isDark
-                    ? ZanateColors.zanateEyeYellow
-                    : ZanateColors.zanateBlack,
-                foregroundColor:
-                    isDark ? ZanateColors.zanateBlack : Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 15),
-              ),
-              onPressed: _isSaving ? null : _save,
-              child: _isSaving
-                  ? SizedBox(
-                      height: 18,
-                      width: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color:
-                            isDark ? ZanateColors.zanateBlack : Colors.white,
-                      ),
-                    )
-                  : const Text(
-                      'Guardar Cambios',
-                      style: TextStyle(fontWeight: FontWeight.w700),
                     ),
+                    TextField(
+                      controller: _nameController,
+                      style: TextStyle(color: primaryText),
+                      decoration: zanateField('Nombre comercial de la tienda'),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _descController,
+                      style: TextStyle(color: primaryText),
+                      maxLines: 3,
+                      maxLength: 300,
+                      decoration: zanateField('Descripción de la tienda o productos'),
+                    ),
+                    const SizedBox(height: 8),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      activeTrackColor: ZanateColors.ctaBg(isDark),
+                      title: Text(
+                        'Entregando ahora en el campus',
+                        style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          color: primaryText,
+                        ),
+                      ),
+                      subtitle: Text(
+                        'Muestra un distintivo verde en tu perfil y publicaciones.',
+                        style: TextStyle(color: ZanateColors.textMuted(isDark)),
+                      ),
+                      value: _isOnCampus,
+                      onChanged: (val) => setState(() => _isOnCampus = val),
+                    ),
+                    if (_isOnCampus) ...[
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        key: ValueKey(_selectedBuilding),
+                        initialValue: _selectedBuilding,
+                        dropdownColor: ZanateColors.card(isDark),
+                        style: TextStyle(color: primaryText, fontSize: 14),
+                        decoration: zanateField('Edificio de entrega'),
+                        items: USACConstants.campusBuildings
+                            .where((b) => b['sede_id'] == 'central')
+                            .map(
+                              (b) => DropdownMenuItem<String>(
+                                value: b['building_code']?.toString(),
+                                child: Text('${b['building_code']} · ${b['nombre']}'),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (val) => setState(() => _selectedBuilding = val),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _noteController,
+                        style: TextStyle(color: primaryText),
+                        maxLength: 120,
+                        decoration: zanateField(
+                          'Nota de ubicación (ej. Frente a fotocopiadora)',
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isDark
+                            ? ZanateColors.zanateEyeYellow
+                            : ZanateColors.zanateBlack,
+                        foregroundColor:
+                            isDark ? ZanateColors.zanateBlack : Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                      ),
+                      onPressed: _isSaving ? null : _save,
+                      child: _isSaving
+                          ? SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: isDark
+                                    ? ZanateColors.zanateBlack
+                                    : Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              'Guardar Cambios',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(height: 24),
-          ],
+          ),
         ),
       ),
     );

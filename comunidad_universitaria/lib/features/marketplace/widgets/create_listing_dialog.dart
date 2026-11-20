@@ -12,6 +12,7 @@ import '../../../core/utils/responsive.dart';
 import '../../profile/widgets/carne_validation_modal.dart';
 import '../../shared/widgets/identity_badge_chip.dart';
 import '../../../core/models/user_profile.dart';
+import '../marketplace_theme.dart';
 import 'marketplace_plans_sheet.dart';
 
 class CreateListingDialog extends StatefulWidget {
@@ -35,35 +36,16 @@ class CreateListingDialog extends StatefulWidget {
     required Function(MarketplaceItem) onListingCreated,
     bool isSponsored = false,
   }) {
-    if (Responsive.isMobile(context)) {
-      return showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        useSafeArea: true,
-        backgroundColor: ZanateColors.bg(
-          Theme.of(context).brightness == Brightness.dark,
-        ),
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
+    return Navigator.of(context).push<void>(
+      MaterialPageRoute(
         builder: (ctx) => CreateListingDialog(
           activeAlias: activeAlias,
           onAliasChanged: onAliasChanged,
           onListingCreated: onListingCreated,
           isSponsored: isSponsored,
         ),
-      );
-    } else {
-      return showDialog(
-        context: context,
-        builder: (ctx) => CreateListingDialog(
-          activeAlias: activeAlias,
-          onAliasChanged: onAliasChanged,
-          onListingCreated: onListingCreated,
-          isSponsored: isSponsored,
-        ),
-      );
-    }
+      ),
+    );
   }
 
   @override
@@ -353,94 +335,25 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isMobile = Responsive.isMobile(context);
+    final scaffoldBg = ZanateColors.bg(isDark);
     final borderColor = ZanateColors.border(isDark);
     final primaryText = ZanateColors.textPrimary(isDark);
     final secondaryText = ZanateColors.textMuted(isDark);
-    final maxHeight =
-        MediaQuery.of(context).size.height * (isMobile ? 0.90 : 0.85);
 
     Widget content = Form(
       key: _formKey,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: maxHeight),
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(isMobile ? 20 : 26),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (isMobile) ...[
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: borderColor,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-              ],
-              // Header
-              Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: ZanateColors.zanateEyeYellow.withValues(alpha: 0.24),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Center(
-                      child: PhosphorIcon(
-                        PhosphorIconsBold.storefront,
-                        color: isDark
-                            ? ZanateColors.zanateEyeYellow
-                            : ZanateColors.zanateBlack,
-                        size: 22,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Publicar Producto o Servicio',
-                          style: GoogleFonts.outfit(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 19,
-                            letterSpacing: -0.2,
-                            color: primaryText,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Marketplace Universitario · Comunidad USAC',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: secondaryText,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Container(
-                          width: 44,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: ZanateColors.zanateEyeYellow,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
+      child: SingleChildScrollView(
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 18 : 28,
+          vertical: isMobile ? 16 : 24,
+        ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 680),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               // Selector visual drásticamente diferenciado (Identidad en Marketplace)
               IdentityBadgeChip(
                 mode: IdentityMode.marketplaceVerified,
@@ -527,13 +440,13 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
 
               // Aviso de vigencia de 14 días en plan free
               if (_sellerStatus == null || _sellerStatus!.planId == 'free') ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       PhosphorIconsRegular.clockCountdown,
                       size: 13,
-                      color: Color(0xFFF59E0B),
+                      color: primaryText,
                     ),
                     const SizedBox(width: 6),
                     Expanded(
@@ -541,9 +454,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                         'Esta publicación se pausará automáticamente a los 14 días.',
                         style: TextStyle(
                           fontSize: 10.5,
-                          color: isDark
-                              ? const Color(0xFFFDE68A)
-                              : const Color(0xFFB45309),
+                          color: primaryText,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -552,7 +463,9 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                 ),
               ],
 
+              const SizedBox(height: 16),
               Container(height: 0.8, color: borderColor),
+              const SizedBox(height: 18),
 
               // Category & Free Toggle
               Wrap(
@@ -565,6 +478,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                     child: DropdownButtonFormField<String>(
                       initialValue: _selectedCategory,
                       isExpanded: true,
+                      itemHeight: null,
                       dropdownColor: ZanateColors.card(isDark),
                       decoration: _zanateInput(
                         isDark,
@@ -577,7 +491,6 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                               value: c.id,
                               child: Text(
                                 c.label,
-                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(fontSize: 13),
                               ),
                             ),
@@ -768,6 +681,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                     child: DropdownButtonFormField<String>(
                       initialValue: _selectedSede,
                       isExpanded: true,
+                      itemHeight: null,
                       dropdownColor: ZanateColors.card(isDark),
                       decoration: _zanateInput(
                         isDark,
@@ -779,7 +693,6 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                               value: s['id']!,
                               child: Text(
                                 s['nombre']!,
-                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(fontSize: 12),
                               ),
                             ),
@@ -794,6 +707,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                     child: DropdownButtonFormField<String>(
                       initialValue: _selectedFacultad,
                       isExpanded: true,
+                      itemHeight: null,
                       dropdownColor: ZanateColors.card(isDark),
                       decoration: _zanateInput(
                         isDark,
@@ -805,7 +719,6 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                               value: f['id'].toString(),
                               child: Text(
                                 f['nombre'].toString(),
-                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(fontSize: 12),
                               ),
                             ),
@@ -820,6 +733,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                     child: DropdownButtonFormField<String>(
                       initialValue: _selectedBuilding,
                       isExpanded: true,
+                      itemHeight: null,
                       dropdownColor: ZanateColors.card(isDark),
                       decoration: _zanateInput(
                         isDark,
@@ -831,7 +745,6 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                               value: b['building_code'].toString(),
                               child: Text(
                                 '${b['building_code']} — ${b['nombre']}',
-                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(fontSize: 12),
                               ),
                             ),
@@ -1031,9 +944,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                       .map(
                         (link) => Chip(
                           label: Text(
-                            link.length > 30
-                                ? '${link.substring(0, 27)}...'
-                                : link,
+                            link,
                             style: const TextStyle(fontSize: 11),
                           ),
                           deleteIcon: const PhosphorIcon(
@@ -1171,31 +1082,42 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
             ],
           ),
         ),
+        ),
       ),
     );
 
-    if (isMobile) {
-      return Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: content,
-      );
-    } else {
-      return Dialog(
-        backgroundColor: ZanateColors.card(isDark),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(
-            color: borderColor,
-            width: 0.8,
+    return MarketplaceTheme.wrap(
+      context,
+      Scaffold(
+        backgroundColor: scaffoldBg,
+        appBar: AppBar(
+          backgroundColor: scaffoldBg,
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            tooltip: 'Volver',
+            icon: PhosphorIcon(
+              PhosphorIconsBold.caretLeft,
+              color: primaryText,
+              size: 22,
+            ),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          title: Text(
+            'Publicar Producto o Servicio',
+            style: GoogleFonts.outfit(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              color: primaryText,
+            ),
+          ),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Divider(height: 1, color: borderColor),
           ),
         ),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 640),
-          child: content,
-        ),
-      );
-    }
+        body: SafeArea(child: content),
+      ),
+    );
   }
 }
