@@ -819,12 +819,18 @@ class _MySalesScreenState extends State<MySalesScreen> {
               ),
               const SizedBox(width: 6),
               Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: ZanateColors.textMuted(isDark),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    softWrap: false,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: ZanateColors.textMuted(isDark),
+                    ),
                   ),
                 ),
               ),
@@ -853,7 +859,7 @@ class _MySalesScreenState extends State<MySalesScreen> {
   ) {
     final textPrimary = ZanateColors.textPrimary(isDark);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
         color: ZanateColors.surface(isDark),
         borderRadius: BorderRadius.circular(12),
@@ -864,19 +870,25 @@ class _MySalesScreenState extends State<MySalesScreen> {
       ),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: color),
-          const SizedBox(width: 8),
+          Icon(icon, size: 15, color: color),
+          const SizedBox(width: 6),
           Expanded(
-            child: Text(
-              channel,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: textPrimary,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                channel,
+                maxLines: 1,
+                softWrap: false,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
               ),
             ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 4),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
             decoration: BoxDecoration(
