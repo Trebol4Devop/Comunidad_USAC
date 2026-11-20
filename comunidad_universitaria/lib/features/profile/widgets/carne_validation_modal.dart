@@ -109,13 +109,10 @@ class _CarneValidationModalState extends State<CarneValidationModal> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final titleColor = isDark ? Colors.white : ZanateColors.zanateBlack;
-    final subtleColor =
-        isDark ? const Color(0xFF94A3B8) : ZanateColors.subtleText;
-    final borderColor =
-        isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
-    final fillColor =
-        isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg;
+    final titleColor = ZanateColors.textPrimary(isDark);
+    final subtleColor = ZanateColors.textSecondary(isDark);
+    final borderColor = ZanateColors.border(isDark);
+    final fillColor = ZanateColors.surface(isDark);
 
     InputDecoration zanateInput({
       required String labelText,
@@ -172,7 +169,7 @@ class _CarneValidationModalState extends State<CarneValidationModal> {
       ),
       surfaceTintColor: Colors.transparent,
       elevation: 0,
-      backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+      backgroundColor: ZanateColors.card(isDark),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 460),
         child: Padding(
@@ -290,9 +287,7 @@ class _CarneValidationModalState extends State<CarneValidationModal> {
                                 style: TextStyle(
                                   fontSize: 12,
                                   height: 1.38,
-                                  color: isDark
-                                      ? Colors.grey.shade300
-                                      : const Color(0xFF334155),
+                                  color: subtleColor,
                                 ),
                               ),
                             ],
@@ -309,6 +304,7 @@ class _CarneValidationModalState extends State<CarneValidationModal> {
                     controller: _carneController,
                     keyboardType: TextInputType.number,
                     maxLength: 10,
+                    style: TextStyle(color: titleColor),
                     decoration: zanateInput(
                       labelText: 'Número de Carné Universitario',
                       hintText: 'Ej. 202100123',
@@ -335,6 +331,7 @@ class _CarneValidationModalState extends State<CarneValidationModal> {
                   TextFormField(
                     controller: _nameController,
                     textCapitalization: TextCapitalization.words,
+                    style: TextStyle(color: titleColor),
                     decoration: zanateInput(
                       labelText: 'Nombre completo para reintentar',
                       hintText: 'Ej. Juan José Pérez Gómez',
@@ -370,7 +367,8 @@ class _CarneValidationModalState extends State<CarneValidationModal> {
                         children: [
                           Checkbox(
                             value: _consentChecked,
-                            activeColor: ZanateColors.zanateBlack,
+                            activeColor: ZanateColors.ctaBg(isDark),
+                            checkColor: ZanateColors.ctaFg(isDark),
                             onChanged: (val) {
                               setState(() {
                                 _consentChecked = val ?? false;
@@ -449,12 +447,8 @@ class _CarneValidationModalState extends State<CarneValidationModal> {
                         ElevatedButton.icon(
                           onPressed: _isSavingDraft ? null : _saveDraftForRetry,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: isDark
-                                ? ZanateColors.zanateEyeYellow
-                                : ZanateColors.zanateBlack,
-                            foregroundColor: isDark
-                                ? ZanateColors.zanateBlack
-                                : Colors.white,
+                            backgroundColor: ZanateColors.ctaBg(isDark),
+                            foregroundColor: ZanateColors.ctaFg(isDark),
                             elevation: 0,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 18,
@@ -465,12 +459,12 @@ class _CarneValidationModalState extends State<CarneValidationModal> {
                             ),
                           ),
                           icon: _isSavingDraft
-                              ? const SizedBox(
+                              ? SizedBox(
                                   width: 16,
                                   height: 16,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: Colors.white,
+                                    color: ZanateColors.ctaFg(isDark),
                                   ),
                                 )
                               : const Icon(

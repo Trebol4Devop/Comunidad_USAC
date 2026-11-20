@@ -59,14 +59,12 @@ class _AliasModalState extends State<AliasModal> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final titleColor = isDark ? Colors.white : ZanateColors.zanateBlack;
-    final subtleColor =
-        isDark ? const Color(0xFF94A3B8) : ZanateColors.subtleText;
-    final borderColor =
-        isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
+    final titleColor = ZanateColors.textPrimary(isDark);
+    final subtleColor = ZanateColors.textSecondary(isDark);
+    final borderColor = ZanateColors.border(isDark);
 
     return Dialog(
-      backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+      backgroundColor: ZanateColors.card(isDark),
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -147,9 +145,7 @@ class _AliasModalState extends State<AliasModal> {
                     color: titleColor,
                   ),
                   filled: true,
-                  fillColor: isDark
-                      ? const Color(0xFF0F172A)
-                      : ZanateColors.surfaceBg,
+                  fillColor: ZanateColors.surface(isDark),
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 14,
                     vertical: 12,
@@ -218,12 +214,8 @@ class _AliasModalState extends State<AliasModal> {
                     ),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isDark
-                            ? ZanateColors.zanateEyeYellow
-                            : ZanateColors.zanateBlack,
-                        foregroundColor: isDark
-                            ? ZanateColors.zanateBlack
-                            : Colors.white,
+                        backgroundColor: ZanateColors.ctaBg(isDark),
+                        foregroundColor: ZanateColors.ctaFg(isDark),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),

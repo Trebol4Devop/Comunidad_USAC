@@ -24,12 +24,10 @@ class IdentityBadgeChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final fg = isDark ? Colors.white : ZanateColors.zanateBlack;
-    final subtle = isDark ? const Color(0xFF94A3B8) : ZanateColors.subtleText;
-    final chipBg = isDark ? const Color(0xFF1E293B) : ZanateColors.surfaceBg;
-    final borderColor = isDark
-        ? const Color(0xFF334155)
-        : ZanateColors.subtleBorder;
+    final fg = ZanateColors.textPrimary(isDark);
+    final subtle = ZanateColors.textMuted(isDark);
+    final chipBg = ZanateColors.surface(isDark);
+    final borderColor = ZanateColors.border(isDark);
 
     if (mode == IdentityMode.forumAnonymous) {
       return Container(
@@ -44,7 +42,7 @@ class IdentityBadgeChip extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF0F172A) : Colors.white,
+                color: ZanateColors.bg(isDark),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: borderColor),
               ),
@@ -156,7 +154,9 @@ class IdentityBadgeChip extends StatelessWidget {
                     ? PhosphorIconsFill.sealCheck
                     : PhosphorIconsRegular.shieldCheck,
                 size: 16,
-                color: ZanateColors.zanateBlack,
+                color: isDark
+                    ? ZanateColors.zanateEyeYellow
+                    : ZanateColors.zanateBlack,
               ),
             ),
             const SizedBox(width: 10),

@@ -2,10 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase_config.dart';
+import '../../../core/constants/zanate_colors.dart';
 import '../../../core/services/supabase_service.dart';
+import 'zanate_ui.dart';
 
 class TotpSessionGuard extends StatefulWidget {
   const TotpSessionGuard({super.key, required this.child});
@@ -243,12 +247,30 @@ class _TotpChallengeScreenState extends State<_TotpChallengeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = ZanateColors.bg(isDark);
+    final textPrimary = ZanateColors.textPrimary(isDark);
+    final textSecondary = ZanateColors.textSecondary(isDark);
+    final textMuted = ZanateColors.textMuted(isDark);
+
     return Scaffold(
+      backgroundColor: bgColor,
       appBar: AppBar(
+        backgroundColor: bgColor,
+        surfaceTintColor: Colors.transparent,
+        centerTitle: true,
         automaticallyImplyLeading: false,
-        title: const Text('Verificación de seguridad'),
+        title: Text(
+          'Verificación de seguridad',
+          style: GoogleFonts.outfit(
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+            color: textPrimary,
+          ),
+        ),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(foregroundColor: textMuted),
             onPressed: widget.onSignOut,
             child: const Text('Cerrar sesión'),
           ),
@@ -262,19 +284,39 @@ class _TotpChallengeScreenState extends State<_TotpChallengeScreen> {
               shrinkWrap: true,
               padding: const EdgeInsets.all(24),
               children: [
-                const Icon(Icons.security_outlined, size: 48),
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: ZanateColors.zanateEyeYellow.withValues(alpha: 0.22),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Icon(
+                      PhosphorIconsFill.shieldCheck,
+                      size: 36,
+                      color: isDark
+                          ? ZanateColors.zanateEyeYellow
+                          : ZanateColors.zanateBlack,
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 16),
                 Text(
                   'Confirma que eres tú',
                   textAlign: TextAlign.center,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                  style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 22,
+                    color: textPrimary,
+                  ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                const Center(child: ZanateAccentBar()),
+                const SizedBox(height: 12),
+                Text(
                   'Ingresa el código actual de 6 dígitos de tu app autenticadora.',
                   textAlign: TextAlign.center,
+                  style: TextStyle(color: textSecondary, height: 1.4),
                 ),
                 const SizedBox(height: 20),
                 if (_errorMessage != null) ...[
@@ -286,27 +328,47 @@ class _TotpChallengeScreenState extends State<_TotpChallengeScreen> {
                   keyboardType: TextInputType.number,
                   textAlign: TextAlign.center,
                   maxLength: 6,
+                  style: TextStyle(
+                    color: textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: const InputDecoration(
+                  decoration: zanateInputDecoration(
+                    isDark: isDark,
                     labelText: 'Código TOTP',
                     hintText: '123456',
-                    prefixIcon: Icon(Icons.password_outlined),
-                    counterText: '',
-                  ),
+                    prefixIcon: Icon(
+                      PhosphorIconsRegular.password,
+                      size: 20,
+                      color: textMuted,
+                    ),
+                  ).copyWith(counterText: ''),
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ZanateColors.ctaBg(isDark),
+                    foregroundColor: ZanateColors.ctaFg(isDark),
+                    elevation: 0,
+                    minimumSize: const Size.fromHeight(50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
                   onPressed: _isVerifying ? null : _verify,
                   child: _isVerifying
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 18,
                           height: 18,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white,
+                            color: ZanateColors.ctaFg(isDark),
                           ),
                         )
-                      : const Text('Verificar código TOTP'),
+                      : const Text(
+                          'Verificar código TOTP',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
                 ),
               ],
             ),
@@ -334,14 +396,32 @@ class _TotpStatusScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = ZanateColors.bg(isDark);
+    final textPrimary = ZanateColors.textPrimary(isDark);
+    final textSecondary = ZanateColors.textSecondary(isDark);
+    final textMuted = ZanateColors.textMuted(isDark);
+
     return Scaffold(
+      backgroundColor: bgColor,
       appBar: AppBar(
+        backgroundColor: bgColor,
+        surfaceTintColor: Colors.transparent,
+        centerTitle: true,
         automaticallyImplyLeading: false,
-        title: const Text('Autenticación protegida'),
+        title: Text(
+          'Autenticación protegida',
+          style: GoogleFonts.outfit(
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+            color: textPrimary,
+          ),
+        ),
         actions: onSignOut == null
             ? null
             : [
                 TextButton(
+                  style: TextButton.styleFrom(foregroundColor: textMuted),
                   onPressed: onSignOut,
                   child: const Text('Cerrar sesión'),
                 ),
@@ -354,21 +434,48 @@ class _TotpStatusScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (showProgress) ...[
-                const CircularProgressIndicator(),
+                CircularProgressIndicator(
+                  color: isDark
+                      ? ZanateColors.zanateEyeYellow
+                      : ZanateColors.zanateBlack,
+                ),
                 const SizedBox(height: 20),
               ],
               Text(
                 title,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleLarge,
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 20,
+                  color: textPrimary,
+                ),
               ),
               const SizedBox(height: 8),
-              Text(message, textAlign: TextAlign.center),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: textSecondary, height: 1.4),
+              ),
               if (onRetry != null) ...[
                 const SizedBox(height: 20),
                 ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ZanateColors.ctaBg(isDark),
+                    foregroundColor: ZanateColors.ctaFg(isDark),
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
                   onPressed: onRetry,
-                  child: const Text('Reintentar'),
+                  child: const Text(
+                    'Reintentar',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
                 ),
               ],
             ],
@@ -386,14 +493,26 @@ class _TotpErrorMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFEE2E2),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFFCA5A5)),
+        color: isDark
+            ? const Color(0xFF7F1D1D).withValues(alpha: 0.35)
+            : const Color(0xFFFEE2E2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark
+              ? const Color(0xFFF87171).withValues(alpha: 0.45)
+              : const Color(0xFFFCA5A5),
+        ),
       ),
-      child: Text(message, style: const TextStyle(color: Color(0xFFB91C1C))),
+      child: Text(
+        message,
+        style: TextStyle(
+          color: isDark ? const Color(0xFFFCA5A5) : const Color(0xFFB91C1C),
+        ),
+      ),
     );
   }
 }

@@ -28,13 +28,13 @@ class SponsorCarousel extends StatelessWidget {
     if (sponsoredItems.isEmpty) {
       // Prompt banner to invite sponsors
       return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: ZanateColors.card(isDark),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color:
-                isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            color: ZanateColors.border(isDark),
             width: 1.0,
           ),
         ),
@@ -111,9 +111,9 @@ class SponsorCarousel extends StatelessWidget {
     final item = sponsoredItems.first;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.fromLTRB(16, 10, 16, 14),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: ZanateColors.card(isDark),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: ZanateColors.zanateEyeYellow,
@@ -180,9 +180,7 @@ class SponsorCarousel extends StatelessWidget {
                     child: Container(
                       width: 100,
                       height: 100,
-                      color: isDark
-                          ? const Color(0xFF0F172A)
-                          : ZanateColors.surfaceBg,
+                      color: ZanateColors.surface(isDark),
                       child: Image.network(
                         item.imageUrls.first,
                         fit: BoxFit.cover,
@@ -281,14 +279,10 @@ class SponsorCarousel extends StatelessWidget {
                                 vertical: 3,
                               ),
                               decoration: BoxDecoration(
-                                color: isDark
-                                    ? const Color(0xFF0F172A)
-                                    : ZanateColors.surfaceBg,
+                                color: ZanateColors.surface(isDark),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: isDark
-                                      ? const Color(0xFF334155)
-                                      : ZanateColors.subtleBorder,
+                                  color: ZanateColors.border(isDark),
                                 ),
                               ),
                               child: Text(

@@ -38,8 +38,11 @@ class SponsoredContentControls extends StatelessWidget {
     showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: ZanateColors.card(isDark),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: ZanateColors.border(isDark)),
+        ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -49,7 +52,7 @@ class SponsoredContentControls extends StatelessWidget {
               style: GoogleFonts.outfit(
                 fontWeight: FontWeight.w700,
                 fontSize: 19,
-                color: isDark ? Colors.white : ZanateColors.zanateBlack,
+                color: ZanateColors.textPrimary(isDark),
               ),
             ),
             const SizedBox(height: 8),
@@ -68,18 +71,14 @@ class SponsoredContentControls extends StatelessWidget {
           style: TextStyle(
             fontSize: 13.5,
             height: 1.45,
-            color:
-                isDark ? const Color(0xFFCBD5E1) : ZanateColors.subtleText,
+            color: ZanateColors.textSecondary(isDark),
           ),
         ),
         actions: [
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: isDark
-                  ? ZanateColors.zanateEyeYellow
-                  : ZanateColors.zanateBlack,
-              foregroundColor:
-                  isDark ? ZanateColors.zanateBlack : Colors.white,
+              backgroundColor: ZanateColors.ctaBg(isDark),
+              foregroundColor: ZanateColors.ctaFg(isDark),
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -124,12 +123,12 @@ class SponsoredContentControls extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+      backgroundColor: ZanateColors.bg(isDark),
       showDragHandle: true,
       shape: RoundedRectangleBorder(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         side: BorderSide(
-          color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+          color: ZanateColors.border(isDark),
         ),
       ),
       builder: (sheetContext) => SafeArea(
@@ -258,15 +257,13 @@ class SponsoredContentControls extends StatelessWidget {
                 )
               : PopupMenuButton<String>(
                   tooltip: 'Opciones del contenido patrocinado',
-                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  color: ZanateColors.card(isDark),
                   surfaceTintColor: Colors.transparent,
                   elevation: 2,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                     side: BorderSide(
-                      color: isDark
-                          ? const Color(0xFF334155)
-                          : ZanateColors.subtleBorder,
+                      color: ZanateColors.border(isDark),
                     ),
                   ),
                   padding: EdgeInsets.zero,

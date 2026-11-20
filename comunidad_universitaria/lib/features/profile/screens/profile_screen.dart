@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../core/constants/avatar_presets.dart';
 import '../../../core/constants/categories.dart';
+import '../../../core/constants/zanate_colors.dart';
 import '../../../core/models/facultad.dart';
 import '../../../core/models/marketplace_item.dart';
 import '../../../core/models/post.dart';
@@ -14,6 +15,8 @@ import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/utils/time_utils.dart';
 import '../../forum/screens/post_detail_screen.dart';
+import '../../shared/widgets/empty_state_widget.dart';
+import '../../shared/widgets/zanate_ui.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String activeAlias;
@@ -215,7 +218,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Perfil guardado exitosamente.'),
-            backgroundColor: Color(0xFF004B87),
+            backgroundColor: ZanateColors.zanateBlack,
           ),
         );
       }
@@ -290,17 +293,36 @@ class _ProfileScreenState extends State<ProfileScreen>
     required String title,
     required String message,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        backgroundColor: ZanateColors.card(isDark),
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: ZanateColors.border(isDark)),
+        ),
         title: Text(
           title,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          style: GoogleFonts.outfit(
+            fontWeight: FontWeight.w700,
+            fontSize: 17,
+            color: ZanateColors.textPrimary(isDark),
+          ),
         ),
-        content: Text(message, style: const TextStyle(fontSize: 13)),
+        content: Text(
+          message,
+          style: TextStyle(
+            fontSize: 13.5,
+            color: ZanateColors.textSecondary(isDark),
+          ),
+        ),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: ZanateColors.textMuted(isDark),
+            ),
             onPressed: () => Navigator.of(ctx).pop(false),
             child: const Text('Cancelar'),
           ),
@@ -308,6 +330,10 @@ class _ProfileScreenState extends State<ProfileScreen>
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFDC2626),
               foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
             child: const Text('Eliminar'),
@@ -328,89 +354,38 @@ class _ProfileScreenState extends State<ProfileScreen>
         .toList();
   }
 
-  static const _zanateBlack = Color(0xFF0B0D10);
-  static const _zanateEyeYellow = Color(0xFFF5C518);
-  static const _subtleText = Color(0xFF475569);
-
-  InputDecoration _zanateInput({
-    required String labelText,
-    String? hintText,
-    Widget? prefixIcon,
-    Widget? suffixIcon,
-    String? counterText,
-  }) {
-    final inputBorder = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1.2),
-    );
-    final focusedBorder = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: _zanateBlack, width: 1.6),
-    );
-    final errorBorder = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.2),
-    );
-
-    return InputDecoration(
-      labelText: labelText,
-      hintText: hintText,
-      counterText: counterText,
-      prefixIcon: prefixIcon,
-      suffixIcon: suffixIcon,
-      filled: true,
-      fillColor: const Color(0xFFF8FAFC),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      labelStyle: const TextStyle(
-        fontSize: 13.5,
-        fontWeight: FontWeight.w500,
-        color: Color(0xFF64748B),
-      ),
-      floatingLabelStyle: const TextStyle(
-        fontSize: 12.5,
-        fontWeight: FontWeight.w700,
-        color: _zanateBlack,
-      ),
-      hintStyle: const TextStyle(
-        fontSize: 13.5,
-        color: Color(0xFF94A3B8),
-      ),
-      border: inputBorder,
-      enabledBorder: inputBorder,
-      focusedBorder: focusedBorder,
-      errorBorder: errorBorder,
-      focusedErrorBorder: errorBorder,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final isDesktop = Responsive.isDesktop(context);
     final canPop = Navigator.of(context).canPop();
+    final bgColor = ZanateColors.bg(isDark);
+    final textPrimary = ZanateColors.textPrimary(isDark);
+    final borderColor = ZanateColors.border(isDark);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: bgColor,
       body: SafeArea(
         bottom: false,
         child: Column(
           children: [
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: bgColor,
                 border: Border(
-                  bottom: BorderSide(color: Color(0xFFE2E8F0)),
+                  bottom: BorderSide(color: borderColor),
                 ),
               ),
               child: Row(
                 children: [
                   if (canPop)
                     IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         PhosphorIconsBold.caretLeft,
                         size: 22,
-                        color: _zanateBlack,
+                        color: textPrimary,
                       ),
                       tooltip: 'Regresar',
                       onPressed: () => Navigator.of(context).pop(),
@@ -424,7 +399,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                       style: GoogleFonts.outfit(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: _zanateBlack,
+                        color: textPrimary,
                       ),
                     ),
                   ),
@@ -434,8 +409,12 @@ class _ProfileScreenState extends State<ProfileScreen>
             ),
             Expanded(
               child: _isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(color: _zanateBlack),
+                  ? Center(
+                      child: CircularProgressIndicator(
+                        color: isDark
+                            ? ZanateColors.zanateEyeYellow
+                            : ZanateColors.zanateBlack,
+                      ),
                     )
                   : SingleChildScrollView(
                       child: Center(
@@ -477,8 +456,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                                 // Save Profile Button
                                 ElevatedButton.icon(
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: _zanateBlack,
-                                    foregroundColor: Colors.white,
+                                    backgroundColor: ZanateColors.ctaBg(isDark),
+                                    foregroundColor: ZanateColors.ctaFg(isDark),
                                     elevation: 0,
                                     minimumSize: const Size.fromHeight(52),
                                     padding: const EdgeInsets.symmetric(
@@ -491,12 +470,12 @@ class _ProfileScreenState extends State<ProfileScreen>
                                   ),
                                   onPressed: _isSaving ? null : _saveProfile,
                                   icon: _isSaving
-                                      ? const SizedBox(
+                                      ? SizedBox(
                                           width: 18,
                                           height: 18,
                                           child: CircularProgressIndicator(
                                             strokeWidth: 2,
-                                            color: Colors.white,
+                                            color: ZanateColors.ctaFg(isDark),
                                           ),
                                         )
                                       : const Icon(
@@ -533,17 +512,22 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   Widget _buildHeaderCard(ThemeData theme, bool isDesktop) {
+    final isDark = theme.brightness == Brightness.dark;
     final isAuthenticated = SupabaseService.isAuthenticated;
 
     final avatarColor = _avatarColors[_selectedAvatarColor];
     final avatarIcon = _avatarIcons[_selectedAvatarIcon];
+    final cardColor = ZanateColors.card(isDark);
+    final borderColor = ZanateColors.border(isDark);
+    final textPrimary = ZanateColors.textPrimary(isDark);
+    final textSecondary = ZanateColors.textSecondary(isDark);
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+        border: Border.all(color: borderColor, width: 1.2),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -565,14 +549,14 @@ class _ProfileScreenState extends State<ProfileScreen>
                   child: Container(
                     padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
-                      color: _zanateBlack,
+                      color: ZanateColors.ctaBg(isDark),
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 1.5),
+                      border: Border.all(color: cardColor, width: 1.5),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       PhosphorIconsBold.pencilSimple,
                       size: 11,
-                      color: Colors.white,
+                      color: ZanateColors.ctaFg(isDark),
                     ),
                   ),
                 ),
@@ -597,7 +581,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                         style: GoogleFonts.outfit(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
-                          color: _zanateBlack,
+                          color: textPrimary,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -618,7 +602,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                       size: 14,
                       color: isAuthenticated
                           ? const Color(0xFF059669)
-                          : _subtleText,
+                          : textSecondary,
                     ),
                     const SizedBox(width: 4),
                     Expanded(
@@ -631,7 +615,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                           fontSize: 12,
                           color: isAuthenticated
                               ? const Color(0xFF059669)
-                              : _subtleText,
+                              : textSecondary,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -650,30 +634,30 @@ class _ProfileScreenState extends State<ProfileScreen>
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: ZanateColors.surface(isDark),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: const Color(0xFFE2E8F0),
+                        color: borderColor,
                         width: 1.2,
                       ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
+                        Icon(
                           PhosphorIconsRegular.pencilSimple,
                           size: 14,
-                          color: _zanateBlack,
+                          color: textPrimary,
                         ),
                         const SizedBox(width: 6),
-                        const Flexible(
+                        Flexible(
                           child: Text(
                             'Editar seudónimo',
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: _zanateBlack,
+                              color: textPrimary,
                             ),
                           ),
                         ),
@@ -693,8 +677,8 @@ class _ProfileScreenState extends State<ProfileScreen>
     final role = _profile?.role ?? 'student';
     String label = 'Estudiante';
     IconData icon = PhosphorIconsRegular.graduationCap;
-    Color bgColor = _zanateEyeYellow;
-    Color fgColor = _zanateBlack;
+    Color bgColor = ZanateColors.zanateEyeYellow;
+    Color fgColor = ZanateColors.zanateBlack;
 
     if (role == 'admin') {
       label = 'Admin';
@@ -733,6 +717,11 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   Widget _buildAcademicCard(ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
+    final cardColor = ZanateColors.card(isDark);
+    final borderColor = ZanateColors.border(isDark);
+    final textPrimary = ZanateColors.textPrimary(isDark);
+    final textMuted = ZanateColors.textMuted(isDark);
     final carreras = _getCarrerasForFacultad(_selectedFacultadId);
 
     // Validate that selected carrera belongs to this facultad
@@ -744,9 +733,9 @@ class _ProfileScreenState extends State<ProfileScreen>
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+        border: Border.all(color: borderColor, width: 1.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -756,13 +745,15 @@ class _ProfileScreenState extends State<ProfileScreen>
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
+                  color: ZanateColors.surface(isDark),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: borderColor),
                 ),
-                child: const Icon(
+                child: Icon(
                   PhosphorIconsRegular.graduationCap,
-                  color: _zanateBlack,
+                  color: isDark
+                      ? ZanateColors.zanateEyeYellow
+                      : ZanateColors.zanateBlack,
                   size: 18,
                 ),
               ),
@@ -773,7 +764,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                   style: GoogleFonts.outfit(
                     fontWeight: FontWeight.w700,
                     fontSize: 15.5,
-                    color: _zanateBlack,
+                    color: textPrimary,
                   ),
                 ),
               ),
@@ -786,14 +777,16 @@ class _ProfileScreenState extends State<ProfileScreen>
             key: ValueKey('facultad_$_selectedFacultadId'),
             initialValue: _selectedFacultadId,
             isExpanded: true,
-            dropdownColor: Colors.white,
+            dropdownColor: cardColor,
+            style: TextStyle(fontSize: 13, color: textPrimary),
             borderRadius: BorderRadius.circular(14),
-            decoration: _zanateInput(
+            decoration: zanateInputDecoration(
+              isDark: isDark,
               labelText: 'Facultad / Unidad Académica',
-              prefixIcon: const Icon(
+              prefixIcon: Icon(
                 PhosphorIconsRegular.buildings,
                 size: 18,
-                color: _subtleText,
+                color: textMuted,
               ),
             ),
             items: USACConstants.facultades.map((f) {
@@ -802,7 +795,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 child: Text(
                   f['nombre'] as String,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 13),
+                  style: TextStyle(fontSize: 13, color: textPrimary),
                 ),
               );
             }).toList(),
@@ -827,14 +820,16 @@ class _ProfileScreenState extends State<ProfileScreen>
             key: ValueKey('carrera_${_selectedFacultadId}_$_selectedCarreraId'),
             initialValue: _selectedCarreraId,
             isExpanded: true,
-            dropdownColor: Colors.white,
+            dropdownColor: cardColor,
+            style: TextStyle(fontSize: 13, color: textPrimary),
             borderRadius: BorderRadius.circular(14),
-            decoration: _zanateInput(
+            decoration: zanateInputDecoration(
+              isDark: isDark,
               labelText: 'Carrera',
-              prefixIcon: const Icon(
+              prefixIcon: Icon(
                 PhosphorIconsRegular.bookOpen,
                 size: 18,
-                color: _subtleText,
+                color: textMuted,
               ),
             ),
             items: carreras.map((c) {
@@ -843,7 +838,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 child: Text(
                   c.nombre,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 13),
+                  style: TextStyle(fontSize: 13, color: textPrimary),
                 ),
               );
             }).toList(),
@@ -860,14 +855,16 @@ class _ProfileScreenState extends State<ProfileScreen>
             key: ValueKey('sede_$_selectedSedeId'),
             initialValue: _selectedSedeId,
             isExpanded: true,
-            dropdownColor: Colors.white,
+            dropdownColor: cardColor,
+            style: TextStyle(fontSize: 13, color: textPrimary),
             borderRadius: BorderRadius.circular(14),
-            decoration: _zanateInput(
+            decoration: zanateInputDecoration(
+              isDark: isDark,
               labelText: 'Sede / Centro Universitario',
-              prefixIcon: const Icon(
+              prefixIcon: Icon(
                 PhosphorIconsRegular.mapPin,
                 size: 18,
-                color: _subtleText,
+                color: textMuted,
               ),
             ),
             items: USACConstants.sedes.map((s) {
@@ -876,7 +873,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 child: Text(
                   '${s['nombre']} (${s['departamento']})',
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 13),
+                  style: TextStyle(fontSize: 13, color: textPrimary),
                 ),
               );
             }).toList(),
@@ -892,12 +889,18 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   Widget _buildContactCard(ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
+    final cardColor = ZanateColors.card(isDark);
+    final borderColor = ZanateColors.border(isDark);
+    final textPrimary = ZanateColors.textPrimary(isDark);
+    final textMuted = ZanateColors.textMuted(isDark);
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+        border: Border.all(color: borderColor, width: 1.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -907,13 +910,15 @@ class _ProfileScreenState extends State<ProfileScreen>
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
+                  color: ZanateColors.surface(isDark),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: borderColor),
                 ),
-                child: const Icon(
+                child: Icon(
                   PhosphorIconsRegular.addressBook,
-                  color: _zanateBlack,
+                  color: isDark
+                      ? ZanateColors.zanateEyeYellow
+                      : ZanateColors.zanateBlack,
                   size: 18,
                 ),
               ),
@@ -924,7 +929,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                   style: GoogleFonts.outfit(
                     fontWeight: FontWeight.w700,
                     fontSize: 15.5,
-                    color: _zanateBlack,
+                    color: textPrimary,
                   ),
                 ),
               ),
@@ -936,13 +941,15 @@ class _ProfileScreenState extends State<ProfileScreen>
           TextField(
             controller: _whatsappController,
             keyboardType: TextInputType.phone,
-            decoration: _zanateInput(
+            style: TextStyle(color: textPrimary),
+            decoration: zanateInputDecoration(
+              isDark: isDark,
               labelText: 'WhatsApp Predeterminado',
               hintText: '502 12345678',
-              prefixIcon: const Icon(
+              prefixIcon: Icon(
                 PhosphorIconsRegular.whatsappLogo,
                 size: 18,
-                color: _subtleText,
+                color: textMuted,
               ),
             ),
           ),
@@ -951,13 +958,15 @@ class _ProfileScreenState extends State<ProfileScreen>
           // Instagram
           TextField(
             controller: _instagramController,
-            decoration: _zanateInput(
+            style: TextStyle(color: textPrimary),
+            decoration: zanateInputDecoration(
+              isDark: isDark,
               labelText: 'Instagram',
               hintText: 'usuario_estudiante',
-              prefixIcon: const Icon(
+              prefixIcon: Icon(
                 PhosphorIconsRegular.instagramLogo,
                 size: 18,
-                color: _subtleText,
+                color: textMuted,
               ),
             ),
           ),
@@ -966,13 +975,15 @@ class _ProfileScreenState extends State<ProfileScreen>
           // Telegram
           TextField(
             controller: _telegramController,
-            decoration: _zanateInput(
+            style: TextStyle(color: textPrimary),
+            decoration: zanateInputDecoration(
+              isDark: isDark,
               labelText: 'Telegram',
               hintText: 'usuario_telegram',
-              prefixIcon: const Icon(
+              prefixIcon: Icon(
                 PhosphorIconsRegular.paperPlaneTilt,
                 size: 18,
-                color: _subtleText,
+                color: textMuted,
               ),
             ),
           ),
@@ -982,11 +993,16 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   Widget _buildActivitySection(ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
+    final cardColor = ZanateColors.card(isDark);
+    final borderColor = ZanateColors.border(isDark);
+    final textPrimary = ZanateColors.textPrimary(isDark);
+
     return Material(
-      color: Colors.white,
+      color: cardColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.2),
+        side: BorderSide(color: borderColor, width: 1.2),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -999,13 +1015,15 @@ class _ProfileScreenState extends State<ProfileScreen>
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
+                    color: ZanateColors.surface(isDark),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    border: Border.all(color: borderColor),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     PhosphorIconsRegular.clockCounterClockwise,
-                    color: _zanateBlack,
+                    color: isDark
+                        ? ZanateColors.zanateEyeYellow
+                        : ZanateColors.zanateBlack,
                     size: 18,
                   ),
                 ),
@@ -1016,15 +1034,15 @@ class _ProfileScreenState extends State<ProfileScreen>
                     style: GoogleFonts.outfit(
                       fontWeight: FontWeight.w700,
                       fontSize: 15.5,
-                      color: _zanateBlack,
+                      color: textPrimary,
                     ),
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     PhosphorIconsRegular.arrowsClockwise,
                     size: 18,
-                    color: _zanateBlack,
+                    color: textPrimary,
                   ),
                   tooltip: 'Actualizar actividad',
                   onPressed: _loadUserActivity,
@@ -1034,11 +1052,11 @@ class _ProfileScreenState extends State<ProfileScreen>
           ),
           TabBar(
             controller: _tabController,
-            indicatorColor: _zanateEyeYellow,
+            indicatorColor: ZanateColors.zanateEyeYellow,
             indicatorWeight: 3,
-            dividerColor: const Color(0xFFE2E8F0),
-            labelColor: _zanateBlack,
-            unselectedLabelColor: const Color(0xFF64748B),
+            dividerColor: borderColor,
+            labelColor: textPrimary,
+            unselectedLabelColor: ZanateColors.textMuted(isDark),
             labelStyle: GoogleFonts.outfit(
               fontWeight: FontWeight.w700,
               fontSize: 13,
@@ -1065,8 +1083,12 @@ class _ProfileScreenState extends State<ProfileScreen>
           SizedBox(
             height: 350,
             child: _isLoadingActivity
-                ? const Center(
-                    child: CircularProgressIndicator(color: _zanateBlack),
+                ? Center(
+                    child: CircularProgressIndicator(
+                      color: isDark
+                          ? ZanateColors.zanateEyeYellow
+                          : ZanateColors.zanateBlack,
+                    ),
                   )
                 : TabBarView(
                     controller: _tabController,
@@ -1082,62 +1104,10 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-  Widget _buildEmptyActivityState({
-    required IconData icon,
-    required String title,
-    required String description,
-  }) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFFF8FAFC),
-                border: Border.all(
-                  color: const Color(0xFFE2E8F0),
-                  width: 1.2,
-                ),
-              ),
-              child: Icon(icon, size: 32, color: _zanateBlack),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.outfit(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: _zanateBlack,
-              ),
-            ),
-            const SizedBox(height: 6),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 360),
-              child: Text(
-                description,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 13,
-                  height: 1.4,
-                  color: _subtleText,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildPostsTab(ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
     if (_myPosts.isEmpty) {
-      return _buildEmptyActivityState(
+      return const EmptyStateWidget(
         icon: PhosphorIconsRegular.chatsCircle,
         title: 'Sin publicaciones en el foro',
         description:
@@ -1148,7 +1118,8 @@ class _ProfileScreenState extends State<ProfileScreen>
     return ListView.separated(
       padding: const EdgeInsets.all(12),
       itemCount: _myPosts.length,
-      separatorBuilder: (_, _) => const Divider(height: 1),
+      separatorBuilder: (_, _) =>
+          Divider(height: 1, color: ZanateColors.border(isDark)),
       itemBuilder: (context, index) {
         final post = _myPosts[index];
         return ListTile(
@@ -1157,17 +1128,25 @@ class _ProfileScreenState extends State<ProfileScreen>
             post.title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              color: ZanateColors.textPrimary(isDark),
+            ),
           ),
           subtitle: Text(
             '${TimeUtils.timeAgo(post.createdAt)} • ${post.likes} votos • ${post.commentCount} comentarios',
-            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+            style: TextStyle(fontSize: 11, color: ZanateColors.textMuted(isDark)),
           ),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
-                icon: const Icon(PhosphorIconsRegular.arrowSquareOut, size: 18),
+                icon: Icon(
+                  PhosphorIconsRegular.arrowSquareOut,
+                  size: 18,
+                  color: ZanateColors.textSecondary(isDark),
+                ),
                 tooltip: 'Ver detalle de post',
                 onPressed: () {
                   Navigator.of(context).push(
@@ -1197,8 +1176,9 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   Widget _buildGroupsTab(ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
     if (_myGroups.isEmpty) {
-      return _buildEmptyActivityState(
+      return const EmptyStateWidget(
         icon: PhosphorIconsRegular.usersThree,
         title: 'Sin grupos de estudio compartidos',
         description:
@@ -1209,7 +1189,8 @@ class _ProfileScreenState extends State<ProfileScreen>
     return ListView.separated(
       padding: const EdgeInsets.all(12),
       itemCount: _myGroups.length,
-      separatorBuilder: (_, _) => const Divider(height: 1),
+      separatorBuilder: (_, _) =>
+          Divider(height: 1, color: ZanateColors.border(isDark)),
       itemBuilder: (context, index) {
         final group = _myGroups[index];
         return ListTile(
@@ -1218,11 +1199,15 @@ class _ProfileScreenState extends State<ProfileScreen>
             group.title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              color: ZanateColors.textPrimary(isDark),
+            ),
           ),
           subtitle: Text(
             '${group.curso} (${group.section}) • ${group.upvotes} votos',
-            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+            style: TextStyle(fontSize: 11, color: ZanateColors.textMuted(isDark)),
           ),
           trailing: IconButton(
             icon: const Icon(
@@ -1239,8 +1224,9 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   Widget _buildMarketplaceTab(ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
     if (_myMarketplaceItems.isEmpty) {
-      return _buildEmptyActivityState(
+      return const EmptyStateWidget(
         icon: PhosphorIconsRegular.shoppingBag,
         title: 'Sin anuncios en el Marketplace',
         description:
@@ -1251,7 +1237,8 @@ class _ProfileScreenState extends State<ProfileScreen>
     return ListView.separated(
       padding: const EdgeInsets.all(12),
       itemCount: _myMarketplaceItems.length,
-      separatorBuilder: (_, _) => const Divider(height: 1),
+      separatorBuilder: (_, _) =>
+          Divider(height: 1, color: ZanateColors.border(isDark)),
       itemBuilder: (context, index) {
         final item = _myMarketplaceItems[index];
         final priceText = item.isFree
@@ -1264,11 +1251,15 @@ class _ProfileScreenState extends State<ProfileScreen>
             item.title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              color: ZanateColors.textPrimary(isDark),
+            ),
           ),
           subtitle: Text(
             '$priceText • ${item.buildingCode} • ${TimeUtils.timeAgo(item.createdAt)}',
-            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+            style: TextStyle(fontSize: 11, color: ZanateColors.textMuted(isDark)),
           ),
           trailing: IconButton(
             icon: const Icon(
@@ -1285,16 +1276,18 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   void _showAliasEditorModal() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: ZanateColors.card(isDark),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setModalState) {
+            final textPrimary = ZanateColors.textPrimary(isDark);
             return SafeArea(
               top: false,
               child: Padding(
@@ -1314,7 +1307,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                         height: 4,
                         margin: const EdgeInsets.only(bottom: 16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE2E8F0),
+                          color: ZanateColors.border(isDark),
                           borderRadius: BorderRadius.circular(999),
                         ),
                       ),
@@ -1324,7 +1317,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                       style: GoogleFonts.outfit(
                         fontWeight: FontWeight.w700,
                         fontSize: 17,
-                        color: _zanateBlack,
+                        color: textPrimary,
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -1332,20 +1325,21 @@ class _ProfileScreenState extends State<ProfileScreen>
                       controller: _aliasController,
                       maxLength: 35,
                       autofocus: true,
-                      decoration: _zanateInput(
+                      style: TextStyle(color: textPrimary),
+                      decoration: zanateInputDecoration(
+                        isDark: isDark,
                         labelText: 'Seudónimo visible en la comunidad',
                         hintText: 'Ej. Estudiante USAC #402',
-                        prefixIcon: const Icon(
+                        prefixIcon: Icon(
                           PhosphorIconsRegular.identificationBadge,
                           size: 18,
-                          color: _subtleText,
+                          color: ZanateColors.textMuted(isDark),
                         ),
-                        counterText: '',
                         suffixIcon: IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             PhosphorIconsRegular.diceFive,
                             size: 19,
-                            color: _zanateBlack,
+                            color: textPrimary,
                           ),
                           tooltip: 'Generar seudónimo aleatorio',
                           onPressed: () {
@@ -1353,14 +1347,14 @@ class _ProfileScreenState extends State<ProfileScreen>
                             setModalState(() {});
                           },
                         ),
-                      ),
+                      ).copyWith(counterText: ''),
                       onChanged: (_) => setState(() {}),
                     ),
                     const SizedBox(height: 18),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: _zanateBlack,
-                        foregroundColor: Colors.white,
+                        backgroundColor: ZanateColors.ctaBg(isDark),
+                        foregroundColor: ZanateColors.ctaFg(isDark),
                         elevation: 0,
                         minimumSize: const Size.fromHeight(48),
                         shape: RoundedRectangleBorder(
@@ -1387,15 +1381,20 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   void _showAvatarPickerModal() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: ZanateColors.card(isDark),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setModalState) {
+            final textPrimary = ZanateColors.textPrimary(isDark);
+            final textSecondary = ZanateColors.textSecondary(isDark);
+            final borderColor = ZanateColors.border(isDark);
+
             return SafeArea(
               top: false,
               child: Padding(
@@ -1410,7 +1409,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                         height: 4,
                         margin: const EdgeInsets.only(bottom: 16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE2E8F0),
+                          color: borderColor,
                           borderRadius: BorderRadius.circular(999),
                         ),
                       ),
@@ -1420,7 +1419,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                       style: GoogleFonts.outfit(
                         fontWeight: FontWeight.w700,
                         fontSize: 17,
-                        color: _zanateBlack,
+                        color: textPrimary,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -1431,7 +1430,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                       style: GoogleFonts.outfit(
                         fontWeight: FontWeight.w700,
                         fontSize: 13,
-                        color: _subtleText,
+                        color: textSecondary,
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -1454,7 +1453,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                               shape: BoxShape.circle,
                               border: Border.all(
                                 color: isSelected
-                                    ? _zanateBlack
+                                    ? (isDark
+                                          ? Colors.white
+                                          : ZanateColors.zanateBlack)
                                     : Colors.transparent,
                                 width: 2.5,
                               ),
@@ -1479,7 +1480,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                       style: GoogleFonts.outfit(
                         fontWeight: FontWeight.w700,
                         fontSize: 13,
-                        color: _subtleText,
+                        color: textSecondary,
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -1499,20 +1500,28 @@ class _ProfileScreenState extends State<ProfileScreen>
                             height: 44,
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? _zanateEyeYellow.withValues(alpha: 0.22)
-                                  : const Color(0xFFF8FAFC),
+                                  ? ZanateColors.zanateEyeYellow.withValues(
+                                      alpha: 0.22,
+                                    )
+                                  : ZanateColors.surface(isDark),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: isSelected
-                                    ? _zanateBlack
-                                    : const Color(0xFFE2E8F0),
+                                    ? (isDark
+                                          ? ZanateColors.zanateEyeYellow
+                                          : ZanateColors.zanateBlack)
+                                    : borderColor,
                                 width: isSelected ? 1.6 : 1.2,
                               ),
                             ),
                             child: Icon(
                               _avatarIcons[idx],
                               size: 20,
-                              color: isSelected ? _zanateBlack : _subtleText,
+                              color: isSelected
+                                  ? (isDark
+                                        ? ZanateColors.zanateEyeYellow
+                                        : ZanateColors.zanateBlack)
+                                  : ZanateColors.textMuted(isDark),
                             ),
                           ),
                         );
@@ -1522,8 +1531,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                     const SizedBox(height: 22),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: _zanateBlack,
-                        foregroundColor: Colors.white,
+                        backgroundColor: ZanateColors.ctaBg(isDark),
+                        foregroundColor: ZanateColors.ctaFg(isDark),
                         elevation: 0,
                         minimumSize: const Size.fromHeight(48),
                         shape: RoundedRectangleBorder(
