@@ -365,22 +365,21 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                       ),
                       const SizedBox(width: 6),
                       Expanded(
-                        child: Row(
+                        child: Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 4,
+                          runSpacing: 2,
                           children: [
-                            Flexible(
-                              child: Text(
-                                (item.sellerBusinessName != null && item.sellerBusinessName!.trim().isNotEmpty)
-                                    ? item.sellerBusinessName!
-                                    : item.authorAlias,
-                                overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                            Text(
+                              (item.sellerBusinessName != null && item.sellerBusinessName!.trim().isNotEmpty)
+                                  ? item.sellerBusinessName!
+                                  : item.authorAlias,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                            if (item.isSellerVerified) ...[
-                              const SizedBox(width: 4),
+                            if (item.isSellerVerified)
                               Tooltip(
                                 message: 'Vendedor verificado',
                                 child: PhosphorIcon(
@@ -391,9 +390,7 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                                       : ZanateColors.zanateBlack,
                                 ),
                               ),
-                            ],
-                            if (item.sellerBadgeText != null && item.sellerBadgeText!.isNotEmpty) ...[
-                              const SizedBox(width: 6),
+                            if (item.sellerBadgeText != null && item.sellerBadgeText!.isNotEmpty)
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 6,
@@ -415,7 +412,6 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                                   ),
                                 ),
                               ),
-                            ],
                           ],
                         ),
                       ),
@@ -484,8 +480,6 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                 // Title
                 Text(
                   item.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.outfit(
                     fontWeight: FontWeight.w700,
                     fontSize: 15.5,
@@ -498,8 +492,6 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                 // Description
                 Text(
                   item.description,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodySmall?.copyWith(
                     fontSize: 12,
                     color: isDark
@@ -512,11 +504,15 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
 
                 // Delivery location
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      PhosphorIconsRegular.mapPin,
-                      size: 14,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 1),
+                      child: Icon(
+                        PhosphorIconsRegular.mapPin,
+                        size: 14,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      ),
                     ),
                     const SizedBox(width: 4),
                     Expanded(
@@ -526,7 +522,6 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                             : (item.locationDetail.isNotEmpty
                                   ? item.locationDetail
                                   : _getSedeName(item.sede)),
-                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
@@ -629,11 +624,15 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                 if (!item.isSellerVerified && !item.isSold) ...[
                   const SizedBox(height: 6),
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        PhosphorIconsRegular.shieldWarning,
-                        size: 13,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 1),
+                        child: Icon(
+                          PhosphorIconsRegular.shieldWarning,
+                          size: 13,
+                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        ),
                       ),
                       const SizedBox(width: 5),
                       Expanded(
@@ -643,8 +642,6 @@ class _MarketplaceCardState extends State<MarketplaceCard> {
                             fontSize: 10.5,
                             color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],

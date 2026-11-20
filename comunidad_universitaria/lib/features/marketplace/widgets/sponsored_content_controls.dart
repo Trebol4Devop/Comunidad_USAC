@@ -188,59 +188,58 @@ class SponsoredContentControls extends StatelessWidget {
 
     return Row(
       children: [
-        Semantics(
-          container: true,
-          label: _accessibleSponsorLabel,
-          child: ExcludeSemantics(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: ZanateColors.zanateEyeYellow,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    'Patrocinado',
-                    style: GoogleFonts.outfit(
-                      color: ZanateColors.zanateBlack,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
+        Expanded(
+          child: Semantics(
+            container: true,
+            label: _accessibleSponsorLabel,
+            child: ExcludeSemantics(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
                     ),
-                  ),
-                ),
-                if (brand != null) ...[
-                  const SizedBox(width: 6),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 120),
+                    decoration: BoxDecoration(
+                      color: ZanateColors.zanateEyeYellow,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     child: Text(
-                      'por $brand',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: overImage
-                            ? Colors.white
-                            : Theme.of(context).colorScheme.onSurface,
+                      'Patrocinado',
+                      style: GoogleFonts.outfit(
+                        color: ZanateColors.zanateBlack,
                         fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        shadows: overImage
-                            ? const [
-                                Shadow(color: Colors.black87, blurRadius: 4),
-                              ]
-                            : null,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
+                  if (brand != null) ...[
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        'por $brand',
+                        style: TextStyle(
+                          color: overImage
+                              ? Colors.white
+                              : Theme.of(context).colorScheme.onSurface,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          shadows: overImage
+                              ? const [
+                                  Shadow(color: Colors.black87, blurRadius: 4),
+                                ]
+                              : null,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
-        const Spacer(),
+        const SizedBox(width: 4),
         SizedBox(
           width: 48,
           height: 48,

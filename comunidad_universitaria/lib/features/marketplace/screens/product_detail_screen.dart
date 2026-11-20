@@ -396,10 +396,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
         title: Text(
           item.title,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
           style: GoogleFonts.outfit(
-            fontSize: 17,
+            fontSize: 15.5,
             fontWeight: FontWeight.w700,
             color: isDark ? Colors.white : ZanateColors.zanateBlack,
           ),
@@ -868,8 +866,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   ? Colors.white
                                   : ZanateColors.zanateBlack,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         if (item.isSellerVerified) ...[
@@ -1174,8 +1170,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     fontWeight: FontWeight.w800,
                     fontSize: 15,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),
@@ -1199,96 +1193,99 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ],
         ),
         const SizedBox(height: 10),
-        SizedBox(
-          height: 160,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            itemCount: _sellerOtherItems.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 10),
-            itemBuilder: (ctx, i) {
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: List.generate(_sellerOtherItems.length, (i) {
               final other = _sellerOtherItems[i];
-              return InkWell(
-                onTap: () {
-                  Navigator.of(context).pushReplacement(
-                    MaterialURLRoute(
-                      builder: (_) => ProductDetailScreen(
-                        itemId: other.id,
-                        initialItem: other,
+              return Padding(
+                padding: EdgeInsets.only(
+                  right: i < _sellerOtherItems.length - 1 ? 10 : 0,
+                ),
+                child: InkWell(
+                  onTap: () {
+                    Navigator.of(context).pushReplacement(
+                      MaterialURLRoute(
+                        builder: (_) => ProductDetailScreen(
+                          itemId: other.id,
+                          initialItem: other,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    width: 145,
+                    constraints: const BoxConstraints(minHeight: 160),
+                    decoration: BoxDecoration(
+                      color: ZanateColors.card(isDark),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: ZanateColors.border(isDark),
+                        width: 1.0,
                       ),
                     ),
-                  );
-                },
-                child: Container(
-                  width: 136,
-                  decoration: BoxDecoration(
-                    color: ZanateColors.card(isDark),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: ZanateColors.border(isDark),
-                      width: 1.0,
-                    ),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        height: 90,
-                        width: double.infinity,
-                        color: ZanateColors.surface(isDark),
-                        child: other.imageUrls.isNotEmpty
-                            ? Image.network(
-                                other.imageUrls.first,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) => const PhosphorIcon(
-                                  PhosphorIconsRegular.image,
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          height: 90,
+                          width: double.infinity,
+                          color: ZanateColors.surface(isDark),
+                          child: other.imageUrls.isNotEmpty
+                              ? Image.network(
+                                  other.imageUrls.first,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, _, _) => const PhosphorIcon(
+                                    PhosphorIconsRegular.image,
+                                    size: 24,
+                                    color: ZanateColors.hintText,
+                                  ),
+                                )
+                              : const PhosphorIcon(
+                                  PhosphorIconsRegular.storefront,
                                   size: 24,
                                   color: ZanateColors.hintText,
                                 ),
-                              )
-                            : const PhosphorIcon(
-                                PhosphorIconsRegular.storefront,
-                                size: 24,
-                                color: ZanateColors.hintText,
-                              ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              other.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.outfit(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: isDark
-                                    ? Colors.white
-                                    : ZanateColors.zanateBlack,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              other.formattedPrice,
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w800,
-                                color: isDark
-                                    ? ZanateColors.zanateEyeYellow
-                                    : ZanateColors.zanateBlack,
-                              ),
-                            ),
-                          ],
                         ),
-                      ),
-                    ],
+                        Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                other.title,
+                                style: GoogleFonts.outfit(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark
+                                      ? Colors.white
+                                      : ZanateColors.zanateBlack,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                other.formattedPrice,
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: isDark
+                                      ? ZanateColors.zanateEyeYellow
+                                      : ZanateColors.zanateBlack,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );
-            },
+            }),
           ),
         ),
       ],
@@ -1320,7 +1317,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             crossAxisCount: 2,
             crossAxisSpacing: 10,
             mainAxisSpacing: 10,
-            childAspectRatio: 0.85,
+            childAspectRatio: 0.72,
           ),
           itemBuilder: (ctx, i) {
             final rel = _relatedItems[i];
@@ -1376,10 +1373,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         children: [
                           Text(
                             rel.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.outfit(
-                              fontSize: 12.5,
+                              fontSize: 12,
                               fontWeight: FontWeight.w700,
                               color: isDark
                                   ? Colors.white
@@ -1400,8 +1395,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           const SizedBox(height: 2),
                           Text(
                             rel.authorAlias,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: 10,
                               color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),

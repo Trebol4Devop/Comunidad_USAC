@@ -280,14 +280,12 @@ class _MySalesScreenState extends State<MySalesScreen> {
                         const SizedBox(height: 10),
 
                         if (_listings.isEmpty)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 32),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 32),
                             child: EmptyStateWidget(
                               icon: PhosphorIconsRegular.shoppingBag,
                               title: 'Aún no tienes publicaciones',
                               description: 'Publica tu primer producto o servicio para empezar a vender.',
-                              buttonText: 'Crear Publicación',
-                              onButtonPressed: () => Navigator.of(context).pop(),
                             ),
                           )
                         else
@@ -295,7 +293,7 @@ class _MySalesScreenState extends State<MySalesScreen> {
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: _listings.length,
-                            separatorBuilder: (_, _) => const SizedBox.shrink(),
+                            separatorBuilder: (_, _) => const SizedBox(height: 10),
                             itemBuilder: (ctx, i) => _buildInventoryRow(_listings[i], isDark),
                           ),
                         const SizedBox(height: 32),
@@ -477,6 +475,7 @@ class _MySalesScreenState extends State<MySalesScreen> {
                         value: _selectedBuilding,
                         isDense: true,
                         isExpanded: true,
+                        itemHeight: null,
                         dropdownColor: ZanateColors.card(isDark),
                         borderRadius: BorderRadius.circular(12),
                         style: TextStyle(fontSize: 12, color: textPrimary),
@@ -487,7 +486,6 @@ class _MySalesScreenState extends State<MySalesScreen> {
                                 value: b['building_code']?.toString(),
                                 child: Text(
                                   '${b['building_code']} · ${b['nombre']}',
-                                  overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: textPrimary,
@@ -531,9 +529,12 @@ class _MySalesScreenState extends State<MySalesScreen> {
       totalMessenger += m.clickMessenger;
     }
 
-    final overallContactRate = totalViews > 0 ? (totalClicks / totalViews * 100).toStringAsFixed(1) : '0.0';
+    final overallContactRate = totalViews > 0
+        ? (totalClicks / totalViews * 100).toStringAsFixed(1)
+        : '0.0';
 
     final textPrimary = ZanateColors.textPrimary(isDark);
+    final textMuted = ZanateColors.textMuted(isDark);
     final borderColor = ZanateColors.border(isDark);
     return Container(
       padding: const EdgeInsets.all(16),
@@ -549,19 +550,36 @@ class _MySalesScreenState extends State<MySalesScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Semantics(
-                header: true,
-                child: Text(
-                  'Rendimiento y Conversión',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 15,
-                    color: textPrimary,
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: ZanateColors.zanateEyeYellow.withValues(alpha: 0.22),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: PhosphorIcon(
+                  PhosphorIconsBold.chartLineUp,
+                  size: 18,
+                  color: isDark
+                      ? ZanateColors.zanateEyeYellow
+                      : ZanateColors.zanateBlack,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Semantics(
+                  header: true,
+                  child: Text(
+                    'Rendimiento y Conversión',
+                    style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      color: textPrimary,
+                    ),
                   ),
                 ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
@@ -603,7 +621,7 @@ class _MySalesScreenState extends State<MySalesScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
 
           if (_isLoadingMetrics)
             const Center(
@@ -615,13 +633,20 @@ class _MySalesScreenState extends State<MySalesScreen> {
           else if (_metricsError)
             Row(
               children: [
-                const Text('No se pudieron cargar las analíticas.', style: TextStyle(fontSize: 12, color: Colors.red)),
-                const Spacer(),
-                TextButton(onPressed: _loadMetrics, child: const Text('Reintentar')),
+                const Expanded(
+                  child: Text(
+                    'No se pudieron cargar las analíticas.',
+                    style: TextStyle(fontSize: 12, color: Colors.red),
+                  ),
+                ),
+                TextButton(
+                  onPressed: _loadMetrics,
+                  child: const Text('Reintentar'),
+                ),
               ],
             )
           else ...[
-            // Aggregated Stat Badges
+            // Métricas principales en diseño de 2 niveles para evitar recortes en móvil
             Row(
               children: [
                 Expanded(
@@ -632,7 +657,7 @@ class _MySalesScreenState extends State<MySalesScreen> {
                     isDark,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 Expanded(
                   child: _buildMetricTile(
                     'Clics a contacto',
@@ -641,28 +666,127 @@ class _MySalesScreenState extends State<MySalesScreen> {
                     isDark,
                   ),
                 ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: ZanateColors.surface(isDark),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: borderColor, width: 1.0),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: ZanateColors.zanateEyeYellow.withValues(alpha: 0.22),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      PhosphorIconsBold.trendUp,
+                      size: 16,
+                      color: isDark
+                          ? ZanateColors.zanateEyeYellow
+                          : ZanateColors.zanateBlack,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Tasa conversión',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Porcentaje de vistas que generaron contacto',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '$overallContactRate%',
+                    style: GoogleFonts.outfit(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: isDark
+                          ? ZanateColors.zanateEyeYellow
+                          : ZanateColors.zanateBlack,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'Interacciones por canal',
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+                color: textMuted,
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Breakdown by channel en cuadrícula limpia 2x2
+            Row(
+              children: [
+                Expanded(
+                  child: _buildChannelChip(
+                    'WhatsApp',
+                    totalWhatsapp,
+                    PhosphorIconsFill.whatsappLogo,
+                    const Color(0xFF25D366),
+                    isDark,
+                  ),
+                ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: _buildMetricTile(
-                    'Tasa conversión',
-                    '$overallContactRate%',
-                    PhosphorIconsRegular.trendUp,
+                  child: _buildChannelChip(
+                    'Telegram',
+                    totalTelegram,
+                    PhosphorIconsFill.telegramLogo,
+                    const Color(0xFF0088CC),
                     isDark,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-
-            // Breakdown by channel
-            Wrap(
-              spacing: 8,
-              runSpacing: 6,
+            const SizedBox(height: 8),
+            Row(
               children: [
-                _buildChannelChip('WhatsApp', totalWhatsapp, const Color(0xFF25D366)),
-                _buildChannelChip('Telegram', totalTelegram, const Color(0xFF0088CC)),
-                _buildChannelChip('Instagram', totalInstagram, const Color(0xFFE1306C)),
-                _buildChannelChip('Messenger', totalMessenger, const Color(0xFF0084FF)),
+                Expanded(
+                  child: _buildChannelChip(
+                    'Instagram',
+                    totalInstagram,
+                    PhosphorIconsFill.instagramLogo,
+                    const Color(0xFFE1306C),
+                    isDark,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildChannelChip(
+                    'Messenger',
+                    totalMessenger,
+                    PhosphorIconsFill.messengerLogo,
+                    const Color(0xFF0084FF),
+                    isDark,
+                  ),
+                ),
               ],
             ),
           ],
@@ -672,11 +796,12 @@ class _MySalesScreenState extends State<MySalesScreen> {
   }
 
   Widget _buildMetricTile(String label, String value, IconData icon, bool isDark) {
+    final textPrimary = ZanateColors.textPrimary(isDark);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: ZanateColors.surface(isDark),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: ZanateColors.border(isDark),
           width: 1.0,
@@ -689,29 +814,29 @@ class _MySalesScreenState extends State<MySalesScreen> {
             children: [
               Icon(
                 icon,
-                size: 14,
+                size: 16,
                 color: ZanateColors.focusBorder(isDark),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   label,
                   style: TextStyle(
-                    fontSize: 10.5,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                     color: ZanateColors.textMuted(isDark),
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
             value,
             style: GoogleFonts.outfit(
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-              color: isDark ? Colors.white : ZanateColors.zanateBlack,
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: textPrimary,
             ),
           ),
         ],
@@ -719,23 +844,53 @@ class _MySalesScreenState extends State<MySalesScreen> {
     );
   }
 
-  Widget _buildChannelChip(String channel, int clicks, Color color) {
+  Widget _buildChannelChip(
+    String channel,
+    int clicks,
+    IconData icon,
+    Color color,
+    bool isDark,
+  ) {
+    final textPrimary = ZanateColors.textPrimary(isDark);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
+        color: ZanateColors.surface(isDark),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: ZanateColors.border(isDark),
+          width: 0.9,
+        ),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            '$channel: ',
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color),
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              channel,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: textPrimary,
+              ),
+            ),
           ),
-          Text(
-            '$clicks',
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color),
+          const SizedBox(width: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              '$clicks',
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w800,
+                color: color,
+              ),
+            ),
           ),
         ],
       ),
@@ -798,8 +953,6 @@ class _MySalesScreenState extends State<MySalesScreen> {
               children: [
                 Text(
                   item.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.outfit(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
