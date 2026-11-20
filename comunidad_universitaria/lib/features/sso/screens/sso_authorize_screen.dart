@@ -2,11 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/config/supabase_config.dart';
+import '../../../core/constants/zanate_colors.dart';
 import '../../../core/services/local_storage_service.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../shared/widgets/zanate_ui.dart';
 import '../sso_security_validator.dart';
 
 class SsoAuthorizeScreen extends StatefulWidget {
@@ -265,10 +269,10 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0B132B) : const Color(0xFFF1F5F9),
+      backgroundColor: ZanateColors.bg(isDark),
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 520),
             child: _buildBody(theme, isDark),
@@ -325,19 +329,27 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
     required String description,
     required String recommendation,
   }) {
+    final textPrimary = ZanateColors.textPrimary(isDark);
+    final textSecondary = ZanateColors.textSecondary(isDark);
+
     return Container(
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1C2541) : Colors.white,
+        color: ZanateColors.card(isDark),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.red.shade300, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.red.withValues(alpha: 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        border: Border.all(
+          color: Colors.red.shade400.withValues(alpha: isDark ? 0.55 : 0.7),
+          width: 1.5,
+        ),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.red.withValues(alpha: 0.08),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -346,43 +358,63 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.red.shade50,
+              color: isDark
+                  ? Colors.red.shade900.withValues(alpha: 0.28)
+                  : Colors.red.shade50,
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.gpp_bad_rounded, size: 48, color: Colors.red.shade700),
+            child: Icon(
+              PhosphorIconsFill.shieldWarning,
+              size: 46,
+              color: isDark ? Colors.red.shade300 : Colors.red.shade700,
+            ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
           Text(
             title,
             textAlign: TextAlign.center,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Colors.red.shade700,
+            style: GoogleFonts.outfit(
+              fontWeight: FontWeight.w800,
+              fontSize: 20,
+              color: isDark ? Colors.red.shade300 : Colors.red.shade700,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
+          ZanateAccentBar(color: Colors.red.shade500),
+          const SizedBox(height: 14),
           Text(
             description,
             textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium?.copyWith(height: 1.45),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              height: 1.45,
+              color: textSecondary,
+            ),
           ),
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+              color: ZanateColors.surface(isDark),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: ZanateColors.border(isDark)),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.shield_outlined, size: 18, color: theme.colorScheme.primary),
+                Icon(
+                  PhosphorIconsRegular.shieldCheck,
+                  size: 18,
+                  color: textPrimary,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     recommendation,
-                    style: const TextStyle(fontSize: 11, height: 1.4),
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      height: 1.4,
+                      color: textSecondary,
+                    ),
                   ),
                 ),
               ],
@@ -391,12 +423,19 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
           const SizedBox(height: 24),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF004B87),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              backgroundColor: ZanateColors.ctaBg(isDark),
+              foregroundColor: ZanateColors.ctaFg(isDark),
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
             ),
-            icon: const Icon(Icons.home, size: 18),
-            label: const Text('Ir a Comunidad USAC'),
+            icon: const Icon(PhosphorIconsRegular.house, size: 18),
+            label: const Text(
+              'Ir a Zanate',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
             onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil('/', (_) => false),
           ),
         ],
@@ -407,22 +446,26 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
   Widget _buildConsentCard(ThemeData theme, bool isDark) {
     final userEmail = SupabaseService.currentUser?.email ?? 'usuario@estudiante.usac.edu.gt';
     final userAlias = _currentAlias.isNotEmpty ? _currentAlias : 'Estudiante USAC';
+    final textPrimary = ZanateColors.textPrimary(isDark);
+    final textSecondary = ZanateColors.textSecondary(isDark);
+    final textMuted = ZanateColors.textMuted(isDark);
+    final borderColor = ZanateColors.border(isDark);
 
     return Container(
-      padding: const EdgeInsets.all(28),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1C2541) : Colors.white,
+        color: ZanateColors.card(isDark),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        border: Border.all(color: borderColor),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -432,21 +475,32 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Comunidad USAC Icon
+              // Zanate Icon
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF004B87),
+                  color: ZanateColors.zanateBlack,
                   borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isDark ? ZanateColors.zanateEyeYellow : borderColor,
+                  ),
                 ),
-                child: const Icon(Icons.school, color: Colors.white, size: 24),
+                child: const Icon(
+                  PhosphorIconsBold.bird,
+                  color: ZanateColors.zanateEyeYellow,
+                  size: 22,
+                ),
               ),
               const SizedBox(width: 14),
-              Icon(Icons.sync_alt_rounded, size: 24, color: Colors.grey.shade400),
+              Icon(
+                PhosphorIconsRegular.arrowsLeftRight,
+                size: 20,
+                color: textMuted,
+              ),
               const SizedBox(width: 14),
               // PEMTREE Icon
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [Color(0xFF059669), Color(0xFF10B981)],
@@ -455,55 +509,63 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
                   ),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(Icons.park, color: Colors.white, size: 24),
+                child: const Icon(
+                  PhosphorIconsBold.tree,
+                  color: Colors.white,
+                  size: 22,
+                ),
               ),
             ],
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 14),
 
           // Title
           Text(
             'Conectar con PEMTREE',
             textAlign: TextAlign.center,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              fontSize: 22,
+            style: GoogleFonts.outfit(
+              fontWeight: FontWeight.w800,
+              fontSize: 21,
+              color: textPrimary,
             ),
           ),
-
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
+          const Center(child: ZanateAccentBar()),
+          const SizedBox(height: 8),
 
           // Friendly message required
           Text(
             'PEMTREE solicita autorización para consultar tu perfil de estudiante y permitirte calificar secciones.',
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(
-              height: 1.45,
-              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+              height: 1.4,
+              color: textSecondary,
             ),
           ),
 
-          const SizedBox(height: 22),
+          const SizedBox(height: 14),
 
           // User Active Identity Card
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+              color: ZanateColors.surface(isDark),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-              ),
+              border: Border.all(color: borderColor),
             ),
             child: Row(
               children: [
                 CircleAvatar(
-                  radius: 22,
-                  backgroundColor: const Color(0xFF004B87),
+                  radius: 19,
+                  backgroundColor: ZanateColors.zanateBlack,
                   child: Text(
                     userAlias.isNotEmpty ? userAlias.characters.first.toUpperCase() : 'U',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                    style: const TextStyle(
+                      color: ZanateColors.zanateEyeYellow,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -516,12 +578,22 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
                           Flexible(
                             child: Text(
                               userAlias,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: textPrimary,
+                              ),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           const SizedBox(width: 6),
-                          const Icon(Icons.verified, size: 14, color: Color(0xFF004B87)),
+                          Icon(
+                            PhosphorIconsFill.sealCheck,
+                            size: 15,
+                            color: isDark
+                                ? ZanateColors.zanateEyeYellow
+                                : ZanateColors.zanateBlack,
+                          ),
                         ],
                       ),
                       const SizedBox(height: 2),
@@ -529,7 +601,7 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
                         userEmail,
                         style: TextStyle(
                           fontSize: 12,
-                          color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                          color: textMuted,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -540,14 +612,15 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
             ),
           ),
 
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
 
           // Permissions summary list
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.5) : const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(12),
+              color: ZanateColors.surface(isDark),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: borderColor),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -557,20 +630,32 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.grey.shade300 : Colors.grey.shade800,
+                    color: textPrimary,
                   ),
                 ),
-                const SizedBox(height: 10),
-                _buildPermissionRow(Icons.account_circle_outlined, 'Ver tu identificador y alias estudiantil verificado'),
                 const SizedBox(height: 8),
-                _buildPermissionRow(Icons.rate_review_outlined, 'Emitir votos y evaluaciones de catedráticos y secciones'),
-                const SizedBox(height: 8),
-                _buildPermissionRow(Icons.lock_outline, 'Inicio de sesión seguro para la plataforma'),
+                _buildPermissionRow(
+                  PhosphorIconsRegular.userCircle,
+                  'Ver tu identificador y alias estudiantil verificado',
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 6),
+                _buildPermissionRow(
+                  PhosphorIconsRegular.chatTeardropText,
+                  'Emitir votos y evaluaciones de catedráticos y secciones',
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 6),
+                _buildPermissionRow(
+                  PhosphorIconsRegular.lockSimple,
+                  'Inicio de sesión seguro para la plataforma',
+                  isDark: isDark,
+                ),
               ],
             ),
           ),
 
-          const SizedBox(height: 26),
+          const SizedBox(height: 16),
 
           // Action Buttons
           Row(
@@ -581,8 +666,10 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFFDC2626),
                     side: const BorderSide(color: Color(0xFFF87171)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
                   onPressed: _isLoading ? null : _handleCancel,
                   child: const Text('Cancelar / Rechazar', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -593,17 +680,23 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
               Expanded(
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF004B87),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    backgroundColor: ZanateColors.ctaBg(isDark),
+                    foregroundColor: ZanateColors.ctaFg(isDark),
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
                   onPressed: _isLoading ? null : _handleAuthorize,
                   child: _isLoading
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: ZanateColors.ctaFg(isDark),
+                          ),
                         )
                       : const Text('Autorizar / Continuar', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
@@ -611,17 +704,21 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
             ],
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
           // Security Notice Footer
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.lock, size: 12, color: Colors.grey.shade500),
-              const SizedBox(width: 4),
+              Icon(
+                PhosphorIconsRegular.lockSimple,
+                size: 13,
+                color: textMuted,
+              ),
+              const SizedBox(width: 5),
               Text(
                 'Conexión segura y autenticación protegida',
-                style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
+                style: TextStyle(fontSize: 10.5, color: textMuted),
               ),
             ],
           ),
@@ -630,16 +727,30 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
     );
   }
 
-  Widget _buildPermissionRow(IconData icon, String text) {
+  Widget _buildPermissionRow(
+    IconData icon,
+    String text, {
+    required bool isDark,
+  }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 15, color: const Color(0xFF004B87)),
+        Icon(
+          icon,
+          size: 16,
+          color: isDark
+              ? ZanateColors.zanateEyeYellow
+              : ZanateColors.zanateBlack,
+        ),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(fontSize: 11, height: 1.3),
+            style: TextStyle(
+              fontSize: 11.5,
+              height: 1.35,
+              color: ZanateColors.textSecondary(isDark),
+            ),
           ),
         ),
       ],
@@ -647,21 +758,26 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
   }
 
   Widget _buildLoginCard(ThemeData theme, bool isDark) {
+    final textPrimary = ZanateColors.textPrimary(isDark);
+    final textSecondary = ZanateColors.textSecondary(isDark);
+    final textMuted = ZanateColors.textMuted(isDark);
+    final borderColor = ZanateColors.border(isDark);
+
     return Container(
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1C2541) : Colors.white,
+        color: ZanateColors.card(isDark),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        border: Border.all(color: borderColor),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -673,15 +789,25 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF004B87).withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
+                  color: ZanateColors.zanateEyeYellow.withValues(alpha: 0.22),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(Icons.lock_outline, color: Color(0xFF004B87), size: 24),
+                child: Icon(
+                  PhosphorIconsFill.lockKey,
+                  color: isDark
+                      ? ZanateColors.zanateEyeYellow
+                      : ZanateColors.zanateBlack,
+                  size: 22,
+                ),
               ),
               const SizedBox(width: 10),
-              const Text(
-                'Comunidad USAC SSO',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              Text(
+                'Zanate SSO',
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 17,
+                  color: textPrimary,
+                ),
               ),
             ],
           ),
@@ -689,30 +815,47 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
           Text(
             'Inicia Sesión para Conectar con PEMTREE',
             textAlign: TextAlign.center,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
+            style: GoogleFonts.outfit(
+              fontWeight: FontWeight.w800,
+              fontSize: 19,
+              color: textPrimary,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
+          const Center(child: ZanateAccentBar()),
+          const SizedBox(height: 10),
           Text(
-            'Ingresa con tu cuenta de Comunidad USAC para otorgar acceso a la aplicación cliente.',
+            'Ingresa con tu cuenta de Zanate para otorgar acceso a la aplicación cliente.',
             textAlign: TextAlign.center,
-            style: theme.textTheme.bodySmall?.copyWith(fontSize: 12),
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontSize: 12.5,
+              color: textSecondary,
+            ),
           ),
           const SizedBox(height: 20),
 
           if (_authErrorMessage != null) ...[
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFFEE2E2),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFFCA5A5)),
+                color: isDark
+                    ? const Color(0xFF7F1D1D).withValues(alpha: 0.35)
+                    : const Color(0xFFFEE2E2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isDark
+                      ? const Color(0xFFF87171).withValues(alpha: 0.45)
+                      : const Color(0xFFFCA5A5),
+                ),
               ),
               child: Text(
                 _authErrorMessage!,
-                style: const TextStyle(color: Color(0xFFB91C1C), fontSize: 12),
+                style: TextStyle(
+                  color: isDark
+                      ? const Color(0xFFFCA5A5)
+                      : const Color(0xFFB91C1C),
+                  fontSize: 12,
+                ),
               ),
             ),
             const SizedBox(height: 14),
@@ -720,15 +863,23 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
 
           if (_infoMessage != null) ...[
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFE0F2FE),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFF7DD3FC)),
+                color: ZanateColors.zanateEyeYellow.withValues(
+                  alpha: isDark ? 0.16 : 0.18,
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: ZanateColors.zanateEyeYellow.withValues(alpha: 0.5),
+                ),
               ),
               child: Text(
                 _infoMessage!,
-                style: const TextStyle(color: Color(0xFF075985), fontSize: 12),
+                style: TextStyle(
+                  color: textPrimary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
             const SizedBox(height: 14),
@@ -737,21 +888,27 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
           // Google Sign In
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF004B87),
-              foregroundColor: Colors.white,
+              backgroundColor: ZanateColors.ctaBg(isDark),
+              foregroundColor: ZanateColors.ctaFg(isDark),
+              elevation: 0,
               padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
             ),
             icon: _isLoading
-                ? const SizedBox(
+                ? SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: ZanateColors.ctaFg(isDark),
+                    ),
                   )
-                : const Icon(Icons.g_mobiledata, size: 26, color: Colors.white),
+                : const ZanateGoogleIcon(size: 20),
             label: Text(
               _isLoading ? 'Conectando...' : 'Continuar con Google',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
             ),
             onPressed: (_isLoading || _waitingForGoogle)
                 ? null
@@ -759,9 +916,10 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
           ),
           if (_waitingForGoogle) ...[
             const SizedBox(height: 10),
-            const Text(
-              'Completa el acceso en Google y regresa a Comunidad USAC.',
+            Text(
+              'Completa el acceso en Google y regresa a Zanate.',
               textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: textSecondary),
             ),
           ],
 
@@ -771,7 +929,7 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 11,
-              color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+              color: textMuted,
             ),
           ),
         ],
@@ -780,14 +938,15 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
   }
 
   Widget _buildRedirectingCard(ThemeData theme, bool isDark) {
+    final textPrimary = ZanateColors.textPrimary(isDark);
+    final textSecondary = ZanateColors.textSecondary(isDark);
+
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1C2541) : Colors.white,
+        color: ZanateColors.card(isDark),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-        ),
+        border: Border.all(color: ZanateColors.border(isDark)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -795,22 +954,35 @@ class _SsoAuthorizeScreenState extends State<SsoAuthorizeScreen> {
           const SizedBox(
             width: 48,
             height: 48,
-            child: CircularProgressIndicator(strokeWidth: 3, color: Color(0xFF004B87)),
+            child: CircularProgressIndicator(
+              strokeWidth: 3,
+              color: ZanateColors.zanateEyeYellow,
+            ),
           ),
           const SizedBox(height: 24),
           Text(
             'Redirigiendo a PEMTREE...',
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+            style: GoogleFonts.outfit(
+              fontWeight: FontWeight.w700,
+              fontSize: 18,
+              color: textPrimary,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             'Conectando de forma segura con tu cuenta de estudiante...',
             textAlign: TextAlign.center,
-            style: theme.textTheme.bodySmall,
+            style: theme.textTheme.bodySmall?.copyWith(color: textSecondary),
           ),
           if (_redirectingUrl != null) ...[
             const SizedBox(height: 20),
             TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: isDark
+                    ? ZanateColors.zanateEyeYellow
+                    : ZanateColors.zanateBlack,
+              ),
               onPressed: () => _performRedirect(_redirectingUrl!),
               child: const Text('Si no eres redirigido automáticamente, haz clic aquí'),
             ),
