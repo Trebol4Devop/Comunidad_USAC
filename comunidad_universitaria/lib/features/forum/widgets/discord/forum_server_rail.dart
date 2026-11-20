@@ -35,10 +35,8 @@ class ForumServerRail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final railBackground =
-        isDark ? const Color(0xFF111827) : ZanateColors.surfaceBg;
-    final borderColor =
-        isDark ? const Color(0xFF1F2937) : ZanateColors.subtleBorder;
+    final railBackground = isDark ? ZanateColors.darkBg : ZanateColors.surfaceBg;
+    final borderColor = ZanateColors.border(isDark);
 
     final visibleServers = <ForumServer>[];
     for (final server in servers) {
@@ -81,7 +79,7 @@ class ForumServerRail extends StatelessWidget {
                     width: 46,
                     height: 46,
                     child: Material(
-                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      color: ZanateColors.card(isDark),
                       borderRadius: BorderRadius.circular(16),
                       child: InkWell(
                         onTap: () => _addServer(context),
@@ -126,16 +124,16 @@ class _ServerButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final activeBg =
-        isDark ? ZanateColors.zanateAccent : ZanateColors.zanateBlack;
-    final inactiveBg = isDark ? const Color(0xFF313338) : Colors.white;
-    final activeFg = Colors.white;
-    final inactiveFg =
-        isDark ? const Color(0xFFDBDEE1) : const Color(0xFF313338);
+        isDark ? ZanateColors.zanateEyeYellow : ZanateColors.zanateBlack;
+    final inactiveBg = ZanateColors.surface(isDark);
+    final activeFg =
+        isDark ? ZanateColors.zanateBlack : Colors.white;
+    final inactiveFg = ZanateColors.textSecondary(isDark);
     final logoAsset = server.resolvedLogoAsset;
     final hasLogo = logoAsset != null && logoAsset.isNotEmpty;
 
     final containerBg = hasLogo
-        ? (isDark ? const Color(0xFF26282B) : Colors.white)
+        ? ZanateColors.card(isDark)
         : (isSelected ? activeBg : inactiveBg);
 
     return Padding(
@@ -179,9 +177,7 @@ class _ServerButton extends StatelessWidget {
                         ? Border.all(
                             color: isSelected
                                 ? activeBg
-                                : (isDark
-                                    ? const Color(0xFF383A40)
-                                    : const Color(0xFFE2E8F0)),
+                                : ZanateColors.border(isDark),
                             width: isSelected ? 2 : 1,
                           )
                         : null,
