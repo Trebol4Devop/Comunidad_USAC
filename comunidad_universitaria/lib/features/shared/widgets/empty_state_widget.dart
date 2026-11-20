@@ -24,15 +24,10 @@ class EmptyStateWidget extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final titleColor = isDark ? Colors.white : ZanateColors.zanateBlack;
-    final subtitleColor =
-        isDark ? const Color(0xFF94A3B8) : ZanateColors.subtleText;
-    final circleBg = isDark
-        ? const Color(0xFF1E293B)
-        : ZanateColors.surfaceBg;
-    final circleBorder = isDark
-        ? const Color(0xFF334155)
-        : ZanateColors.subtleBorder;
+    final titleColor = ZanateColors.textPrimary(isDark);
+    final subtitleColor = ZanateColors.textSecondary(isDark);
+    final circleBg = ZanateColors.surface(isDark);
+    final circleBorder = ZanateColors.border(isDark);
 
     return Center(
       child: Padding(
