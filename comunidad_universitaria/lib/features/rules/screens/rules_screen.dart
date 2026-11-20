@@ -2,41 +2,45 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../core/constants/categories.dart';
+import '../../../core/constants/zanate_colors.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/utils/url_utils.dart';
 
 class RulesScreen extends StatelessWidget {
   const RulesScreen({super.key});
 
-  static const _zanateBlack = Color(0xFF0B0D10);
-  static const _subtleText = Color(0xFF475569);
-
   @override
   Widget build(BuildContext context) {
     final canPop = Navigator.of(context).canPop();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = ZanateColors.textPrimary(isDark);
+    final textSecondary = ZanateColors.textSecondary(isDark);
+    final borderColor = ZanateColors.border(isDark);
+    final surfaceColor = ZanateColors.surface(isDark);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: ZanateColors.bg(isDark),
       body: SafeArea(
         bottom: false,
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              height: 58,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                color: ZanateColors.card(isDark),
                 border: Border(
-                  bottom: BorderSide(color: Color(0xFFE2E8F0)),
+                  bottom: BorderSide(color: borderColor),
                 ),
               ),
               child: Row(
                 children: [
                   if (canPop)
                     IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         PhosphorIconsBold.caretLeft,
                         size: 22,
-                        color: _zanateBlack,
+                        color: textPrimary,
                       ),
                       tooltip: 'Regresar',
                       onPressed: () => Navigator.of(context).pop(),
@@ -48,9 +52,9 @@ class RulesScreen extends StatelessWidget {
                       'Normas y Descargo',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.outfit(
-                        fontSize: 16,
+                        fontSize: 17.5,
                         fontWeight: FontWeight.w700,
-                        color: _zanateBlack,
+                        color: textPrimary,
                       ),
                     ),
                   ),
@@ -69,12 +73,12 @@ class RulesScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Zanate es una iniciativa estudiantil independiente, libre y sin fines de lucro entre compañeros universitarios.',
                         style: TextStyle(
                           fontSize: 13.5,
                           height: 1.4,
-                          color: _subtleText,
+                          color: textSecondary,
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -86,24 +90,27 @@ class RulesScreen extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                           fontSize: 17,
                           letterSpacing: -0.2,
-                          color: _zanateBlack,
+                          color: textPrimary,
                         ),
                       ),
                       const SizedBox(height: 12),
 
                       _buildRuleTile(
+                        isDark: isDark,
                         number: '1',
                         title: 'Respeto mutuo y fraternidad universitaria',
                         description:
                             'Queda estrictamente prohibido el acoso, las faltas de respeto, discriminación o difamación entre compañeros o hacia catedráticos.',
                       ),
                       _buildRuleTile(
+                        isDark: isDark,
                         number: '2',
                         title: 'Veracidad y enlaces limpios',
                         description:
                             'Solo comparte enlaces legítimos de grupos académicos. No se permiten acortadores con publicidad ni enlaces maliciosos.',
                       ),
                       _buildRuleTile(
+                        isDark: isDark,
                         number: '3',
                         title:
                             'Prohibición de venta de exámenes o fraude académico',
@@ -111,6 +118,7 @@ class RulesScreen extends StatelessWidget {
                             'La comunidad está pensada para apoyarnos con resolución de dudas, resúmenes y material libre. No se tolera el comercio de notas, parciales filtrados ni suplantación.',
                       ),
                       _buildRuleTile(
+                        isDark: isDark,
                         number: '4',
                         title: 'Protección de Privacidad y Seudónimos',
                         description:
@@ -126,18 +134,20 @@ class RulesScreen extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                           fontSize: 17,
                           letterSpacing: -0.2,
-                          color: _zanateBlack,
+                          color: textPrimary,
                         ),
                       ),
                       const SizedBox(height: 12),
 
                       _buildRuleTile(
+                        isDark: isDark,
                         number: '5',
                         title: 'Trato directo y sin intermediación financiera',
                         description:
                             'La plataforma no interviene en las transacciones comerciales, no custodia dinero ni cobra comisiones. Toda compraventa, entrega o coordinación de tutoría se realiza de forma directa y voluntaria entre los estudiantes.',
                       ),
                       _buildRuleTile(
+                        isDark: isDark,
                         number: '6',
                         title:
                             'Prohibición estricta de sustancias y productos ilegales',
@@ -145,6 +155,7 @@ class RulesScreen extends StatelessWidget {
                             'Queda terminantemente prohibido publicar bebidas alcohólicas, sustancias ilícitas, medicamentos bajo prescripción médica, armas o cualquier artículo prohibido por el reglamento universitario y las leyes de Guatemala.',
                       ),
                       _buildRuleTile(
+                        isDark: isDark,
                         number: '7',
                         title: 'Seguridad en puntos de encuentro',
                         description:
@@ -157,10 +168,14 @@ class RulesScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(18),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFFBEB),
+                          color: isDark
+                              ? const Color(0xFF2B2108)
+                              : const Color(0xFFFFFBEB),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: const Color(0xFFFDE68A),
+                            color: isDark
+                                ? const Color(0xFF78350F)
+                                : const Color(0xFFFDE68A),
                             width: 1.2,
                           ),
                         ),
@@ -169,9 +184,11 @@ class RulesScreen extends StatelessWidget {
                           children: [
                             Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   PhosphorIconsRegular.info,
-                                  color: Color(0xFFB45309),
+                                  color: isDark
+                                      ? ZanateColors.zanateEyeYellow
+                                      : const Color(0xFFB45309),
                                   size: 20,
                                 ),
                                 const SizedBox(width: 8),
@@ -180,7 +197,9 @@ class RulesScreen extends StatelessWidget {
                                     'Descargo de Responsabilidad Legal e Independencia',
                                     style: GoogleFonts.outfit(
                                       fontWeight: FontWeight.w700,
-                                      color: const Color(0xFF92400E),
+                                      color: isDark
+                                          ? const Color(0xFFFDE68A)
+                                          : const Color(0xFF92400E),
                                       fontSize: 14.5,
                                     ),
                                   ),
@@ -188,10 +207,12 @@ class RulesScreen extends StatelessWidget {
                               ],
                             ),
                             const SizedBox(height: 8),
-                            const Text(
+                            Text(
                               'Zanate es una plataforma y directorio estudiantil independiente y sin fines de lucro. No representa, no forma parte ni actúa en nombre de las autoridades de la Universidad de San Carlos de Guatemala. Los datos de pensums, materias y facultades se basan en publicaciones de libre acceso con carácter exclusivamente informativo.\n\nLos administradores de la plataforma no se hacen responsables de los acuerdos particulares, compras, ventas o contenidos intercambiados en enlaces de terceros.',
                               style: TextStyle(
-                                color: Color(0xFF92400E),
+                                color: isDark
+                                    ? const Color(0xFFFDE68A)
+                                    : const Color(0xFF92400E),
                                 fontSize: 12.5,
                                 height: 1.45,
                               ),
@@ -206,10 +227,10 @@ class RulesScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(18),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
+                          color: surfaceColor,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: const Color(0xFFE2E8F0),
+                            color: borderColor,
                             width: 1.2,
                           ),
                         ),
@@ -218,9 +239,9 @@ class RulesScreen extends StatelessWidget {
                           children: [
                             Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   PhosphorIconsRegular.scales,
-                                  color: _zanateBlack,
+                                  color: ZanateColors.focusBorder(isDark),
                                   size: 20,
                                 ),
                                 const SizedBox(width: 8),
@@ -229,7 +250,7 @@ class RulesScreen extends StatelessWidget {
                                     'Cumplimiento legal y privacidad',
                                     style: GoogleFonts.outfit(
                                       fontWeight: FontWeight.w700,
-                                      color: _zanateBlack,
+                                      color: textPrimary,
                                       fontSize: 15,
                                     ),
                                   ),
@@ -238,18 +259,21 @@ class RulesScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 12),
                             _buildLegalBullet(
+                              isDark: isDark,
                               boldPrefix: 'Art. 3:',
                               text:
                                   ' el proveedor no edita transmisiones ajenas; solo aprueba u oculta.',
                             ),
                             const SizedBox(height: 8),
                             _buildLegalBullet(
+                              isDark: isDark,
                               boldPrefix: 'Art. 12/13/14/16:',
                               text:
                                   ' suplantación, acceso ilícito, fraude y amenazas están prohibidos.',
                             ),
                             const SizedBox(height: 8),
                             _buildLegalBullet(
+                              isDark: isDark,
                               boldPrefix: 'Art. 20/21:',
                               text:
                                   ' retención de evidencia hasta 90 días y congelamiento legal.',
@@ -267,16 +291,16 @@ class RulesScreen extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                           fontSize: 16.5,
                           letterSpacing: -0.2,
-                          color: _zanateBlack,
+                          color: textPrimary,
                         ),
                       ),
                       const SizedBox(height: 4),
-                      const Text(
+                      Text(
                         'Los siguientes enlaces conducen a los sitios web institucionales externos de cada facultad:',
                         style: TextStyle(
                           fontSize: 12.5,
                           height: 1.4,
-                          color: _subtleText,
+                          color: textSecondary,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -288,24 +312,24 @@ class RulesScreen extends StatelessWidget {
                             .where((f) => f['id'] != 'todas')
                             .map(
                               (f) => ActionChip(
-                                backgroundColor: const Color(0xFFF8FAFC),
-                                side: const BorderSide(
-                                  color: Color(0xFFE2E8F0),
+                                backgroundColor: surfaceColor,
+                                side: BorderSide(
+                                  color: borderColor,
                                 ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                avatar: const Icon(
+                                avatar: Icon(
                                   PhosphorIconsRegular.arrowSquareOut,
                                   size: 15,
-                                  color: _zanateBlack,
+                                  color: textPrimary,
                                 ),
                                 label: Text(
                                   f['nombre'].toString(),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w600,
-                                    color: _zanateBlack,
+                                    color: textPrimary,
                                   ),
                                 ),
                                 onPressed: () => UrlUtils.openUrl(
@@ -330,17 +354,20 @@ class RulesScreen extends StatelessWidget {
   }
 
   Widget _buildRuleTile({
+    required bool isDark,
     required String number,
     required String title,
     required String description,
   }) {
+    final textPrimary = ZanateColors.textPrimary(isDark);
+    final textSecondary = ZanateColors.textSecondary(isDark);
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: ZanateColors.surface(isDark),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+        border: Border.all(color: ZanateColors.border(isDark), width: 1.2),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -349,7 +376,7 @@ class RulesScreen extends StatelessWidget {
             width: 28,
             height: 28,
             decoration: BoxDecoration(
-              color: _zanateBlack,
+              color: ZanateColors.ctaBg(isDark),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Center(
@@ -357,7 +384,7 @@ class RulesScreen extends StatelessWidget {
                 number,
                 style: GoogleFonts.outfit(
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: ZanateColors.ctaFg(isDark),
                   fontSize: 13,
                 ),
               ),
@@ -370,19 +397,19 @@ class RulesScreen extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 13.5,
-                    color: _zanateBlack,
+                    color: textPrimary,
                   ),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   description,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12.5,
                     height: 1.4,
-                    color: _subtleText,
+                    color: textSecondary,
                   ),
                 ),
               ],
@@ -394,9 +421,12 @@ class RulesScreen extends StatelessWidget {
   }
 
   Widget _buildLegalBullet({
+    required bool isDark,
     required String boldPrefix,
     required String text,
   }) {
+    final textPrimary = ZanateColors.textPrimary(isDark);
+    final textSecondary = ZanateColors.textSecondary(isDark);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -405,8 +435,8 @@ class RulesScreen extends StatelessWidget {
           child: Container(
             width: 5,
             height: 5,
-            decoration: const BoxDecoration(
-              color: _zanateBlack,
+            decoration: BoxDecoration(
+              color: ZanateColors.focusBorder(isDark),
               shape: BoxShape.circle,
             ),
           ),
@@ -415,17 +445,17 @@ class RulesScreen extends StatelessWidget {
         Expanded(
           child: Text.rich(
             TextSpan(
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12.5,
                 height: 1.4,
-                color: _subtleText,
+                color: textSecondary,
               ),
               children: [
                 TextSpan(
                   text: boldPrefix,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    color: _zanateBlack,
+                    color: textPrimary,
                   ),
                 ),
                 TextSpan(text: text),
