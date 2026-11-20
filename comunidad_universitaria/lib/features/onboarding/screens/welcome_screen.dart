@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import '../../../core/constants/zanate_colors.dart';
 import '../../rules/screens/rules_screen.dart';
 import '../../verification/state/verification_controller.dart';
 import '../state/session_controller.dart';
@@ -14,10 +15,6 @@ class WelcomeScreen extends StatelessWidget {
   final VoidCallback? onContinueAsGuest;
   final VerificationController? verificationController;
   final SessionController? sessionController;
-
-  // Paleta inspirada en el dibujo del Zanate: blanco puro, negro plumaje y amarillo del ojo
-  static const Color _zanateBlack = Color(0xFF0B0D10);
-  static const Color _zanateEyeYellow = Color(0xFFF5C518);
 
   const WelcomeScreen({
     super.key,
@@ -78,8 +75,10 @@ class WelcomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = ZanateColors.bg(isDark);
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: bgColor,
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = constraints.maxWidth >= 780;
@@ -87,21 +86,21 @@ class WelcomeScreen extends StatelessWidget {
           if (isWide) {
             return Row(
               children: [
-                // Panel izquierdo: blanco puro con el Zanate protagonista y frase abajo a la izquierda
+                // Panel izquierdo: limpio con el Zanate protagonista y frase abajo a la izquierda
                 const Expanded(
                   flex: 11,
                   child: _WhiteBrandPanel(),
                 ),
-                const VerticalDivider(
+                VerticalDivider(
                   width: 1,
                   thickness: 1,
-                  color: Color(0xFFE2E8F0),
+                  color: ZanateColors.border(isDark),
                 ),
-                // Panel derecho: blanco puro con acciones e insignia abajo a la derecha
+                // Panel derecho: acciones e insignia abajo a la derecha
                 Expanded(
                   flex: 9,
                   child: Container(
-                    color: Colors.white,
+                    color: bgColor,
                     child: SafeArea(
                       child: Stack(
                         children: [
@@ -129,10 +128,10 @@ class WelcomeScreen extends StatelessWidget {
                               ),
                             ),
                           ),
-                          const Positioned(
+                          Positioned(
                             right: 28,
                             bottom: 10,
-                            child: _TrebolCreditBadge(onDark: false),
+                            child: _TrebolCreditBadge(onDark: isDark),
                           ),
                         ],
                       ),
@@ -143,7 +142,7 @@ class WelcomeScreen extends StatelessWidget {
             );
           }
 
-          // Vista móvil / estrecha: pantalla completamente blanca, mejor distribución y crédito al límite inferior
+          // Vista móvil / estrecha: fondo limpio en claro/oscuro, mejor distribución y crédito abajo
           return SafeArea(
             child: LayoutBuilder(
               builder: (context, mobileConstraints) {
@@ -205,11 +204,11 @@ class WelcomeScreen extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            const Padding(
-                              padding: EdgeInsets.only(top: 10, bottom: 6),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 10, bottom: 6),
                               child: Align(
                                 alignment: Alignment.centerRight,
-                                child: _TrebolCreditBadge(onDark: false),
+                                child: _TrebolCreditBadge(onDark: isDark),
                               ),
                             ),
                           ],
@@ -257,8 +256,9 @@ class _WhiteBrandPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      color: Colors.white,
+      color: ZanateColors.bg(isDark),
       child: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -306,6 +306,9 @@ class _CompactMobileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = ZanateColors.textPrimary(isDark);
+    final textSecondary = ZanateColors.textSecondary(isDark);
     final titleSize = compact ? 34.0 : 40.0;
     final phraseSize = compact ? 16.0 : 17.5;
 
@@ -322,7 +325,7 @@ class _CompactMobileHeader extends StatelessWidget {
             errorBuilder: (context, error, stackTrace) => Icon(
               PhosphorIconsRegular.bird,
               size: logoSize * 0.6,
-              color: WelcomeScreen._zanateBlack,
+              color: textPrimary,
             ),
           ),
         ),
@@ -334,7 +337,7 @@ class _CompactMobileHeader extends StatelessWidget {
             fontSize: titleSize,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.5,
-            color: WelcomeScreen._zanateBlack,
+            color: textPrimary,
           ),
         ),
         SizedBox(height: compact ? 8 : 12),
@@ -348,7 +351,7 @@ class _CompactMobileHeader extends StatelessWidget {
                 fontSize: phraseSize,
                 fontWeight: FontWeight.w600,
                 height: 1.25,
-                color: const Color(0xFF334155),
+                color: textSecondary,
               ),
             ),
             IntrinsicWidth(
@@ -364,14 +367,14 @@ class _CompactMobileHeader extends StatelessWidget {
                       fontSize: phraseSize + 0.5,
                       fontWeight: FontWeight.w800,
                       height: 1.25,
-                      color: WelcomeScreen._zanateBlack,
+                      color: textPrimary,
                     ),
                   ),
                   const SizedBox(height: 3),
                   Container(
                     height: 3,
                     decoration: BoxDecoration(
-                      color: WelcomeScreen._zanateEyeYellow,
+                      color: ZanateColors.zanateEyeYellow,
                       borderRadius: BorderRadius.circular(999),
                     ),
                   ),
@@ -396,6 +399,8 @@ class _BrandHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = ZanateColors.textPrimary(isDark);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -409,7 +414,7 @@ class _BrandHero extends StatelessWidget {
             errorBuilder: (context, error, stackTrace) => Icon(
               PhosphorIconsRegular.bird,
               size: logoSize * 0.6,
-              color: WelcomeScreen._zanateBlack,
+              color: textPrimary,
             ),
           ),
         ),
@@ -421,7 +426,7 @@ class _BrandHero extends StatelessWidget {
             fontSize: titleSize,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.6,
-            color: WelcomeScreen._zanateBlack,
+            color: textPrimary,
           ),
         ),
       ],
@@ -436,12 +441,14 @@ class _ExplorationTagline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = ZanateColors.textPrimary(isDark);
     final baseStyle = GoogleFonts.outfit(
       fontSize: fontSize,
       fontWeight: FontWeight.w700,
       height: 1.08,
       letterSpacing: -0.6,
-      color: const Color(0xFF334155),
+      color: ZanateColors.textSecondary(isDark),
     );
 
     return Column(
@@ -466,14 +473,14 @@ class _ExplorationTagline extends StatelessWidget {
                   fontWeight: FontWeight.w800,
                   height: 1.08,
                   letterSpacing: -0.6,
-                  color: WelcomeScreen._zanateBlack,
+                  color: textPrimary,
                 ),
               ),
               const SizedBox(height: 6),
               Container(
                 height: 4.5,
                 decoration: BoxDecoration(
-                  color: WelcomeScreen._zanateEyeYellow,
+                  color: ZanateColors.zanateEyeYellow,
                   borderRadius: BorderRadius.circular(999),
                 ),
               ),
@@ -504,9 +511,11 @@ class _ActionsColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const subtleText = Color(0xFF475569);
-    const mutedText = Color(0xFF64748B);
-    const lightBorder = Color(0xFFE2E8F0);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = ZanateColors.textPrimary(isDark);
+    final textSecondary = ZanateColors.textSecondary(isDark);
+    final textMuted = ZanateColors.textMuted(isDark);
+    final borderColor = ZanateColors.border(isDark);
     final buttonHeight = compact ? 48.0 : 54.0;
     final buttonPadding = EdgeInsets.symmetric(
       horizontal: compact ? 20 : 24,
@@ -526,15 +535,15 @@ class _ActionsColumn extends StatelessWidget {
               fontSize: 26,
               fontWeight: FontWeight.w700,
               letterSpacing: -0.3,
-              color: WelcomeScreen._zanateBlack,
+              color: textPrimary,
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Elige cómo quieres entrar hoy.',
             style: TextStyle(
               fontSize: 14,
-              color: subtleText,
+              color: textSecondary,
             ),
           ),
           const SizedBox(height: 24),
@@ -543,8 +552,8 @@ class _ActionsColumn extends StatelessWidget {
         // Botón Principal: Iniciar sesión (Amarillo del ojo del Zanate)
         ElevatedButton.icon(
           style: ElevatedButton.styleFrom(
-            backgroundColor: WelcomeScreen._zanateEyeYellow,
-            foregroundColor: WelcomeScreen._zanateBlack,
+            backgroundColor: ZanateColors.zanateEyeYellow,
+            foregroundColor: ZanateColors.zanateBlack,
             elevation: 0,
             minimumSize: Size.fromHeight(buttonHeight),
             padding: buttonPadding,
@@ -563,11 +572,14 @@ class _ActionsColumn extends StatelessWidget {
         ),
         SizedBox(height: gap),
 
-        // Botón para nuevos usuarios: Crear cuenta (Negro Zanate sobre blanco)
+        // Botón para nuevos usuarios: Crear cuenta
         ElevatedButton.icon(
           style: ElevatedButton.styleFrom(
-            backgroundColor: WelcomeScreen._zanateBlack,
-            foregroundColor: Colors.white,
+            backgroundColor:
+                isDark ? ZanateColors.darkSurfaceSubtle : ZanateColors.zanateBlack,
+            foregroundColor:
+                isDark ? ZanateColors.darkTextPrimary : Colors.white,
+            side: isDark ? BorderSide(color: borderColor, width: 1.2) : null,
             elevation: 0,
             minimumSize: Size.fromHeight(buttonHeight),
             padding: buttonPadding,
@@ -587,26 +599,26 @@ class _ActionsColumn extends StatelessWidget {
 
         Padding(
           padding: EdgeInsets.symmetric(vertical: compact ? 10 : 14),
-          child: const Row(
+          child: Row(
             children: [
-              Expanded(child: Divider(color: lightBorder, height: 1)),
+              Expanded(child: Divider(color: borderColor, height: 1)),
               Flexible(
                 flex: 0,
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
                   child: Text(
                     'o explora sin registro',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 12,
-                      color: mutedText,
+                      color: textMuted,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
               ),
-              Expanded(child: Divider(color: lightBorder, height: 1)),
+              Expanded(child: Divider(color: borderColor, height: 1)),
             ],
           ),
         ),
@@ -614,10 +626,10 @@ class _ActionsColumn extends StatelessWidget {
         // Botón Secundario: Continuar como anónimo
         OutlinedButton.icon(
           style: OutlinedButton.styleFrom(
-            foregroundColor: WelcomeScreen._zanateBlack,
-            backgroundColor: const Color(0xFFF8FAFC),
-            side: const BorderSide(
-              color: Color(0xFFCBD5E1),
+            foregroundColor: textPrimary,
+            backgroundColor: ZanateColors.surface(isDark),
+            side: BorderSide(
+              color: isDark ? borderColor : const Color(0xFFCBD5E1),
               width: 1.3,
             ),
             minimumSize: Size.fromHeight(buttonHeight),
@@ -628,7 +640,7 @@ class _ActionsColumn extends StatelessWidget {
           icon: Icon(
             PhosphorIconsRegular.eye,
             size: compact ? 18 : 20,
-            color: subtleText,
+            color: textSecondary,
           ),
           label: Text(
             'Continuar como anónimo',
@@ -648,7 +660,7 @@ class _ActionsColumn extends StatelessWidget {
         Center(
           child: TextButton.icon(
             style: TextButton.styleFrom(
-              foregroundColor: subtleText,
+              foregroundColor: textSecondary,
               padding: EdgeInsets.symmetric(
                 horizontal: 12,
                 vertical: compact ? 4 : 8,
@@ -680,7 +692,7 @@ class _TrebolCreditBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = onDark ? Colors.white : WelcomeScreen._zanateBlack;
+    final textColor = onDark ? Colors.white : ZanateColors.zanateBlack;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -716,16 +728,18 @@ class _AnonymousModeNoticeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: compact ? 12 : 14,
         vertical: compact ? 10 : 13,
       ),
       decoration: BoxDecoration(
-        color: WelcomeScreen._zanateEyeYellow.withValues(alpha: 0.14),
+        color: ZanateColors.zanateEyeYellow
+            .withValues(alpha: isDark ? 0.16 : 0.14),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: WelcomeScreen._zanateEyeYellow.withValues(alpha: 0.6),
+          color: ZanateColors.zanateEyeYellow.withValues(alpha: 0.6),
           width: 1.1,
         ),
       ),
@@ -737,7 +751,9 @@ class _AnonymousModeNoticeCard extends StatelessWidget {
             child: Icon(
               PhosphorIconsFill.info,
               size: compact ? 17 : 19,
-              color: const Color(0xFFB45309),
+              color: isDark
+                  ? ZanateColors.zanateEyeYellow
+                  : const Color(0xFFB45309),
             ),
           ),
           const SizedBox(width: 10),
@@ -747,18 +763,20 @@ class _AnonymousModeNoticeCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: compact ? 12 : 12.5,
                   height: 1.35,
-                  color: const Color(0xFF334155),
+                  color: isDark
+                      ? const Color(0xFFFDE68A)
+                      : const Color(0xFF334155),
                   fontWeight: FontWeight.w500,
                 ),
-                children: const [
+                children: [
                   TextSpan(
                     text: 'Modo anónimo: ',
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
-                      color: WelcomeScreen._zanateBlack,
+                      color: ZanateColors.textPrimary(isDark),
                     ),
                   ),
-                  TextSpan(
+                  const TextSpan(
                     text:
                         'podrás explorar el foro y el marketplace, pero necesitas una cuenta para publicar.',
                   ),
