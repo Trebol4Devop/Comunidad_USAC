@@ -40,9 +40,9 @@ class CreateListingDialog extends StatefulWidget {
         context: context,
         isScrollControlled: true,
         useSafeArea: true,
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF0F172A)
-            : Colors.white,
+        backgroundColor: ZanateColors.bg(
+          Theme.of(context).brightness == Brightness.dark,
+        ),
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
@@ -274,7 +274,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
               content: Text(
                 '¡Publicación creada exitosamente en el Marketplace!',
               ),
-              backgroundColor: Color(0xFF004B87),
+              backgroundColor: ZanateColors.zanateBlack,
             ),
           );
         } else {
@@ -323,17 +323,15 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
     String? prefixText,
     Widget? prefixIcon,
   }) {
-    final borderColor =
-        isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
-    final focusColor =
-        isDark ? ZanateColors.zanateEyeYellow : ZanateColors.zanateBlack;
+    final borderColor = ZanateColors.border(isDark);
+    final focusColor = ZanateColors.focusBorder(isDark);
     return InputDecoration(
       labelText: labelText,
       hintText: hintText,
       prefixText: prefixText,
       prefixIcon: prefixIcon,
       filled: true,
-      fillColor: isDark ? const Color(0xFF1E293B) : ZanateColors.surfaceBg,
+      fillColor: ZanateColors.surface(isDark),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
@@ -355,11 +353,9 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isMobile = Responsive.isMobile(context);
-    final borderColor =
-        isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
-    final primaryText = isDark ? Colors.white : ZanateColors.zanateBlack;
-    final secondaryText =
-        isDark ? const Color(0xFF94A3B8) : ZanateColors.mutedText;
+    final borderColor = ZanateColors.border(isDark);
+    final primaryText = ZanateColors.textPrimary(isDark);
+    final secondaryText = ZanateColors.textMuted(isDark);
     final maxHeight =
         MediaQuery.of(context).size.height * (isMobile ? 0.90 : 0.85);
 
@@ -474,16 +470,12 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                   decoration: BoxDecoration(
                     color: _isQuotaExceeded
                         ? const Color(0xFFEF4444).withValues(alpha: 0.1)
-                        : (theme.brightness == Brightness.dark
-                            ? const Color(0xFF1E293B)
-                            : const Color(0xFFF1F5F9)),
-                    borderRadius: BorderRadius.circular(8),
+                        : ZanateColors.pill(isDark),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: _isQuotaExceeded
                           ? const Color(0xFFEF4444)
-                          : (theme.brightness == Brightness.dark
-                              ? const Color(0xFF334155)
-                              : ZanateColors.subtleBorder),
+                          : borderColor,
                       width: 0.8,
                     ),
                   ),
@@ -496,7 +488,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                         size: 16,
                         color: _isQuotaExceeded
                             ? const Color(0xFFEF4444)
-                            : ZanateColors.zanateAccent,
+                            : ZanateColors.focusBorder(isDark),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -509,9 +501,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                             fontWeight: FontWeight.w600,
                             color: _isQuotaExceeded
                                 ? const Color(0xFFDC2626)
-                                : (theme.brightness == Brightness.dark
-                                    ? Colors.white
-                                    : ZanateColors.zanateDark),
+                                : primaryText,
                           ),
                         ),
                       ),
@@ -523,10 +513,10 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                         onPressed: () => MarketplacePlansSheet.show(context),
                         child: Text(
                           _isQuotaExceeded ? 'Mejorar plan' : 'Planes',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
-                            color: ZanateColors.zanateAccent,
+                            color: ZanateColors.focusBorder(isDark),
                           ),
                         ),
                       ),
@@ -551,7 +541,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                         'Esta publicación se pausará automáticamente a los 14 días.',
                         style: TextStyle(
                           fontSize: 10.5,
-                          color: theme.brightness == Brightness.dark
+                          color: isDark
                               ? const Color(0xFFFDE68A)
                               : const Color(0xFFB45309),
                           fontWeight: FontWeight.w500,
@@ -562,7 +552,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                 ),
               ],
 
-              Container(height: 0.8, color: theme.brightness == Brightness.dark ? const Color(0xFF334155) : ZanateColors.subtleBorder),
+              Container(height: 0.8, color: borderColor),
 
               // Category & Free Toggle
               Wrap(
@@ -575,8 +565,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                     child: DropdownButtonFormField<String>(
                       initialValue: _selectedCategory,
                       isExpanded: true,
-                      dropdownColor:
-                          isDark ? const Color(0xFF1E293B) : Colors.white,
+                      dropdownColor: ZanateColors.card(isDark),
                       decoration: _zanateInput(
                         isDark,
                         labelText: 'Categoría',
@@ -779,8 +768,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                     child: DropdownButtonFormField<String>(
                       initialValue: _selectedSede,
                       isExpanded: true,
-                      dropdownColor:
-                          isDark ? const Color(0xFF1E293B) : Colors.white,
+                      dropdownColor: ZanateColors.card(isDark),
                       decoration: _zanateInput(
                         isDark,
                         labelText: 'Sede / Campus',
@@ -806,8 +794,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                     child: DropdownButtonFormField<String>(
                       initialValue: _selectedFacultad,
                       isExpanded: true,
-                      dropdownColor:
-                          isDark ? const Color(0xFF1E293B) : Colors.white,
+                      dropdownColor: ZanateColors.card(isDark),
                       decoration: _zanateInput(
                         isDark,
                         labelText: 'Facultad / Unidad',
@@ -833,8 +820,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                     child: DropdownButtonFormField<String>(
                       initialValue: _selectedBuilding,
                       isExpanded: true,
-                      dropdownColor:
-                          isDark ? const Color(0xFF1E293B) : Colors.white,
+                      dropdownColor: ZanateColors.card(isDark),
                       decoration: _zanateInput(
                         isDark,
                         labelText: 'Edificio o Punto',
@@ -926,9 +912,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                             errorBuilder: (ctx, err, stack) => Container(
                               width: 70,
                               height: 70,
-                              color: isDark
-                                  ? const Color(0xFF1E293B)
-                                  : ZanateColors.surfaceBg,
+                              color: ZanateColors.surface(isDark),
                               child: PhosphorIcon(
                                 PhosphorIconsRegular.imageBroken,
                                 size: 24,
@@ -963,9 +947,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                     OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
                         foregroundColor: primaryText,
-                        backgroundColor: isDark
-                            ? const Color(0xFF1E293B)
-                            : ZanateColors.surfaceBg,
+                        backgroundColor: ZanateColors.surface(isDark),
                         side: BorderSide(color: borderColor, width: 1.2),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
@@ -1027,9 +1009,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                   const SizedBox(width: 8),
                   IconButton.filledTonal(
                     style: IconButton.styleFrom(
-                      backgroundColor: isDark
-                          ? const Color(0xFF1E293B)
-                          : ZanateColors.pillBg,
+                      backgroundColor: ZanateColors.pill(isDark),
                       foregroundColor: primaryText,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -1203,11 +1183,11 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
       );
     } else {
       return Dialog(
-        backgroundColor: theme.brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white,
+        backgroundColor: ZanateColors.card(isDark),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
           side: BorderSide(
-            color: theme.brightness == Brightness.dark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            color: borderColor,
             width: 0.8,
           ),
         ),
