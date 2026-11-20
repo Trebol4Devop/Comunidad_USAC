@@ -9,13 +9,24 @@ import '../../../core/constants/zanate_colors.dart';
 import '../../../core/services/connectivity_service.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/utils/url_utils.dart';
+import '../../shared/screens/settings_screen.dart';
 import '../../shared/widgets/network_state_widgets.dart';
+import '../../shared/widgets/zanate_ui.dart';
 import '../services/map_sync_service.dart';
 import '../services/supabase_campus_community_repository.dart';
 import '../widgets/building_3d_viewer.dart';
 
 class CampusMapScreen extends StatefulWidget {
-  const CampusMapScreen({super.key});
+  final String? activeAlias;
+  final Function(String newAlias)? onAliasChanged;
+  final VoidCallback? onToggleTheme;
+
+  const CampusMapScreen({
+    super.key,
+    this.activeAlias,
+    this.onAliasChanged,
+    this.onToggleTheme,
+  });
 
   @override
   State<CampusMapScreen> createState() => _CampusMapScreenState();
@@ -246,12 +257,11 @@ class _CampusMapScreenState extends State<CampusMapScreen> {
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
-        backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+        backgroundColor: ZanateColors.bg(isDark),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
           side: BorderSide(
-            color:
-                isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            color: ZanateColors.border(isDark),
           ),
         ),
         child: SizedBox(
@@ -265,14 +275,14 @@ class _CampusMapScreenState extends State<CampusMapScreen> {
                   style: GoogleFonts.outfit(
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : ZanateColors.zanateBlack,
+                    color: ZanateColors.textPrimary(isDark),
                   ),
                 ),
                 leading: IconButton(
                   icon: PhosphorIcon(
                     PhosphorIconsRegular.x,
                     size: 20,
-                    color: isDark ? Colors.white : ZanateColors.zanateBlack,
+                    color: ZanateColors.textPrimary(isDark),
                   ),
                   onPressed: () => Navigator.of(ctx).pop(),
                 ),
@@ -291,9 +301,7 @@ class _CampusMapScreenState extends State<CampusMapScreen> {
                   'Arrastra para rotar · Pellizca para zoom · ${building.floorsCount} niveles',
                   style: TextStyle(
                     fontSize: 12,
-                    color: isDark
-                        ? const Color(0xFF94A3B8)
-                        : ZanateColors.mutedText,
+                    color: ZanateColors.textMuted(isDark),
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -310,7 +318,7 @@ class _CampusMapScreenState extends State<CampusMapScreen> {
       return UsacMapTheme(
         primaryColor: ZanateColors.zanateEyeYellow,
         accentColor: ZanateColors.zanateEyeYellow,
-        buildingDefaultColor: const Color(0x551E293B),
+        buildingDefaultColor: const Color(0x5514181F),
         buildingBorderColor: const Color(0xFF64748B),
         buildingSelectedColor: const Color(0x99F5C518),
         buildingSelectedBorderColor: ZanateColors.zanateEyeYellow,
@@ -420,16 +428,67 @@ class _CampusMapScreenState extends State<CampusMapScreen> {
         Container(
           width: 380,
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF0F172A) : Colors.white,
+            color: ZanateColors.bg(isDark),
             border: Border(
               left: BorderSide(
-                color: isDark
-                    ? const Color(0xFF334155)
-                    : ZanateColors.subtleBorder,
+                color: ZanateColors.border(isDark),
               ),
             ),
           ),
           child: _buildDirectoryContent(theme, isDark),
+        ),
+      ],
+    );
+  }
+
+  void _openSettings() {
+    SettingsScreen.show(
+      context,
+      activeAlias: widget.activeAlias ?? 'Estudiante USAC',
+      onAliasChanged: widget.onAliasChanged ?? (_) {},
+      onToggleTheme: widget.onToggleTheme,
+    );
+  }
+
+  Widget _buildMobileMapHeader(bool isDark) {
+    final textPrimary = ZanateColors.textPrimary(isDark);
+    return ZanatePageHeader(
+      kicker: 'CAMPUS USAC',
+      title: 'Mapa',
+      leading: IconButton(
+        tooltip: 'Configuración y Perfil',
+        onPressed: _openSettings,
+        icon: PhosphorIcon(
+          PhosphorIconsRegular.gear,
+          size: 21,
+          color: textPrimary,
+        ),
+        style: IconButton.styleFrom(
+          backgroundColor: ZanateColors.pill(isDark),
+          fixedSize: const Size(38, 38),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(11),
+            side: BorderSide(color: ZanateColors.border(isDark), width: 0.8),
+          ),
+        ),
+      ),
+      trailing: [
+        IconButton(
+          tooltip: 'Ver Modelo 3D',
+          onPressed: _open3DViewerForSelected,
+          icon: PhosphorIcon(
+            PhosphorIconsRegular.cube,
+            size: 20,
+            color: textPrimary,
+          ),
+          style: IconButton.styleFrom(
+            backgroundColor: ZanateColors.pill(isDark),
+            fixedSize: const Size(38, 38),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(11),
+              side: BorderSide(color: ZanateColors.border(isDark), width: 0.8),
+            ),
+          ),
         ),
       ],
     );
@@ -445,6 +504,7 @@ class _CampusMapScreenState extends State<CampusMapScreen> {
     if (_showDirectoryOnly) {
       return Column(
         children: [
+          _buildMobileMapHeader(isDark),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: Row(
@@ -453,12 +513,8 @@ class _CampusMapScreenState extends State<CampusMapScreen> {
                 ElevatedButton.icon(
                   onPressed: () => setState(() => _showDirectoryOnly = false),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isDark
-                        ? ZanateColors.zanateEyeYellow
-                        : ZanateColors.zanateBlack,
-                    foregroundColor: isDark
-                        ? ZanateColors.zanateBlack
-                        : Colors.white,
+                    backgroundColor: ZanateColors.ctaBg(isDark),
+                    foregroundColor: ZanateColors.ctaFg(isDark),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -481,115 +537,124 @@ class _CampusMapScreenState extends State<CampusMapScreen> {
       );
     }
 
-    return Stack(
+    return Column(
       children: [
-        // Canvas de Mapa
-        Positioned.fill(child: _buildMapCanvas(mapTheme)),
+        _buildMobileMapHeader(isDark),
+        Expanded(
+          child: Stack(
+            children: [
+              // Canvas de Mapa
+              Positioned.fill(child: _buildMapCanvas(mapTheme)),
 
-        // Controles Superiores Flotantes (Buscador, Modos de Ruta, 3D)
-        _buildTopControls(theme, isDark, mapTheme),
+              // Controles Superiores Flotantes (Buscador, Modos de Ruta)
+              _buildTopControls(theme, isDark, mapTheme),
 
-        // Floor Selector flotante si hay edificio con pisos seleccionado
-        if (_controller.selectedBuilding != null &&
-            _controller.selectedBuilding!.floorsCount > 1)
-          Positioned(
-            right: 16,
-            bottom: 120,
-            child: FloorSelector(
-              floorsCount: _controller.selectedBuilding!.floorsCount,
-              selectedFloor: _controller.selectedFloor,
-              theme: mapTheme,
-              onFloorSelected: (f) => _controller.selectFloor(f),
-            ),
-          ),
-
-        // Banner Turn-by-Turn cuando hay ruta activa
-        if (_controller.currentRoute != null)
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: TurnByTurnBanner(
-              route: _controller.currentRoute!,
-              trackingState: _controller.navigationTrackingState,
-              theme: mapTheme,
-              onClose: () => _controller.clearRoute(),
-            ),
-          ),
-
-        // Draggable Bottom Sheet con Directorio de Edificios y Puntos
-        DraggableScrollableSheet(
-          initialChildSize: 0.55,
-          minChildSize: 0.15,
-          maxChildSize: 0.95,
-          snap: true,
-          builder: (context, scrollController) {
-            return Container(
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF0F172A) : Colors.white,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                border: Border(
-                  top: BorderSide(
-                    color: isDark
-                        ? const Color(0xFF334155)
-                        : ZanateColors.subtleBorder,
+              // Floor Selector flotante si hay edificio con pisos seleccionado
+              if (_controller.selectedBuilding != null &&
+                  _controller.selectedBuilding!.floorsCount > 1)
+                Positioned(
+                  right: 16,
+                  bottom: 120,
+                  child: FloorSelector(
+                    floorsCount: _controller.selectedBuilding!.floorsCount,
+                    selectedFloor: _controller.selectedFloor,
+                    theme: mapTheme,
+                    onFloorSelected: (f) => _controller.selectFloor(f),
                   ),
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.12),
-                    blurRadius: 10,
-                    offset: const Offset(0, -3),
+
+              // Banner Turn-by-Turn cuando hay ruta activa
+              if (_controller.currentRoute != null)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: TurnByTurnBanner(
+                    route: _controller.currentRoute!,
+                    trackingState: _controller.navigationTrackingState,
+                    theme: mapTheme,
+                    onClose: () => _controller.clearRoute(),
                   ),
-                ],
-              ),
-              child: CustomScrollView(
-                controller: scrollController,
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const SizedBox(height: 10),
-                        Container(
-                          width: 40,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? const Color(0xFF334155)
-                                : ZanateColors.subtleBorder,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
+                ),
+
+              // Draggable Bottom Sheet con Directorio de Edificios y Puntos
+              DraggableScrollableSheet(
+                initialChildSize: 0.34,
+                minChildSize: 0.14,
+                maxChildSize: 0.92,
+                snap: true,
+                builder: (context, scrollController) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: ZanateColors.bg(isDark),
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(20),
+                      ),
+                      border: Border(
+                        top: BorderSide(
+                          color: ZanateColors.border(isDark),
                         ),
-                        const SizedBox(height: 10),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.12),
+                          blurRadius: 10,
+                          offset: const Offset(0, -3),
+                        ),
                       ],
                     ),
-                  ),
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: _buildDirectoryHeader(theme, isDark),
+                    child: CustomScrollView(
+                      controller: scrollController,
+                      slivers: [
+                        SliverToBoxAdapter(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              const SizedBox(height: 8),
+                              Container(
+                                width: 40,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  color: ZanateColors.border(isDark),
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                            ],
+                          ),
+                        ),
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: _buildDirectoryHeader(
+                              theme,
+                              isDark,
+                              compact: true,
+                            ),
+                          ),
+                        ),
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(20, 2, 20, 12),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                final location = _locations[index];
+                                return _LocationRow(
+                                  location: location,
+                                  onDirections: () => _handleDirections(location),
+                                );
+                              },
+                              childCount: _locations.length,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final location = _locations[index];
-                          return _LocationRow(
-                            location: location,
-                            onDirections: () => _handleDirections(location),
-                          );
-                        },
-                        childCount: _locations.length,
-                      ),
-                    ),
-                  ),
-                ],
+                  );
+                },
               ),
-            );
-          },
+            ],
+          ),
         ),
       ],
     );
@@ -637,13 +702,11 @@ class _CampusMapScreenState extends State<CampusMapScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
                 side: BorderSide(
-                  color: isDark
-                      ? const Color(0xFF334155)
-                      : ZanateColors.subtleBorder,
+                  color: ZanateColors.border(isDark),
                   width: 1.2,
                 ),
               ),
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              color: ZanateColors.card(isDark),
               child: Row(
                 children: [
                   const SizedBox(width: 14),
@@ -660,14 +723,24 @@ class _CampusMapScreenState extends State<CampusMapScreen> {
                       controller: _searchController,
                       focusNode: _searchFocusNode,
                       onChanged: _onSearchChanged,
-                      decoration: const InputDecoration(
-                        hintText: 'Buscar edificio, aula o alias (ej. El Iglú, T-3, 5B)...',
-                        hintStyle: TextStyle(color: ZanateColors.hintText),
+                      style: TextStyle(
+                        color: ZanateColors.textPrimary(isDark),
+                        fontSize: 14,
+                      ),
+                      decoration: InputDecoration(
+                        filled: false,
+                        hintText:
+                            'Buscar edificio, aula o alias (ej. El Iglú, T-3, 5B)...',
+                        hintStyle: TextStyle(
+                          color: ZanateColors.textMuted(isDark),
+                        ),
                         border: InputBorder.none,
                         focusedBorder: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         isDense: true,
-                        contentPadding: EdgeInsets.symmetric(vertical: 12),
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                        ),
                       ),
                     ),
                   ),
@@ -682,17 +755,18 @@ class _CampusMapScreenState extends State<CampusMapScreen> {
                         _onSearchChanged('');
                       },
                     ),
-                  IconButton(
-                    tooltip: 'Ver Modelo 3D',
-                    icon: PhosphorIcon(
-                      PhosphorIconsRegular.cube,
-                      size: 20,
-                      color: isDark
-                          ? ZanateColors.zanateEyeYellow
-                          : ZanateColors.zanateBlack,
+                  if (!Responsive.isMobile(context))
+                    IconButton(
+                      tooltip: 'Ver Modelo 3D',
+                      icon: PhosphorIcon(
+                        PhosphorIconsRegular.cube,
+                        size: 20,
+                        color: isDark
+                            ? ZanateColors.zanateEyeYellow
+                            : ZanateColors.zanateBlack,
+                      ),
+                      onPressed: _open3DViewerForSelected,
                     ),
-                    onPressed: _open3DViewerForSelected,
-                  ),
                 ],
               ),
             ),
@@ -735,12 +809,10 @@ class _CampusMapScreenState extends State<CampusMapScreen> {
                 margin: const EdgeInsets.only(top: 6),
                 constraints: const BoxConstraints(maxHeight: 260),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  color: ZanateColors.card(isDark),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: isDark
-                        ? const Color(0xFF334155)
-                        : ZanateColors.subtleBorder,
+                    color: ZanateColors.border(isDark),
                     width: 1.2,
                   ),
                   boxShadow: [
@@ -757,9 +829,7 @@ class _CampusMapScreenState extends State<CampusMapScreen> {
                   itemCount: searchResults.length,
                   separatorBuilder: (_, _) => Divider(
                     height: 1,
-                    color: isDark
-                        ? const Color(0xFF334155)
-                        : ZanateColors.subtleBorder,
+                    color: ZanateColors.border(isDark),
                   ),
                   itemBuilder: (context, index) {
                     final item = searchResults[index];
@@ -778,14 +848,17 @@ class _CampusMapScreenState extends State<CampusMapScreen> {
                         item.title,
                         style: GoogleFonts.outfit(
                           fontWeight: FontWeight.w700,
-                          color:
-                              isDark ? Colors.white : ZanateColors.zanateBlack,
+                          color: ZanateColors.textPrimary(isDark),
                         ),
                       ),
                       subtitle: Text(
                         item.matchedAlias != null
                             ? '${item.subtitle} · Alias: ${item.matchedAlias}'
                             : item.subtitle,
+                        style: TextStyle(
+                          color: ZanateColors.textMuted(isDark),
+                          fontSize: 12,
+                        ),
                       ),
                       onTap: () => _onSearchResultSelected(item),
                     );
@@ -812,17 +885,17 @@ class _CampusMapScreenState extends State<CampusMapScreen> {
         size: 16,
         color: isSelected
             ? ZanateColors.zanateBlack
-            : (isDark ? const Color(0xFF94A3B8) : ZanateColors.subtleText),
+            : ZanateColors.textMuted(isDark),
       ),
       label: Text(label),
       selected: isSelected,
       showCheckmark: false,
-      backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+      backgroundColor: ZanateColors.card(isDark),
       selectedColor: ZanateColors.zanateEyeYellow,
       side: BorderSide(
         color: isSelected
-            ? (isDark ? ZanateColors.zanateEyeYellow : ZanateColors.zanateBlack)
-            : (isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder),
+            ? ZanateColors.focusBorder(isDark)
+            : ZanateColors.border(isDark),
       ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       labelStyle: GoogleFonts.outfit(
@@ -830,7 +903,7 @@ class _CampusMapScreenState extends State<CampusMapScreen> {
         fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
         color: isSelected
             ? ZanateColors.zanateBlack
-            : (isDark ? const Color(0xFFCBD5E1) : ZanateColors.subtleText),
+            : ZanateColors.textSecondary(isDark),
       ),
       onSelected: (val) {
         if (val) {
@@ -852,40 +925,40 @@ class _CampusMapScreenState extends State<CampusMapScreen> {
   }
 
   /// Encabezado del Directorio de Ubicaciones
-  Widget _buildDirectoryHeader(ThemeData theme, bool isDark) {
+  Widget _buildDirectoryHeader(
+    ThemeData theme,
+    bool isDark, {
+    bool compact = false,
+  }) {
     final locations = _locations;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Mapa',
-          style: GoogleFonts.outfit(
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white : ZanateColors.zanateBlack,
+        if (!compact) ...[
+          Text(
+            'Mapa',
+            style: GoogleFonts.outfit(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: ZanateColors.textPrimary(isDark),
+            ),
           ),
-        ),
-        const SizedBox(height: 6),
-        Container(
-          width: 44,
-          height: 4,
-          decoration: BoxDecoration(
-            color: ZanateColors.zanateEyeYellow,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-        const SizedBox(height: 8),
+          const SizedBox(height: 6),
+        ],
+        const ZanateAccentBar(),
+        SizedBox(height: compact ? 6 : 8),
         Text(
           'Puntos de encuentro y edificios de la USAC',
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: isDark ? const Color(0xFF94A3B8) : ZanateColors.subtleText,
+            fontSize: compact ? 13 : null,
+            color: ZanateColors.textSecondary(isDark),
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: compact ? 8 : 16),
         Wrap(
           spacing: 8,
-          runSpacing: 8,
+          runSpacing: compact ? 6 : 8,
           children: [
             for (final campus in const [
               'Todas',
@@ -897,28 +970,25 @@ class _CampusMapScreenState extends State<CampusMapScreen> {
                 selected: _selectedCampus == campus,
                 onSelected: (_) => setState(() => _selectedCampus = campus),
                 showCheckmark: false,
-                backgroundColor:
-                    isDark ? const Color(0xFF1E293B) : ZanateColors.pillBg,
+                visualDensity: compact ? VisualDensity.compact : null,
+                padding: compact
+                    ? const EdgeInsets.symmetric(horizontal: 6)
+                    : null,
+                backgroundColor: ZanateColors.pill(isDark),
                 selectedColor: ZanateColors.zanateEyeYellow,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
                 side: BorderSide(
                   color: _selectedCampus == campus
-                      ? (isDark
-                          ? ZanateColors.zanateEyeYellow
-                          : ZanateColors.zanateBlack)
-                      : (isDark
-                          ? const Color(0xFF334155)
-                          : ZanateColors.subtleBorder),
+                      ? ZanateColors.focusBorder(isDark)
+                      : ZanateColors.border(isDark),
                 ),
                 labelStyle: GoogleFonts.outfit(
-                  fontSize: 13,
+                  fontSize: compact ? 12.5 : 13,
                   color: _selectedCampus == campus
                       ? ZanateColors.zanateBlack
-                      : (isDark
-                          ? const Color(0xFFCBD5E1)
-                          : ZanateColors.subtleText),
+                      : ZanateColors.textSecondary(isDark),
                   fontWeight: _selectedCampus == campus
                       ? FontWeight.w700
                       : FontWeight.w600,
@@ -926,16 +996,16 @@ class _CampusMapScreenState extends State<CampusMapScreen> {
               ),
           ],
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: compact ? 6 : 12),
         Text(
           '${locations.length} ubicaciones',
           style: TextStyle(
-            fontSize: 12.5,
+            fontSize: compact ? 12 : 12.5,
             fontWeight: FontWeight.w600,
-            color: isDark ? const Color(0xFF94A3B8) : ZanateColors.mutedText,
+            color: ZanateColors.textMuted(isDark),
           ),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: compact ? 2 : 4),
       ],
     );
   }
@@ -977,7 +1047,7 @@ class _LocationRow extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+            color: ZanateColors.border(isDark),
           ),
         ),
       ),
@@ -988,13 +1058,10 @@ class _LocationRow extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color:
-                  isDark ? const Color(0xFF1E293B) : ZanateColors.surfaceBg,
+              color: ZanateColors.surface(isDark),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: isDark
-                    ? const Color(0xFF334155)
-                    : ZanateColors.subtleBorder,
+                color: ZanateColors.border(isDark),
               ),
             ),
             child: Center(
@@ -1017,16 +1084,14 @@ class _LocationRow extends StatelessWidget {
                   style: GoogleFonts.outfit(
                     fontWeight: FontWeight.w700,
                     fontSize: 14.5,
-                    color: isDark ? Colors.white : ZanateColors.zanateBlack,
+                    color: ZanateColors.textPrimary(isDark),
                   ),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   location['description'] as String? ?? '',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: isDark
-                        ? const Color(0xFF94A3B8)
-                        : ZanateColors.subtleText,
+                    color: ZanateColors.textMuted(isDark),
                     height: 1.35,
                   ),
                 ),
@@ -1038,8 +1103,7 @@ class _LocationRow extends StatelessWidget {
             tooltip: 'Cómo llegar',
             onPressed: onDirections,
             style: IconButton.styleFrom(
-              backgroundColor:
-                  isDark ? const Color(0xFF1E293B) : ZanateColors.surfaceBg,
+              backgroundColor: ZanateColors.surface(isDark),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
