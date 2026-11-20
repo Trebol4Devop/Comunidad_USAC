@@ -98,10 +98,10 @@ class PostCard extends StatelessWidget {
     final showModBanner = isModerator && modStatus > 0;
     final modColor = modStatus == 1 ? const Color(0xFFEAB308) : const Color(0xFFEF4444);
 
-    final cardBg = isDark ? const Color(0xFF0F172A) : Colors.white;
+    final cardBg = ZanateColors.bg(isDark);
     final cardBorder = showModBanner
         ? modColor
-        : (isDark ? const Color(0xFF1E293B) : ZanateColors.subtleBorder);
+        : ZanateColors.border(isDark);
 
     return Container(
       decoration: BoxDecoration(
@@ -224,10 +224,10 @@ class PostCard extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                               decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF1E293B) : ZanateColors.surfaceBg,
+                                color: ZanateColors.surface(isDark),
                                 borderRadius: BorderRadius.circular(6),
                                 border: Border.all(
-                                  color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+                                  color: ZanateColors.border(isDark),
                                   width: 0.8,
                                 ),
                               ),
@@ -236,7 +236,7 @@ class PostCard extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w600,
-                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                  color: ZanateColors.textMuted(isDark),
                                 ),
                               ),
                             ),
@@ -247,7 +247,7 @@ class PostCard extends StatelessWidget {
                           TimeUtils.timeAgo(post.createdAt),
                           style: TextStyle(
                             fontSize: 11,
-                            color: isDark ? const Color(0xFF64748B) : Colors.blueGrey.shade400,
+                            color: ZanateColors.textMuted(isDark),
                           ),
                         ),
                       ],
@@ -256,12 +256,12 @@ class PostCard extends StatelessWidget {
                   if (onReport != null || (post.isMine && onDelete != null))
                     PopupMenuButton<String>(
                     tooltip: 'Más opciones',
-                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    color: ZanateColors.card(isDark),
                     surfaceTintColor: Colors.transparent,
                     elevation: 3,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
-                      side: BorderSide(color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder),
+                      side: BorderSide(color: ZanateColors.border(isDark)),
                     ),
                     icon: Icon(
                       PhosphorIconsRegular.dotsThreeVertical,
@@ -341,7 +341,7 @@ class PostCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontSize: 13.5,
-                  color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
+                  color: ZanateColors.textSecondary(isDark),
                   height: 1.45,
                 ),
               ),
@@ -352,10 +352,10 @@ class PostCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF0F172A) : ZanateColors.surfaceBg,
+                    color: ZanateColors.surface(isDark),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+                      color: ZanateColors.border(isDark),
                     ),
                   ),
                   child: Column(
@@ -429,14 +429,10 @@ class PostCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? const Color(0xFF1E293B).withValues(alpha: 0.6)
-                        : ZanateColors.surfaceBg,
+                    color: ZanateColors.surface(isDark),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isDark
-                          ? const Color(0xFF334155)
-                          : ZanateColors.subtleBorder,
+                      color: ZanateColors.border(isDark),
                     ),
                   ),
                   child: Column(
@@ -487,12 +483,8 @@ class PostCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
                                   color: isMyVote
-                                      ? (isDark
-                                          ? ZanateColors.zanateEyeYellow
-                                          : ZanateColors.zanateBlack)
-                                      : (isDark
-                                          ? const Color(0xFF334155)
-                                          : ZanateColors.subtleBorder),
+                                      ? ZanateColors.focusBorder(isDark)
+                                      : ZanateColors.border(isDark),
                                   width: isMyVote ? 1.5 : 1.0,
                                 ),
                               ),
