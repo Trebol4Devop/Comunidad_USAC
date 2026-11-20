@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:comunidad_universitaria/core/services/connectivity_service.dart';
 import 'package:comunidad_universitaria/features/map/screens/campus_map_screen.dart';
 import 'package:comunidad_universitaria/features/shared/widgets/network_state_widgets.dart';
+import 'package:comunidad_universitaria/features/shared/widgets/zanate_ui.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -83,5 +84,39 @@ void main() {
       expect(find.text('Sin conexión. Mostrando contenido en caché.'), findsOneWidget);
       expect(find.text('Reintentar'), findsOneWidget);
     });
+
+    testWidgets(
+      'No duplica márgenes superiores por SafeArea en cabecera móvil y buscador',
+      (tester) async {
+        tester.view.physicalSize = const Size(400, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Builder(
+              builder: (context) => MediaQuery(
+                data: MediaQuery.of(context).copyWith(
+                  padding: const EdgeInsets.only(top: 44),
+                ),
+                child: const CampusMapScreen(),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final headerRect = tester.getRect(find.byType(ZanatePageHeader));
+        final searchFieldFinder = find.byWidgetPredicate(
+          (w) =>
+              w is TextField &&
+              w.decoration?.hintText?.contains('Buscar edificio') == true,
+        );
+        final searchRect = tester.getRect(searchFieldFinder);
+
+        expect(headerRect.height, lessThanOrEqualTo(62));
+        expect(searchRect.top - headerRect.bottom, lessThanOrEqualTo(20));
+      },
+    );
   });
 }

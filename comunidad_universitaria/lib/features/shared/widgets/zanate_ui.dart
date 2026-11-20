@@ -41,6 +41,7 @@ class ZanatePageHeader extends StatelessWidget {
   final List<Widget>? trailing;
   final bool centerTitle;
   final double height;
+  final bool safeAreaTop;
 
   const ZanatePageHeader({
     super.key,
@@ -53,6 +54,7 @@ class ZanatePageHeader extends StatelessWidget {
     this.trailing,
     this.centerTitle = true,
     this.height = 58,
+    this.safeAreaTop = true,
   });
 
   @override
@@ -94,11 +96,12 @@ class ZanatePageHeader extends StatelessWidget {
         ),
       ),
       child: SafeArea(
+        top: safeAreaTop,
         bottom: false,
-        child: SizedBox(
-          height: height,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: height),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             child: Row(
               children: [
                 if (resolvedLeading != null)
@@ -108,6 +111,7 @@ class ZanatePageHeader extends StatelessWidget {
                 if (resolvedLeading != null) const SizedBox(width: 8),
                 Expanded(
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: centerTitle
                         ? CrossAxisAlignment.center
@@ -116,8 +120,9 @@ class ZanatePageHeader extends StatelessWidget {
                       if (kicker != null && kicker!.isNotEmpty)
                         Text(
                           kicker!.toUpperCase(),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          textAlign: centerTitle
+                              ? TextAlign.center
+                              : TextAlign.start,
                           style: GoogleFonts.inter(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
@@ -127,8 +132,9 @@ class ZanatePageHeader extends StatelessWidget {
                         ),
                       Text(
                         title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        textAlign: centerTitle
+                            ? TextAlign.center
+                            : TextAlign.start,
                         style: GoogleFonts.outfit(
                           fontSize: 17.5,
                           fontWeight: FontWeight.w700,
@@ -140,8 +146,9 @@ class ZanatePageHeader extends StatelessWidget {
                       if (subtitle != null && subtitle!.isNotEmpty)
                         Text(
                           subtitle!,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          textAlign: centerTitle
+                              ? TextAlign.center
+                              : TextAlign.start,
                           style: TextStyle(
                             fontSize: 11.5,
                             color: ZanateColors.textSecondary(isDark),
