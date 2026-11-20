@@ -26,7 +26,7 @@ class SponsorRequestDialog extends StatefulWidget {
         context: context,
         isScrollControlled: true,
         useSafeArea: true,
-        backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+        backgroundColor: ZanateColors.bg(isDark),
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
@@ -130,7 +130,7 @@ class _SponsorRequestDialogState extends State<SponsorRequestDialog> {
           content: Text(
             '¡Solicitud enviada con éxito! El equipo se comunicará contigo por WhatsApp.',
           ),
-          backgroundColor: Color(0xFF004B87),
+          backgroundColor: ZanateColors.zanateBlack,
         ),
       );
     } else {
@@ -147,15 +147,13 @@ class _SponsorRequestDialogState extends State<SponsorRequestDialog> {
     required String labelText,
     String? hintText,
   }) {
-    final borderColor =
-        isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
-    final focusColor =
-        isDark ? ZanateColors.zanateEyeYellow : ZanateColors.zanateBlack;
+    final borderColor = ZanateColors.border(isDark);
+    final focusColor = ZanateColors.focusBorder(isDark);
     return InputDecoration(
       labelText: labelText,
       hintText: hintText,
       filled: true,
-      fillColor: isDark ? const Color(0xFF1E293B) : ZanateColors.surfaceBg,
+      fillColor: ZanateColors.surface(isDark),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
@@ -177,11 +175,9 @@ class _SponsorRequestDialogState extends State<SponsorRequestDialog> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isMobile = Responsive.isMobile(context);
-    final borderColor =
-        isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder;
-    final primaryText = isDark ? Colors.white : ZanateColors.zanateBlack;
-    final secondaryText =
-        isDark ? const Color(0xFF94A3B8) : ZanateColors.mutedText;
+    final borderColor = ZanateColors.border(isDark);
+    final primaryText = ZanateColors.textPrimary(isDark);
+    final secondaryText = ZanateColors.textMuted(isDark);
     final maxHeight =
         MediaQuery.of(context).size.height * (isMobile ? 0.90 : 0.85);
 
@@ -336,7 +332,8 @@ class _SponsorRequestDialogState extends State<SponsorRequestDialog> {
                   key: ValueKey(_selectedPlanId),
                   initialValue: _selectedPlanId,
                   isExpanded: true,
-                  dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  dropdownColor: ZanateColors.card(isDark),
+                  style: TextStyle(color: primaryText, fontSize: 14),
                   decoration: _zanateInput(
                     isDark,
                     labelText: 'Plan Deseado',
@@ -369,7 +366,8 @@ class _SponsorRequestDialogState extends State<SponsorRequestDialog> {
               DropdownButtonFormField<String>(
                 initialValue: _placement,
                 isExpanded: true,
-                dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                dropdownColor: ZanateColors.card(isDark),
+                style: TextStyle(color: primaryText, fontSize: 14),
                 decoration: _zanateInput(
                   isDark,
                   labelText: 'Espacio Deseado',
@@ -544,7 +542,7 @@ class _SponsorRequestDialogState extends State<SponsorRequestDialog> {
       );
     } else {
       return Dialog(
-        backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+        backgroundColor: ZanateColors.bg(isDark),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
           side: BorderSide(color: borderColor, width: 1.0),
