@@ -17,14 +17,10 @@ class MarketplaceTheme {
   static ThemeData resolve(BuildContext context) {
     final base = Theme.of(context);
     final isDark = base.brightness == Brightness.dark;
-    final borderColor = isDark
-        ? const Color(0xFF334155)
-        : ZanateColors.subtleBorder;
-    final surface = isDark ? const Color(0xFF1E293B) : Colors.white;
-    final foreground = isDark ? Colors.white : ZanateColors.zanateBlack;
-    final focusColor = isDark
-        ? ZanateColors.zanateEyeYellow
-        : ZanateColors.zanateBlack;
+    final borderColor = ZanateColors.border(isDark);
+    final surface = ZanateColors.card(isDark);
+    final foreground = ZanateColors.textPrimary(isDark);
+    final focusColor = ZanateColors.focusBorder(isDark);
 
     OutlineInputBorder outline(Color color, [double width = 1.2]) {
       return OutlineInputBorder(
@@ -41,7 +37,7 @@ class MarketplaceTheme {
     }
 
     return base.copyWith(
-      scaffoldBackgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+      scaffoldBackgroundColor: ZanateColors.bg(isDark),
       appBarTheme: base.appBarTheme.copyWith(
         backgroundColor: surface,
         foregroundColor: foreground,
@@ -63,7 +59,8 @@ class MarketplaceTheme {
         ),
       ),
       bottomSheetTheme: base.bottomSheetTheme.copyWith(
-        backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+        backgroundColor: ZanateColors.bg(isDark),
+        modalBackgroundColor: ZanateColors.bg(isDark),
         shape: RoundedRectangleBorder(
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           side: BorderSide(color: borderColor, width: 1.0),
@@ -71,7 +68,7 @@ class MarketplaceTheme {
       ),
       inputDecorationTheme: base.inputDecorationTheme.copyWith(
         filled: true,
-        fillColor: isDark ? const Color(0xFF1E293B) : ZanateColors.surfaceBg,
+        fillColor: ZanateColors.surface(isDark),
         border: outline(borderColor),
         enabledBorder: outline(borderColor),
         focusedBorder: outline(focusColor, 1.6),
