@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../core/constants/categories.dart';
+import '../../../core/constants/zanate_colors.dart';
 import '../../../core/models/whatsapp_group.dart';
 import '../../../core/services/groups_service.dart';
 import '../../../core/services/local_storage_service.dart';
@@ -12,6 +13,7 @@ import '../../../core/services/supabase_service.dart';
 import '../widgets/create_group_dialog.dart';
 import '../widgets/group_card.dart';
 import '../../shared/widgets/auth_modal.dart';
+import '../../shared/widgets/empty_state_widget.dart';
 import '../../shared/screens/settings_screen.dart';
 
 class GroupsScreen extends StatefulWidget {
@@ -297,19 +299,19 @@ class GroupsScreenState extends State<GroupsScreen> {
     return 'Facultad';
   }
 
-  static const _zanateBlack = Color(0xFF0B0D10);
-  static const _zanateEyeYellow = Color(0xFFF5C518);
-  static const _subtleText = Color(0xFF475569);
-
   void _showPreferencesSheet(BuildContext context, bool isDark) {
     String tempFacultad = _selectedFacultad;
+    final textPrimary = ZanateColors.textPrimary(isDark);
+    final textSecondary = ZanateColors.textSecondary(isDark);
+    final borderColor = ZanateColors.border(isDark);
 
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      backgroundColor: ZanateColors.bg(isDark),
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        side: BorderSide(color: borderColor, width: 1),
       ),
       builder: (sheetContext) {
         return StatefulBuilder(
@@ -332,17 +334,17 @@ class GroupsScreenState extends State<GroupsScreen> {
                         height: 4,
                         margin: const EdgeInsets.only(bottom: 16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE2E8F0),
+                          color: borderColor,
                           borderRadius: BorderRadius.circular(999),
                         ),
                       ),
                     ),
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           PhosphorIconsRegular.slidersHorizontal,
                           size: 20,
-                          color: _zanateBlack,
+                          color: textPrimary,
                         ),
                         const SizedBox(width: 8),
                         Text(
@@ -350,7 +352,7 @@ class GroupsScreenState extends State<GroupsScreen> {
                           style: GoogleFonts.outfit(
                             fontSize: 17,
                             fontWeight: FontWeight.w700,
-                            color: _zanateBlack,
+                            color: textPrimary,
                           ),
                         ),
                         const Spacer(),
@@ -359,11 +361,13 @@ class GroupsScreenState extends State<GroupsScreen> {
                             onPressed: () {
                               setSheetState(() => tempFacultad = 'todas');
                             },
-                            child: const Text(
+                            child: Text(
                               'Restablecer',
                               style: TextStyle(
                                 fontSize: 13,
-                                color: Color(0xFFEF4444),
+                                color: isDark
+                                    ? const Color(0xFFF87171)
+                                    : const Color(0xFFEF4444),
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -372,22 +376,22 @@ class GroupsScreenState extends State<GroupsScreen> {
                     ),
                     const SizedBox(height: 14),
 
-                    const Text(
+                    Text(
                       'Selecciona tu facultad o unidad académica',
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w600,
-                        color: _subtleText,
+                        color: textSecondary,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: ZanateColors.surface(isDark),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: const Color(0xFFE2E8F0),
+                          color: borderColor,
                           width: 1.2,
                         ),
                       ),
@@ -395,12 +399,12 @@ class GroupsScreenState extends State<GroupsScreen> {
                         child: DropdownButton<String>(
                           value: tempFacultad,
                           isExpanded: true,
-                          dropdownColor: Colors.white,
+                          dropdownColor: ZanateColors.card(isDark),
                           borderRadius: BorderRadius.circular(14),
-                          icon: const Icon(
+                          icon: Icon(
                             PhosphorIconsRegular.caretDown,
                             size: 16,
-                            color: _zanateBlack,
+                            color: textPrimary,
                           ),
                           items: USACConstants.facultades
                               .map(
@@ -409,9 +413,9 @@ class GroupsScreenState extends State<GroupsScreen> {
                                   child: Text(
                                     f['nombre'].toString(),
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 13,
-                                      color: _zanateBlack,
+                                      color: textPrimary,
                                     ),
                                   ),
                                 ),
@@ -438,8 +442,8 @@ class GroupsScreenState extends State<GroupsScreen> {
                           _loadGroups();
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _zanateBlack,
-                          foregroundColor: Colors.white,
+                          backgroundColor: ZanateColors.ctaBg(isDark),
+                          foregroundColor: ZanateColors.ctaFg(isDark),
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
@@ -464,16 +468,17 @@ class GroupsScreenState extends State<GroupsScreen> {
     );
   }
 
-  // 1. Zanate Header: Clean White, Centered Title, Gear for Settings on Left
+  // 1. Zanate Header: Centered Title, Gear for Settings on Left
   Widget _buildSquaredHeader(bool isDark, String titleText) {
+    final textPrimary = ZanateColors.textPrimary(isDark);
     return Container(
       height: 58,
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 8),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: ZanateColors.card(isDark),
         border: Border(
-          bottom: BorderSide(color: Color(0xFFE2E8F0)),
+          bottom: BorderSide(color: ZanateColors.border(isDark)),
         ),
       ),
       child: Row(
@@ -487,10 +492,10 @@ class GroupsScreenState extends State<GroupsScreen> {
               onAliasChanged: widget.onAliasChanged,
               onToggleTheme: widget.onToggleTheme,
             ),
-            icon: const Icon(
+            icon: Icon(
               PhosphorIconsRegular.gear,
               size: 22,
-              color: _zanateBlack,
+              color: textPrimary,
             ),
             splashRadius: 22,
           ),
@@ -501,13 +506,13 @@ class GroupsScreenState extends State<GroupsScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const Text(
+                Text(
                   'DIRECTORIO ESTUDIANTIL',
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.8,
-                    color: Color(0xFF64748B),
+                    color: ZanateColors.textMuted(isDark),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -518,7 +523,7 @@ class GroupsScreenState extends State<GroupsScreen> {
                   style: GoogleFonts.outfit(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: _zanateBlack,
+                    color: textPrimary,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -531,10 +536,10 @@ class GroupsScreenState extends State<GroupsScreen> {
           IconButton(
             tooltip: 'Compartir Grupo',
             onPressed: _openCreateGroupDialog,
-            icon: const Icon(
+            icon: Icon(
               PhosphorIconsBold.plus,
               size: 22,
-              color: _zanateBlack,
+              color: textPrimary,
             ),
             splashRadius: 22,
           ),
@@ -545,13 +550,16 @@ class GroupsScreenState extends State<GroupsScreen> {
 
   // 2. Zanate Search & Preferences Bar
   Widget _buildSquaredSearchBar(bool isDark) {
+    final textPrimary = ZanateColors.textPrimary(isDark);
+    final textSecondary = ZanateColors.textSecondary(isDark);
+    final borderColor = ZanateColors.border(isDark);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: ZanateColors.card(isDark),
         border: Border(
-          bottom: BorderSide(color: Color(0xFFE2E8F0)),
+          bottom: BorderSide(color: borderColor),
         ),
       ),
       child: Row(
@@ -561,19 +569,19 @@ class GroupsScreenState extends State<GroupsScreen> {
               height: 40,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: ZanateColors.surface(isDark),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(0xFFE2E8F0),
+                  color: borderColor,
                   width: 1.2,
                 ),
               ),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     PhosphorIconsRegular.magnifyingGlass,
                     size: 17,
-                    color: _subtleText,
+                    color: textSecondary,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -582,20 +590,23 @@ class GroupsScreenState extends State<GroupsScreen> {
                       onChanged: _onSearchChanged,
                       onSubmitted: _submitSearch,
                       textInputAction: TextInputAction.search,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
+                        filled: false,
                         hintText: 'Buscar cursos, secciones o palabras clave...',
                         hintStyle: TextStyle(
                           fontSize: 13,
-                          color: Color(0xFF94A3B8),
+                          color: ZanateColors.textMuted(isDark),
                           fontWeight: FontWeight.w400,
                         ),
                         border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
                         isDense: true,
                         contentPadding: EdgeInsets.zero,
                       ),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13.5,
-                        color: _zanateBlack,
+                        color: textPrimary,
                       ),
                     ),
                   ),
@@ -606,12 +617,12 @@ class GroupsScreenState extends State<GroupsScreen> {
                         _searchController.clear();
                         _onSearchChanged('');
                       },
-                      child: const Padding(
-                        padding: EdgeInsets.all(4),
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
                         child: Icon(
                           PhosphorIconsRegular.x,
                           size: 15,
-                          color: _subtleText,
+                          color: textSecondary,
                         ),
                       ),
                     ),
@@ -630,9 +641,12 @@ class GroupsScreenState extends State<GroupsScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
                 color: _hasActivePreferences
-                    ? _zanateEyeYellow
-                    : const Color(0xFFF1F5F9),
+                    ? ZanateColors.zanateEyeYellow
+                    : ZanateColors.pill(isDark),
                 borderRadius: BorderRadius.circular(12),
+                border: _hasActivePreferences
+                    ? null
+                    : Border.all(color: borderColor, width: 1),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -642,7 +656,9 @@ class GroupsScreenState extends State<GroupsScreen> {
                         ? PhosphorIconsFill.slidersHorizontal
                         : PhosphorIconsRegular.slidersHorizontal,
                     size: 15,
-                    color: _zanateBlack,
+                    color: _hasActivePreferences
+                        ? ZanateColors.zanateBlack
+                        : textPrimary,
                   ),
                   const SizedBox(width: 6),
                   Text(
@@ -652,7 +668,9 @@ class GroupsScreenState extends State<GroupsScreen> {
                       fontWeight: _hasActivePreferences
                           ? FontWeight.w700
                           : FontWeight.w600,
-                      color: _zanateBlack,
+                      color: _hasActivePreferences
+                          ? ZanateColors.zanateBlack
+                          : textPrimary,
                     ),
                   ),
                   if (_hasActivePreferences) ...[
@@ -665,7 +683,7 @@ class GroupsScreenState extends State<GroupsScreen> {
                       child: const Icon(
                         PhosphorIconsBold.x,
                         size: 13,
-                        color: _zanateBlack,
+                        color: ZanateColors.zanateBlack,
                       ),
                     ),
                   ],
@@ -712,10 +730,12 @@ class GroupsScreenState extends State<GroupsScreen> {
 
   Widget _buildGroupsFeed(bool isDark) {
     if (_isLoading && _groups.isEmpty) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(40),
-          child: CircularProgressIndicator(color: _zanateBlack),
+          padding: const EdgeInsets.all(40),
+          child: CircularProgressIndicator(
+            color: ZanateColors.focusBorder(isDark),
+          ),
         ),
       );
     }
@@ -727,53 +747,13 @@ class GroupsScreenState extends State<GroupsScreen> {
     if (_groups.isEmpty) {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
-        children: [
-          Center(
-            child: Column(
-              children: [
-                Container(
-                  width: 76,
-                  height: 76,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: const Color(0xFFF8FAFC),
-                    border: Border.all(
-                      color: const Color(0xFFE2E8F0),
-                      width: 1.2,
-                    ),
-                  ),
-                  child: const Icon(
-                    PhosphorIconsRegular.usersThree,
-                    size: 34,
-                    color: _zanateBlack,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'No se encontraron grupos para este filtro',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.outfit(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                    color: _zanateBlack,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 360),
-                  child: const Text(
-                    'Prueba ajustando tus preferencias o usa el botón + superior para compartir un enlace con tus compañeros.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      height: 1.4,
-                      color: _subtleText,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 24),
+        children: const [
+          EmptyStateWidget(
+            icon: PhosphorIconsRegular.usersThree,
+            title: 'No se encontraron grupos para este filtro',
+            description:
+                'Prueba ajustando tus preferencias o usa el botón + superior para compartir un enlace con tus compañeros.',
           ),
         ],
       );
@@ -795,7 +775,7 @@ class GroupsScreenState extends State<GroupsScreen> {
         : 'Grupos de Estudio';
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: ZanateColors.bg(isDark),
       body: Column(
         children: [
           // 1. Zanate Top Header
@@ -811,7 +791,8 @@ class GroupsScreenState extends State<GroupsScreen> {
           // 3. Feed
           Expanded(
             child: RefreshIndicator(
-              color: _zanateBlack,
+              color: ZanateColors.focusBorder(isDark),
+              backgroundColor: ZanateColors.card(isDark),
               onRefresh: _loadGroups,
               child: _buildGroupsFeed(isDark),
             ),
