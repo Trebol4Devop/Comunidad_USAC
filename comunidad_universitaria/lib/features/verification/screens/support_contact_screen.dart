@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/config/support_config.dart';
+import '../../../core/constants/zanate_colors.dart';
 import '../../../core/services/supabase_service.dart';
 import '../utils/verification_validators.dart';
 
@@ -151,20 +152,26 @@ class _SupportContactScreenState extends State<SupportContactScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const zanateBlack = Color(0xFF0B0D10);
-    const zanateEyeYellow = Color(0xFFF5C518);
-    const subtleText = Color(0xFF475569);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = ZanateColors.textPrimary(isDark);
+    final textSecondary = ZanateColors.textSecondary(isDark);
+    final textMuted = ZanateColors.textMuted(isDark);
+    final borderColor = ZanateColors.border(isDark);
+    final focusColor = ZanateColors.focusBorder(isDark);
     final inputBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1.2),
+      borderSide: BorderSide(color: borderColor, width: 1.2),
     );
     final focusedBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: zanateBlack, width: 1.6),
+      borderSide: BorderSide(color: focusColor, width: 1.6),
     );
     final errorBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.2),
+      borderSide: BorderSide(
+        color: isDark ? const Color(0xFFF87171) : const Color(0xFFEF4444),
+        width: 1.2,
+      ),
     );
     InputDecoration zanateInput({
       required String labelText,
@@ -180,24 +187,24 @@ class _SupportContactScreenState extends State<SupportContactScreen> {
         counterText: counterText,
         prefixIcon: prefixIcon,
         filled: true,
-        fillColor: const Color(0xFFF8FAFC),
+        fillColor: ZanateColors.surface(isDark),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 16,
         ),
-        labelStyle: const TextStyle(
+        labelStyle: TextStyle(
           fontSize: 13.5,
           fontWeight: FontWeight.w500,
-          color: Color(0xFF64748B),
+          color: textMuted,
         ),
-        floatingLabelStyle: const TextStyle(
+        floatingLabelStyle: TextStyle(
           fontSize: 12.5,
           fontWeight: FontWeight.w700,
-          color: zanateBlack,
+          color: focusColor,
         ),
-        hintStyle: const TextStyle(
+        hintStyle: TextStyle(
           fontSize: 13.5,
-          color: Color(0xFF94A3B8),
+          color: textMuted,
         ),
         border: inputBorder,
         enabledBorder: inputBorder,
@@ -208,7 +215,7 @@ class _SupportContactScreenState extends State<SupportContactScreen> {
     }
 
     return ColoredBox(
-      color: Colors.white,
+      color: ZanateColors.bg(isDark),
       child: AbsorbPointer(
         absorbing: _isSending,
         child: SingleChildScrollView(
@@ -224,7 +231,7 @@ class _SupportContactScreenState extends State<SupportContactScreen> {
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.3,
-                    color: zanateBlack,
+                    color: textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -234,18 +241,18 @@ class _SupportContactScreenState extends State<SupportContactScreen> {
                     width: 44,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: zanateEyeYellow,
+                      color: ZanateColors.zanateEyeYellow,
                       borderRadius: BorderRadius.circular(999),
                     ),
                   ),
                 ),
                 const SizedBox(height: 10),
-                const Text(
+                Text(
                   'Escríbenos si no tienes correo institucional o falló la verificación.',
                   style: TextStyle(
                     fontSize: 13.5,
                     height: 1.4,
-                    color: subtleText,
+                    color: textSecondary,
                   ),
                 ),
                 const SizedBox(height: 18),
@@ -257,25 +264,25 @@ class _SupportContactScreenState extends State<SupportContactScreen> {
                       vertical: 11,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: ZanateColors.surface(isDark),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: borderColor),
                     ),
                     child: Row(
                       children: [
-                        const Icon(
+                        Icon(
                           PhosphorIconsRegular.at,
                           size: 17,
-                          color: subtleText,
+                          color: textSecondary,
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             'Correo de la cuenta: ${_accountEmail!}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12.5,
                               fontWeight: FontWeight.w500,
-                              color: zanateBlack,
+                              color: textPrimary,
                             ),
                           ),
                         ),
@@ -288,13 +295,14 @@ class _SupportContactScreenState extends State<SupportContactScreen> {
                 DropdownButtonFormField<String>(
                   initialValue: _selectedReason,
                   isExpanded: true,
-                  dropdownColor: Colors.white,
+                  dropdownColor: ZanateColors.card(isDark),
                   borderRadius: BorderRadius.circular(14),
+                  style: TextStyle(color: textPrimary, fontSize: 14),
                   decoration: zanateInput(
                     labelText: 'Motivo de contacto',
-                    prefixIcon: const Icon(
+                    prefixIcon: Icon(
                       PhosphorIconsRegular.question,
-                      color: subtleText,
+                      color: textSecondary,
                     ),
                   ),
                   items: [
@@ -320,6 +328,7 @@ class _SupportContactScreenState extends State<SupportContactScreen> {
                   maxLength: 500,
                   maxLines: 4,
                   textCapitalization: TextCapitalization.sentences,
+                  style: TextStyle(color: textPrimary),
                   decoration: zanateInput(
                     labelText: 'Detalle (opcional)',
                     hintText: 'Cuéntanos qué pasó o qué error viste.',
@@ -333,12 +342,13 @@ class _SupportContactScreenState extends State<SupportContactScreen> {
                   controller: _carneController,
                   keyboardType: TextInputType.number,
                   maxLength: 9,
+                  style: TextStyle(color: textPrimary),
                   decoration: zanateInput(
                     labelText: 'Carné USAC (opcional)',
                     hintText: 'Ej. 202012345',
-                    prefixIcon: const Icon(
+                    prefixIcon: Icon(
                       PhosphorIconsRegular.identificationCard,
-                      color: subtleText,
+                      color: textSecondary,
                     ),
                     counterText: '',
                   ),
@@ -352,8 +362,8 @@ class _SupportContactScreenState extends State<SupportContactScreen> {
                 ElevatedButton.icon(
                   key: const Key('support_send'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: zanateBlack,
-                    foregroundColor: Colors.white,
+                    backgroundColor: ZanateColors.ctaBg(isDark),
+                    foregroundColor: ZanateColors.ctaFg(isDark),
                     elevation: 0,
                     minimumSize: const Size.fromHeight(52),
                     padding: const EdgeInsets.symmetric(vertical: 14),
@@ -363,11 +373,11 @@ class _SupportContactScreenState extends State<SupportContactScreen> {
                   ),
                   onPressed: _isSending ? null : _handleSend,
                   icon: _isSending
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 18,
                           height: 18,
                           child: CircularProgressIndicator(
-                            color: Colors.white,
+                            color: ZanateColors.ctaFg(isDark),
                             strokeWidth: 2,
                           ),
                         )
