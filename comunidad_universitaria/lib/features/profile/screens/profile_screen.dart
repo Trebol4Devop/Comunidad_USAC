@@ -50,6 +50,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   late TextEditingController _whatsappController;
   late TextEditingController _telegramController;
   late TextEditingController _instagramController;
+  late TextEditingController _messengerController;
 
   String _selectedFacultadId = '08';
   String _selectedCarreraId = 'sistemas';
@@ -76,6 +77,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     _whatsappController = TextEditingController();
     _telegramController = TextEditingController();
     _instagramController = TextEditingController();
+    _messengerController = TextEditingController();
 
     _loadFullProfile();
   }
@@ -98,6 +100,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     _whatsappController.dispose();
     _telegramController.dispose();
     _instagramController.dispose();
+    _messengerController.dispose();
     super.dispose();
   }
 
@@ -124,6 +127,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         _whatsappController.text = profile.contactWhatsapp ?? '';
         _telegramController.text = profile.contactTelegram ?? '';
         _instagramController.text = profile.contactInstagram ?? '';
+        _messengerController.text = profile.contactMessenger ?? '';
         _isLoading = false;
       });
 
@@ -204,6 +208,9 @@ class _ProfileScreenState extends State<ProfileScreen>
         contactInstagram: _instagramController.text.trim().isEmpty
             ? null
             : _instagramController.text.trim(),
+        contactMessenger: _messengerController.text.trim().isEmpty
+            ? null
+            : _messengerController.text.trim(),
       );
 
       await ProfileService.saveProfile(updatedProfile);
@@ -979,6 +986,23 @@ class _ProfileScreenState extends State<ProfileScreen>
               hintText: 'usuario_telegram',
               prefixIcon: Icon(
                 PhosphorIconsRegular.paperPlaneTilt,
+                size: 18,
+                color: textMuted,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Facebook Messenger
+          TextField(
+            controller: _messengerController,
+            style: TextStyle(color: textPrimary),
+            decoration: zanateInputDecoration(
+              isDark: isDark,
+              labelText: 'Facebook Messenger',
+              hintText: 'usuario o enlace m.me/tu_perfil',
+              prefixIcon: Icon(
+                PhosphorIconsRegular.messengerLogo,
                 size: 18,
                 color: textMuted,
               ),

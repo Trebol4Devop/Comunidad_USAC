@@ -9,6 +9,7 @@ import '../../../core/services/local_storage_service.dart';
 import '../../../core/services/marketplace_service.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/utils/responsive.dart';
+import '../../profile/screens/profile_screen.dart';
 import '../../profile/widgets/carne_validation_modal.dart';
 import '../../shared/widgets/identity_badge_chip.dart';
 import '../../../core/models/user_profile.dart';
@@ -59,12 +60,6 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
   final _priceController = TextEditingController(text: '0.00');
   final _locationDetailController = TextEditingController();
 
-  // Contact channels
-  final _whatsappController = TextEditingController();
-  final _instagramController = TextEditingController();
-  final _messengerController = TextEditingController();
-  final _telegramController = TextEditingController();
-
   // Reference Social Links
   final _socialLinkInputController = TextEditingController();
   final List<String> _socialLinks = [];
@@ -81,6 +76,7 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
   bool _isFree = false;
   bool _isSubmitting = false;
   bool _isUploadingImage = false;
+  bool _isLoadingProfile = true;
   UserProfile? _userProfile;
   MarketplaceSellerStatus? _sellerStatus;
 
@@ -105,19 +101,13 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
     if (mounted) {
       setState(() {
         _userProfile = prof;
-        if (prof.contactWhatsapp != null && _whatsappController.text.isEmpty) {
-          _whatsappController.text = prof.contactWhatsapp!;
-        }
-        if (prof.contactInstagram != null &&
-            _instagramController.text.isEmpty) {
-          _instagramController.text = prof.contactInstagram!;
-        }
-        if (prof.contactTelegram != null && _telegramController.text.isEmpty) {
-          _telegramController.text = prof.contactTelegram!;
-        }
+        _isLoadingProfile = false;
       });
     }
   }
+
+  bool get _hasConfiguredContactChannel =>
+      _userProfile?.hasContactChannel ?? false;
 
   @override
   void dispose() {
@@ -125,10 +115,6 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
     _descriptionController.dispose();
     _priceController.dispose();
     _locationDetailController.dispose();
-    _whatsappController.dispose();
-    _instagramController.dispose();
-    _messengerController.dispose();
-    _telegramController.dispose();
     _socialLinkInputController.dispose();
     _videoUrlController.dispose();
     super.dispose();
@@ -197,16 +183,23 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // Verify at least one contact channel
-    final hasWhatsapp = _whatsappController.text.trim().isNotEmpty;
-    final hasInstagram = _instagramController.text.trim().isNotEmpty;
-    final hasMessenger = _messengerController.text.trim().isNotEmpty;
-    final hasTelegram = _telegramController.text.trim().isNotEmpty;
+    // Verify at least one contact channel configured in profile
+    final whatsapp = _userProfile?.contactWhatsapp?.trim();
+    final instagram = _userProfile?.contactInstagram?.trim();
+    final messenger = _userProfile?.contactMessenger?.trim();
+    final telegram = _userProfile?.contactTelegram?.trim();
+
+    final hasWhatsapp = whatsapp != null && whatsapp.isNotEmpty;
+    final hasInstagram = instagram != null && instagram.isNotEmpty;
+    final hasMessenger = messenger != null && messenger.isNotEmpty;
+    final hasTelegram = telegram != null && telegram.isNotEmpty;
 
     if (!hasWhatsapp && !hasInstagram && !hasMessenger && !hasTelegram) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Debes proporcionar al menos un canal de contacto.'),
+          content: Text(
+            'Debes configurar al menos un canal de contacto en tu perfil.',
+          ),
           backgroundColor: Colors.orange,
         ),
       );
@@ -230,14 +223,10 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
         sede: _selectedSede,
         buildingCode: _selectedBuilding,
         locationDetail: _locationDetailController.text.trim(),
-        contactWhatsapp: hasWhatsapp ? _whatsappController.text.trim() : null,
-        contactInstagram: hasInstagram
-            ? _instagramController.text.trim()
-            : null,
-        contactMessenger: hasMessenger
-            ? _messengerController.text.trim()
-            : null,
-        contactTelegram: hasTelegram ? _telegramController.text.trim() : null,
+        contactWhatsapp: hasWhatsapp ? whatsapp : null,
+        contactInstagram: hasInstagram ? instagram : null,
+        contactMessenger: hasMessenger ? messenger : null,
+        contactTelegram: hasTelegram ? telegram : null,
         socialLinks: _socialLinks,
         imageUrls: _imageUrls,
         videoUrl: _videoUrlController.text.trim().isNotEmpty
@@ -572,94 +561,46 @@ class _CreateListingDialogState extends State<CreateListingDialog> {
                 const SizedBox(height: 12),
               ],
 
-              // Contact Channels Section Header
-              Text(
-                'Canales de Contacto',
-                style: GoogleFonts.outfit(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                  color: primaryText,
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // WhatsApp
-              TextFormField(
-                controller: _whatsappController,
-                keyboardType: TextInputType.phone,
-                decoration: _zanateInput(
-                  isDark,
-                  labelText: 'WhatsApp',
-                  hintText: 'Ej. 55551234',
-                  prefixIcon: const Padding(
-                    padding: EdgeInsets.all(12),
-                    child: PhosphorIcon(
-                      PhosphorIconsFill.whatsappLogo,
-                      size: 18,
-                      color: Color(0xFF25D366),
+              // Botón para configurar canales de contacto solo si no hay ninguno configurado
+              if (!_isLoadingProfile && !_hasConfiguredContactChannel) ...[
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: primaryText,
+                    backgroundColor: ZanateColors.surface(isDark),
+                    side: BorderSide(color: borderColor, width: 1.2),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
                     ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 13,
+                    ),
+                    minimumSize: const Size(double.infinity, 48),
+                  ),
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ProfileScreen(
+                          activeAlias: widget.activeAlias,
+                          onAliasChanged: widget.onAliasChanged,
+                          isDarkMode: isDark,
+                        ),
+                      ),
+                    );
+                    await _loadUserProfile();
+                  },
+                  icon: Icon(
+                    PhosphorIconsRegular.addressBook,
+                    size: 18,
+                    color: primaryText,
+                  ),
+                  label: const Text(
+                    'Configurar canales de contacto',
+                    style: TextStyle(fontWeight: FontWeight.w700),
                   ),
                 ),
-              ),
-              const SizedBox(height: 10),
-
-              // Instagram
-              TextFormField(
-                controller: _instagramController,
-                decoration: _zanateInput(
-                  isDark,
-                  labelText: 'Instagram',
-                  hintText: 'Ej. @mi_emprendimiento o enlace a tu perfil',
-                  prefixIcon: const Padding(
-                    padding: EdgeInsets.all(12),
-                    child: PhosphorIcon(
-                      PhosphorIconsFill.instagramLogo,
-                      size: 18,
-                      color: Color(0xFFE1306C),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              // Messenger
-              TextFormField(
-                controller: _messengerController,
-                decoration: _zanateInput(
-                  isDark,
-                  labelText: 'Facebook Messenger',
-                  hintText: 'Ej. @usuario o enlace m.me/tu_perfil',
-                  prefixIcon: const Padding(
-                    padding: EdgeInsets.all(12),
-                    child: PhosphorIcon(
-                      PhosphorIconsFill.messengerLogo,
-                      size: 18,
-                      color: Color(0xFF0084FF),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              // Telegram
-              TextFormField(
-                controller: _telegramController,
-                decoration: _zanateInput(
-                  isDark,
-                  labelText: 'Telegram',
-                  hintText: 'Ej. @usuario_telegram',
-                  prefixIcon: const Padding(
-                    padding: EdgeInsets.all(12),
-                    child: PhosphorIcon(
-                      PhosphorIconsFill.telegramLogo,
-                      size: 18,
-                      color: Color(0xFF229ED9),
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
+              ],
 
               // Sede & Building / Location
               Text(

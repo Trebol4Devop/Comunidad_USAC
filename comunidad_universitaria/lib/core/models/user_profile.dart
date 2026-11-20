@@ -11,6 +11,7 @@ class UserProfile {
   final String? contactWhatsapp;
   final String? contactTelegram;
   final String? contactInstagram;
+  final String? contactMessenger;
   final String? email;
   final String? carne; // Carné aportado por el usuario, puede ser un borrador
   final String? studentName; // Nombre aportado, no necesariamente verificado
@@ -30,6 +31,7 @@ class UserProfile {
     this.contactWhatsapp,
     this.contactTelegram,
     this.contactInstagram,
+    this.contactMessenger,
     this.email,
     this.carne,
     this.studentName,
@@ -38,6 +40,11 @@ class UserProfile {
 
   bool get isAdmin => role == 'admin';
   bool get isModerator => role == 'moderator' || role == 'admin';
+  bool get hasContactChannel =>
+      (contactWhatsapp?.trim().isNotEmpty ?? false) ||
+      (contactTelegram?.trim().isNotEmpty ?? false) ||
+      (contactInstagram?.trim().isNotEmpty ?? false) ||
+      (contactMessenger?.trim().isNotEmpty ?? false);
 
   UserProfile copyWith({
     String? userId,
@@ -52,6 +59,7 @@ class UserProfile {
     String? contactWhatsapp,
     String? contactTelegram,
     String? contactInstagram,
+    String? contactMessenger,
     String? email,
     String? carne,
     String? studentName,
@@ -70,6 +78,7 @@ class UserProfile {
       contactWhatsapp: contactWhatsapp ?? this.contactWhatsapp,
       contactTelegram: contactTelegram ?? this.contactTelegram,
       contactInstagram: contactInstagram ?? this.contactInstagram,
+      contactMessenger: contactMessenger ?? this.contactMessenger,
       email: email ?? this.email,
       carne: carne ?? this.carne,
       studentName: studentName ?? this.studentName,
@@ -91,6 +100,7 @@ class UserProfile {
       'contact_whatsapp': contactWhatsapp,
       'contact_telegram': contactTelegram,
       'contact_instagram': contactInstagram,
+      'contact_messenger': contactMessenger,
       'email': email,
       'carne': carne,
       'student_name': studentName,
@@ -116,6 +126,7 @@ class UserProfile {
       contactWhatsapp: map['contact_whatsapp']?.toString(),
       contactTelegram: map['contact_telegram']?.toString(),
       contactInstagram: map['contact_instagram']?.toString(),
+      contactMessenger: map['contact_messenger']?.toString(),
       email: map['email']?.toString(),
       carne: map['carne']?.toString(),
       studentName: map['student_name']?.toString(),
