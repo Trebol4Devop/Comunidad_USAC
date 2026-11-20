@@ -36,12 +36,8 @@ class DiscordMediaAttachment extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final radius = borderRadius ?? BorderRadius.circular(14);
 
-    final containerBg = isDark
-        ? const Color(0xFF1E293B)
-        : ZanateColors.surfaceBg;
-    final borderColor = isDark
-        ? const Color(0xFF334155)
-        : ZanateColors.subtleBorder;
+    final containerBg = ZanateColors.surface(isDark);
+    final borderColor = ZanateColors.border(isDark);
 
     return Align(
       alignment: Alignment.centerLeft,
@@ -117,9 +113,7 @@ class DiscordMediaAttachment extends StatelessWidget {
                                 'No se pudo cargar la imagen',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: isDark
-                                      ? const Color(0xFFAAAAAA)
-                                      : const Color(0xFF64748B),
+                                  color: ZanateColors.textMuted(isDark),
                                 ),
                               ),
                             ],
