@@ -26,7 +26,7 @@ class AliasDiceButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final fg = isDark ? Colors.white : ZanateColors.zanateBlack;
+    final fg = ZanateColors.textPrimary(isDark);
 
     return Container(
       padding: EdgeInsets.symmetric(
@@ -34,10 +34,10 @@ class AliasDiceButton extends StatelessWidget {
         vertical: compact ? 3 : 5,
       ),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : ZanateColors.surfaceBg,
+        color: ZanateColors.surface(isDark),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : ZanateColors.subtleBorder,
+          color: ZanateColors.border(isDark),
           width: 1.0,
         ),
       ),
