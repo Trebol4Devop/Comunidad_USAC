@@ -5,8 +5,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/config/supabase_config.dart';
+import '../../../core/constants/zanate_colors.dart';
 import '../../../core/services/local_storage_service.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../shared/widgets/zanate_ui.dart';
 import '../../verification/screens/verification_flow_screen.dart';
 import '../../verification/state/verification_controller.dart';
 import '../../verification/widgets/verification_gate.dart';
@@ -22,9 +24,6 @@ class NoInstitutionalEmailScreen extends StatefulWidget {
   final AuthApi? authApi;
   final VoidCallback? onStudentSelected;
   final VoidCallback? onMerchantSelected;
-
-  static const Color _zanateBlack = Color(0xFF0B0D10);
-  static const Color _zanateEyeYellow = Color(0xFFF5C518);
 
   const NoInstitutionalEmailScreen({
     super.key,
@@ -219,7 +218,6 @@ class _NoInstitutionalEmailScreenState
       } else if (api != null) {
         launched = await api.signInWithGoogle(redirectTo: redirectUrl);
       } else {
-      } else {
         launched = await SupabaseService.signInWithGoogle(
           redirectTo: redirectUrl,
         );
@@ -248,13 +246,16 @@ class _NoInstitutionalEmailScreenState
         unawaited(_authSubscription?.cancel());
         _authSubscription = null;
         if (mounted) {
+          final wasStudent = _pendingStudent;
           setState(() {
             _isBusy = false;
             _waitingForGoogle = false;
+            _pendingStudent = null;
           });
-          if (_pendingStudent == true) {
-            _navigateToStudent();
-          } else if (_pendingStudent == false) {
+          if (AuthGate.hasActiveInstance) return;
+          if (wasStudent == true) {
+            _navigateToSupport();
+          } else if (wasStudent == false) {
             _navigateToMerchant();
           }
         }
@@ -278,8 +279,10 @@ class _NoInstitutionalEmailScreenState
   }
 
   Widget _buildContent(BuildContext context) {
-    const subtleText = Color(0xFF475569);
-    const mutedText = Color(0xFF64748B);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = ZanateColors.textPrimary(isDark);
+    final textSecondary = ZanateColors.textSecondary(isDark);
+    final textMuted = ZanateColors.textMuted(isDark);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -291,27 +294,20 @@ class _NoInstitutionalEmailScreenState
             fontWeight: FontWeight.w700,
             letterSpacing: -0.3,
             height: 1.15,
-            color: NoInstitutionalEmailScreen._zanateBlack,
+            color: textPrimary,
           ),
         ),
         const SizedBox(height: 8),
-        Align(
+        const Align(
           alignment: Alignment.centerLeft,
-          child: Container(
-            width: 44,
-            height: 4,
-            decoration: BoxDecoration(
-              color: NoInstitutionalEmailScreen._zanateEyeYellow,
-              borderRadius: BorderRadius.circular(999),
-            ),
-          ),
+          child: ZanateAccentBar(),
         ),
         const SizedBox(height: 12),
-        const Text(
+        Text(
           'Si usas una cuenta personal o comercial, elige tu perfil. Soporte revisará tu caso manualmente.',
           style: TextStyle(
             fontSize: 13.5,
-            color: subtleText,
+            color: textSecondary,
             height: 1.45,
           ),
         ),
@@ -322,29 +318,31 @@ class _NoInstitutionalEmailScreenState
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             margin: const EdgeInsets.only(bottom: 18),
             decoration: BoxDecoration(
-              color: NoInstitutionalEmailScreen._zanateEyeYellow.withValues(
-                alpha: 0.14,
+              color: ZanateColors.zanateEyeYellow.withValues(
+                alpha: isDark ? 0.16 : 0.14,
               ),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Row(
               children: [
-                const SizedBox(
+                SizedBox(
                   width: 18,
                   height: 18,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: NoInstitutionalEmailScreen._zanateBlack,
+                    color: ZanateColors.focusBorder(isDark),
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Text(
                     'Completa el acceso en Google y regresa a la app para continuar.',
                     style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w500,
-                      color: Color(0xFF334155),
+                      color: isDark
+                          ? const Color(0xFFFDE68A)
+                          : const Color(0xFF334155),
                     ),
                   ),
                 ),
@@ -352,7 +350,7 @@ class _NoInstitutionalEmailScreenState
                 TextButton(
                   onPressed: () => _cancelPendingGoogleWait(),
                   style: TextButton.styleFrom(
-                    foregroundColor: NoInstitutionalEmailScreen._zanateBlack,
+                    foregroundColor: textPrimary,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
                       vertical: 4,
@@ -379,8 +377,8 @@ class _NoInstitutionalEmailScreenState
           subtitle:
               'No tengo correo institucional o la verificación automática falló',
           icon: PhosphorIconsRegular.student,
-          buttonBg: NoInstitutionalEmailScreen._zanateEyeYellow,
-          buttonFg: NoInstitutionalEmailScreen._zanateBlack,
+          buttonBg: ZanateColors.zanateEyeYellow,
+          buttonFg: ZanateColors.zanateBlack,
           isBusy: _isBusy,
           buttonLabel: 'Contactar con soporte',
           buttonKey: const Key('student_support_button'),
@@ -394,8 +392,10 @@ class _NoInstitutionalEmailScreenState
           title: 'Comerciante del Campus',
           subtitle: 'Quiero registrar mi negocio en el campus',
           icon: PhosphorIconsRegular.storefront,
-          buttonBg: NoInstitutionalEmailScreen._zanateBlack,
-          buttonFg: Colors.white,
+          buttonBg: isDark
+              ? ZanateColors.darkSurfaceSubtle
+              : ZanateColors.zanateBlack,
+          buttonFg: isDark ? ZanateColors.darkTextPrimary : Colors.white,
           isBusy: _isBusy,
           buttonLabel: 'Contactar con soporte',
           buttonKey: const Key('merchant_support_button'),
@@ -403,13 +403,13 @@ class _NoInstitutionalEmailScreenState
         ),
 
         const SizedBox(height: 16),
-        const Text(
+        Text(
           'La app no almacena el contenido del correo ni el carné que decidas incluir; se envía desde tu propia cuenta.',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 11.5,
             height: 1.4,
-            color: mutedText,
+            color: textMuted,
           ),
         ),
       ],
@@ -418,8 +418,12 @@ class _NoInstitutionalEmailScreenState
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = ZanateColors.bg(isDark);
+    final textPrimary = ZanateColors.textPrimary(isDark);
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: bgColor,
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = constraints.maxWidth >= 780;
@@ -431,15 +435,15 @@ class _NoInstitutionalEmailScreenState
                   flex: 11,
                   child: _NoInstBrandPanel(),
                 ),
-                const VerticalDivider(
+                VerticalDivider(
                   width: 1,
                   thickness: 1,
-                  color: Color(0xFFE2E8F0),
+                  color: ZanateColors.border(isDark),
                 ),
                 Expanded(
                   flex: 9,
                   child: Container(
-                    color: Colors.white,
+                    color: bgColor,
                     child: SafeArea(
                       child: Stack(
                         children: [
@@ -449,10 +453,10 @@ class _NoInstitutionalEmailScreenState
                             child: IconButton(
                               onPressed: () => Navigator.of(context).pop(),
                               tooltip: 'Regresar',
-                              icon: const Icon(
+                              icon: Icon(
                                 PhosphorIconsBold.caretLeft,
-                                size: 24,
-                                color: NoInstitutionalEmailScreen._zanateBlack,
+                                size: 22,
+                                color: textPrimary,
                               ),
                             ),
                           ),
@@ -505,11 +509,10 @@ class _NoInstitutionalEmailScreenState
                               child: Row(
                                 children: [
                                   IconButton(
-                                    icon: const Icon(
+                                    icon: Icon(
                                       PhosphorIconsBold.caretLeft,
-                                      size: 24,
-                                      color: NoInstitutionalEmailScreen
-                                          ._zanateBlack,
+                                      size: 22,
+                                      color: textPrimary,
                                     ),
                                     tooltip: 'Regresar',
                                     onPressed: () =>
@@ -587,8 +590,10 @@ class _NoInstBrandPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = ZanateColors.textPrimary(isDark);
     return Container(
-      color: Colors.white,
+      color: ZanateColors.bg(isDark),
       child: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -602,7 +607,7 @@ class _NoInstBrandPanel extends StatelessWidget {
               fontWeight: FontWeight.w700,
               height: 1.08,
               letterSpacing: -0.6,
-              color: const Color(0xFF334155),
+              color: ZanateColors.textSecondary(isDark),
             );
 
             return Stack(
@@ -624,7 +629,7 @@ class _NoInstBrandPanel extends StatelessWidget {
                             errorBuilder: (context, error, stackTrace) => Icon(
                               PhosphorIconsRegular.bird,
                               size: logoSize * 0.6,
-                              color: NoInstitutionalEmailScreen._zanateBlack,
+                              color: textPrimary,
                             ),
                           ),
                         ),
@@ -636,7 +641,7 @@ class _NoInstBrandPanel extends StatelessWidget {
                             fontSize: 56,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.6,
-                            color: NoInstitutionalEmailScreen._zanateBlack,
+                            color: textPrimary,
                           ),
                         ),
                       ],
@@ -668,15 +673,14 @@ class _NoInstBrandPanel extends StatelessWidget {
                                 fontWeight: FontWeight.w800,
                                 height: 1.08,
                                 letterSpacing: -0.6,
-                                color: NoInstitutionalEmailScreen._zanateBlack,
+                                color: textPrimary,
                               ),
                             ),
                             const SizedBox(height: 6),
                             Container(
                               height: 4.5,
                               decoration: BoxDecoration(
-                                color:
-                                    NoInstitutionalEmailScreen._zanateEyeYellow,
+                                color: ZanateColors.zanateEyeYellow,
                                 borderRadius: BorderRadius.circular(999),
                               ),
                             ),
@@ -700,6 +704,8 @@ class _NoInstTrebolCreditBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fg = ZanateColors.textPrimary(isDark);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -708,18 +714,18 @@ class _NoInstTrebolCreditBadge extends StatelessWidget {
           width: 24,
           height: 24,
           fit: BoxFit.contain,
-          color: NoInstitutionalEmailScreen._zanateBlack,
+          color: fg,
           colorBlendMode: BlendMode.srcIn,
           semanticLabel: 'Logo de Trebol4Devop',
           errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
         ),
         const SizedBox(width: 7),
-        const Text(
+        Text(
           'Trebol4Devop',
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: NoInstitutionalEmailScreen._zanateBlack,
+            color: fg,
             letterSpacing: 0.2,
           ),
         ),
@@ -753,18 +759,22 @@ class _VerificationOptionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = ZanateColors.textPrimary(isDark);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: ZanateColors.card(isDark),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: ZanateColors.border(isDark), width: 1.2),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
       child: Padding(
         padding: const EdgeInsets.all(18),
@@ -776,13 +786,13 @@ class _VerificationOptionCard extends StatelessWidget {
               children: [
                 Container(
                   padding: const EdgeInsets.all(10),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF8FAFC),
+                  decoration: BoxDecoration(
+                    color: ZanateColors.surface(isDark),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     icon,
-                    color: NoInstitutionalEmailScreen._zanateBlack,
+                    color: textPrimary,
                     size: 22,
                   ),
                 ),
@@ -796,17 +806,17 @@ class _VerificationOptionCard extends StatelessWidget {
                         style: GoogleFonts.outfit(
                           fontSize: 16.5,
                           fontWeight: FontWeight.w700,
-                          color: NoInstitutionalEmailScreen._zanateBlack,
+                          color: textPrimary,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         subtitle,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           height: 1.35,
                           fontWeight: FontWeight.w500,
-                          color: Color(0xFF475569),
+                          color: ZanateColors.textSecondary(isDark),
                         ),
                       ),
                     ],
@@ -822,6 +832,9 @@ class _VerificationOptionCard extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: buttonBg,
                   foregroundColor: buttonFg,
+                  side: isDark && buttonBg == ZanateColors.darkSurfaceSubtle
+                      ? BorderSide(color: ZanateColors.border(isDark))
+                      : null,
                   elevation: 0,
                   minimumSize: const Size.fromHeight(46),
                   padding: const EdgeInsets.symmetric(vertical: 12),
