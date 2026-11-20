@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/categories.dart';
+import '../../../core/constants/zanate_colors.dart';
 import '../../../core/services/supabase_service.dart';
 import '../services/ocr_service.dart';
 import '../services/verification_service.dart';
@@ -497,21 +498,28 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
 
   /// Sección de las dos caras del carné + verificación local de coherencia.
   Widget _buildCarnePhotoSection(bool isDark) {
+    final textPrimary = ZanateColors.textPrimary(isDark);
+    final infoNoticeColor =
+        isDark ? const Color(0xFFFDE68A) : const Color(0xFF334155);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Row(
+        Row(
           children: [
             Icon(
               PhosphorIconsRegular.camera,
               size: 20,
-              color: Color(0xFF0B0D10),
+              color: textPrimary,
             ),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
                 'Fotos del carné',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13.5,
+                  color: textPrimary,
+                ),
               ),
             ),
           ],
@@ -521,21 +529,24 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF5C518).withValues(alpha: 0.14),
+              color: ZanateColors.zanateEyeYellow
+                  .withValues(alpha: isDark ? 0.16 : 0.14),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Row(
+            child: Row(
               children: [
                 Icon(
                   PhosphorIconsFill.info,
-                  color: Color(0xFFB45309),
+                  color: isDark
+                      ? ZanateColors.zanateEyeYellow
+                      : const Color(0xFFB45309),
                   size: 18,
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'La validación local del carné solo aplica en móvil. Aquí puedes usar tu correo institucional.',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF334155)),
+                    style: TextStyle(fontSize: 12, color: infoNoticeColor),
                   ),
                 ),
               ],
@@ -594,9 +605,9 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: ZanateColors.card(isDark),
         border: Border.all(
-          color: const Color(0xFFE2E8F0),
+          color: ZanateColors.border(isDark),
           width: 1.2,
         ),
         borderRadius: BorderRadius.circular(16),
@@ -664,7 +675,7 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
                 child: OutlinedButton.icon(
                   key: cameraKey,
                   onPressed: isScanning ? null : onCamera,
-                  icon: const Icon(Icons.camera_alt_outlined, size: 18),
+                  icon: const Icon(PhosphorIconsRegular.camera, size: 18),
                   label: const Text('Tomar foto'),
                 ),
               ),
@@ -673,7 +684,7 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
                 child: OutlinedButton.icon(
                   key: galleryKey,
                   onPressed: isScanning ? null : onGallery,
-                  icon: const Icon(Icons.photo_library_outlined, size: 18),
+                  icon: const Icon(PhosphorIconsRegular.images, size: 18),
                   label: const Text('Galería'),
                 ),
               ),
@@ -681,18 +692,21 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
           ),
           if (isScanning) ...[
             const SizedBox(height: 10),
-            const Row(
+            Row(
               children: [
-                SizedBox(
+                const SizedBox(
                   width: 16,
                   height: 16,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'Analizando el carné en el dispositivo...',
-                    style: TextStyle(fontSize: 12),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: ZanateColors.textSecondary(isDark),
+                    ),
                   ),
                 ),
               ],
@@ -702,7 +716,12 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
             const SizedBox(height: 8),
             Text(
               notice,
-              style: const TextStyle(fontSize: 11.5, color: Color(0xFFB45309)),
+              style: TextStyle(
+                fontSize: 11.5,
+                color: isDark
+                    ? const Color(0xFFFBBF24)
+                    : const Color(0xFFB45309),
+              ),
             ),
           ],
           if (validation != null) ...[
@@ -715,13 +734,15 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
                         ? const Color(0xFF14301F)
                         : const Color(0xFFECFDF5))
                     : (isDark
-                        ? const Color(0xFF451A1A)
+                        ? const Color(0xFF3F1616)
                         : const Color(0xFFFEF2F2)),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: validation.passed
                       ? const Color(0xFF10B981)
-                      : const Color(0xFFEF4444),
+                      : (isDark
+                          ? const Color(0xFF991B1B)
+                          : const Color(0xFFEF4444)),
                 ),
               ),
               child: Column(
@@ -735,22 +756,32 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
                       fontWeight: FontWeight.bold,
                       fontSize: 12.5,
                       color: validation.passed
-                          ? const Color(0xFF059669)
-                          : const Color(0xFFB91C1C),
+                          ? (isDark
+                              ? const Color(0xFF34D399)
+                              : const Color(0xFF059669))
+                          : (isDark
+                              ? const Color(0xFFFCA5A5)
+                              : const Color(0xFFB91C1C)),
                     ),
                   ),
                   const SizedBox(height: 6),
                   ...validation.items.map((item) {
                     final color = item.level == CarnetCheckLevel.ok
-                        ? const Color(0xFF059669)
+                        ? (isDark
+                            ? const Color(0xFF34D399)
+                            : const Color(0xFF059669))
                         : item.level == CarnetCheckLevel.warning
-                            ? const Color(0xFFB45309)
-                            : const Color(0xFFB91C1C);
+                            ? (isDark
+                                ? const Color(0xFFFBBF24)
+                                : const Color(0xFFB45309))
+                            : (isDark
+                                ? const Color(0xFFFCA5A5)
+                                : const Color(0xFFB91C1C));
                     final icon = item.level == CarnetCheckLevel.ok
-                        ? Icons.check_circle_outline
+                        ? PhosphorIconsRegular.checkCircle
                         : item.level == CarnetCheckLevel.warning
-                            ? Icons.warning_amber_rounded
-                            : Icons.error_outline;
+                            ? PhosphorIconsRegular.warning
+                            : PhosphorIconsRegular.warningCircle;
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 3),
                       child: Row(
@@ -785,22 +816,26 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
 
   @override
   Widget build(BuildContext context) {
-    const zanateBlack = Color(0xFF0B0D10);
-    const zanateEyeYellow = Color(0xFFF5C518);
-    const subtleText = Color(0xFF475569);
-    const mutedText = Color(0xFF64748B);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = ZanateColors.textPrimary(isDark);
+    final textSecondary = ZanateColors.textSecondary(isDark);
+    final textMuted = ZanateColors.textMuted(isDark);
+    final borderColor = ZanateColors.border(isDark);
+    final focusColor = ZanateColors.focusBorder(isDark);
     final inputBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1.2),
+      borderSide: BorderSide(color: borderColor, width: 1.2),
     );
     final focusedBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: zanateBlack, width: 1.6),
+      borderSide: BorderSide(color: focusColor, width: 1.6),
     );
     final errorBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.2),
+      borderSide: BorderSide(
+        color: isDark ? const Color(0xFFF87171) : const Color(0xFFEF4444),
+        width: 1.2,
+      ),
     );
     InputDecoration zanateInput({
       required String labelText,
@@ -814,24 +849,24 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
         counterText: counterText,
         prefixIcon: prefixIcon,
         filled: true,
-        fillColor: const Color(0xFFF8FAFC),
+        fillColor: ZanateColors.surface(isDark),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 16,
         ),
-        labelStyle: const TextStyle(
+        labelStyle: TextStyle(
           fontSize: 13.5,
           fontWeight: FontWeight.w500,
-          color: Color(0xFF64748B),
+          color: textMuted,
         ),
-        floatingLabelStyle: const TextStyle(
+        floatingLabelStyle: TextStyle(
           fontSize: 12.5,
           fontWeight: FontWeight.w700,
-          color: zanateBlack,
+          color: focusColor,
         ),
-        hintStyle: const TextStyle(
+        hintStyle: TextStyle(
           fontSize: 13.5,
-          color: Color(0xFF94A3B8),
+          color: textMuted,
         ),
         border: inputBorder,
         enabledBorder: inputBorder,
@@ -842,7 +877,7 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
     }
 
     return ColoredBox(
-      color: Colors.white,
+      color: ZanateColors.bg(isDark),
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         child: Form(
@@ -856,7 +891,7 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
                   letterSpacing: -0.3,
-                  color: zanateBlack,
+                  color: textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
@@ -866,18 +901,18 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
                   width: 44,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: zanateEyeYellow,
+                    color: ZanateColors.zanateEyeYellow,
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
               ),
               const SizedBox(height: 10),
-              const Text(
+              Text(
                 'Valida tu correo institucional y tu carné USAC.',
                 style: TextStyle(
                   fontSize: 13.5,
                   height: 1.4,
-                  color: subtleText,
+                  color: textSecondary,
                 ),
               ),
               const SizedBox(height: 18),
@@ -888,12 +923,13 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
                 keyboardType: TextInputType.number,
                 textInputAction: TextInputAction.next,
                 maxLength: 9,
+                style: TextStyle(color: textPrimary),
                 decoration: zanateInput(
                   labelText: 'Número de Carné USAC (9 dígitos)',
                   hintText: 'Ej. 201901234',
-                  prefixIcon: const Icon(
+                  prefixIcon: Icon(
                     PhosphorIconsRegular.identificationCard,
-                    color: subtleText,
+                    color: textSecondary,
                   ),
                   counterText: '',
                 ),
@@ -904,23 +940,24 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
 
               // Dropdown de Carrera
               if (_loadingCarreras)
-                const Center(
+                Center(
                   child: Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: CircularProgressIndicator(color: zanateBlack),
+                    padding: const EdgeInsets.all(8.0),
+                    child: CircularProgressIndicator(color: focusColor),
                   ),
                 )
               else
                 DropdownButtonFormField<String>(
                   initialValue: _selectedCarreraId,
                   isExpanded: true,
-                  dropdownColor: Colors.white,
+                  dropdownColor: ZanateColors.card(isDark),
                   borderRadius: BorderRadius.circular(14),
+                  style: TextStyle(color: textPrimary, fontSize: 13.5),
                   decoration: zanateInput(
                     labelText: 'Carrera Universitaria',
-                    prefixIcon: const Icon(
+                    prefixIcon: Icon(
                       PhosphorIconsRegular.graduationCap,
-                      color: subtleText,
+                      color: textSecondary,
                     ),
                   ),
                   items: _carreras.map((c) {
@@ -929,7 +966,7 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
                       child: Text(
                         c['nombre'] ?? '',
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 13),
+                        style: TextStyle(fontSize: 13, color: textPrimary),
                       ),
                     );
                   }).toList(),
@@ -945,8 +982,8 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
               // Opción 1: Google OAuth
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: zanateEyeYellow,
-                  foregroundColor: zanateBlack,
+                  backgroundColor: ZanateColors.zanateEyeYellow,
+                  foregroundColor: ZanateColors.zanateBlack,
                   elevation: 0,
                   minimumSize: const Size.fromHeight(52),
                   padding: const EdgeInsets.symmetric(vertical: 14),
@@ -965,20 +1002,20 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
             const SizedBox(height: 16),
 
             // Separador
-            const Row(
+            Row(
               children: [
-                Expanded(child: Divider(color: Color(0xFFE2E8F0))),
+                Expanded(child: Divider(color: borderColor)),
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: Text(
                     'o mediante código',
                     style: TextStyle(
                       fontSize: 12,
-                      color: mutedText,
+                      color: textMuted,
                     ),
                   ),
                 ),
-                Expanded(child: Divider(color: Color(0xFFE2E8F0))),
+                Expanded(child: Divider(color: borderColor)),
               ],
             ),
             const SizedBox(height: 16),
@@ -991,23 +1028,28 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
                   vertical: 12,
                 ),
                 decoration: BoxDecoration(
-                  color: zanateEyeYellow.withValues(alpha: 0.14),
+                  color: ZanateColors.zanateEyeYellow
+                      .withValues(alpha: isDark ? 0.16 : 0.14),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
                     Icon(
                       PhosphorIconsFill.info,
-                      color: Color(0xFFB45309),
+                      color: isDark
+                          ? ZanateColors.zanateEyeYellow
+                          : const Color(0xFFB45309),
                       size: 18,
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Tu sesión actual es anónima. Al verificar tu correo, se migrará a tu cuenta real.',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF334155),
+                          color: isDark
+                              ? const Color(0xFFFDE68A)
+                              : const Color(0xFF334155),
                         ),
                       ),
                     ),
@@ -1023,12 +1065,13 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
               keyboardType: TextInputType.emailAddress,
               textInputAction:
                   _otpSent ? TextInputAction.next : TextInputAction.done,
+              style: TextStyle(color: textPrimary),
               decoration: zanateInput(
                 labelText: 'Correo Institucional USAC',
                 hintText: 'estudiante@ingenieria.usac.edu.gt',
-                prefixIcon: const Icon(
+                prefixIcon: Icon(
                   PhosphorIconsRegular.envelopeSimple,
-                  color: subtleText,
+                  color: textSecondary,
                 ),
               ),
             ),
@@ -1038,9 +1081,9 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
             if (!_otpSent)
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: zanateBlack,
-                  backgroundColor: const Color(0xFFF8FAFC),
-                  side: const BorderSide(color: Color(0xFFCBD5E1), width: 1.3),
+                  foregroundColor: textPrimary,
+                  backgroundColor: ZanateColors.surface(isDark),
+                  side: BorderSide(color: borderColor, width: 1.3),
                   minimumSize: const Size.fromHeight(50),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
@@ -1063,10 +1106,10 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
                   padding: const EdgeInsets.only(bottom: 10),
                   child: Text(
                     _otpInfoMessage!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w600,
-                      color: zanateBlack,
+                      color: textPrimary,
                     ),
                   ),
                 ),
@@ -1074,12 +1117,13 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
                 controller: _otpController,
                 keyboardType: TextInputType.number,
                 maxLength: 6,
+                style: TextStyle(color: textPrimary),
                 decoration: zanateInput(
                   labelText: 'Código de 6 dígitos',
                   hintText: '123456',
-                  prefixIcon: const Icon(
+                  prefixIcon: Icon(
                     PhosphorIconsRegular.lockKey,
-                    color: subtleText,
+                    color: textSecondary,
                   ),
                   counterText: '',
                 ),
@@ -1120,25 +1164,35 @@ class _InstitutionalEmailStepState extends State<InstitutionalEmailStep> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFEF2F2),
+                  color: isDark
+                      ? const Color(0xFF3F1616)
+                      : const Color(0xFFFEF2F2),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFFCA5A5)),
+                  border: Border.all(
+                    color: isDark
+                        ? const Color(0xFF991B1B)
+                        : const Color(0xFFFCA5A5),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       _inlineError!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12.5,
-                        color: Color(0xFFB91C1C),
+                        color: isDark
+                            ? const Color(0xFFFCA5A5)
+                            : const Color(0xFFB91C1C),
                       ),
                     ),
                     const SizedBox(height: 6),
                     TextButton.icon(
                       onPressed: widget.onSelectSupportPath,
                       style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFFB91C1C),
+                        foregroundColor: isDark
+                            ? const Color(0xFFFCA5A5)
+                            : const Color(0xFFB91C1C),
                       ),
                       icon: const Icon(PhosphorIconsRegular.headset, size: 16),
                       label: const Text(
