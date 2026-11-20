@@ -448,6 +448,7 @@ class _MerchantSupportScreenState extends State<MerchantSupportScreen> {
                                   ? null
                                   : _selectedCategoryId,
                               isExpanded: true,
+                              itemHeight: null,
                               dropdownColor: ZanateColors.card(isDark),
                               borderRadius: BorderRadius.circular(14),
                               style: TextStyle(
@@ -467,7 +468,6 @@ class _MerchantSupportScreenState extends State<MerchantSupportScreen> {
                                     value: category.id,
                                     child: Text(
                                       category.label,
-                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                               ],

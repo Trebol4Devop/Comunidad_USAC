@@ -16,8 +16,6 @@ class AliasBadgeButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final width = MediaQuery.of(context).size.width;
-    final maxTextWidth = width < 450 ? 80.0 : 140.0;
 
     return InkWell(
       onTap: onTap,
@@ -40,11 +38,9 @@ class AliasBadgeButton extends StatelessWidget {
               child: const Icon(Icons.person, size: 10, color: Colors.white),
             ),
             const SizedBox(width: 6),
-            ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: maxTextWidth),
+            Flexible(
               child: Text(
                 alias,
-                overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   fontSize: 11,

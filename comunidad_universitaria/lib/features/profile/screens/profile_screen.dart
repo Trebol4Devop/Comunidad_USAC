@@ -583,7 +583,6 @@ class _ProfileScreenState extends State<ProfileScreen>
                           fontWeight: FontWeight.w700,
                           color: textPrimary,
                         ),
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -610,7 +609,6 @@ class _ProfileScreenState extends State<ProfileScreen>
                         isAuthenticated
                             ? 'Cuenta Verificada'
                             : 'Perfil Estudiantil',
-                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 12,
                           color: isAuthenticated
@@ -653,7 +651,6 @@ class _ProfileScreenState extends State<ProfileScreen>
                         Flexible(
                           child: Text(
                             'Editar seudónimo',
-                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -777,6 +774,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             key: ValueKey('facultad_$_selectedFacultadId'),
             initialValue: _selectedFacultadId,
             isExpanded: true,
+            itemHeight: null,
             dropdownColor: cardColor,
             style: TextStyle(fontSize: 13, color: textPrimary),
             borderRadius: BorderRadius.circular(14),
@@ -794,7 +792,6 @@ class _ProfileScreenState extends State<ProfileScreen>
                 value: f['id'] as String,
                 child: Text(
                   f['nombre'] as String,
-                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontSize: 13, color: textPrimary),
                 ),
               );
@@ -820,6 +817,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             key: ValueKey('carrera_${_selectedFacultadId}_$_selectedCarreraId'),
             initialValue: _selectedCarreraId,
             isExpanded: true,
+            itemHeight: null,
             dropdownColor: cardColor,
             style: TextStyle(fontSize: 13, color: textPrimary),
             borderRadius: BorderRadius.circular(14),
@@ -837,7 +835,6 @@ class _ProfileScreenState extends State<ProfileScreen>
                 value: c.id,
                 child: Text(
                   c.nombre,
-                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontSize: 13, color: textPrimary),
                 ),
               );
@@ -855,6 +852,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             key: ValueKey('sede_$_selectedSedeId'),
             initialValue: _selectedSedeId,
             isExpanded: true,
+            itemHeight: null,
             dropdownColor: cardColor,
             style: TextStyle(fontSize: 13, color: textPrimary),
             borderRadius: BorderRadius.circular(14),
@@ -872,7 +870,6 @@ class _ProfileScreenState extends State<ProfileScreen>
                 value: s['id'] as String,
                 child: Text(
                   '${s['nombre']} (${s['departamento']})',
-                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontSize: 13, color: textPrimary),
                 ),
               );
@@ -1126,8 +1123,6 @@ class _ProfileScreenState extends State<ProfileScreen>
           dense: true,
           title: Text(
             post.title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 13,
@@ -1197,8 +1192,6 @@ class _ProfileScreenState extends State<ProfileScreen>
           dense: true,
           title: Text(
             group.title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 13,
@@ -1249,8 +1242,6 @@ class _ProfileScreenState extends State<ProfileScreen>
           dense: true,
           title: Text(
             item.title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 13,

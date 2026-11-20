@@ -59,8 +59,6 @@ class PopularServersSidebar extends StatelessWidget {
               Expanded(
                 child: Text(
                   'MÁS POPULARES',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.outfit(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -281,8 +279,6 @@ class PopularServersSidebar extends StatelessWidget {
                             ? Colors.white
                             : ZanateColors.zanateBlack,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 1),
                     Text(
@@ -295,8 +291,6 @@ class PopularServersSidebar extends StatelessWidget {
                             ? const Color(0xFF949BA4)
                             : ZanateColors.mutedText,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 3),
 

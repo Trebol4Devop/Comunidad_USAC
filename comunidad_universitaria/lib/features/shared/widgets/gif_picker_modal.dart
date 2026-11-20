@@ -487,8 +487,6 @@ class _GifPickerModalState extends State<GifPickerModal> {
                                       fontSize: 10,
                                       fontWeight: FontWeight.w600,
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ),

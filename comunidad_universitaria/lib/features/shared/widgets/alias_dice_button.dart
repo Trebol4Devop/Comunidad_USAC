@@ -50,11 +50,9 @@ class AliasDiceButton extends StatelessWidget {
             color: fg,
           ),
           const SizedBox(width: 6),
-          ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: compact ? 120 : 160),
+          Flexible(
             child: Text(
               alias,
-              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: compact ? 11 : 12,
                 fontWeight: FontWeight.w600,

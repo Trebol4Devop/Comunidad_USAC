@@ -132,8 +132,6 @@ class _ReportDialogState extends State<ReportDialog> {
                         Text(
                           widget.subtitle,
                           style: TextStyle(fontSize: 12.5, color: subtleText),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
