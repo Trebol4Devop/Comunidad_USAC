@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:comunidad_universitaria/core/config/app_theme.dart';
 import 'package:comunidad_universitaria/features/shared/widgets/image_viewer_dialog.dart';
 
@@ -31,7 +32,7 @@ void main() {
 
       expect(find.byType(InteractiveViewer), findsOneWidget);
       expect(find.byTooltip('Cerrar visor'), findsOneWidget);
-      expect(find.byIcon(Icons.close), findsOneWidget);
+      expect(find.byIcon(PhosphorIconsRegular.x), findsOneWidget);
     });
 
     testWidgets('Muestra badge con título cuando se provee', (tester) async {
