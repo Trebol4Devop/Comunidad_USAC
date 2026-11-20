@@ -27,9 +27,10 @@ class MarketplacePlansSheet extends StatefulWidget {
         context: context,
         isScrollControlled: true,
         useSafeArea: true,
-        backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        backgroundColor: ZanateColors.bg(isDark),
+        shape: RoundedRectangleBorder(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          side: BorderSide(color: ZanateColors.border(isDark)),
         ),
         builder: (ctx) => const MarketplacePlansSheet(),
       );
@@ -37,9 +38,10 @@ class MarketplacePlansSheet extends StatefulWidget {
       return showDialog(
         context: context,
         builder: (ctx) => Dialog(
-          backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+          backgroundColor: ZanateColors.bg(isDark),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: ZanateColors.border(isDark)),
           ),
           insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
           child: ConstrainedBox(
@@ -159,9 +161,7 @@ class _MarketplacePlansSheetState extends State<MarketplacePlansSheet> {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? const Color(0xFF334155)
-                      : ZanateColors.subtleBorder,
+                  color: ZanateColors.border(isDark),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -312,14 +312,10 @@ class _MarketplacePlansSheetState extends State<MarketplacePlansSheet> {
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? const Color(0xFF1E293B)
-                            : const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(4),
+                        color: ZanateColors.surface(isDark),
+                        borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: isDark
-                              ? const Color(0xFF334155)
-                              : ZanateColors.subtleBorder,
+                          color: ZanateColors.border(isDark),
                           width: 0.8,
                         ),
                       ),
@@ -328,9 +324,7 @@ class _MarketplacePlansSheetState extends State<MarketplacePlansSheet> {
                           Icon(
                             PhosphorIconsRegular.info,
                             size: 18,
-                            color: isDark
-                                ? const Color(0xFF94A3B8)
-                                : const Color(0xFF64748B),
+                            color: ZanateColors.textMuted(isDark),
                           ),
                           const SizedBox(width: 10),
                           Expanded(
@@ -338,9 +332,7 @@ class _MarketplacePlansSheetState extends State<MarketplacePlansSheet> {
                               'La coordinación y el pago del plan se realizan fuera de la app con el equipo. La plataforma no cobra comisiones por tus ventas.',
                               style: TextStyle(
                                 fontSize: 11,
-                                color: isDark
-                                    ? const Color(0xFFCBD5E1)
-                                    : const Color(0xFF475569),
+                                color: ZanateColors.textSecondary(isDark),
                                 height: 1.3,
                               ),
                             ),
@@ -366,13 +358,11 @@ class _MarketplacePlansSheetState extends State<MarketplacePlansSheet> {
         ? const Color(0xFF10B981)
         : (isRecommended
             ? ZanateColors.zanateEyeYellow
-            : (isDark
-                ? const Color(0xFF334155)
-                : ZanateColors.subtleBorder));
+            : ZanateColors.border(isDark));
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: ZanateColors.card(isDark),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: borderColor,
@@ -521,13 +511,11 @@ class _MarketplacePlansSheetState extends State<MarketplacePlansSheet> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: isCurrentPlan
-                  ? (isDark ? const Color(0xFF1E293B) : ZanateColors.pillBg)
-                  : (isDark
-                      ? ZanateColors.zanateEyeYellow
-                      : ZanateColors.zanateBlack),
+                  ? ZanateColors.pill(isDark)
+                  : ZanateColors.ctaBg(isDark),
               foregroundColor: isCurrentPlan
-                  ? (isDark ? Colors.white70 : ZanateColors.mutedText)
-                  : (isDark ? ZanateColors.zanateBlack : Colors.white),
+                  ? ZanateColors.textMuted(isDark)
+                  : ZanateColors.ctaFg(isDark),
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
