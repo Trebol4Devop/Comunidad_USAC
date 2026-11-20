@@ -125,7 +125,7 @@ void main() {
       // Verifica el estado vacío
       expect(find.byType(EmptyStateWidget), findsOneWidget);
       expect(find.text('Aún no tienes publicaciones'), findsOneWidget);
-      expect(find.text('Crear Publicación'), findsOneWidget);
+      expect(find.text('Crear Publicación'), findsNothing);
     });
   });
 }

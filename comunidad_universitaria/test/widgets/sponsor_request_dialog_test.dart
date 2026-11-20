@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:comunidad_universitaria/core/config/app_theme.dart';
 import 'package:comunidad_universitaria/features/marketplace/widgets/sponsor_request_dialog.dart';
 import '../helpers/test_setup.dart';
@@ -59,5 +60,46 @@ void main() {
       expect(find.text('Ingresa un número de WhatsApp de 8 dígitos.'), findsOneWidget);
       expect(find.text('Describe tu propuesta con al menos 10 caracteres.'), findsOneWidget);
     });
+
+    testWidgets(
+      'SponsorRequestDialog.show abre una vista separada con AppBar y caretLeft en móvil',
+      (tester) async {
+        tester.view.physicalSize = const Size(400, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
+
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.lightTheme,
+            home: Scaffold(
+              body: Builder(
+                builder: (ctx) => ElevatedButton(
+                  onPressed: () => SponsorRequestDialog.show(ctx),
+                  child: const Text('Abrir patrocinio'),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Abrir patrocinio'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(SponsorRequestDialog), findsOneWidget);
+        expect(
+          find.descendant(
+            of: find.byType(SponsorRequestDialog),
+            matching: find.byType(Scaffold),
+          ),
+          findsOneWidget,
+        );
+        expect(find.byType(AppBar), findsOneWidget);
+        expect(find.text('Solicitar Espacio de Patrocinador'), findsOneWidget);
+        expect(find.byIcon(PhosphorIconsBold.caretLeft), findsOneWidget);
+        expect(find.byType(BottomSheet), findsNothing);
+        expect(find.byType(Dialog), findsNothing);
+      },
+    );
   });
 }

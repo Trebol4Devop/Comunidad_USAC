@@ -42,15 +42,17 @@ void main() {
       expect(switched, isTrue);
     });
 
-    testWidgets('Modo marketplaceVerified sin verificar muestra contacto directo y botón Validar Carné', (tester) async {
+    testWidgets('Modo marketplaceVerified sin verificar muestra vendedor sin subtítulo y botón de engranaje', (tester) async {
+      bool switched = false;
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.lightTheme,
-          home: const Scaffold(
+          home: Scaffold(
             body: IdentityBadgeChip(
               mode: IdentityMode.marketplaceVerified,
               displayName: 'Emprendedor Sancarlista',
               isVerified: false,
+              onSwitchIdentity: () => switched = true,
             ),
           ),
         ),
@@ -60,8 +62,14 @@ void main() {
       expect(find.byIcon(PhosphorIconsRegular.shieldCheck), findsOneWidget);
       expect(find.text('Vendedor: '), findsOneWidget);
       expect(find.text('Emprendedor Sancarlista'), findsOneWidget);
-      expect(find.text('Perfil estudiantil de contacto directo'), findsOneWidget);
+      expect(find.text('Perfil estudiantil de contacto directo'), findsNothing);
+      expect(find.text('Ajustes'), findsNothing);
+      expect(find.byIcon(PhosphorIconsRegular.gear), findsOneWidget);
       expect(find.text('Verificado'), findsNothing);
+
+      await tester.tap(find.byIcon(PhosphorIconsRegular.gear));
+      await tester.pumpAndSettle();
+      expect(switched, isTrue);
     });
 
     testWidgets('Modo marketplaceVerified verificado muestra badge de Verificado e icono check', (tester) async {

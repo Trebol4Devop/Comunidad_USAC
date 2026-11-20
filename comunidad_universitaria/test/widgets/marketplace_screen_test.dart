@@ -63,7 +63,7 @@ void main() {
 
         // Banner de cabecera
         expect(
-          find.text('Marketplace & Tutorías Estudiantiles'),
+          find.text('Marketplace Estudiantil'),
           findsOneWidget,
         );
         expect(
@@ -112,7 +112,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(
-          find.text('Marketplace & Tutorías Estudiantiles'),
+          find.text('Marketplace Estudiantil'),
           findsOneWidget,
         );
 
@@ -137,13 +137,13 @@ void main() {
         await tester.pumpWidget(buildTestScreen());
         await tester.pumpAndSettle();
 
-        // Debe mostrar el EmptyStateWidget real
+        // Debe mostrar el EmptyStateWidget real sin botón de crear primera publicación
         expect(find.byType(EmptyStateWidget), findsOneWidget);
         expect(
           find.text('No hay publicaciones en esta categoría aún'),
           findsOneWidget,
         );
-        expect(find.text('Crear Primera Publicación'), findsOneWidget);
+        expect(find.text('Crear Primera Publicación'), findsNothing);
       },
     );
 

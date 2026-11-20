@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:comunidad_universitaria/core/config/app_theme.dart';
 import 'package:comunidad_universitaria/core/models/marketplace_plan.dart';
 import 'package:comunidad_universitaria/core/models/marketplace_seller_status.dart';
@@ -101,11 +102,14 @@ void main() {
       expect(find.text('Check-in de presencia en campus'), findsOneWidget);
       expect(find.text('Publicaciones ilimitadas'), findsWidgets);
 
-      // Nota obligatoria de no comisiones
-      expect(
-        find.textContaining('La plataforma no cobra comisiones por tus ventas'),
-        findsOneWidget,
+      // Nota obligatoria de no comisiones ubicada en la parte superior antes de las tarjetas
+      final noteFinder = find.textContaining(
+        'La plataforma no cobra comisiones por tus ventas',
       );
+      expect(noteFinder, findsOneWidget);
+      final noteTop = tester.getTopLeft(noteFinder).dy;
+      final firstPlanTop = tester.getTopLeft(find.text('Estudiante')).dy;
+      expect(noteTop, lessThan(firstPlanTop));
     });
 
     testWidgets('Marca el plan actual del vendedor con un chip de Plan actual', (tester) async {
@@ -203,5 +207,46 @@ void main() {
       expect(find.text('Q25'), findsNothing);
       expect(find.text('Q75'), findsNothing);
     });
+
+    testWidgets(
+      'MarketplacePlansSheet.show abre una vista separada con AppBar y caretLeft en móvil',
+      (tester) async {
+        tester.view.physicalSize = const Size(400, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
+
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.lightTheme,
+            home: Scaffold(
+              body: Builder(
+                builder: (ctx) => ElevatedButton(
+                  onPressed: () => MarketplacePlansSheet.show(ctx),
+                  child: const Text('Ver planes'),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Ver planes'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(MarketplacePlansSheet), findsOneWidget);
+        expect(
+          find.descendant(
+            of: find.byType(MarketplacePlansSheet),
+            matching: find.byType(Scaffold),
+          ),
+          findsOneWidget,
+        );
+        expect(find.byType(AppBar), findsOneWidget);
+        expect(find.text('Planes del Marketplace'), findsOneWidget);
+        expect(find.byIcon(PhosphorIconsBold.caretLeft), findsOneWidget);
+        expect(find.byType(BottomSheet), findsNothing);
+        expect(find.byType(Dialog), findsNothing);
+      },
+    );
   });
 }
